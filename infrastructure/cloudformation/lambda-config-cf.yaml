@@ -1,30 +1,37 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Configuration for MARIAN Lambda function'
+# File: lambda-config.yaml
+# Project: MARIAN (Project HAL)
+# Purpose: CloudFormation template for Lambda function configuration
+# Author: Claude
+# Date: December 15, 2024
 
-Parameters:
-  LambdaLayerArn:
-    Type: String
-    Description: ARN of the Lambda layer containing dependencies
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda function configuration for Project MARIAN
 
 Resources:
-  MarianFunctionConfiguration:
-    Type: AWS::Lambda::Function
+  MarianFunction:
+    Type: 'AWS::Lambda::Function'
     Properties:
       FunctionName: Marian
       Runtime: python3.9
       Handler: lambda_function.lambda_handler
-      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Marian-role-1wz8k7bw'
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/Marian-role-1wz8k7bw'
       Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              return {"statusCode": 200}
+        S3Bucket: jexi-testkb
+        S3Key: function.zip
       Timeout: 300
       MemorySize: 256
       Environment:
         Variables:
           DYNAMODB_TABLE: email_metadata
           GMAIL_SECRET_ID: gmail/oauth/tokens
-          ANTHROPIC_SECRET_ID: AntrhopicKey
-      Tags:
-        - Key: Project
-          Value: MARIAN
+          ANTHROPIC_SECRET_ID: AnthropicKey
+      Layers:
+        - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:marian_dependencies:1'
+
+Outputs:
+  FunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt MarianFunction.Arn
+  FunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref MarianFunction

@@ -24,11 +24,26 @@ cleanup_stack "marian-lambda-config"
 
 echo "Creating Lambda layer..."
 # Create layer directory
-rm -rf layer
+rm -rf layer venv
 mkdir -p layer/python
 
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Upgrade pip and install wheel
+pip install --upgrade pip wheel
+
 # Install dependencies into layer
-pip install --target ./layer/python -r requirements.txt
+pip install --platform manylinux2014_x86_64 \
+    --implementation cp \
+    --python-version 3.9 \
+    --only-binary=:all: \
+    -r requirements.txt \
+    -t ./layer/python/
+
+# Deactivate virtual environment
+deactivate
 
 # Create layer ZIP
 cd layer
@@ -76,16 +91,4 @@ aws lambda update-function-code \
 # Update Lambda configuration
 echo "Updating Lambda function configuration..."
 aws lambda update-function-configuration \
-    --function-name $LAMBDA_FUNCTION_NAME \
-    --runtime python3.9 \
-    --handler lambda_function.lambda_handler \
-    --timeout 300 \
-    --memory-size 256 \
-    --environment "Variables={DYNAMODB_TABLE=email_metadata,GMAIL_SECRET_ID=gmail/oauth/tokens,ANTHROPIC_SECRET_ID=AntrhopicKey}" \
-    --layers $LAYER_ARN \
-    --region $AWS_REGION
-
-# Clean up
-rm -rf layer layer.zip package function.zip
-
-echo "Deployment complete!"
+    --function-name $L
