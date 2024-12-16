@@ -19,32 +19,38 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environments
-.env
-.venv
+# Virtual Environment
 venv/
 ENV/
+env/
+.env
 
-# IDE and Editor files
-.idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
-*.swp
-*.swo
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# AWS Lambda Deployment Files
+layer/
+layer.zip
+package/
+function.zip
 
-# Logs and databases
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# Local development
 *.log
-*.sqlite3
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Project-specific ignores
+# OS
+.DS_Store
+Thumbs.db

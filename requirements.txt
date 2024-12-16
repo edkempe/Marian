@@ -1,3 +1,4 @@
+# Core Python and Development Dependencies
 astroid==3.3.6
 awscli==1.36.22
 black==24.10.0
@@ -29,3 +30,16 @@ six==1.17.0
 tomlkit==0.13.2
 typing_extensions==4.12.2
 urllib3==2.2.3
+
+# Gmail API Dependencies
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.106.0
+
+# AI and Natural Language Processing
+anthropic==0.27.0
+
+# Logging and Monitoring
+watchtower==3.0.1
+
+# Note: Requires Python 3.9+
