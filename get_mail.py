@@ -199,7 +199,13 @@ def main():
                 email_data['body'], email_data['labels'],
                 email_data['raw_data']))
                 conn.commit()
-                print(f"Stored email: {email_data['date']} - {email_data['subject']}")
+                
+                # Convert UTC date to Mountain Time for display
+                utc_date = datetime.strptime(email_data['date'], '%Y-%m-%d %H:%M:%S %z')
+                mountain_tz = timezone('US/Mountain')
+                display_date = utc_date.astimezone(mountain_tz).strftime('%Y-%m-%d %H:%M:%S %Z')
+                
+                print(f"Stored email: {display_date} - {email_data['subject']}")
             except Exception as e:
                 print(f"Error storing email: {e}")
 
