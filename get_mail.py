@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 import argparse
 
-label_name = "+SaneLater"  # The label name you want to search for
+days_to_fetch = 5  # Number of days to fetch emails
 maxResults = 500  # Gmail API limit is 500
 
 def get_gmail_service():
@@ -36,33 +36,6 @@ def clear_database(conn):
     conn.commit()
     print("Database cleared successfully")
 
-def fetch_emails_by_label(label_id, start_date=None, end_date=None):
-    service = get_gmail_service()
-    try:
-        query = f'label:{label_id}'
-        if start_date:
-            query += f' after:{start_date.strftime("%Y/%m/%d")}'
-        if end_date:
-            query += f' before:{end_date.strftime("%Y/%m/%d")}'
-        
-        messages = []
-        next_page_token = None
-        while True:
-            results = service.users().messages().list(
-                userId='me',
-                q=query,
-                maxResults=500,
-                pageToken=next_page_token
-            ).execute()
-            messages.extend(results.get('messages', []))
-            next_page_token = results.get('nextPageToken')
-            if not next_page_token:
-                break
-        return messages
-    except Exception as e:
-        print(f'An error occurred: {e}')
-        return []
-    
 def fetch_emails(start_date=None, end_date=None):
     service = get_gmail_service()
     try:
@@ -89,7 +62,6 @@ def fetch_emails(start_date=None, end_date=None):
     except Exception as e:
         print(f'An error occurred: {e}')
         return []
-
 
 def process_email(service, msg_id):
     try:
@@ -127,21 +99,6 @@ def process_email(service, msg_id):
         print(f'Error processing message {msg_id}: {e}')
         return None
 
-def get_label_id(label_name):
-    service = get_gmail_service()
-    try:
-        results = service.users().labels().list(userId='me').execute()
-        labels = results.get('labels', [])
-        for label in labels:
-            if label['name'].lower() == label_name.lower():
-                print(f"Found label: {label['name']} with ID: {label['id']}")
-                return label['id']
-        print(f"Label '{label_name}' not found")
-        return None
-    except Exception as e:
-        print(f'Error getting label ID: {e}')
-        return None
-
 def get_oldest_email_date(conn):
     cursor = conn.cursor()
     cursor.execute('SELECT MIN(date) FROM emails')
@@ -154,19 +111,19 @@ def get_newest_email_date(conn):
     newest_date = cursor.fetchone()[0]
     return datetime.strptime(newest_date, '%a, %d %b %Y %H:%M:%S %z') if newest_date else None
 
-def fetch_older_emails(conn, label_id, days=30):
+def fetch_older_emails(conn):
     oldest_date = get_oldest_email_date(conn)
     if oldest_date:
         end_date = oldest_date - timedelta(seconds=1)
-        start_date = end_date - timedelta(days=days)
-        return fetch_emails_by_label(label_id, start_date, end_date)
+        start_date = end_date - timedelta(days=days_to_fetch)
+        return fetch_emails(start_date, end_date)
     return []
 
-def fetch_newer_emails(conn, label_id):
+def fetch_newer_emails(conn):
     newest_date = get_newest_email_date(conn)
     if newest_date:
         start_date = newest_date + timedelta(seconds=1)
-        return fetch_emails_by_label(label_id, start_date)
+        return fetch_emails(start_date)
     return []
 
 def count_emails(conn):
@@ -192,9 +149,9 @@ def main():
     total_emails = count_emails(conn)
 
     if total_emails == 0:
-        print("Database is empty. Fetching last 30 days of emails.")
+        print(f"Database is empty. Fetching last {days_to_fetch} days of emails.")
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=days_to_fetch)
         messages = fetch_emails(start_date, end_date)
     elif args.older:
         messages = fetch_older_emails(conn)
@@ -220,7 +177,6 @@ def main():
                 print(f"Error storing email: {e}")
 
     conn.close()
-
 
 if __name__ == '__main__':
     main()

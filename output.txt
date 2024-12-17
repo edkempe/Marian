@@ -2,30 +2,178 @@ Successfully connected to database
 
 Reading recent emails from database...
 
-Found 101 emails:
-Total emails in database: 101
+Found 509 emails:
+Total emails in database: 509
+Date range: 11 Dec 2024 18:05:40 -0600 to Wed, 11 Dec 2024 22:45:59 -0600
 
 ==================================================
-Subject: Congrats! Prescriptions Are Now Linked to Your CVS.com Account
-From: CVS Pharmacy <pharmacy@your.cvs.com>
-Date: Tue, 17 Dec 2024 13:29:08 +0000
+Subject: Your statement is available
+From: Bank of America <onlinebanking@ealerts.bankofamerica.com>
+Date: Wed, 11 Dec 2024 22:45:59 -0600
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
-Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
 
 ==================================================
-Subject: Resource Management Concepts is hiring a Network Administrator.
-From: Eric Miller <inmail-hit-reply@linkedin.com>
-Date: Tue, 17 Dec 2024 12:48:27 +0000 (UTC)
+Subject: Go to the gym for shoulder tension
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Wed, 11 Dec 2024 18:42:14 -0700
+Labels: IMPORTANT,SENT,INBOX
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
+Subject: 📷 Chance Reed recently posted a new photo
+From: Chance on Facebook <friendupdates@facebookmail.com>
+Date: Wed, 11 Dec 2024 18:29:27 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+📷 Chance Reed added a new photo
+
+Thanks,
+The Facebook team
+
+
+
+==================...
+
+==================================================
+Subject: Movies - 12 Monkeys
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Wed, 11 Dec 2024 18:06:35 -0700
+Labels: Label_3766799458700700158,IMPORTANT,SENT
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
+Subject: Watch Lobster with Brian?
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Wed, 11 Dec 2024 17:29:27 -0700
+Labels: Label_3766799458700700158,UNREAD,IMPORTANT,SENT
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
+Subject: Alias BigInbox
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Wed, 11 Dec 2024 17:20:18 -0700
+Labels: IMPORTANT,Label_3729917456980438582,SENT
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
+Subject: 50% Off: Work Smarter, Not Harder in 2025
+From: Blinkist <hello@mail.blinkist.com>
+Date: Thu, 12 Dec 2024 23:26:33 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Unlock the 80/20 principle for
+max...
+
+==================================================
+Subject: 🖥️ Intel struck gold with its Battlemage GPUs 💩 Microsoft Recall needs to be recalled again 🎮 You need to try Valve's new game Deadlock
+From: XDA <newsletter@xda-developers.com>
+Date: Thu, 12 Dec 2024 23:05:27 +0000
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
-Body preview: Resource Management Concepts is hiring a Network Administrator.
-Resource Management Concepts is hir...
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: If this is your dog my friend said it jumped...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Thu, 12 Dec 2024 22:52:14 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+If this is your dog my friend said it jumped into her car.
+htt...
+
+==================================================
+Subject: Human Infrastructure 381: Tech Support with Drink Pairings, Building an Automation Portfolio, and More
+From: Packet Pushers <human-infrastructure@mail.beehiiv.com>
+Date: Thu, 12 Dec 2024 22:46:45 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: ## THIS WEEK’S MUST-READ BLOGS   🤓
+
+**[5 Things to Do to Help Your Family’s Tech Ecosystem over th...
+
+==================================================
+Subject: Your statement is available
+From: Bank of America <onlinebanking@ealerts.bankofamerica.com>
+Date: Thu, 12 Dec 2024 22:32:50 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
+
+==================================================
+Subject: Your receipt from Anthropic #2359-7254
+From: Anthropic <invoice+statements@mail.anthropic.com>
+Date: Thu, 12 Dec 2024 22:30:27 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: 🗓️ Your recurring merchant alert in Monarch
+From: Monarch Money <email@email.monarchmoney.com>
+Date: Thu, 12 Dec 2024 22:17:34 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+We found 1 new recurring merchant in your transaction history:
+
+- Elevenlabs (Monthly...
 
 ==================================================
 Subject: ✨ You have 2 new updates in Monarch
 From: Monarch Money <email@email.monarchmoney.com>
-Date: Tue, 17 Dec 2024 10:25:09 +0000 (UTC)
+Date: Thu, 12 Dec 2024 22:17:30 +0000 (UTC)
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: Hi Eddie,
@@ -33,42 +181,1133 @@ Body preview: Hi Eddie,
 You have 2 new updates in Monarch to review.
 
 
-🔔 Your expense alert
-An expense of $...
+❓ Uncategorized budget update
+You&#x...
 
 ==================================================
-Subject: Introducing audio generation on Poe
-From: Poe <product-updates@poe.com>
-Date: Tue, 17 Dec 2024 10:17:00 +0000
-Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+Subject: 🔔 Big savings happen here: 40% off layers & loungewear, 30% OFF women's underwear multipacks + MORE!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Thu, 12 Dec 2024 22:11:56 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
 --------------------------------------------------
-Body preview: Hi everyone,
-
-We're excited to share that Poe now supports audio generation through ElevenLabs and...
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
 
 ==================================================
-Subject: Refund on order 114-4689712-2683417
-From: "Amazon.com" <payments-messages@amazon.com>
-Date: Tue, 17 Dec 2024 08:41:43 +0000
+Subject: The famous actor Arnold Schwarzenegger He posted a photo of himself sleeping on the street, under his famous bronze statue, and sadly wrote: "How t...
+From: Quora Suggested Spaces <humanity-space@quora.com>
+Date: Thu, 12 Dec 2024 22:04:44 +0000
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Trending Stories from Humanity
+
+-----
+
+
+
+
+
+
+
+The famous actor Arnold Schwarzenegger
+He po...
+
+==================================================
+Subject: Janna and other neighbors are planning to attend Sound Bath: Release and...
+From: Weekend Events in NorthPark <no-reply@rs.email.nextdoor.com>
+Date: Thu, 12 Dec 2024 22:04:40 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_SOCIAL
+--------------------------------------------------
+Body preview: Janna and other neighbors are planning to attend Sound Bath: Release and...
+
+==================================================
+Subject: 📣 Time’s running out for Christmas delivery!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Thu, 12 Dec 2024 21:14:35 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
+
+==================================================
+Subject: Learn What GenAI Means for Your Agency | Health IT Summit 2025
+From: AFCEA Bethesda <registrar.afceabethesda.org@5261a.clients.bmsend.com>
+Date: Thu, 12 Dec 2024 21:02:49 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <img src='https://afceabethesda.benchurl.com/c/o?e=1922742&c=5261A&relid=&l=22A1AFE2&email=nA2NaNJAt...
+
+==================================================
+Subject: 🧹 It's Time to Clean Up Your Mac Desktop — I Bought a TV on Black Friday and It Didn’t Go Well
+From: How-To Geek <newsletter@howtogeek.com>
+Date: Thu, 12 Dec 2024 20:45:56 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: Help reach dads like Isaac
+From: Kent Evans <kent.evans@manhoodjourney.org>
+Date: Thu, 12 Dec 2024 20:27:52 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Your support equips dads like Isaac to lead with faith. Together, we can transform families, communi...
+
+==================================================
+Subject: We found something you might like
+From: "Amazon.com" <store-news@amazon.com>
+Date: Thu, 12 Dec 2024 20:18:39 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
 --------------------------------------------------
 Body preview: 
   
-
-Hello, We're writing to let you know we processed your refund of $136.18 for your Order 114-...
+How about another look? Keep shopping your recent finds on Amazon. https://www.amazon.com/hz/m...
 
 ==================================================
-Subject: More Records For Nasdaq As Dow Struggles With Losing Streak
-From: Wall Street Breakfast <account@seekingalpha.com>
-Date: Tue, 17 Dec 2024 07:32:39 -0500
+Subject: Your preview of the refreshed Monarch
+From: Monarch Money <hello@updates.monarchmoney.com>
+Date: Thu, 12 Dec 2024 20:06:03 +0000
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
-Body preview: A big divergence is going on in the markets, where value stocks are taking a back seat to growth. Wh...
+Body preview: ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­ ͏ ‌     ­͏ ‌     ­ ͏ ‌     ­ ͏...
 
 ==================================================
-Subject: Inside Courteney Cox’s Ultimate Home-Based Business
+Subject: 8th grade t-shirt
+From: Adams Junior High <AJHeNews@katyisd.org>
+Date: Thu, 12 Dec 2024 19:56:29 -0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: MessageGood afternoon,8th grade T-shirt have been distributed.  If you ORDERED an 8th grade shirt an...
+
+==================================================
+Subject: Now on sale: Gracie Abrams with Role Model
+From: "Natalie @ SeatGeek" <events@seatgeek.com>
+Date: Thu, 12 Dec 2024 19:40:43 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: New tour dates in Morrison are now on sale. Let's go! 
+
+
+ <https://seatgeek.com> 
+
+
+ <https://seatge...
+
+==================================================
+Subject: AP Exam Accommodation Requests: Jordan HS Class of 2027
+From: Jordan HS Class of 2027 <notifications@instructure.com>
+Date: Thu, 12 Dec 2024 19:25:08 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: AP students needing testing accommodations must adhere to the College Board timeline for these reque...
+
+==================================================
+Subject: Friday Jr calls for 15% off...
+From: "Marco's Offers" <offers@offers.marcos.com>
+Date: Thu, 12 Dec 2024 19:21:40 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
+
+==================================================
+Subject: 📣 New group suggestion: Butterfly Bliss Strategy Station
+From: Meetup <info@email.meetup.com>
+Date: Thu, 12 Dec 2024 19:06:22 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+    .hero-title { margin: 0
+30px !important; margin-top: 20px !important; } .hero-d...
+
+==================================================
+Subject: 📄 Ray Voight shared Christian Fellowship Church's post
+From: Ray on Facebook <friendupdates@facebookmail.com>
+Date: Thu, 12 Dec 2024 18:56:41 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+📄 Ray Voight shared Christian Fellowship Church's post
+
+Thanks,
+The Facebook team
+...
+
+==================================================
+Subject: I need some advice my friend applied for a position...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Thu, 12 Dec 2024 18:39:59 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+I need some advice my friend applied for a position for WIS Int...
+
+==================================================
+Subject: Thank You For Your Purchase
+From: PlayStation <reply@txn-email.playstation.com>
+Date: Thu, 12 Dec 2024 18:32:05 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+<!doctype html>
+<html lang='en' xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-micro...
+
+==================================================
+Subject: The Contemplative Path of Focusing
+From: Rose Sposito <jinparose@68662129.mailchimpapp.com>
+Date: Thu, 12 Dec 2024 18:21:24 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+http://rosesposito.com/
+Embodied Wisdom in Everyday Life
+
+Healing, Loving, and Celebrating Ou...
+
+==================================================
+Subject: Holiday Shooting Camp & December Newsletter | BB Academy
+From: "B&B Academy" <no-reply@bandbbasketballacademy.org>
+Date: Thu, 12 Dec 2024 18:10:53 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!doctype html>
+                    <html>
+                      <head>
+                        <...
+
+==================================================
+Subject: Project Due When You Walk In TOMORROW: JHS APUSH Fall Racicot
+From: JHS APUSH Fall Racicot <notifications@instructure.com>
+Date: Thu, 12 Dec 2024 18:01:19 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Howdy Y'all,
+
+This is your reminder that you will have no time to finish your project tomorrow, as...
+
+==================================================
+Subject: Hi Eddie! Alison (40) from Arvada + 23 more members are waiting for you.
+From: Match <matchmail@connect.match.com>
+Date: Thu, 12 Dec 2024 18:01:13 -0600
+Labels: UNREAD,Label_134,CATEGORY_SOCIAL
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: BOLDERBoulder 2025 - Registration Open
+From: Runners Roost <digital@runnersroost.com>
+Date: Thu, 12 Dec 2024 18:00:21 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212578...
+
+==================================================
+Subject: Check out these 12 items going fast near you
+From: OfferUp <news@discover.offerup.com>
+Date: Thu, 12 Dec 2024 18:00:05 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: OfferUp ( # )           #NowTrending ( # )
+Calling all sellers! These items are selling fast on Off...
+
+==================================================
+Subject: Give the Gift of 5280 Burger Bar! Thursday Steak Night Tonight!!
+From: 5280 Burger Bar <no-reply+b00921a7@toast-restaurants.com>
+Date: Thu, 12 Dec 2024 17:59:43 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xm...
+
+==================================================
+Subject: Re: Confirm United refund for first class upgrade
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Thu, 12 Dec 2024 17:52:37 -0700
+Labels: IMPORTANT,Label_144,SENT
+--------------------------------------------------
+Body preview: reference ID
+45387161
+
+Thank you,
+Eddie
+
+
+On Sun, Dec 1, 2024 at 10:30 PM Eddie Kempe <eddiek...
+
+==================================================
+Subject: 🔮 Google runs headfirst into the agentic model race
+From: AI Weekly <info@venturebeat.com>
+Date: Thu, 12 Dec 2024 17:30:35 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+View in browser
+
+December 12, 2024
+https://venturebeat.com?utm_source=VentureBeat&utm_campaig...
+
+==================================================
+Subject: Hi Eddie, we noticed a new sign in to your Dropbox account
+From: Dropbox <no-reply@dropbox.com>
+Date: Thu, 12 Dec 2024 17:22:42 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+A new web browser just signed in to your Dropbox account. To help keep your account sec...
+
+==================================================
+Subject: Hi Eddie, we noticed a new sign in to your Dropbox account
+From: Dropbox <no-reply@dropbox.com>
+Date: Thu, 12 Dec 2024 17:22:42 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+A new Android device just signed in to your Dropbox account. To help keep your account ...
+
+==================================================
+Subject: 5 Unexpected Subscriptions That Can Save You Money
+From: Lifehacker Newsletter <newsletter@e.lifehacker.com>
+Date: Thu, 12 Dec 2024 17:03:52 -0500
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!-- X-Campaign: 75126980/174210744/45102380730 -->
+<style> .dvPreheader { display: none !important...
+
+==================================================
+Subject: 🆕 See 💥 #KravenTheHunter & 👑 #LOTR The War of the Rohirrim Today! 
+From: Studio Movie Grill <communications@smgloyalty.com>
+Date: Thu, 12 Dec 2024 17:01:33 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Studio Movie Grill
+  If you can't view the images in this email, please follow this link: https://w...
+
+==================================================
+Subject: We got you something 📬
+From: Chipotle Mexican Grill <chipotle@email.chipotle.com>
+Date: Thu, 12 Dec 2024 16:57:37 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+  Chipotle Mexican Grill
+ &#8199; &#847; &zwnj;   &#8199; &#847; &zwnj;   &#8199; &...
+
+==================================================
+Subject: Save More over the Holidays
+From: Best Western Rewards <deals@email.bestwesternrewards.com>
+Date: Thu, 12 Dec 2024 16:46:43 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: ALERT 🚨 Is your pet insurance saving you $$$?
+From: Petco <Petco@e.petco.com>
+Date: Thu, 12 Dec 2024 16:40:36 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+Get a free quote on customizable plans tailored to your budget.͏
+
+ 
+
+Ge...
+
+==================================================
+Subject: ⛰️ Avs Better Halves Tree Auction Ends TONIGHT!
+From: Colorado Avalanche <dbm@coloradoavalanche.com>
+Date: Thu, 12 Dec 2024 16:34:39 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Avs Better Halves Tree Auction
+
+Celebrate the holiday season with the Avs Better Halves Tree Aucti...
+
+==================================================
+Subject: Make this weekend one to remember, Eddie.
+From: Match <mailer@connect.match.com>
+Date: Thu, 12 Dec 2024 16:19:17 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview: 
+
+
+
+  
+  
+   
+            
+    
+    
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tran...
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Thu, 12 Dec 2024 16:09:04 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: What Employees Really Want
+From: Fairygodboss Events <events@info.fairygodboss.com>
+Date: Thu, 12 Dec 2024 16:08:33 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Innovative Programs and Initiatives That Employees Love
+
+https://fairygodboss.com/community/feed?u...
+
+==================================================
+Subject: Don't Miss: Winter Savings-18% Off Printer Ink!
+From: LD Products <ldproducts@eml.ldproducts.com>
+Date: Thu, 12 Dec 2024 16:03:56 +0100
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Sale Expires 12/13/2024 11:59 PM PST | Experience exceptional value this
+season
+with LD Products, ...
+
+==================================================
+Subject: 241212 Rest Day: Your Weekly CrossFit Updates
+From: CrossFit <crossfit@mail.crossfit.com>
+Date: Thu, 12 Dec 2024 15:52:17 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Catch up on new content and explore CrossFit courses.   CrossFit
+( https://links.crossfit.com/f/a/wO...
+
+==================================================
+Subject: Tell us about your stay at Courtyard Santa Clarita Valencia
+From: Courtyard Santa Clarita Valencia <marriott@express.medallia.com>
+Date: Thu, 12 Dec 2024 15:50:09 -0800 (PST)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Dear Eddie Kempe,
+
+Thank you for your recent stay. Your feedback is important to us. 
+Please take...
+
+==================================================
+Subject: Some of our gear picks for the season | Runners Roost Newsletter
+From: Runners Roost <digital@runnersroost.com>
+Date: Thu, 12 Dec 2024 15:50:04 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212578...
+
+==================================================
+Subject: 📢 Come Back for $1/wk. for 12 months - Limited-Time Offer
+From: SiriusXM <no-reply@e.siriusxm.com>
+Date: Thu, 12 Dec 2024 15:45:40 -0800
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: We're sorry you're having trouble viewing this email. Please click here
+https://t.e.siriusxm.com/r/...
+
+==================================================
+Subject: Your Blink of the Day
+From: Blinkist <hello@mail.blinkist.com>
+Date: Thu, 12 Dec 2024 15:32:13 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Today:
+Working with Emotional Intelligenc...
+
+==================================================
+Subject: 😮BOGO for $5😮
+From: MyPanera <panera@m1.panerabread.com>
+Date: Thu, 12 Dec 2024 15:31:28 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: SAVE inside!    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...
+
+==================================================
+Subject: Eddie, unlock AI power with simple prompts in AI Studio
+From: Google AI Studio <googleaistudio-noreply@google.com>
+Date: Thu, 12 Dec 2024 15:19:23 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: AI Studio: Your first AI project awaits  
+<https://notifications.google.com/g/p/ANiao5oJq4Q-WhOveKz...
+
+==================================================
+Subject: Eddie, unlock AI power with simple prompts in AI Studio
+From: Google AI Studio <googleaistudio-noreply@google.com>
+Date: Thu, 12 Dec 2024 15:18:51 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: AI Studio: Your first AI project awaits  
+<https://notifications.google.com/g/p/ANiao5rQMIh1oknvqTd...
+
+==================================================
+Subject: Save on iconic games | 30th Anniversary deals on now
+From: PlayStation <email@email.playstation.com>
+Date: Thu, 12 Dec 2024 15:09:36 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: Eddie, 6 new rentals match your search in Aurora, Westminster, Lakewood, etc
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Thu, 12 Dec 2024 15:07:14 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margi...
+
+==================================================
+Subject: New Video: How A Delicious Prawn Can Kill You – Allergies Explained
+From: kurzgesagt <birbs@kurzgesagt.org>
+Date: Thu, 12 Dec 2024 15:05:02 -0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: [kurzgesagt logo white](https://kurzgesagt.org)
+
+[About](https://kurzgesagt.org)
+
+[YouTube](http...
+
+==================================================
+Subject: Welcome to How-To Geek Newsletters
+From: How-To Geek <newsletter@howtogeek.com>
+Date: Thu, 12 Dec 2024 14:50:22 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: Our 2024 Wrap-Up is live
+From: PlayStation <email@email.playstation.com>
+Date: Thu, 12 Dec 2024 14:46:44 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: 🎁 Unwrap great savings: 30% OFF men's & women's underwear multipacks, 3 for $30 men's underwear singles + MORE!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Thu, 12 Dec 2024 14:40:47 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: (1/7) Welcome to LangSmith! Log Your First Trace 🎉
+From: "Nick @ LangChain" <noreply@langchain.com>
+Date: Thu, 12 Dec 2024 14:30:01 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: I need a job!!!
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Thu, 12 Dec 2024 14:27:52 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+I need a job!!!
+https://nextdoor.com/p/5Hk7HT7SJNSJ?post=37331...
+
+==================================================
+Subject: 30% OFF FINAL FANTASY XIV for a Limited Time
+From: FINAL FANTASY XIV ONLINE <noreply@xmail.square-enix.com>
+Date: Thu, 12 Dec 2024 14:27:37 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Sale ends January 9.<a href=""><img src="https://link.square-enix-games.com/img/65c4cfa90be95e4c25ee...
+
+==================================================
+Subject: Get 15% off above $50 purchase
+From: Gillette <ondemand@pg.gillette.com>
+Date: Thu, 12 Dec 2024 14:24:45 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!doctype html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:of...
+
+==================================================
+Subject: Buy 5 Get 1 FREE: Build Your Own Filament 6-Pack
+From: MatterHackers <support@matterhackers.com>
+Date: Thu, 12 Dec 2024 14:07:03 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Choose any MatterHackers Build Series PLA, PETG, ABS & more to build your 6-pack and get a free spoo...
+
+==================================================
+Subject: ▶ Chance Reed added a new post
+From: Chance on Facebook <friendupdates@facebookmail.com>
+Date: Thu, 12 Dec 2024 14:06:35 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+▶ Chance Reed added a new post
+
+Thanks,
+The Facebook team
+
+
+
+===================...
+
+==================================================
+Subject: Last Chance to Celebrate BIG— Book Now & Save $99!
+From: "Urban Air Westminster, CO" <urbanair@mail.urbanairparks.com>
+Date: Thu, 12 Dec 2024 13:37:33 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+ 
+  
+ 
+ 
+&#847;&zwnj; &#8199;&#847;&zwnj; &#8199;&#847;&zwnj; &#8199;&#847;&zwnj; &#8199;&#8...
+
+==================================================
+Subject: Has Anthropic Claude just wiped out an entire industry? | AI Rabbit in CodeX
+From: Medium Daily Digest <noreply@medium.com>
+Date: Thu, 12 Dec 2024 13:30:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Stories for Eddiekempe
+@eddiekempe (https://medium.com/@eddiekempe?source=email-7d2f191647df-173399...
+
+==================================================
+Subject: Elitch's Luminova Holidays! 🎢✨
+From: Elitch Gardens <info@elitchgardens.com>
+Date: Thu, 12 Dec 2024 13:16:38 -0500 (EST)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Email from Elitch Gardens Open daily through 12/23!   Dazzling lights, thrilling rides and Santa Cla...
+
+==================================================
+Subject: 🛍 Shopping budget update in Monarch
+From: Monarch Money <email@email.monarchmoney.com>
+Date: Thu, 12 Dec 2024 13:07:46 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+Hi Eddie,
+
+
+    You've exceeded your Shopping budget this month by $1321.
+
+
+Open Plan:
+http...
+
+==================================================
+Subject: Networking doesn’t have to feel icky (promise!)
+From: Jamila Payne <hello@dailysuccessroutine.com>
+Date: Thu, 12 Dec 2024 13:02:42 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: (
+https://click.convertkit-mail2.com/zlue6v298wtnhk9kew0aphwv86500s6/x0hph6hw4p08k0t5/aHR0cHM6Ly9kY...
+
+==================================================
+Subject: Exciting news from Waymo
+From: Waymo Updates <noreply@waymo.com>
+Date: Thu, 12 Dec 2024 12:46:49 -0800
+Labels: Label_169,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <https://notifications.google.com/g/p/ANiao5oUWF-hYNFSFeYAaShAsuITBKt8_f_t6wP6DbzPDe1xTD8U5MDzVGQ4n7...
+
+==================================================
+Subject: LAST CHANCE: Holiday perks 🎁
+From: "Disney+" <disneyplus@mail.disneyplus.com>
+Date: Thu, 12 Dec 2024 12:36:25 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.d...
+
+==================================================
+Subject: Get 500 BetMGM Reward Points With Your Next Bet
+From: BetMGM <info@mail.betmgm.com>
+Date: Thu, 12 Dec 2024 12:34:57 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: Deal of the Day: Save $100 on SoundLink Max!
+From: Bose <email@email.bose.com>
+Date: Thu, 12 Dec 2024 12:33:27 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+ 
+
+ 
+Our party hero SoundLink Max Portable Speaker is only $299. 
+
+&#847; &zwnj;   &#8199; ...
+
+==================================================
+Subject: Boulder Linux Users Group (BLUG): Boulder Linux Users Group (BLUG) - Holiday MeetUp MashUp!
+From: "Dan Mackin (Meetup)" <info@email.meetup.com>
+Date: Thu, 12 Dec 2024 12:30:39 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <p>Hey y'all! As mentioned previously, we are having our DevOps+BLUG Holiday MeetUp MashUp this even...
+
+==================================================
+Subject: 🎁 Don’t miss the deadline for Christmas delivery!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Thu, 12 Dec 2024 12:23:07 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
+
+==================================================
+Subject: Re: Parent meetings
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Thu, 12 Dec 2024 12:22:03 -0700
+Labels: SENT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Opportunities for Couples Recovery
+From: newbeginnings RCA <rca89015arlington@gmail.com>
+Date: Thu, 12 Dec 2024 11:56:49 -0500
+Labels: UNREAD,CATEGORY_UPDATES,Label_141
+--------------------------------------------------
+Body preview:  Good Afternoon
+
+The Arlington RCA Fellowship does not meet this week.  However, as always
+there ...
+
+==================================================
+Subject: 30% Off + Kids Sail Free on MSC Cruises | Sailings from $178
+From: "GoToSea.com" <gotosea@messaging.gotosea.com>
+Date: Thu, 12 Dec 2024 11:52:16 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: mynwv, see what's been happening on Instagram
+From: Instagram <no-reply@mail.instagram.com>
+Date: Thu, 12 Dec 2024 11:45:56 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_8957922951372212280,Label_46
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional //EN"><html><head><title>Facebook</title><...
+
+==================================================
+Subject: Offer ends 12/22/24: Get 50% off a yearly plan of Nest Aware
+From: Google Home <googlehome@google.com>
+Date: Thu, 12 Dec 2024 11:20:35 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_141
+--------------------------------------------------
+Body preview: Make the most of your Nest  
+devices ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ...
+
+==================================================
+Subject: Save up to 30% before 2024 is over
+From: edX Team <news@sfmc.edx.org>
+Date: Thu, 12 Dec 2024 11:06:11 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+ 
+ 
+
+  This year’s in-demand computer science skills
+&zwnj; &zwnj; &zwnj; &zwnj; &zwnj; &zwnj;...
+
+==================================================
+Subject: 💗She's Still In Me:
+From: "Lisa A. Romano" <coach@lisaaromano.com>
+Date: Thu, 12 Dec 2024 10:55:48 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: The Three Year Old I Can't Ignore
+Anymore ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌...
+
+==================================================
+Subject: Ho-ho-hold the commercials: Get 6 months of AMC+ Ad-Free on us. $8.99/mo after.
+From: Verizon Wireless <no-reply@customer.verizon.com>
+Date: Thu, 12 Dec 2024 10:47:22 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
+
+==================================================
+Subject: BOGO Free Footlong Coneys all day! 🤩
+From: Sonic <noreply@email.sonicdrivein.com>
+Date: Thu, 12 Dec 2024 10:45:58 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+Sonic Drive-In
+
+
+
+
+
+
+
+
+ 
+
+ 
+ To view this email as a web page, click 
+https://cli...
+
+==================================================
+Subject: 🚗 Auto Payment budget update in Monarch
+From: Monarch Money <email@email.monarchmoney.com>
+Date: Thu, 12 Dec 2024 10:32:27 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+Hi Eddie,
+
+
+    You've exceeded your Auto Payment budget this month by $151.
+
+
+Open Plan:
+h...
+
+==================================================
+Subject: Don't Let The Grinch Steal Your VIFP Deal... 👀🎁⏰
+From: Carnival VIFP Club <funships@carnivalcruiselineemail.com>
+Date: Thu, 12 Dec 2024 10:07:53 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <div style="display:none">
+<!-- Define Email Template -->
+  
+
+<!-- Defines aLL data feilds -->
+...
+
+==================================================
+Subject: Meet our newest beach club
+From: Royal Caribbean <RoyalCaribbean@reply.royalcaribbeanmarketing.com>
+Date: Thu, 12 Dec 2024 09:55:08 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+ 
+ 
+ 
+ Royal Caribbean International
+ 
+ 
+
+https://click.RoyalCaribbeanMarketing.com/?qs=90c...
+
+==================================================
+Subject:   Psst Eddie… still holiday shopping?
+From: Google Home <googlehome@google.com>
+Date: Thu, 12 Dec 2024 09:40:50 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_141
+--------------------------------------------------
+Body preview: Don't miss the deals of the season from Google  
+Home ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏...
+
+==================================================
+Subject: Latest Deals From Mile High On The Cheap - 12/12/2024
+From: Mile High On The Cheap <info@milehighonthecheap.com>
+Date: Thu, 12 Dec 2024 09:38:49 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: ** Mile High on the Cheap-mailing 
+- https://feeds.feedblitz.com/milehighonthecheap-feed
+
+- Movie...
+
+==================================================
+Subject: Your expertise is requested!
+From: LinkedIn <linkedin@e.linkedin.com>
+Date: Thu, 12 Dec 2024 09:32:32 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
+Subject: $69 sale for your sweet escape!
+From: Southwest Airlines <SouthwestAirlines@iluv.southwest.com>
+Date: Thu, 12 Dec 2024 09:32:28 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: Last Chance for 25% Off Sports Styles
+From: SKECHERS <no-reply@emails.skechers.com>
+Date: Thu, 12 Dec 2024 09:28:52 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Skechers(R)
+
+ 
+ 
+ [{
+ "@context": "https://schema.org/",
+ "@type": "Organization",
+ "logo": "...
+
+==================================================
+Subject: End The Year On a High Note 🎶
+From: AEG Presents Rocky Mountains <rockymountains@events.aegpresents.com>
+Date: Thu, 12 Dec 2024 09:10:13 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+AEG Presents
+  
+
+ 
+https://click.events.aegpresents.com/?qs=c55b7ebbc33fa8b2801d5747e9a4a68d5b...
+
+==================================================
+Subject: You never know who you’ll meet, Eddie.
+From: Match <mailer@connect.match.com>
+Date: Thu, 12 Dec 2024 09:00:22 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview: 
+
+  
+
+
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+
+    
+        
+
+
+
+<!DOCTYPE HTML PUB...
+
+==================================================
+Subject: Can AI Chatbots Really Help with Time Management? Here’s What I Learned
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Thu, 12 Dec 2024 07:49:39 -0700
+Labels: IMPORTANT,Label_3729917456980438582,SENT
+--------------------------------------------------
+Body preview: https://www.howtogeek.com/can-ai-chatbots-really-help-with-time-management-heres-what-i-learned/
+
+...
+
+==================================================
+Subject: The Road To Nasdaq 20,000
+From: Wall Street Breakfast <account@seekingalpha.com>
+Date: Thu, 12 Dec 2024 07:12:57 -0500
+Labels: UNREAD,IMPORTANT,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Investors are bringing out the champagne glasses after the Nasdaq (COMP:IND) closed above 20,000 poi...
+
+==================================================
+Subject: Atomic Note-Taking Guide - DEV Community
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Thu, 12 Dec 2024 06:53:21 -0700
+Labels: UNREAD,IMPORTANT,Label_3729917456980438582,SENT
+--------------------------------------------------
+Body preview: https://dev.to/gokayburuc/atomic-note-taking-guide-4fo9
+
+
+Thank you,
+Eddie
+
+
+==================================================
+Subject: Small Businesses Handling Shorter Holiday Shopping Season With Earlier Events and Promotions
 From: "Inc. This Morning" <newsletters@e.inc.com>
-Date: Tue, 17 Dec 2024 06:38:45 -0600 (CST)
+Date: Thu, 12 Dec 2024 06:38:49 -0600 (CST)
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: 
@@ -77,78 +1316,332 @@ Body preview:
 
 
 ==================================================
-Subject: Hertz Security Notification: Unrecognized Login Device or Location
-From: Hertz <hertz@feedback.hertz.com>
-Date: Tue, 17 Dec 2024 03:16:09 +0000 (UTC)
-Labels: UNREAD,Label_167,CATEGORY_PERSONAL
+Subject: Hurry! 7X MATCH Ends in Hours!
+From: American Heart Association <email@heartemail.org>
+Date: Thu, 12 Dec 2024 06:09:20 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
 --------------------------------------------------
-Body preview: Dear Valued Member,
-
-Your Hertz Gold Plus Rewards® account was used to sign in on a new device or ...
+Body preview: AHA
+https://click.heartemail.org/?qs=ff1160d674e6e7bfb10e05a1ea9d9bd170876691e1195e400fda4fb458029f...
 
 ==================================================
-Subject: Mad About
+Subject: Flow, the secret to happiness
+From: TED Recommends <recommends@ted.com>
+Date: Thu, 12 Dec 2024 06:06:04 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: 30% OFF exclusive holiday gifts 🎁❄️
+From: Petco <Petco@e.petco.com>
+Date: Thu, 12 Dec 2024 05:47:31 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+ONLY 4 DAYS LEFT TO SHIP ON TIME!
+
+ 
+
+ONLY 4 DAYS LEFT TO SHIP ON TIME!...
+
+==================================================
+Subject: SSGA FUNDS - ETF FUNDS Important Information
+From: EDWARD JONES <id@proxyvote.com>
+Date: Thu, 12 Dec 2024 04:51:56 -0500
+Labels: UNREAD,Label_47,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" ...
+
+==================================================
+Subject: Join us at Security, Compliance, and Identity Fundamentals training day
+From: Microsoft Security <email@microsoft.com>
+Date: Thu, 12 Dec 2024 04:08:01 -0600 (CST)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+Having trouble viewing this email? | View as web page <[[https://emails.microsoft.com/v/MTU3LUdRRS...
+
+==================================================
+Subject: This item will be sent to you Delivery Now if you buy now.
+From: Temu <email@market.temuemail.com>
+Date: Thu, 12 Dec 2024 03:37:48 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: -----------------------------------------------------------------------
+Temu
+---------------------...
+
+==================================================
+Subject: Major Youth Ministry Update
+From: Youth Ministry <mail@flocknote.com>
+Date: Thu, 12 Dec 2024 03:30:15 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview:   
+
+Hello Parents and Students,  It is with a grateful yet heavy heart that I let you all know tha...
+
+==================================================
+Subject: You have 5 new invitations
+From: LinkedIn <notifications-noreply@linkedin.com>
+Date: Thu, 12 Dec 2024 03:20:30 +0000 (UTC)
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: You have 5 new invitations
+View invitations:https://www.linkedin.com/comm/mynetwork/?lipi=urn%3Ali%...
+
+==================================================
+Subject: Have you seen this dog?
 From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
-Date: Tue, 17 Dec 2024 03:10:39 +0000 (UTC)
+Date: Thu, 12 Dec 2024 03:10:25 +0000 (UTC)
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: Nextdoor Your NorthPark neighbors
 
-Mad About
-https://nextdoor.com/p/5C2QM4bFmTXy?post=374270051&c...
+Have you seen this dog?
+https://nextdoor.com/p/xtYPn_Y62c8K?po...
 
 ==================================================
-Subject: Wooli (18+) /  San Jose Tip-Off: Stanford vs Oregon, California vs San Diego St / Colorado Avalanche at San Jose Sharks / more!
-From: SeatGeek <do-not-reply@seatgeek.com>
-Date: Tue, 17 Dec 2024 01:04:38 +0000
+Subject: You're getting attention: Nicole viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Thu, 12 Dec 2024 03:01:25 -0600
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
-Body preview: Life's an event. We have the tickets. 
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
+
+==================================================
+Subject: Broncos vs Colts
+From: "Natalie @ SeatGeek" <events@seatgeek.com>
+Date: Thu, 12 Dec 2024 02:35:07 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: SeatGeek has authenticated NFL Broncos tickets. Let's go! 
 
 
  <https://seatgeek.com> 
 
- Upcoming events for Eddie  <http...
+ Denver Bronc...
 
 ==================================================
-Subject: Unlock Up To 60% OFF Gidget!'s Gifts!
-From: Cuddle Clones <hello@cuddleclones.com>
-Date: Tue, 17 Dec 2024 00:48:29 +0000 (UTC)
-Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+Subject: Myth Busting Buying a Gun Online, Hotel Room Safety, SIG Sauer P365 Grip Modules & more
+From: Shooting Illustrated <reply@emedia.nrapublications.org>
+Date: Thu, 12 Dec 2024 02:31:19 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
 --------------------------------------------------
-Body preview: [ HoliDay Savings](https://cuddleclones.com/)
-
-No longer want to receive these emails? [Unsubscrib...
+Body preview:  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
 
 ==================================================
-Subject: Your appointment details with Dr. Carrie Burleson
-From: Front Range Eye Associates <frontrangeeyeassociates@yourdoctor.co>
-Date: Tue, 17 Dec 2024 00:27:55 +0000
+Subject: Macy's addresses major accounting error
+From: LinkedIn News <editors-noreply@linkedin.com>
+Date: Thu, 12 Dec 2024 02:28:52 +0000 (UTC)
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
-Body preview: [https://cdn.4patientcare.com/essilor-experts/e/.eJwTUmiOSjhidOzM-mpNAY7C6Udab9xR-NsXduvmx-yWcsfPW4W...
+Body preview: ----------------------------------------
+
+This email was intended for Eddie Kempe (Experienced IT ...
 
 ==================================================
-Subject: Retro NYE at The Delorean
-From: The Delorean  <donotreply@holdmyticket.com>
-Date: Tue, 17 Dec 2024 00:01:02 +0000
-Labels: CATEGORY_PROMOTIONS,UNREAD,IMPORTANT,Label_167
+Subject: “solutions architect”: Palo Alto Networks - Prisma Cloud Solutions Architect, Majors and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Thu, 12 Dec 2024 02:21:39 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for solutions architect in United States
+30+ new jobs match your preferences.
+     ...
+
+==================================================
+Subject: Help reach dads like Isaac
+From: Kent Evans <kent.evans@manhoodjourney.org>
+Date: Thu, 12 Dec 2024 02:11:55 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Your support equips dads like Isaac to lead with faith. Together, we can transform families, communi...
+
+==================================================
+Subject: Kristina liked you!
+From: Hinge Team <hello@mail.hinge.co>
+Date: Thu, 12 Dec 2024 02:03:26 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: 
 
-  
-    Retro NYE at The Delorean
-    
-    
-    
 
-    
-    
-					
-				
-					
-						
-	...
+
+
+Check out their profile.
+
+
+
+
+
+
+96               sup { font-size: 100% !important; }...
+
+==================================================
+Subject: You're getting attention: Nicole viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Thu, 12 Dec 2024 02:02:34 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
+
+==================================================
+Subject: 2024 Holiday Shipping Guide
+From: SWISSGEAR <info@swissgear.com>
+Date: Thu, 12 Dec 2024 02:00:49 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: [Holiday Shipping Dates](https://www.swissgear.com/)
+
+HURRY, BEFORE ITS TOO LATE!
+
+DEADLINES TO ...
+
+==================================================
+Subject: “information technology architect”: Keyfactor - Solutions Architect and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Thu, 12 Dec 2024 01:49:24 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for information technology architect in Denver
+30+ new jobs match your preferences....
+
+==================================================
+Subject: You're getting attention: Nicole viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Thu, 12 Dec 2024 01:21:19 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
+
+==================================================
+Subject: Last chance! 3 packs for $33 & BOGO 80% OFF!
+From: "Jockey Black Friday / Cyber Monday" <shopjockey@email.jockeycomfort.com>
+Date: Thu, 12 Dec 2024 01:21:15 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: Toys under $50, premium presents, Our Top 100+ Gifts, and more
+From: "Amazon.com" <store-news@amazon.com>
+Date: Thu, 12 Dec 2024 00:19:05 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+Toys under $50 https://www.amazon.com/b?node=122180023011&pf_rd_p=87115209-77fd-41ff-9756-177c...
+
+==================================================
+Subject: Sunday- Full Moon Séance in Englewood
+From: Charles <info@denver-psychic.com>
+Date: Thu, 12 Dec 2024 00:15:43 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Goddess Isis Books
+
+
+** Full Moon Seance
+-------------------------------------------------------...
 
 ==================================================
 Subject: Denver: Plan Your Best NYE
@@ -186,6 +1679,31 @@ Etsyversary offer
 ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ...
 
 ==================================================
+Subject: ✅ Check these deals off your list: 3 for $30 men's underwear singles, 40% OFF layers & loungewear + more!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sun, 15 Dec 2024 22:09:51 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: 
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Sun, 15 Dec 2024 22:07:25 -0700
+Labels: Label_6741241133387397282,IMPORTANT,SENT
+--------------------------------------------------
+Body preview: https://xhamster.com/videos/the-executive-punishment-pt-2-xhxiCpZ
+
+
+Thank you,
+Eddie
+
+
+==================================================
 Subject: Top trending concerts in Denver: Coldplay, Tyler, The Creator, Post Malone and more!
 From: "Natalie @ SeatGeek" <events@seatgeek.com>
 Date: Sun, 15 Dec 2024 21:59:28 +0000
@@ -211,6 +1729,30 @@ It looks like you have 6 open credit card accounts.* Is this accurate?
 Check your a...
 
 ==================================================
+Subject: YouthMin: There is no Youth Group tonight.. see you January 19th!
+From: Youth Ministry <mail@flocknote.com>
+Date: Sun, 15 Dec 2024 21:00:28 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: YouthMin: There is no Youth Group tonight.. see you January 19th!
+
+
+
+==========
+
+ 
+Update my ...
+
+==================================================
+Subject: Eddie, explore low and no intro APR
+From: NerdWallet <nerdwallet@mail.nerdwallet.com>
+Date: Sun, 15 Dec 2024 20:59:12 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: You could save big with a balance transfer ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ...
+
+==================================================
 Subject: Gemini 2.0 and the agentic era
 From: Google Cloud via LinkedIn <newsletters-noreply@linkedin.com>
 Date: Sun, 15 Dec 2024 20:48:07 +0000 (UTC)
@@ -226,6 +1768,15 @@ By Google Cloud
     
     
     Read this article on...
+
+==================================================
+Subject: ⏳ Final hours for lowest price shipping!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Sun, 15 Dec 2024 20:25:56 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
 
 ==================================================
 Subject: 🧠 What is "Deep Tech"? — Waiting for the Galaxy S25 Ultra or Buying the S24
@@ -263,6 +1814,23 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 Body preview: Email from Events and Adventures Over 40 events to start the New Year off right! ICE SKATING, DUELIN...
 
 ==================================================
+Subject: 📣 New group suggestion: Fun Professionals Business Networking Happy Hour
+From: Meetup <info@email.meetup.com>
+Date: Sun, 15 Dec 2024 18:52:08 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+    .hero-title { margin: 0
+30px !important; margin-top: 20px !important; } .hero-d...
+
+==================================================
 Subject: Are there black coyotes in the area?
 From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
 Date: Sun, 15 Dec 2024 18:37:15 +0000 (UTC)
@@ -286,6 +1854,26 @@ There is still time to redeem your FREE Pizookie
 ®
 
 ͏‌ ͏‌ ͏‌ ...
+
+==================================================
+Subject: Bring on the merriment, Eddie 🛍
+From: Yelp <no-reply@mail.yelp.com>
+Date: Sun, 15 Dec 2024 18:19:46 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_141
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+Yelp   body, table, td, a, p, span, ul, li {font-family:
+Arial, sans-serif!im...
 
 ==================================================
 Subject: Editor's take: Android XR could make VR and AR exciting again
@@ -313,12 +1901,48 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: 
 
 ==================================================
+Subject: Last day to get 25% off apparel | Runners Roost Newsletter
+From: Runners Roost <digital@runnersroost.com>
+Date: Sun, 15 Dec 2024 16:44:56 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212569...
+
+==================================================
 Subject: OMG! Low price alert!
 From: SKECHERS <no-reply@emails.skechers.com>
 Date: Sun, 15 Dec 2024 16:35:39 -0600
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: Don't miss 👀 Up to 50% OFF
+From: Petco <Petco@e.petco.com>
+Date: Sun, 15 Dec 2024 16:27:52 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: 📷 Michael Williams recently posted a new photo
+From: Michael on Facebook <friendupdates@facebookmail.com>
+Date: Sun, 15 Dec 2024 16:17:44 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+📷 Michael Williams added a new photo
+
+Thanks,
+The Facebook team
+
+
+
+=============...
 
 ==================================================
 Subject: Unbeatable holiday offers on Orbi Mesh Systems
@@ -398,6 +2022,26 @@ Body preview: <!doctype html><html><head>
 <meta charset="utf...
 
 ==================================================
+Subject: Eddie, 1 pending listing in Georgetown
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Sun, 15 Dec 2024 15:24:03 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margi...
+
+==================================================
+Subject: Eddie, 7 new rentals match your search in Aurora, Denver, Longmont, etc
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Sun, 15 Dec 2024 15:16:26 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margi...
+
+==================================================
 Subject: Get $150 in Bonus Bets INSTANTLY!
 From: DraftKings Sportsbook <draftkings@r.email.draftkings.com>
 Date: Sun, 15 Dec 2024 15:07:30 +0000 (UTC)
@@ -405,6 +2049,35 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: 💸 See details inside ➡️        ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏
 ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ...
+
+==================================================
+Subject: ▶ Brandon Owens added a new video
+From: Brandon on Facebook <friendupdates@facebookmail.com>
+Date: Sun, 15 Dec 2024 14:43:37 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+▶ Brandon Owens added a new video
+
+Thanks,
+The Facebook team
+
+
+
+================...
+
+==================================================
+Subject: 😊 Snuggle up to these deals: 30% OFF men's & women's underwear multipacks, BOGO 60% OFF & much more!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sun, 15 Dec 2024 14:38:30 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
 
 ==================================================
 Subject: I lost my bank card 2 other card at the...
@@ -417,6 +2090,45 @@ Body preview: Nextdoor Your NorthPark neighbors
 I lost my bank card 2 other card at the dollar store on 88th ye...
 
 ==================================================
+Subject: Boost Their 3D Printing: Gift an Accessory or Upgrade
+From: MatterHackers <support@matterhackers.com>
+Date: Sun, 15 Dec 2024 14:17:56 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Hotends, nozzles, filament dryers and more 3D printing accessories make a great gift for any 3D prin...
+
+==================================================
+Subject: Hooray! Your order ending in 2570 was picked up.
+From: Target <orders@oe.target.com>
+Date: Sun, 15 Dec 2024 14:13:11 -0600
+Labels: Label_3729917456980438582,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+OPU Picked Up
+ 
+ &#8199; &#847; &#8199; &#847; &#8199; &#847; &#8199; &#84...
+
+==================================================
+Subject: AI Agents: How to build Digital Workers | Alfredo Sone
+From: Medium Daily Digest <noreply@medium.com>
+Date: Sun, 15 Dec 2024 13:30:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Stories for Eddiekempe
+@eddiekempe (https://medium.com/@eddiekempe?source=email-7d2f191647df-173425...
+
+==================================================
 Subject: From the editor: Recall in the hot seat again
 From: XDA <newsletter@xda-developers.com>
 Date: Sun, 15 Dec 2024 13:18:35 +0000
@@ -426,6 +2138,44 @@ Body preview: <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
 
 ==================================================
+Subject: Prepare for 2025: Our 6 Wellness Tips for the Holidays! 🎅
+From: GOWOD <contact@gowod.eu>
+Date: Sun, 15 Dec 2024 13:14:31 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!doctype html>
+<html lang="en" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schema...
+
+==================================================
+Subject: 🗣️🗣️🗣️ BEYOND BIG GIFTING ENDS TOMORROW 🚨🎁🚨
+From: "Bed Bath & Beyond" <email@promotion.bedbathandbeyond.com>
+Date: Sun, 15 Dec 2024 12:34:42 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Hurry & snag HUGE savings on last-minute gifts for everyone on
+your list--up to 70% off!
+
+
+
+
+
+
+
+
+
+
+
+...
+
+==================================================
+Subject: FBI Official Confirms Drone Update; Supreme Court Responds to Catholic Charity Request
+From: Epoch Times Morning Brief <newsletter@theepochtimes.com>
+Date: Sun, 15 Dec 2024 12:34:37 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
 Subject: Get NFL Sunday Ticket for $209
 From: YouTube TV <no-reply@youtube.com>
 Date: Sun, 15 Dec 2024 12:28:54 -0800
@@ -433,6 +2183,15 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: NFL Sunday Ticket is now just $209.
 <https://notifications.google.com/g/p/ANiao5p2Yv9TmCFZoZsgx0Bg8...
+
+==================================================
+Subject: 🔥 Last day for lowest price shipping!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Sun, 15 Dec 2024 12:23:26 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
 
 ==================================================
 Subject: NEW revamped $1.99 Menu 🤩
@@ -466,6 +2225,16 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: <!-- X-Campaign: 75146425/174256578/45102380730 -->
 <style> .dvPreheader { display: none !important...
+
+==================================================
+Subject: Create before you automate
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Sun, 15 Dec 2024 11:05:21 -0700
+Labels: IMPORTANT,Label_3729917456980438582,SENT
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
 
 ==================================================
 Subject: Harness the power of social media to grow your career
@@ -508,6 +2277,17 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 Body preview: 
 
 ==================================================
+Subject: Latest Deals From Mile High On The Cheap - 12/15/2024
+From: Mile High On The Cheap <info@milehighonthecheap.com>
+Date: Sun, 15 Dec 2024 09:37:26 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: ** Mile High on the Cheap-mailing 
+- https://feeds.feedblitz.com/milehighonthecheap-feed
+
+- Movie...
+
+==================================================
 Subject: It's Almost a Wrap on 25% Off Athletic Styles
 From: SKECHERS <no-reply@emails.skechers.com>
 Date: Sun, 15 Dec 2024 09:28:30 -0600
@@ -536,6 +2316,50 @@ Body preview: <div style="display:none">
 ...
 
 ==================================================
+Subject: You never know who you’ll meet, Eddie.
+From: Match <mailer@connect.match.com>
+Date: Sun, 15 Dec 2024 09:00:16 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview: 
+
+  
+
+
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+
+    
+        
+
+
+
+<!DOCTYPE HTML PUB...
+
+==================================================
+Subject: We found a match for you! Is this "The One?"
+From: CarMax <CarMax@email-carmax.com>
+Date: Sun, 15 Dec 2024 07:34:56 -0600
+Labels: Label_169,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
 Subject: Yorba Weekly Insights
 From: Yorba <support@yorba.co>
 Date: Sun, 15 Dec 2024 07:13:07 +0000 (UTC)
@@ -559,6 +2383,49 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: The year may be winding down, but for market participants it will still be a busy week ahead. It is ...
 
 ==================================================
+Subject: New from Desiree and other neighbors on Nextdoor
+From: Nextdoor <no-reply@is.email.nextdoor.com>
+Date: Sun, 15 Dec 2024 06:58:32 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: You've got 20+ recent notifications
+
+See what you missed:
+https://nextdoor.com/notifications/?s=m...
+
+==================================================
+Subject: Don't Forget! $20 Off Ends Monday 🐾
+From: A Gift From Petco <Petco@e.petco.com>
+Date: Sun, 15 Dec 2024 05:51:14 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+Hurry, your exclusive pet savings expire soon!
+
+ 
+
+Hurry, your exclusiv...
+
+==================================================
+Subject: Recent Canvas Notifications
+From: Katy ISD Canvas <notifications@instructure.com>
+Date: Sun, 15 Dec 2024 05:06:38 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview:   You're signed up to receive a weekly report of some notifications from your Canvas account.  Below...
+
+==================================================
 Subject: We've received a few friendly complaints about our dog, and...
 From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
 Date: Sun, 15 Dec 2024 03:12:02 +0000 (UTC)
@@ -580,6 +2447,170 @@ http://rosesposito.com/
 Embodied Wisdom in Everyday Life
 
 Healing, Loving, and Celebrating Ou...
+
+==================================================
+Subject: “information technology architect”: Nutanix - Solutions Architect: Nutanix AI and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Sun, 15 Dec 2024 02:20:07 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for information technology architect in Denver
+23 new jobs match your preferences.
+...
+
+==================================================
+Subject: ✨ You have 2 new updates in Monarch
+From: Monarch Money <email@email.monarchmoney.com>
+Date: Sun, 15 Dec 2024 02:01:48 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+You have 2 new updates in Monarch to review.
+
+
+❓ Uncategorized budget update
+You&#x...
+
+==================================================
+Subject: “solutions architect”: Amazon Web Services (AWS) - Sr. WW Specialist Solutions Architect, Networking and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Sun, 15 Dec 2024 01:49:06 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for solutions architect in United States
+30+ new jobs match your preferences.
+     ...
+
+==================================================
+Subject: 🌟Women's Soft Essentials styles await you
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sun, 15 Dec 2024 01:11:16 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: Your account information has been changed
+From: Ubisoft Account Updates <updates@account.ubisoft.com>
+Date: Sun, 15 Dec 2024 00:41:54 +0000
+Labels: UNREAD,Label_167,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: Hi,
+
+We noticed that you recently changed the following information on your account:
+<ul style='f...
+
+==================================================
+Subject: Up to 40% off presents, Our Top 100+ Gifts, and more
+From: "Amazon.com" <store-news@amazon.com>
+Date: Sat, 14 Dec 2024 23:33:40 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,IMPORTANT,Label_34
+--------------------------------------------------
+Body preview: 
+  
+Up to 40% off gifts for all https://www.amazon.com/b?node=122430923011&ref_=nas
+
+
+
+Our Top...
+
+==================================================
+Subject: 50% Off Blinkist: Master Your Money in 2025
+From: Blinkist <hello@mail.blinkist.com>
+Date: Sat, 14 Dec 2024 23:28:36 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,IMPORTANT,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Transform your financial
+future wi...
+
+==================================================
+Subject: Nuggets vs Suns
+From: "Natalie @ SeatGeek" <events@seatgeek.com>
+Date: Sat, 14 Dec 2024 23:01:47 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: SeatGeek has great deals on Nuggets tickets. Let's go! 
+
+
+ <https://seatgeek.com> 
+
+Denver Nuggets T...
+
+==================================================
+Subject: Hello, I am Steven, a citizen of Ecuador, yesterday I...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Sat, 14 Dec 2024 22:56:12 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Hello, I am Steven, a citizen of Ecuador, yesterday I received ...
+
+==================================================
+Subject: 📣 The essentials at a steal! 40% off layers & loungewear, BOGO 60% OFF & much more
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sat, 14 Dec 2024 22:08:15 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: 📅 Just scheduled: Casual Sunday Ride on Bear Creek Trail (paved path, no roads)
+From: "Wash Park Cycling & E Bike Riders" <info@email.meetup.com>
+Date: Sat, 14 Dec 2024 21:28:55 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
 
 ==================================================
 Subject: Explore our holiday gift guide
@@ -624,6 +2655,114 @@ Body preview:
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tr...
 
 ==================================================
+Subject: Semifinals Today on TNT and ABC
+From: NBA <NBA@email.nba.com>
+Date: Sat, 14 Dec 2024 20:34:03 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Hawks vs. Bucks and Rockets vs. Thunder
+
+ (
+?lid=ukuil99q00bx&cid=nba:dynpage:own:email:adhoc:lin...
+
+==================================================
+Subject: You're getting attention: Amanda viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Sat, 14 Dec 2024 20:01:07 -0600
+Labels: CATEGORY_PROMOTIONS,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tr...
+
+==================================================
+Subject: Tune your Pinecone Index
+From: Team Pinecone <info@pinecone.io>
+Date: Sat, 14 Dec 2024 19:41:03 -0500
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: These tips will improve latency, retrieval, queries and more.
+
+Pinecone (https://email.pinecone.io...
+
+==================================================
+Subject: 🔊 What All the Amazon Echo Blinking Light Colors Mean — 5 Holiday Scams to Avoid
+From: How-To Geek <newsletter@howtogeek.com>
+Date: Sat, 14 Dec 2024 19:21:14 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: You're getting attention: Amanda viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Sat, 14 Dec 2024 19:01:12 -0600
+Labels: CATEGORY_PROMOTIONS,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tr...
+
+==================================================
+Subject: Just had an amazing meal at Miya Moon (https://www.miyamoonco.com/) in...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Sat, 14 Dec 2024 18:40:39 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Just had an amazing meal at Miya Moon (https://www.miyamoonco.c...
+
+==================================================
 Subject: Dasilva Family Dentistry replied to your review on Google
 From: Google Maps <google-maps-noreply@google.com>
 Date: Sat, 14 Dec 2024 18:36:27 -0800
@@ -637,22 +2776,853 @@ Thank you for posting a review on Google.
 Go...
 
 ==================================================
-Subject: Thanks for your recent review
-From: Google Maps <google-maps-noreply@google.com>
-Date: Mon, 16 Dec 2024 23:33:30 -0800
-Labels: UNREAD,Label_167,CATEGORY_UPDATES
+Subject: You're getting attention: Amanda viewed your profile.
+From: Match <mailer@value.match.com>
+Date: Sat, 14 Dec 2024 18:35:46 -0600
+Labels: CATEGORY_PROMOTIONS,Label_167
 --------------------------------------------------
-Body preview: Hi Eddie, Thanks for sharing Your new review is a great addition to Google.  
-Contributions like th...
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tr...
 
 ==================================================
-Subject: Cruise Deals from U.S. & Canadian Ports + 11 Limited-Time Offers!
-From: "VacationsToGo.com" <vtgmail@list.vacationstogo.com>
-Date: Mon, 16 Dec 2024 23:18:29 -0600
+Subject: 📣 New group suggestion: Roots and Wings Building Family Legacies Monthly Social
+From: Meetup <info@email.meetup.com>
+Date: Sat, 14 Dec 2024 18:34:07 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+    .hero-title { margin: 0
+30px !important; margin-top: 20px !important; } .hero-d...
+
+==================================================
+Subject: Congratulations! Your Itinerary has been successfully saved.
+From: Copper Mountain <contactcenter@1240649.brevosend.com>
+Date: Sat, 14 Dec 2024 17:57:42 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: Reservation Confirmation #77588700 for AC Hotel Frisco Colorado
+From: AC Hotels by Marriott Reservations <reservations@res-marriott.com>
+Date: Sat, 14 Dec 2024 17:24:23 +0000
+Labels: Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Weekly activity report for Josh
+From: Microsoft Family Safety <familysafety@microsoft.com>
+Date: Sat, 14 Dec 2024 17:00:11 -0800
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Hi Eddie,
+Here are last week's highlights
+
+to see Josh's full report, go to account.microsoft.com...
+
+==================================================
+Subject: 🙌 WHOA! 4K TVs as low as $149.99 is an amazing deal - no home is finished without the perfect TV
+From: Best Buy <BestBuy@email.bestbuy.com>
+Date: Sat, 14 Dec 2024 16:41:55 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Sunday- Full Moon Séance in Englewood
+From: Charles <info@denver-psychic.com>
+Date: Sat, 14 Dec 2024 16:00:00 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Goddess Isis Books
+
+
+** Full Moon Seance
+-------------------------------------------------------...
+
+==================================================
+Subject: Your order is ready for in-store pickup at Westminster! Order #9180641202570
+From: Target <orders@oe1.target.com>
+Date: Sat, 14 Dec 2024 15:54:47 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...
+
+==================================================
+Subject: Eddie, 10 new rentals match your search in Edgewater, Northglenn, Lakewood, etc
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Sat, 14 Dec 2024 15:41:30 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margin-...
+
+==================================================
+Subject: NOW StreamSaver: the best value in live TV
+From: Xfinity <xfinity@updates.xfinity.com>
+Date: Sat, 14 Dec 2024 15:26:11 -0500
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
-Body preview: This message was sent in HTML format. Either your email client does
-not support this format or the ...
+Body preview: <!DOCTYPE html>
+<html lang="und" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schem...
+
+==================================================
+Subject: Your SKECHERS Order Confirmation # SKEC-US707318371
+From: "no-reply@emails.skechers.com" <no-reply@emails.skechers.com>
+Date: Sat, 14 Dec 2024 15:10:54 -0600
+Labels: Label_3729917456980438582,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+ 
+  
+ 
+ 
+ 
+https://www.skechers.com/ 
+
+
+
+ 
+ 
+
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...
+
+==================================================
+Subject: SKECHERS Plus Reward Certificate
+From: SKECHERS PLUS <no-reply@emails.skechers.com>
+Date: Sat, 14 Dec 2024 15:09:51 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: Thanks for shopping with us! Here's your order #:9180641202570.
+From: Target <orders@oe1.target.com>
+Date: Sat, 14 Dec 2024 14:58:47 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+...
+
+==================================================
+Subject: Kelly Reed shared a link
+From: Kelly on Facebook <friendupdates@facebookmail.com>
+Date: Sat, 14 Dec 2024 14:39:54 -0800
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Hi Eddie,
+
+Kelly Reed shared a link
+
+Thanks,
+The Facebook team
+
+
+
+=========================...
+
+==================================================
+Subject: ❄️ Exclusive December discounts! 3 for $30 men's underwear singles, 40% OFF layers & loungewear + more deals
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sat, 14 Dec 2024 14:39:38 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: (2/7) Test & Tweak in LangSmith’s Playground 🛝
+From: "Nick @ LangChain" <noreply@langchain.com>
+Date: Sat, 14 Dec 2024 14:30:01 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Westminster finally has a trendy place to eat...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Sat, 14 Dec 2024 14:24:18 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+So excited Westminster finally has a trendy place to eat.
+http...
+
+==================================================
+Subject: Your Daily Digest for Sat, 12/14 is ready to view
+From: USPS Informed Delivery <USPSInformeddelivery@email.informeddelivery.usps.com>
+Date: Sat, 14 Dec 2024 14:22:24 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Tags for the Hyundai are due in March
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Sat, 14 Dec 2024 14:15:06 -0700
+Labels: IMPORTANT,SENT
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
+Subject: Eddie, your weekly prize is here 🎉
+From: Google Play <news-googleplay@google.com>
+Date: Sat, 14 Dec 2024 13:40:34 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_46
+--------------------------------------------------
+Body preview: 
+   
+<https://notifications.google.com/g/p/ANiao5pybSSJABhnpQ8erW70EjK_MvnhVVyMU26N20uOt6kM-FTCKKT...
+
+==================================================
+Subject: Brookstone Full/queen Heated Blanket Gray Plush : Target
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Sat, 14 Dec 2024 13:39:53 -0700
+Labels: IMPORTANT,SENT
+--------------------------------------------------
+Body preview: https://www.target.com/p/heated-blanket-brookstone/-/A-88744989?preselect=91126981#lnk=sametab
+eddi...
+
+==================================================
+Subject: Choosing the Right AI Agent Framework: LangGraph vs CrewAI vs OpenAI Swarm | Yi Zhang in Relari Blog
+From: Medium Daily Digest <noreply@medium.com>
+Date: Sat, 14 Dec 2024 13:30:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Stories for Eddiekempe
+@eddiekempe (https://medium.com/@eddiekempe?source=email-7d2f191647df-173416...
+
+==================================================
+Subject: You've got 20 credits!
+From: Audible <do-not-reply@audible.com>
+Date: Sat, 14 Dec 2024 13:17:58 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+audible
+20 credits
+My Account https://www.audible.com/account/overview/?source_code=AUDOR265...
+
+==================================================
+Subject: Celebrate Giving Season with VSP ✨
+From: VSP Vision Care <VSPVisionCareVCM@e.vsp.com>
+Date: Sat, 14 Dec 2024 13:06:29 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+
+ VC_Em_Hday_0_0_0_0_0_0_0_0
+
+ 
+ 
+&zwnj; ͏&zwnj; ͏&zwnj; ͏&zwnj; ͏&zwnj; ͏&zwnj; ͏&zwnj; ...
+
+==================================================
+Subject: 40% OFF our entire holiday collection ✨ 🎄
+From: Petco <Petco@e.petco.com>
+Date: Sat, 14 Dec 2024 13:02:10 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+
+
+ONLY 2 DAYS LEFT TO SHIP ON TIME!
+
+ 
+
+ONLY 2 DAYS LEFT TO SHIP ON T...
+
+==================================================
+Subject: 🎁 Extended! 2 more days for lowest price shipping
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Sat, 14 Dec 2024 12:17:35 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
+
+==================================================
+Subject: No, Google Messages Aren't Always End-to-End Encrypted
+From: Lifehacker Newsletter <newsletter@e.lifehacker.com>
+Date: Sat, 14 Dec 2024 12:04:54 -0500
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!-- X-Campaign: 75146075/174241512/45102380730 -->
+<style> .dvPreheader { display: none !important...
+
+==================================================
+Subject: It's beginning to look a lot like... 🎄
+From: Elitch Gardens <info@elitchgardens.com>
+Date: Sat, 14 Dec 2024 12:01:37 -0500 (EST)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Email from Elitch Gardens Enjoy the holidays at Elitch Gardens!   Don't miss Colorado's BIGGEST spec...
+
+==================================================
+Subject: Important update: Rocky Mountain Single Parents ⚠️
+From: Meetup <info@email.meetup.com>
+Date: Sat, 14 Dec 2024 11:28:59 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+.hero-title { margin: 0 30px !important; margin-top: 20px
+!important; } .hero...
+
+==================================================
+Subject: New cheesy SONIC Smashers calling 📳
+From: Sonic <noreply@email.sonicdrivein.com>
+Date: Sat, 14 Dec 2024 10:27:51 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+Sonic Drive-In
+
+
+
+
+
+
+
+
+ 
+
+ 
+ To view this email as a web page, click 
+https://cli...
+
+==================================================
+Subject: Latest Deals From Mile High On The Cheap - 12/14/2024
+From: Mile High On The Cheap <info@milehighonthecheap.com>
+Date: Sat, 14 Dec 2024 09:38:40 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: ** Mile High on the Cheap-mailing 
+- https://feeds.feedblitz.com/milehighonthecheap-feed
+
+- 167 F...
+
+==================================================
+Subject: ⏰🎁Clock Is Ticking On Your Holiday Deal⏰🎁
+From: Carnival VIFP Club <funships@carnivalcruiselineemail.com>
+Date: Sat, 14 Dec 2024 09:21:13 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,IMPORTANT,Label_167
+--------------------------------------------------
+Body preview: <div style="display:none">
+<!-- Define Email Template -->
+  
+
+<!-- Defines aLL data feilds -->
+...
+
+==================================================
+Subject: Eddie, you've got the power.
+From: Match <mailer@connect.match.com>
+Date: Sat, 14 Dec 2024 09:00:15 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview: 
+
+  
+
+
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+
+    
+        
+
+
+
+<!DOCTYPE HT...
+
+==================================================
+Subject: Close Out the Year With our Hottest New Styles
+From: SKECHERS <no-reply@emails.skechers.com>
+Date: Sat, 14 Dec 2024 08:17:06 -0600
+Labels: CATEGORY_PROMOTIONS,Label_167
+--------------------------------------------------
+Body preview: Skechers(R)
+
+ 
+ 
+ [{
+ "@context": "https://schema.org/",
+ "@type": "Organization",
+ "logo": "...
+
+==================================================
+Subject: What Moved Markets This Week
+From: Wall Street Breakfast <account@seekingalpha.com>
+Date: Sat, 14 Dec 2024 07:16:48 -0500
+Labels: UNREAD,IMPORTANT,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: It was a mixed week for Wall Street's major averages. The awful market breadth and some concerns spa...
+
+==================================================
+Subject: Get up to $60 for your old headphones or earbuds.
+From: Bose <email@email.bose.com>
+Date: Sat, 14 Dec 2024 07:05:03 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+ 
+
+
+ 
+And get a new pair of QuietComfort Earbuds. 
+
+&#847; &zwnj;   &#8199;  &#847; &zwnj;...
+
+==================================================
+Subject: Exclusive: Convicted on Fraud Charges, Carlos Watson Claims He’s a Victim
+From: "Inc. This Morning" <newsletters@e.inc.com>
+Date: Sat, 14 Dec 2024 06:42:21 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+&nbsp;
+
+
+==================================================
+Subject: Celebrate New Year's Eve 2025 with Wild River Grille!
+From: Wild River Grille <info.wildrivergrille.com@azo.e2ma.net>
+Date: Sat, 14 Dec 2024 04:34:51 -0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Alternate text
+
+☰✕
+
+RESERVATIONS (https://t.e2ma.net/click/ydggsm/azw4em0e/eqwd82)
+LUNCH (https...
+
+==================================================
+Subject: 📅 Just scheduled: Search for Reindeer Hike
+From: 5280 Singles Over 40 <info@email.meetup.com>
+Date: Sat, 14 Dec 2024 04:00:11 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+==================================================
+Subject: 📅 Just scheduled: Search For Reindeer Hike
+From: 5280 Singles <info@email.meetup.com>
+Date: Sat, 14 Dec 2024 03:59:41 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+==================================================
+Subject: Hello, good evening, let me introduce myself.
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Sat, 14 Dec 2024 03:11:11 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Hello, good evening, let me introduce myself.
+https://nextdoor...
+
+==================================================
+Subject: Joe Olwig reacted to a post: WWT is Hiring for a Data…
+From: LinkedIn <updates-noreply@linkedin.com>
+Date: Sat, 14 Dec 2024 02:59:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: ----------------------------------------
+
+
+
+    
+          
+Joe Olwig liked this
+        
+
+...
+
+==================================================
+Subject: Shop Customers' Most-Loved gifts, premium presents, and more
+From: "Amazon.com" <store-news@amazon.com>
+Date: Sat, 14 Dec 2024 02:55:39 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+Last-minute gifts Customers' Most-Loved https://www.amazon.com/b?node=122248691011&ref_=nas
+...
+
+==================================================
+Subject: Eddie, will one of your new pet matches be the one?
+From: Petfinder <petfinder@sfmc.petfinder.com>
+Date: Sat, 14 Dec 2024 02:37:05 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Petfinder
+ 
+ 
+
+
+
+  &#847;&zwnj; &#847;&zwnj; &#847;&zwnj; &#847;&zwnj; &#847;&zwnj; &#847;&zwn...
+
+==================================================
+Subject: “solutions architect”: Stripe - Solutions Architect, Enterprise and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Sat, 14 Dec 2024 02:21:50 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for solutions architect in United States
+30+ new jobs match your preferences.
+     ...
+
+==================================================
+Subject: Strong dads build stronger families
+From: Kent Evans <kent.evans@manhoodjourney.org>
+Date: Sat, 14 Dec 2024 02:03:09 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: When dads lead with faith, families thrive. Join us in equipping fathers with the resources they nee...
+
+==================================================
+Subject: “information technology architect”: Stripe - Solutions Architect, Enterprise and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Sat, 14 Dec 2024 01:48:10 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for information technology architect in Denver
+30+ new jobs match your preferences....
+
+==================================================
+Subject: This weekend, cozy up to these top picks.
+From: Max <Max@stream.max.com>
+Date: Sat, 14 Dec 2024 01:42:23 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: DCU villains, troubled detectives, yule logs, and more.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Max    What's On ...
+
+==================================================
+Subject: 241214 Workout of the Day: Push the Pace
+From: CrossFit <crossfit@mail.crossfit.com>
+Date: Sat, 14 Dec 2024 01:31:34 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Saturday, Dec. 14: Push the pace in order to start working on
+your score.   CrossFit 
+( https://link...
+
+==================================================
+Subject: Don't wait! Take 30% OFF men's & women's underwear multipacks, 5 for $30 women's underwear singles + MORE!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Sat, 14 Dec 2024 01:13:23 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Sat, 14 Dec 2024 00:33:14 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Recent Canvas Notifications
+From: Katy ISD Canvas <notifications@instructure.com>
+Date: Sat, 14 Dec 2024 00:21:05 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview:   You're signed up to receive a daily report of some notifications from your Canvas account.  Below ...
+
+==================================================
+Subject: Your writing skills are growing 🌱
+From: Grammarly Insights <hello@mail.grammarly.com>
+Date: Mon, 16 Dec 2024 23:46:10 +0000
+Labels: Label_169,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Grammarly Week after week, your consistency is paying off. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ...
+
+==================================================
+Subject: Your membership has been cancelled
+From: Team WeightWatchers <teamww@notification.ww.com>
+Date: Mon, 16 Dec 2024 23:42:06 +0000 (UTC)
+Labels: Label_3729917456980438582,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: WeightWatchers
+We're sorry to see you go!
+Hi Eddie,       As requested, your
+WW membership has be...
+
+==================================================
+Subject: Share your opinion about Amazon devices!
+From: "Amazon.com" <store-news@amazon.com>
+Date: Mon, 16 Dec 2024 23:35:05 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+This is an example, please replace www.amazon.com
+
+
+Dear Eddie A Kempe,
+As a valued Amazon...
+
+==================================================
+Subject: See what's new on Max this week.
+From: Max <Max@stream.max.com>
+Date: Mon, 16 Dec 2024 23:34:37 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Featuring Lady Gaga, Sebastian Maniscalco, the Phelps twins, and
+more stars.                     Ma...
+
+==================================================
+Subject: Buy a $100 MatterHackers Gift Card & Get $10 FREE!
+From: MatterHackers <support@matterhackers.com>
+Date: Mon, 16 Dec 2024 23:25:30 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Reminder: Order by December 17th to ensure item delivery by Christmas Eve
+
+Gift Card Sale!
+View t...
 
 ==================================================
 Subject: ❗️WE FOUND A DOG❗️We found a dog when we got...
@@ -663,14 +3633,6 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 Body preview: Nextdoor Your NorthPark neighbors
 
 ❗️WE FOUND A DOG❗️We found a dog when we got home tonight aroun...
-
-==================================================
-Subject: Your card is ready to use in Google Pay
-From: Bank of America <onlinebanking@ealerts.bankofamerica.com>
-Date: Mon, 16 Dec 2024 22:29:59 -0600
-Labels: UNREAD,Label_167,CATEGORY_UPDATES
---------------------------------------------------
-Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
 
 ==================================================
 Subject: Your receipt from Anthropic #2143-1173
@@ -692,12 +3654,50 @@ Eventbrite
 ( https://link.eventbrite.com/f/a/kzIgmR3Zwt26w9c3FkA0UQ~~/AAQ...
 
 ==================================================
+Subject: ⛄ Deck the halls with discounts! 40% off layers & loungewear, BOGO 60 % OFF + MORE
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Mon, 16 Dec 2024 22:05:24 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: RE: dates/times for reconvene ARD meeting
+From: "Latham, Maja E (AJH)" <MajaELatham@katyisd.org>
+Date: Mon, 16 Dec 2024 21:52:46 +0000
+Labels: IMPORTANT,Label_3729917456980438582,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
 Subject: Inside Mines: Capstone Design, Commencement and a Look at 2025
 From: Colorado School of Mines <inside@mines.edu>
 Date: Mon, 16 Dec 2024 21:20:44 +0000 (UTC)
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: Career Opportunities, Leadership Events, National Championships, and More! ##SENDGRIDOPENTRACKING## ...
+
+==================================================
+Subject: 💙 Here’s 50% off to get through the holiday season
+From: Calm <hello@breathe.calm.com>
+Date: Mon, 16 Dec 2024 21:07:01 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: It’s okay if you don’t feel festive. This will help͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌ 
+  ͏ ‌   ͏ ‌   ͏ ‌  ...
+
+==================================================
+Subject: 👉 Looking for a personal loan for your $7,021 debt?
+From: NerdWallet <nerdwallet@mail.nerdwallet.com>
+Date: Mon, 16 Dec 2024 20:53:17 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Find out if you pre-qualify and see your results today ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ...
 
 ==================================================
 Subject: ⚒️ How to Fix Streaming Problems on Discord — Which iPad Model Is Right For You?
@@ -709,6 +3709,97 @@ Body preview: <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
 
 ==================================================
+Subject: A Deal Worthy of Your Year-End Celebration
+From: "Marco's Offers" <offers@offers.marcos.com>
+Date: Mon, 16 Dec 2024 20:34:00 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
+
+==================================================
+Subject: 25% off apparel | Runners Roost Newsletter
+From: Runners Roost <digital@runnersroost.com>
+Date: Mon, 16 Dec 2024 20:26:15 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212569...
+
+==================================================
+Subject: 🛑 Final hours for ground shipping!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Mon, 16 Dec 2024 20:20:30 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
+
+==================================================
+Subject: You Have a New Message
+From: TalkingParents <noreply@talkingparents.com>
+Date: Mon, 16 Dec 2024 20:14:34 +0000
+Labels: CATEGORY_PERSONAL,INBOX
+--------------------------------------------------
+Body preview: You Have a New Message.
+
+You can view the new message by accessing your TalkingParents Account htt...
+
+==================================================
+Subject: You Have a New Message
+From: TalkingParents <noreply@talkingparents.com>
+Date: Mon, 16 Dec 2024 20:10:10 +0000
+Labels: CATEGORY_UPDATES,INBOX
+--------------------------------------------------
+Body preview: You Have a New Message.
+
+You can view the new message by accessing your TalkingParents Account htt...
+
+==================================================
+Subject: Assignment Graded: Universe Review, AJH 8 Science Mann ACA 24-25
+From: AJH 8 Science Mann ACA 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 19:33:06 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment Universe Review has been graded.
+
+graded: Dec 16 at 12:32pm
+
+
+You can review th...
+
+==================================================
+Subject: Don’t miss conversations in Cloud Computing, SaaS, Data Centre & Virtualization
+From: LinkedIn <groups-noreply@linkedin.com>
+Date: Mon, 16 Dec 2024 19:32:19 +0000 (UTC)
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Don’t miss conversations in Cloud Computing, SaaS, Data Centre & Virtualization
+
+....................
+
+==================================================
+Subject: Assignment Graded: Waves and EMS Review, AJH 8 Science Mann ACA 24-25
+From: AJH 8 Science Mann ACA 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 19:29:15 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment Waves and EMS Review has been graded.
+
+graded: Dec 16 at 12:29pm
+
+
+You can revi...
+
+==================================================
+Subject: Announcement for Students who qualified for SLC...: JHS FBLA 24-25
+From: JHS FBLA 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 18:48:16 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Annoucnment for students who qualified for SLC: Many of you have NOT joined the SLC Remind @slcjhs25...
+
+==================================================
 Subject: FYI: Arvada had a recorded hail storm back in July...
 From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
 Date: Mon, 16 Dec 2024 18:40:14 +0000 (UTC)
@@ -717,6 +3808,36 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: Nextdoor Your NorthPark neighbors
 
 FYI: Arvada had a recorded hail storm back in July if you didn’...
+
+==================================================
+Subject: 📣 New group suggestion: Puppy Mill Free Lakewood
+From: Meetup <info@email.meetup.com>
+Date: Mon, 16 Dec 2024 18:31:12 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_135
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+    .hero-title { margin: 0
+30px !important; margin-top: 20px !important; } .hero-d...
+
+==================================================
+Subject: Assignment Graded: Critique - Wizard of Oz Effect, JHS Art I 24-25
+From: JHS Art I 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 18:23:30 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment Critique - Wizard of Oz Effect has been graded.
+
+graded: Dec 16 at 11:23am
+
+
+Yo...
 
 ==================================================
 Subject: Even Santa Can’t Resist a Meal & Dessert
@@ -733,6 +3854,23 @@ $13 Pizookie® Meal Deal comes with a personal Pizookie
 ͏‌ ...
 
 ==================================================
+Subject: 📅 Just scheduled: Yoga at the Karma House by Donation
+From: CLEAR MINDS <info@email.meetup.com>
+Date: Mon, 16 Dec 2024 18:18:01 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+==================================================
 Subject: Open me 📧 for the Sailor Scoop.
 From: Virgin Voyages <info@mk.virginvoyages.com>
 Date: Mon, 16 Dec 2024 18:10:07 +0000
@@ -744,24 +3882,47 @@ Body preview: <!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" lang="en
   <title>Check out w...
 
 ==================================================
-Subject: Zelle® payment of $334.90 to Jody Bergeron has been sent
-From: Bank of America <onlinebanking@ealerts.bankofamerica.com>
-Date: Mon, 16 Dec 2024 18:04:41 -0600
-Labels: UNREAD,Label_167,CATEGORY_UPDATES
+Subject: Assignment Graded: Wizard of Oz Effect Project, JHS Art I 24-25
+From: JHS Art I 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 18:02:38 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
 --------------------------------------------------
-Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
+Body preview: Your assignment Wizard of Oz Effect Project has been graded.
+
+graded: Dec 16 at 11:02am
+
+
+You c...
 
 ==================================================
-Subject: Appointment Confirmation!
-From: Front Range Eye Associates <info@fr-ea.com>
-Date: Mon, 16 Dec 2024 17:46:15 -0700 (MST)
-Labels: UNREAD,Label_167,CATEGORY_PERSONAL
+Subject: Assignment Graded: Fall Exam Review, JHS Art I 24-25
+From: JHS Art I 24-25 <notifications@instructure.com>
+Date: Mon, 16 Dec 2024 17:50:47 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment Fall Exam Review has been graded.
+
+graded: Dec 16 at 10:50am
+
+
+You can review t...
+
+==================================================
+Subject: 📅 Just scheduled: Volunteer (now with coffee & donuts) at Food Bank of the Rockies
+From: Secular Hub <info@email.meetup.com>
+Date: Mon, 16 Dec 2024 17:45:29 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: 
- 
-Dear Eddie,
- 
-Thank you for scheduling your appointment on our interactive web-based system.  Thi...
+
+
+
+
+
+
+
+
+
 
 ==================================================
 Subject: Enjoy a FREE bakery treat with your You Pick Two®!
@@ -835,19 +3996,23 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: 
 
 ==================================================
-Subject: New sign in to Steam
-From: Steam Team <noreply@steampowered.com>
-Date: Mon, 16 Dec 2024 17:12:26 -0800
-Labels: UNREAD,IMPORTANT,Label_167,CATEGORY_UPDATES
+Subject: Get organized with your 2025 Tax Calendar
+From: Sarah from pdfFiller <sarah@pdffiller.com>
+Date: Mon, 16 Dec 2024 17:19:36 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
 --------------------------------------------------
-Body preview: 
-New sign in to Steam
-From your account "ekempe"
+Body preview: Fill out tax forms on time with pdfFiller
 
-Location of sign in:
-Denver, CO, US
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌...
 
-Authoriz...
+==================================================
+Subject: Give the gift of cinema🎁 Receive a FREE $20 Bonus with your $100 E-Card purchase!
+From: Angelika Film Center <marketing@angelikafilmcenter.com>
+Date: Mon, 16 Dec 2024 17:16:20 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Test Here
+Open in browser (https://angelika.showtimeanalytics.com/link/GfY3ituYSRaaN-TTSMoe5KwNlmPeH...
 
 ==================================================
 Subject: You Can Now Test Recall, Windows' Controversial AI Feature
@@ -859,6 +4024,65 @@ Body preview: <!-- X-Campaign: 75178105/174279764/45102380730 -->
 <style> .dvPreheader { display: none !important...
 
 ==================================================
+Subject: Get your 250 extra points right here
+From: Chipotle Mexican Grill <chipotle@email.chipotle.com>
+Date: Mon, 16 Dec 2024 16:58:32 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+  Chipotle Mexican Grill
+ &#8199; &#847; &zwnj;   &#8199; &#847; &zwnj;   &#8199; &...
+
+==================================================
+Subject: Re: Parent meetings
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 16:53:55 -0700
+Labels: SENT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Check for orders and refunds
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 16:49:14 -0700
+Labels: UNREAD,IMPORTANT,SENT,INBOX
+--------------------------------------------------
+Body preview: https://docs.google.com/spreadsheets/d/17AGYnccFJVdSIE3Ly-sQ2HqHK1q6RBmcuFMktuVkPPg/edit?usp=sharing...
+
+==================================================
+Subject: Re: Decide on Marriott reservation in Frisco
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 16:48:06 -0700
+Labels: UNREAD,IMPORTANT,SENT,INBOX
+--------------------------------------------------
+Body preview: You may cancel your reservation for no charge before 11:59 PM local hotel
+time on December 18, 2024...
+
+==================================================
+Subject: Re: dates/times for reconvene ARD meeting
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 16:24:59 -0700
+Labels: Label_3729917456980438582,SENT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: ENDS SOON: Our jolly grooming package ❄️🍪🎄
+From: Petco <Petco@e.petco.com>
+Date: Mon, 16 Dec 2024 16:20:31 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
 Subject: 🌟 Monday Motivation 💪🚀
 From: "Kathy \"Kiki\" Sloan" <Kiki@mail.propertydominator.com>
 Date: Mon, 16 Dec 2024 16:12:07 +0000
@@ -866,6 +4090,73 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: Property Dominator Residential Real Estate
 [https://email.mail.propertydominator.com/c/eJx8kk1v2yAY...
+
+==================================================
+Subject: Great news, Eddie! 3 of your profile visitors have been revealed! 🎉
+From: "Classmates.com" <ClassmatesEmail@email.classmates.com>
+Date: Mon, 16 Dec 2024 16:05:01 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-...
+
+==================================================
+Subject: Reminder: Eddie, tell us about your stay at Courtyard Santa Clarita Valencia
+From: Courtyard Santa Clarita Valencia <marriott@express.medallia.com>
+Date: Mon, 16 Dec 2024 15:51:47 -0800 (PST)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Dear Eddie Kempe,
+
+We recently invited you to participate in our guest survey regarding your recen...
+
+==================================================
+Subject: REMINDER: Your $1/wk. For 12 months Streaming Offer is now available for a Limited-Time.
+From: SiriusXM <no-reply@e.siriusxm.com>
+Date: Mon, 16 Dec 2024 15:16:38 -0800
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: We're sorry you're having trouble viewing this email. Please click here
+https://t.e.siriusxm.com/r/...
+
+==================================================
+Subject: Get Holiday Sale early access 🎁
+From: PlayStation <email@email.playstation.com>
+Date: Mon, 16 Dec 2024 15:10:01 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: Eddie, 2 new rentals match your search in Denver
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Mon, 16 Dec 2024 15:07:56 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margin-...
+
+==================================================
+Subject: Maximize Your iPad Experience 📱
+From: Targus <news.us@targus.com>
+Date: Mon, 16 Dec 2024 15:07:15 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Can't see this email? [View in Your Browser](https://manage.kmail-lists.com/subscriptions/web-view?a...
+
+==================================================
+Subject: ✨ Special deals inside! 30% OFF men's & women's underwear multipacks, 3 for $30 men's underwear singles + more
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Mon, 16 Dec 2024 14:38:21 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
 
 ==================================================
 Subject: Reminder: Give the gift of Medium
@@ -895,12 +4186,45 @@ Hi neighbors!
 https://nextdoor.com/p/7TJCw3Y-fRrR?post=3739574...
 
 ==================================================
+Subject: $20 off and more | Runners Roost Newsletter
+From: Runners Roost <digital@runnersroost.com>
+Date: Mon, 16 Dec 2024 14:15:31 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212569...
+
+==================================================
+Subject: Your SKECHERS Order # SKEC-US707318371 Has Shipped!
+From: SKECHERS <no-reply@emails.skechers.com>
+Date: Mon, 16 Dec 2024 14:14:16 -0600
+Labels: CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Skechers(R)
+
+
+ 
+
+https://view.emails.skechers.com/?qs=34f9f0f0d7972272397aaca6b186dbd4d20754ccc...
+
+==================================================
 Subject: Eddie, we have 8 more ways for you to get involved with your community
 From: VolunteerMatch <noreply@volunteermatch.org>
 Date: Mon, 16 Dec 2024 14:08:34 +0000 (UTC)
 Labels: UNREAD,Label_167,CATEGORY_UPDATES
 --------------------------------------------------
 Body preview: 
+
+==================================================
+Subject: Eddie, start a conversation with your new connection, Patrick
+From: "Patrick Wilson, CHCIO, CHISL, CISSP, M.A. via LinkedIn" <invitations@linkedin.com>
+Date: Mon, 16 Dec 2024 13:48:53 +0000 (UTC)
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: ----------------------------------------
+
+This email was intended for Eddie Kempe (Experienced IT ...
 
 ==================================================
 Subject: You still have 6 FREE Birthday wings!
@@ -911,12 +4235,39 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
 
 ==================================================
+Subject: A Guide to Agentic AI Architecture | DataStax in Building Real-World, Real-Time AI
+From: Medium Daily Digest <noreply@medium.com>
+Date: Mon, 16 Dec 2024 13:30:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Stories for Eddiekempe
+@eddiekempe (https://medium.com/@eddiekempe?source=email-7d2f191647df-173434...
+
+==================================================
+Subject: Delight your loved ones with this unique gift idea 🎁
+From: GOWOD <contact@gowod.eu>
+Date: Mon, 16 Dec 2024 13:25:16 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!doctype html>
+<html lang="en" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schema...
+
+==================================================
 Subject: Give $25. Get $5. JoyFull!
 From: Modern Market <modernmarket@emails.thanx.com>
 Date: Mon, 16 Dec 2024 13:23:04 +0000 (UTC)
 Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
+
+==================================================
+Subject: 📣You, Me, 3 Day Retreat? Video Included
+From: "Lisa A. Romano" <coach@lisaaromano.com>
+Date: Mon, 16 Dec 2024 13:22:50 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 📹 Inner Child Workshop
+Replay ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌...
 
 ==================================================
 Subject: Verify your Hertz Gold Plus Rewards® account
@@ -937,6 +4288,34 @@ Body preview: Unlock Gemini's full potential with fine-tuning
 <https://notifications.google.com/g/p/ANiao5ox13T...
 
 ==================================================
+Subject: Eddie, get a Pixel 9 on us
+From: Google Pixel <googlepixel-noreply@google.com>
+Date: Mon, 16 Dec 2024 13:10:31 -0800
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Join Google Fi Wireless  
+today ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏...
+
+==================================================
+Subject: Mountain Monday: 2 ways to lead your family faithfully
+From: Kent <kent.evans@manhoodjourney.org>
+Date: Mon, 16 Dec 2024 13:10:00 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: You have to find a way to forget the past and move forward—so you can lead your family well.
+
+Dece...
+
+==================================================
+Subject: Networking doesn’t have to feel icky (promise!)
+From: Jamila Payne <hello@dailysuccessroutine.com>
+Date: Mon, 16 Dec 2024 13:04:48 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: (
+https://click.convertkit-mail2.com/75u8lrokxgu8h6vmk3nbzhw3mdo66sn/58hvh7hm493xm5s6/aHR0cHM6Ly9kY...
+
+==================================================
 Subject: 🛍 Shopping budget update in Monarch
 From: Monarch Money <email@email.monarchmoney.com>
 Date: Mon, 16 Dec 2024 12:48:04 +0000 (UTC)
@@ -951,6 +4330,15 @@ Hi Eddie,
 
 Open Plan:
 http...
+
+==================================================
+Subject: 📦 Last day for ground shipping!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Mon, 16 Dec 2024 12:23:13 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
 
 ==================================================
 Subject: How These Free Open Source Projects Can Jumpstart Your Career (No Experience? No Problem!) | DEV Digest
@@ -1033,6 +4421,72 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: 
 
 ==================================================
+Subject: Don’t sleep on these vacay savings - ENDS TONIGHT
+From: Royal Caribbean <RoyalCaribbean@reply.royalcaribbeanmarketing.com>
+Date: Mon, 16 Dec 2024 09:50:33 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+ 
+ 
+ 
+ Royal Caribbean International
+ 
+ 
+
+https://click.RoyalCaribbeanMarketing.com/?qs=1c8...
+
+==================================================
+Subject: What can we learn about Shelly?  How can this help us co-parent?
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 09:39:49 -0700
+Labels: Label_149,IMPORTANT,SENT
+--------------------------------------------------
+Body preview: Projection
+Evaluations
+Communication logs
+
+
+Thank you,
+Eddie
+
+
+==================================================
+Subject: Latest Deals From Mile High On The Cheap - 12/16/2024
+From: Mile High On The Cheap <info@milehighonthecheap.com>
+Date: Mon, 16 Dec 2024 09:38:10 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: ** Mile High on the Cheap-mailing 
+- https://feeds.feedblitz.com/milehighonthecheap-feed
+
+- Movie...
+
+==================================================
+Subject: Daily priming
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 09:35:12 -0700
+Labels: Label_149,IMPORTANT,SENT
+--------------------------------------------------
+Body preview: Minimalist approach
+One thing from yesterday that I am grateful for
+
+
+Thank you,
+Eddie
+
+
+==================================================
+Subject: Decide on Marriott reservation in Frisco
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Mon, 16 Dec 2024 09:28:54 -0700
+Labels: IMPORTANT,SENT,INBOX
+--------------------------------------------------
+Body preview: Thank you,
+Eddie
+
+
+==================================================
 Subject: Walmart's Last-Minute Gifts Deliver Holiday Savings Galore 🎁
 From: Lifehacker Newsletter <newsletter@e.lifehacker.com>
 Date: Mon, 16 Dec 2024 09:05:31 -0500
@@ -1040,6 +4494,42 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 --------------------------------------------------
 Body preview: <!-- X-Campaign: 75171840/174270294/45102380730 -->
 <style> .dvPreheader { display: none !important...
+
+==================================================
+Subject: You never know who you’ll meet, Eddie.
+From: Match <mailer@connect.match.com>
+Date: Mon, 16 Dec 2024 09:00:18 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview: 
+
+  
+
+
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+
+    
+        
+
+
+
+<!DOCTYPE HTML PUB...
 
 ==================================================
 Subject: Seeking The Neutral Rate Of Interest
@@ -1050,6 +4540,33 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: How many rate cuts will the Federal Reserve go for in 2025? Take the survey here and don't forget to...
 
 ==================================================
+Subject: Fed IT’s Top Networking Event This Thursday
+From: MeriTalk <events@meritalk.com>
+Date: Mon, 16 Dec 2024 07:00:45 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: MeriTalk Tech Tonic <http://emails.meritalk.com/MDI4LUpIVS02NDUAAAGXboc4vHaZ5K-LsoLE_IjAGExWeK8Y1Hdo...
+
+==================================================
+Subject: PSC is Ready for 2025—Are You?
+From: PreSales Collective <info@presalescollective.com>
+Date: Mon, 16 Dec 2024 07:00:33 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: From SKOs to skills training, here’s what you need for a successful start to the year.
+
+View in br...
+
+==================================================
+Subject: 30% off 2025 parking!
+From: The Parking Spot <noreply@email.theparkingspot.com>
+Date: Mon, 16 Dec 2024 06:38:52 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+ To view this email as a web page, go to the link below, or copy and paste it into your browser's ...
+
+==================================================
 Subject: The Secret to Being the Person Who Always Gives the Perfect Gift: A Reverse Gift List
 From: "Inc. This Morning" <newsletters@e.inc.com>
 Date: Mon, 16 Dec 2024 06:38:23 -0600 (CST)
@@ -1058,6 +4575,72 @@ Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
 Body preview: 
 
 &nbsp;
+
+
+==================================================
+Subject: Eddie, view your December Nordy Club summary now.
+From: THE NORDY CLUB <nordstrom@eml.nordstrom.com>
+Date: Mon, 16 Dec 2024 06:31:04 -0600
+Labels: Label_169,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: NORDSTROM
+
+ 
+ 
+
+ 
+ 
+ <span style="text-decoration:underline;">Stay on top of all your benefit...
+
+==================================================
+Subject: Last-Minute Gifts + Big Savings!
+From: Logitech <no-reply@ecom1.logitech.com>
+Date: Mon, 16 Dec 2024 06:21:45 -0800
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+Save up to $70, and enjoy express shipping on orders over $99! ͏ ‌  ͏ ‌  ͏ ‌  ͏ ‌  ͏ ‌  ͏ ‌  ͏ ‌...
+
+==================================================
+Subject: LAST CHANCE..Don't Miss Out On These Deals!
+From: Shooting Illustrated <reply@emedia.nrapublications.org>
+Date: Mon, 16 Dec 2024 06:11:27 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xh...
+
+==================================================
+Subject: Final Hours! $20 Off for Your Pet 🐕
+From: A Gift From Petco <Petco@e.petco.com>
+Date: Mon, 16 Dec 2024 05:56:48 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+Exclusive savings for your furry friend ends today!
+
+ 
+
+Exclusive savin...
+
+==================================================
+Subject: DEALS for gifts on your list!  🎁
+From: Petco <Petco@e.petco.com>
+Date: Mon, 16 Dec 2024 05:39:42 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
 
 
 ==================================================
@@ -1096,6 +4679,28 @@ Body preview:
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
 
 ==================================================
+Subject: Step into Savings - 20% Off Ink Cartridges
+From: LD Products <ldproducts@eml.ldproducts.com>
+Date: Mon, 16 Dec 2024 04:00:31 +0100
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Semi-Annual Sale! Use Coupon: SEMI2020 for 20% off our premium
+compatible
+printer cartridges. With...
+
+==================================================
+Subject: 24 people looked at your profile
+From: LinkedIn <messages-noreply@linkedin.com>
+Date: Mon, 16 Dec 2024 03:48:18 +0000 (UTC)
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Your profile is looking great
+
+Your work and accomplishments are being recognized
+
+24 profile vi...
+
+==================================================
 Subject: My husband was injured pretty bad this week at work...
 From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
 Date: Mon, 16 Dec 2024 03:09:53 +0000 (UTC)
@@ -1105,6 +4710,16 @@ Body preview: Nextdoor Your NorthPark neighbors
 
 Hello neighbors!
 https://nextdoor.com/p/nt9RT7Y6pT5q?post=3741...
+
+==================================================
+Subject: We found something you might like
+From: "Amazon.com" <store-news@amazon.com>
+Date: Mon, 16 Dec 2024 03:09:39 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+How about another look? Keep shopping your recent finds on Amazon. https://www.amazon.com/hz/m...
 
 ==================================================
 Subject: You're getting attention: Amberlee viewed your profile.
@@ -1142,6 +4757,68 @@ Body preview:
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
 
 ==================================================
+Subject: Chuck - Solutions Consultant Leader, SLED shared a new post
+From: LinkedIn <updates-noreply@linkedin.com>
+Date: Mon, 16 Dec 2024 02:48:33 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: ----------------------------------------
+
+
+
+          
+        
+
+          Chuck Romero share...
+
+==================================================
+Subject: First P-10 Chambered in 45 Auto
+From: Shooting Illustrated <reply@emedia.nrapublications.org>
+Date: Mon, 16 Dec 2024 02:46:21 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
+
+==================================================
+Subject: “solutions architect”: AMSYS Innovative Solutions, LLC - Cloud Solutions Architect and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Mon, 16 Dec 2024 02:20:47 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for solutions architect in United States
+30+ new jobs match your preferences.
+     ...
+
+==================================================
+Subject: ❄️🎄 Holiday with Festive Films & Food at SMG! 
+From: Studio Movie Grill <communications@smgloyalty.com>
+Date: Mon, 16 Dec 2024 02:15:02 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Studio Movie Grill
+  If you can't view the images in this email, please follow this link: https://w...
+
+==================================================
+Subject: Register now: Microsoft 365 Copilot Training for IT
+From: Microsoft <replyto@email.microsoft.com>
+Date: Mon, 16 Dec 2024 02:12:18 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+Having trouble viewing this email? | View as web page <[[https://emails.microsoft.com/v/MTU3LUdRRS...
+
+==================================================
+Subject: 💭 On remembering, thinking & rushing
+From: mymind <updates@mymind.com>
+Date: Mon, 16 Dec 2024 02:07:00 +0000
+Labels: Label_169,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta n...
+
+==================================================
 Subject: You're getting attention: Amberlee viewed your profile.
 From: Match <mailer@value.match.com>
 Date: Mon, 16 Dec 2024 02:02:15 -0600
@@ -1177,6 +4854,26 @@ Body preview:
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 ...
 
 ==================================================
+Subject: “information technology architect”: SHI International Corp. - ASG Presales Solutions Architect - Data Protection and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Mon, 16 Dec 2024 01:48:23 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for information technology architect in Denver
+21 new jobs match your preferences.
+...
+
+==================================================
+Subject: 241216 Workout of the Day: A Sprint
+From: CrossFit <crossfit@mail.crossfit.com>
+Date: Mon, 16 Dec 2024 01:33:03 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Monday, Dec. 16: Move as quickly as possible through the
+push-ups and the row.   CrossFit 
+( https:/...
+
+==================================================
 Subject: 💵 This week's upcoming bills
 From: Rocket Money <hello@email.rocketmoney.com>
 Date: Mon, 16 Dec 2024 01:18:40 +0000 (UTC)
@@ -1187,6 +4884,18 @@ have
 2 recurring
 charges coming up in the next 7
 days.                   Rocket Mo...
+
+==================================================
+Subject: 🟢 Shop women's best-selling brief underwear styles now!
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Mon, 16 Dec 2024 01:17:34 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
 
 ==================================================
 Subject: You're getting attention: Amberlee viewed your profile.
@@ -1292,6 +5001,1270 @@ Body preview:
 ...
 
 ==================================================
+Subject: Notification: Check for Katy ISD for grades, events and updates  @ Sat Dec 14, 2024 (Recurring Tasks)
+From: Google Calendar <calendar-notification@google.com>
+Date: Fri, 13 Dec 2024 23:55:14 +0000
+Labels: CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: You have an upcoming event
+
+Check for Katy ISD for grades, events and updates
+Saturday Dec 14, 20...
+
+==================================================
+Subject: 📅 Just scheduled: ONLINE - Alexandria - The Stuck Creative Meetup
+From: The Stuck Creative <info@email.meetup.com>
+Date: Fri, 13 Dec 2024 23:37:12 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+==================================================
+Subject: 🎮 Nvidia all but confirms RTX 50 series at CES 2025 📂 10 Windows Explorer secrets 💾 Why faster storage doesn't mean faster load times
+From: XDA <newsletter@xda-developers.com>
+Date: Fri, 13 Dec 2024 23:13:08 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: With the new trash plans, I found this interesting..
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Fri, 13 Dec 2024 22:55:54 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+With the new trash plans, I found this interesting..
+https://n...
+
+==================================================
+Subject: JPS 3on3 March Madness and more 3on3! | Just Play Sports
+From: Just Play Sports <no-reply@justplaysportscolorado.com>
+Date: Fri, 13 Dec 2024 22:51:35 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!doctype html>
+                    <html>
+                      <head>
+                        <...
+
+==================================================
+Subject: Bhairavi Gandhi (AJH 8th Grade Math Gandhi) just sent you a message in Canvas.
+From: Bhairavi Gandhi <notifications@instructure.com>
+Date: Fri, 13 Dec 2024 22:38:43 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+  Subject: Weekly Newsletter Dec 16 - 20
+
+Hello Students and Parents!
+Attached here is the week...
+
+==================================================
+Subject: Viking Update 12/13/24
+From: Adams Junior High <AJHeNews@katyisd.org>
+Date: Fri, 13 Dec 2024 22:30:12 -0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: MessageGood afternoon,Please click on the link below to see the upcoming events happeningat AHJ. Vik...
+
+==================================================
+Subject: Katy ISD Digest Highlights - December 13
+From: Katy ISD Communications <communications@katyisd.org>
+Date: Fri, 13 Dec 2024 22:30:05 -0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: MessageDecember 13, 2024All NEW or UPDATED items this week can be found below.Additional Digest item...
+
+==================================================
+Subject: Katy ISD: Course Selection Parent Webinar #1
+From: Katy ISD Communications <communications@katyisd.org>
+Date: Fri, 13 Dec 2024 22:00:09 -0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: MessageDear Katy ISD Parents and Guardians,The Academic Counseling, College and Career Guidance team...
+
+==================================================
+Subject: 💽 Windows 10's End Makes Now a Good Time to Get Used to Linux — 5 Ways Edge is Better Than Chrome
+From: How-To Geek <newsletter@howtogeek.com>
+Date: Fri, 13 Dec 2024 21:19:31 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft...
+
+==================================================
+Subject: Eddie, your November account statement is available.
+From: PayPal <PayPal@emails.paypal.com>
+Date: Fri, 13 Dec 2024 21:16:29 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+Hello Eddie Kempe,
+
+We have tried to send you this email as HTML (pictures and words) but ...
+
+==================================================
+Subject: ➡️ Best-selling boxers: comfort, style & a refreshing fit await
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Fri, 13 Dec 2024 21:10:42 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: Weekly Warrior: December 13, 2024
+From: Jordan High School <JHSeNews@katyisd.org>
+Date: Fri, 13 Dec 2024 21:00:04 -0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: MessageWarriors,Have a great weekend and get ready for Finals next week. The latest Weekly Warrior i...
+
+==================================================
+Subject: Open up to see our exciting offers 🎁
+From: Xfinity <xfinity@updates.xfinity.com>
+Date: Fri, 13 Dec 2024 20:54:50 -0500
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html dir="auto" lang="und" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schem...
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Fri, 13 Dec 2024 20:34:40 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Fri, 13 Dec 2024 20:33:25 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: RECAP summary
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Fri, 13 Dec 2024 20:31:59 +0000
+Labels: IMPORTANT,Label_3729917456980438582,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Recent release from National Geographic
+From: "Amazon.com" <store-news@amazon.com>
+Date: Fri, 13 Dec 2024 20:14:15 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+
+We thought you'd like to know about this recently released book by an author you follow.
+
+...
+
+==================================================
+Subject: Eddie, follow George Kurtz - President / CEO & Founder at CrowdStrike
+From: LinkedIn <messages-noreply@linkedin.com>
+Date: Fri, 13 Dec 2024 19:49:54 +0000 (UTC)
+Labels: UNREAD,CATEGORY_SOCIAL,Label_35
+--------------------------------------------------
+Body preview: Eddie, add interesting content to your feed. Here are a few recommendations to get started.
+
+
+htt...
+
+==================================================
+Subject: the weekend's wingman- get a large 1-topping pizza and 10 wings for $22.99
+From: "Marco's Offers" <offers@offers.marcos.com>
+Date: Fri, 13 Dec 2024 19:10:35 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xht...
+
+==================================================
+Subject: 📣 New group suggestion: Denver Sk8terz
+From: Meetup <info@email.meetup.com>
+Date: Fri, 13 Dec 2024 19:01:32 +0000 (UTC)
+Labels: UNREAD,Label_135,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+    .hero-title { margin: 0
+30px !important; margin-top: 20px !important; } .hero-d...
+
+==================================================
+Subject: Use your qualifying HSA/FSA funds to save on Calm Premium
+From: Calm <hello@breathe.calm.com>
+Date: Fri, 13 Dec 2024 18:58:06 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Save up to 40% on a year of self-care before Dec 31
+͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌   ͏ ‌  ...
+
+==================================================
+Subject: Last Call to Get Gifts in Time for the Holidays with Standard Shipping
+From: SKECHERS <no-reply@emails.skechers.com>
+Date: Fri, 13 Dec 2024 18:39:23 -0600
+Labels: CATEGORY_PROMOTIONS,Label_167
+--------------------------------------------------
+Body preview: Skechers(R)
+
+ 
+ 
+ [{
+ "@context": "https://schema.org/",
+ "@type": "Organization",
+ "logo": "...
+
+==================================================
+Subject: Missing dog...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Fri, 13 Dec 2024 18:37:18 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Update: thank you everyone for looking for my beautiful pup.
+h...
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Fri, 13 Dec 2024 18:11:40 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: Hello Eddie,
+
+Do you mind having the meeting at 1:30 I’m stuck in a little bit of traffic
+
+
+Kin...
+
+==================================================
+Subject: Sunday Brunch
+From: The Strand DC <info-fishandfirefoodgroup.com@shared1.ccsend.com>
+Date: Fri, 13 Dec 2024 18:08:15 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Email from DC Seafood Eagles v Steelers Watch Party Visit Our Website     EAGLES VS STEELERS WATCH P...
+
+==================================================
+Subject: Welcome to Pinecone
+From: Pinecone <support@pinecone.io>
+Date: Fri, 13 Dec 2024 18:05:56 -0500
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: You're in good company with thousands of ML and software engineers from companies like Notion, Klarn...
+
+==================================================
+Subject: Your United purchase is being refunded
+From: United Airlines <Receipts@united.com>
+Date: Fri, 13 Dec 2024 18:03:15 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <html><head><link href="http://fonts.googleapis.com/css?family=Open+Sans:light:bold" rel="stylesheet...
+
+==================================================
+Subject: To: Eddie, Love: Us.
+From: Match <mailer@connect.match.com>
+Date: Fri, 13 Dec 2024 18:00:42 -0600
+Labels: UNREAD,CATEGORY_SOCIAL,Label_141
+--------------------------------------------------
+Body preview:       
+
+
+    
+    
+
+    
+    
+    
+ 
+    
+    
+
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Tra...
+
+==================================================
+Subject: Attention Different is LIVE!
+From: Attention Different LLC <attentiondifferent@a.kajabimail.net>
+Date: Fri, 13 Dec 2024 17:28:45 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: A big HELLO to our fellow Adult ADHDers,
+And a Warm Welcome to our non-ADHDers too ~
+The Admins at...
+
+==================================================
+Subject: Lock in for finals with our viral game, Blocks
+From: Quizlet <newsletter@newsletter.quizlet.com>
+Date: Fri, 13 Dec 2024 17:19:10 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Only available for a limited time
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌...
+
+==================================================
+Subject: Your neighborhood is full of great restaurants
+From: OpenTable <OpenTable@mgs.opentable.com>
+Date: Fri, 13 Dec 2024 17:11:04 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: 🎫 Wiz Khalifa tickets are on sale now! 🎫
+From: Spotify <no-reply@spotify.com>
+Date: Fri, 13 Dec 2024 17:06:30 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+Tickets for Wiz Khalifa are on sale now!
+
+Wiz Khalifa artist image https://prf.hn/click/camref:1...
+
+==================================================
+Subject: A gift for you and your bestie 🎁
+From: WeightWatchers <teamww@email.ww.com>
+Date: Fri, 13 Dec 2024 17:06:15 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Open for a special holiday offer. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌  ‌ ‌ ‌ ‌ ‌ ‌ ...
+
+==================================================
+Subject: PSA: Plan Your 2025 Travel During These 'Dead Weeks'
+From: Lifehacker Newsletter <newsletter@e.lifehacker.com>
+Date: Fri, 13 Dec 2024 17:02:18 -0500
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!-- X-Campaign: 75127135/174231259/45102380730 -->
+<style> .dvPreheader { display: none !important...
+
+==================================================
+Subject: Re: Parent meetings
+From: Nautekah McCrimmon <nautekah@stsaba.com>
+Date: Fri, 13 Dec 2024 16:58:02 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: That works for me!
+
+
+Kind regards,
+
+Nautekah McCrimmon M.P.H, M.S, BCBA, LBA
+Get Outlook for i...
+
+==================================================
+Subject: Breathe...you still have time to gift this gear
+From: AllTrails Gear Shop <no-reply@email.alltrails.com>
+Date: Fri, 13 Dec 2024 16:43:14 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Order by 12/13 for on-time arrival
+͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏‌ ͏...
+
+==================================================
+Subject: Your November 2024 transaction history
+From: Venmo <venmo@venmo.com>
+Date: Fri, 13 Dec 2024 16:32:51 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Eddie, your new purchases are eligible for Citi® Flex Pay
+From: "Costco Anywhere Visa® Card" <citicards@info15.citi.com>
+Date: Fri, 13 Dec 2024 16:31:08 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+Eddie, your new purchases are eligible for Citi® Flex Pay
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ Start a...
+
+==================================================
+Subject: Deck the paws with stackable deals on pet services 💰🐾🎄
+From: Petco <Petco@e.petco.com>
+Date: Fri, 13 Dec 2024 16:30:25 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: All Things Emirates NBA Cup. One Tap Away.
+From: NBA <NBA@email.nba.com>
+Date: Fri, 13 Dec 2024 16:16:24 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Open the NBA App and dive into Semifinals coverage.
+
+ (
+?lid=58w9zmu0o7zy&cid=nba:dynpage:own:ema...
+
+==================================================
+Subject: Want a better way to pay your bills?
+From: Web Bill Pay Service <webbillpay@billpaymail.navyfederal.org>
+Date: Fri, 13 Dec 2024 16:04:17 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Want a better way to pay your bills?
+ Use Bill Pay.
+ &zwnj;  ͏ &zwnj;  ͏ &zwnj;  ͏ &zwnj;  ͏ &zwnj...
+
+==================================================
+Subject: 🎉 Weekly Report at Reclaim: Dec 7 - 13
+From: Reclaim <notifications@reclaim.ai>
+Date: Fri, 13 Dec 2024 15:53:54 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Sorry, but this report is only offered as HTML. Please enable HTML in your email client to view it.
+
+==================================================
+Subject: Eddie, this month kids celebrate the holidays, learn about the Day of Persons with Disabilities, and more
+From: YouTube Kids <no-reply@youtube.com>
+Date: Fri, 13 Dec 2024 15:45:40 -0800
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+
+
+
+YouTube Kids
+
+<https://notifications.google.com/g/p/ANiao5pL766oh6Ab_P8Vsvkpnf_tj-AULiDe...
+
+==================================================
+Subject: Your Blink of the Day
+From: Blinkist <hello@mail.blinkist.com>
+Date: Fri, 13 Dec 2024 15:32:03 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Today:
+Heal Your Gut, Save Your Brain
+  ...
+
+==================================================
+Subject: The gift that gives more!
+From: Runners Roost <digital@runnersroost.com>
+Date: Fri, 13 Dec 2024 15:15:27 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+View this email in your browser (https://mailchi.mp/runnersroost/runners-roost-newsletter-212578...
+
+==================================================
+Subject: Eddie, 8 new rentals match your search in Denver, Northglenn, Lakewood, etc
+From: "realtor.com" <info@notifications.realtor.com>
+Date: Fri, 13 Dec 2024 15:12:20 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html><head><style type="text/css">
+      /* reset */
+      * {margin-top:0px;margin-...
+
+==================================================
+Subject: ⏩ Don't Miss This Deal: 25% Off Sitewide
+From: Targus <news.us@targus.com>
+Date: Fri, 13 Dec 2024 15:11:32 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Can't see this email? [View in Your Browser](https://manage.kmail-lists.com/subscriptions/web-view?a...
+
+==================================================
+Subject: Enjoy 100% FREE DELIVERY! YAY weekend!
+From: MyPanera <panera@m1.panerabread.com>
+Date: Fri, 13 Dec 2024 15:09:52 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Exclusive just for MyPanera Members
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...
+
+==================================================
+Subject: Assignment Graded: 3rd Six Week Cumulative 2024 (Secure Browser), JHS ALGEBRA 2 KAP/GT FALL 2024 - TRUONG
+From: "JHS ALGEBRA 2 KAP/GT FALL 2024 - TRUONG" <notifications@instructure.com>
+Date: Fri, 13 Dec 2024 14:59:10 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment 3rd Six Week Cumulative 2024 (Secure Browser) has been graded.
+
+graded: Dec 13 at ...
+
+==================================================
+Subject: Dec 13 Bonita Lestina Old Town Hall Performance Series Postponed to June
+From: City of Fairfax <cityoffairfaxva@public.govdelivery.com>
+Date: Fri, 13 Dec 2024 14:49:14 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: 🎄 Holiday cheer & deals are here! 30% OFF men's & women's underwear multipacks, 5 for $30 women's underwear singles + more
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Fri, 13 Dec 2024 14:39:19 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: Had a package stolen from my front door...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Fri, 13 Dec 2024 14:30:07 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Had a package stolen from my front door.
+https://nextdoor.com/...
+
+==================================================
+Subject: Your Daily Digest for Fri, 12/13 is ready to view
+From: USPS Informed Delivery <USPSInformeddelivery@email.informeddelivery.usps.com>
+Date: Fri, 13 Dec 2024 14:26:14 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: LAST CALL | Take 15% off your purchase
+From: Gillette <ondemand@pg.gillette.com>
+Date: Fri, 13 Dec 2024 14:24:17 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: <!doctype html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:of...
+
+==================================================
+Subject: 3D Printing for Off-Road Vehicles, E3D Revo Updates, MatterCAD, and More
+From: MatterHackers <support@matterhackers.com>
+Date: Fri, 13 Dec 2024 14:15:21 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: The December Newsletter is here and ready for you to dive into 3D printing articles and guides
+
+Ma...
+
+==================================================
+Subject: Experience Billy Wilder's classic comedy with THE APARTMENT & get 10% off Food & Drink!
+From: "Angelika Film Center & Cafe at Mosaic" <marketing@angelikafilmcenter.com>
+Date: Fri, 13 Dec 2024 14:03:31 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Open in browser (https://angelika.showtimeanalytics.com/link/GfY3ituYSRaaN-TTSMoe5KwNlmPeH3Z1CF67zVs...
+
+==================================================
+Subject: Unwrap Savings: Up to 40% Off
+From: TUMI <news@emails.tumi.com>
+Date: Fri, 13 Dec 2024 14:03:17 +0100
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Our Gift to You: Additional Markdowns
+
+https://link.tumi.com/u/nrd.php?p=ODPcc53Oij_420228_6521085...
+
+==================================================
+Subject: SLC Sign-Up Deadline is TONIGHT and PayNGo Opens on....: JHS FBLA 24-25
+From: JHS FBLA 24-25 <notifications@instructure.com>
+Date: Fri, 13 Dec 2024 13:51:11 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Reminder: If you qualified for SLC (1st-5th Place), today is the last day to commit to signing up. T...
+
+==================================================
+Subject: Eddie, a new Garland High School photo album was just shared 🖼
+From: "Classmates.com" <ClassmatesEmail@email.classmates.com>
+Date: Fri, 13 Dec 2024 13:34:08 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-...
+
+==================================================
+Subject: 5 Brilliant Prompts I Wish Every Single ChatGPT User Knew | Antony Matthews in Artificial Intelligence in Plain English
+From: Medium Daily Digest <noreply@medium.com>
+Date: Fri, 13 Dec 2024 13:30:00 +0000 (UTC)
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Stories for Eddiekempe
+@eddiekempe (https://medium.com/@eddiekempe?source=email-7d2f191647df-173408...
+
+==================================================
+Subject: Protect Dolly from fleas & ticks with this limited-time deal!
+From: Petco <Petco@e.petco.com>
+Date: Fri, 13 Dec 2024 13:22:32 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: 
+
+
+==================================================
+Subject: The 6 Daily Habits of a Better Leader (They're Not What You Think)
+From: Chris Laping <chris@peoplebeforethings.co>
+Date: Fri, 13 Dec 2024 13:00:54 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Read time: 3 minutes / Subscribe <https://peoplebeforethings.co/blog?ss_source=sscampaigns&ss_campai...
+
+==================================================
+Subject: Get the best AI for your best ROI
+From: "Think with Google US & Canada" <noreply-thinkwithgoogle-amer@google.com>
+Date: Fri, 13 Dec 2024 13:00:31 -0600 (CST)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: [ Image ]
+
+THE INSIGHTER  |  DECEMBER 2024
+
+The best AI for your best ROI
+
+[ The Insighter log...
+
+==================================================
+Subject: Trump, RFK Jr. Vaccine Update; Takeaways From Trump Time Interview
+From: Epoch Times Morning Brief <newsletter@theepochtimes.com>
+Date: Fri, 13 Dec 2024 12:43:39 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtm...
+
+==================================================
+Subject: December deals have landed 💸
+From: Sonic <noreply@email.sonicdrivein.com>
+Date: Fri, 13 Dec 2024 12:34:48 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+
+Sonic Drive-In
+
+
+
+
+
+
+
+
+ 
+
+ 
+ To view this email as a web page, click 
+https://cli...
+
+==================================================
+Subject: ⛰️ Be at Ball Arena TOMORROW
+From: Colorado Avalanche <dbm@coloradoavalanche.com>
+Date: Fri, 13 Dec 2024 12:34:42 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: Avs are Coming Home
+ 
+Come cheer on the Avs at Ball Arena this December! Watch as the Avs battle a...
+
+==================================================
+Subject: Herbert, a lost Cat, is missing in your area. Ref. ID: HAP-1214734
+From: HomeAgain PetRescuers <petrescuers@email3.homeagain.com>
+Date: Fri, 13 Dec 2024 12:27:52 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+ 
+ 
+
+https://click.email3.homeagain.com/?qs=da63e0f088df70efa587e20693c3c512afd47879b06829fb962...
+
+==================================================
+Subject: Get Apple Music on us for 6 months with your Verizon Plan
+From: Verizon Wireless <no-reply@customer.verizon.com>
+Date: Fri, 13 Dec 2024 12:16:44 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd...
+
+==================================================
+Subject: 🚚 Last call for ground shipping!
+From: Snapfish <snapfish@emails.snapfish.com>
+Date: Fri, 13 Dec 2024 12:15:49 +0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en" xmlns="http://www.w3.org/1999/xh...
+
+==================================================
+Subject: Your credit card statement is available
+From: Chase <no.reply.alerts@chase.com>
+Date: Fri, 13 Dec 2024 11:38:58 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xh...
+
+==================================================
+Subject: Did you forget something, VIFP? 🎁
+From: Carnival VIFP Club <funships@carnivalcruiselineemail.com>
+Date: Fri, 13 Dec 2024 11:37:03 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <div style="display:none">
+<!-- Define Email Template -->
+  
+
+<!-- Defines aLL data feilds -->
+...
+
+==================================================
+Subject: Re: Parent meetings
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Fri, 13 Dec 2024 11:13:37 -0700
+Labels: SENT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: How to survive your company holiday party
+From: "Inc. This Morning" <newsletters@e.inc.com>
+Date: Fri, 13 Dec 2024 11:08:03 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+&nbsp;
+
+
+==================================================
+Subject: ⏰ LAST CHANCE to score Car-Cation savings!
+From: Avis <avis@e.avis.com>
+Date: Fri, 13 Dec 2024 11:06:39 -0600
+Labels: UNREAD,IMPORTANT,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Avis
+https://click.e.avis.com/?qs=3459c245e179257f520b6a5adbc0038073537dad0080ac3f74084f7d9084a8610...
+
+==================================================
+Subject: 9 must-know open-source tools to land your dream job in 2025 | DEV Digest
+From: DEV Community Digest <yo@dev.to>
+Date: Fri, 13 Dec 2024 11:04:37 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose...
+
+==================================================
+Subject: Re: Parent meetings
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Fri, 13 Dec 2024 10:53:04 -0700
+Labels: SENT
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: 📣 Free Queso this Weekend 📣
+From: Chipotle Mexican Grill <chipotle@email.chipotle.com>
+Date: Fri, 13 Dec 2024 10:49:23 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: View in browser
+---------------------------------------------------------------
+https://view.email...
+
+==================================================
+Subject: 🔔 Your deposit alert in Monarch
+From: Monarch Money <email@email.monarchmoney.com>
+Date: Fri, 13 Dec 2024 10:29:34 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: 🔔 Your deposit alert in Monarch
+
+Hi Eddie,
+
+A deposit of $4,535 categorized as 💵 Paychecks from ...
+
+==================================================
+Subject: A Clue Hidden in a Map Might Solve One of America’s Greatest Mysteries
+From: Popular Mechanics <popularmechanics@newsletter.popularmechanics.com>
+Date: Fri, 13 Dec 2024 10:05:36 -0500 (EST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Enjoy a happy and healthy holiday season.
+From: King Soopers <noreply@lh.kingsoopers.com>
+Date: Fri, 13 Dec 2024 10:00:02 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:of...
+
+==================================================
+Subject: Latest Deals From Mile High On The Cheap - 12/13/2024
+From: Mile High On The Cheap <info@milehighonthecheap.com>
+Date: Fri, 13 Dec 2024 09:38:27 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: ** Mile High on the Cheap-mailing 
+- https://feeds.feedblitz.com/milehighonthecheap-feed
+
+- 167 F...
+
+==================================================
+Subject: Take 25% Off Athletic Styles & Last Call for Standard Shipping in Time for the Holidays!
+From: SKECHERS <no-reply@emails.skechers.com>
+Date: Fri, 13 Dec 2024 09:31:13 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: Skechers(R)
+
+ 
+ 
+ [{
+ "@context": "https://schema.org/",
+ "@type": "Organization",
+ "logo": "...
+
+==================================================
+Subject: Eddie, Build the Future of AI with Gemini 2.0's agentic capabilities
+From: Google AI Studio <googleaistudio-noreply@google.com>
+Date: Fri, 13 Dec 2024 08:50:03 -0800
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Unlock interactive AI experiences with Gemini 2.0
+
+Hi Eddie,
+
+
+We are thrilled to announce the ...
+
+==================================================
+Subject: Re: FW: Brogan/Kempe Update
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Fri, 13 Dec 2024 08:45:58 -0700
+Labels: SENT,INBOX
+--------------------------------------------------
+Body preview: I will send it to Shelly as well
+
+Thank you,
+Eddie
+
+
+On Fri, Dec 13, 2024 at 8:45 AM Eddie Kem...
+
+==================================================
+Subject: Re: FW: Brogan/Kempe Update
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Fri, 13 Dec 2024 08:45:46 -0700
+Labels: SENT,INBOX
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Check AWS costs
+From: Eddie Kempe <eddiekempe@gmail.com>
+Date: Fri, 13 Dec 2024 08:42:22 -0700
+Labels: IMPORTANT,SENT
+--------------------------------------------------
+Body preview: https://us-east-1.console.aws.amazon.com/costmanagement/home?region=us-east-1#/home
+
+74.98 on Frid...
+
+==================================================
+Subject: Trump Team Eyes Bank Regulator Overhaul
+From: Wall Street Breakfast <account@seekingalpha.com>
+Date: Fri, 13 Dec 2024 07:57:22 -0500
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: As Wall Street expects less regulation under president-elect Donald Trump, his transition team is re...
+
+==================================================
+Subject: Opportunities for Couples Recovery - One More Item
+From: newbeginnings RCA <rca89015arlington@gmail.com>
+Date: Fri, 13 Dec 2024 07:48:58 -0500
+Labels: UNREAD,CATEGORY_UPDATES,Label_141
+--------------------------------------------------
+Body preview: All
+
+I missed this in the original email.  My apologies.  Here is a Link
+<https://docs.google.com...
+
+==================================================
+Subject: Don’t Miss Out – Join Before Rates Increase
+From: Wolf Trap <wolftrap@wolftrapmailings.org>
+Date: Fri, 13 Dec 2024 07:22:31 -0800
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_46
+--------------------------------------------------
+Body preview: <!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" ...
+
+==================================================
+Subject: Essential PDF tools are at your fingertips
+From: Adobe Acrobat <mail@mail.adobe.com>
+Date: Fri, 13 Dec 2024 06:52:41 -0800
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: View Web Version:
+https://t-info.mail.adobe.com/r/?id=tbc1a8a03,fe6177b9,c0147658&e=cDE9JTQwVDcyelJ...
+
+==================================================
+Subject: 56 Tips on How to Sell to Walmart
+From: "Inc. This Morning" <newsletters@e.inc.com>
+Date: Fri, 13 Dec 2024 06:36:26 -0600 (CST)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+&nbsp;
+
+
+==================================================
+Subject: Still Looking For That Perfect Gift...Check These Deals Out!
+From: Shooting Illustrated <reply@emedia.nrapublications.org>
+Date: Fri, 13 Dec 2024 06:11:19 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xh...
+
+==================================================
+Subject: 🎄 Deck the Halls with 50% OFF Clearance
+From: Petco <Petco@e.petco.com>
+Date: Fri, 13 Dec 2024 06:09:47 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+Grab these markdowns before they're all gone!
+ 
+ 
+ 
+ Grab these markdow...
+
+==================================================
+Subject: Unleash Savings! $20 off just for you 🐾
+From: A Gift From Petco <Petco@e.petco.com>
+Date: Fri, 13 Dec 2024 05:48:58 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview:  
+
+
+
+
+
+
+
+
+
+
+
+Enjoy a special discount for your furry companions.
+
+ 
+
+Enjoy a special...
+
+==================================================
+Subject: Christmas countdown: hosting must-haves, gifts for all, and more
+From: "Amazon.com" <store-news@amazon.com>
+Date: Fri, 13 Dec 2024 05:14:49 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_34
+--------------------------------------------------
+Body preview: 
+  
+Holiday hosting essentials https://www.amazon.com/b?node=119011802011&ref_=nas
+
+
+
+Stocking...
+
+==================================================
+Subject: Back by popular demand: price drops up to $200!
+From: Bose <email@email.bose.com>
+Date: Fri, 13 Dec 2024 04:23:58 -0600
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: 
+
+ 
+
+
+ 
+Don't miss out on our most popular holiday deals — back for a limited time. 
+
+&#847;...
+
+==================================================
+Subject: Don’t miss out: See what’s new.
+From: Max <Max@stream.max.com>
+Date: Fri, 13 Dec 2024 03:46:55 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169,IMPORTANT
+--------------------------------------------------
+Body preview: Add these to your list.                     Max 
+( https://ablink.stream.max.com/ls/click?upn=u001....
+
+==================================================
+Subject: Tonight I had the Pizza Hut right off of Washington...
+From: Your NorthPark neighbors <reply@ss.email.nextdoor.com>
+Date: Fri, 13 Dec 2024 03:13:01 +0000 (UTC)
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Nextdoor Your NorthPark neighbors
+
+Tonight I had the Pizza Hut right off of Washington and 120th d...
+
+==================================================
+Subject: Assignment Graded: Test Review: Seasons/ Tides/ Plate Tectonics , AJH 8 Science Mann ACA 24-25
+From: AJH 8 Science Mann ACA 24-25 <notifications@instructure.com>
+Date: Fri, 13 Dec 2024 02:47:24 +0000
+Labels: UNREAD,Label_7346995351430108423,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your assignment Test Review: Seasons/ Tides/ Plate Tectonics has been graded.
+
+graded: Dec 12 at 7...
+
+==================================================
+Subject: ENDS 12/31! Help Veterans & Win Big This Holiday Season
+From: Shooting Illustrated <reply@emedia.nrapublications.org>
+Date: Fri, 13 Dec 2024 02:46:11 -0600
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:offic...
+
+==================================================
+Subject: “information technology architect”: Semperis - Senior Solutions Architect, Federal Pre-Sales and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Fri, 13 Dec 2024 02:20:13 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for information technology architect in Denver
+30+ new jobs match your preferences....
+
+==================================================
+Subject: “solutions architect”: Stripe - Solutions Architect, SSMB and more
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+Date: Fri, 13 Dec 2024 01:48:17 +0000 (UTC)
+Labels: Label_6513998119189003310,UNREAD,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Your job alert for solutions architect in United States
+30+ new jobs match your preferences.
+     ...
+
+==================================================
+Subject: 241213 Workout of the Day: Jack
+From: CrossFit <crossfit@mail.crossfit.com>
+Date: Fri, 13 Dec 2024 01:30:59 +0000
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Friday, Dec. 13: In honor of Army Staff Sgt. Jack M. Martin III,
+who died Sept. 29, 2009, in Jolo Is...
+
+==================================================
+Subject: Shop our comfiest women's brief style underwear
+From: Jockey <shopjockey@email.jockeycomfort.com>
+Date: Fri, 13 Dec 2024 01:13:28 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_63
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta http-equ...
+
+==================================================
+Subject: RE: FW: Brogan/Kempe Update
+From: Becky Clark <Becky@whitsonfamilylaw.com>
+Date: Fri, 13 Dec 2024 00:56:50 +0000
+Labels: IMPORTANT,CATEGORY_PERSONAL,INBOX
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: Eddie, your 2024 High Notes are here 🎉
+From: Bandsintown <notifications@updates.bandsintown.com>
+Date: Fri, 13 Dec 2024 00:18:16 +0000 (UTC)
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: 
+
+==================================================
+Subject: The Med is calling: 80% off for your 2nd Sailor
+From: Virgin Voyages <info@mk.virginvoyages.com>
+Date: Fri, 13 Dec 2024 00:04:15 +0000
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+
+<head>
+  <title>Your pictur...
+
+==================================================
+Subject: Hurry... holiday shipping ends TODAY! ^​
+From: TJ MAXX <tjmaxx@eml.tjmaxx.com>
+Date: 16 Dec 2024 13:11:10 -0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: It looks like your email client might not support HTML formatted email.
+
+Try opening this email in...
+
+==================================================
+Subject: Short-term homeless shelter hotel + gas station limit + heartbreaking restaurant closures
+From: "Denver Post // Roundup" <newsletters@denverpost.com>
+Date: 16 Dec 2024 11:23:06 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
 Subject: Must-Have Winter Item! ✔ Ozone-Free Paptizer CPAP Cleaner on Sale for ONLY $189
 From: AdaptHealth Marketplace <reply@adapthealthmarketplace.com>
 Date: 16 Dec 2024 11:10:42 -0500
@@ -1318,6 +6291,14 @@ Body preview:
 
 
 ==================================================
+Subject: Dystopian Book Letter
+From: "Talbott, Tracy A" <TracyATalbott@katyisd.org>
+Date: 16 Dec 2024 07:41:36 -0600
+Labels: Label_6720311247201040933,IMPORTANT,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: <span id="docs-internal-guid-90125dd5-7fff-ee85-bd41-e39caab75ef8"><p dir="ltr" style="line-height:1...
+
+==================================================
 Subject: Re: Update to our Epic Games Store Agreement
 From: Epic Games <help@email.epicgames.com>
 Date: 15 Dec 2024 17:29:12 -0000
@@ -1326,5 +6307,137 @@ Labels: UNREAD,Label_167,CATEGORY_UPDATES
 Body preview: It looks like your email client might not support HTML formatted email.
 
 Try opening this email in...
+
+==================================================
+Subject: One Colorado county's property values plummet + Travis Hunter wins Heisman + Broncos-Colts preview
+From: "Denver Post // Roundup" <newsletters@denverpost.com>
+Date: 15 Dec 2024 12:54:47 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
+Subject: “Nasty toxins” in urban rivers and streams + Heisman Trophy glory + RTD K-9 handlers + more Saturday news
+From: "Denver Post // Roundup" <newsletters@denverpost.com>
+Date: 14 Dec 2024 13:20:35 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
+Subject: Your Refund Request
+From: United Refunds <refunds@united.com>
+Date: 14 Dec 2024 10:14:52 -0600
+Labels: Label_3729917456980438582,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" >
+<html xmlns="http://www.w3.org/1999/...
+
+==================================================
+Subject: Semester Exam Exemption Status Update
+From: Semester Exam Exemption Request <no-reply@katyisd.org>
+Date: 13 Dec 2024 18:14:00 -0600
+Labels: UNREAD,Label_167,CATEGORY_PERSONAL
+--------------------------------------------------
+Body preview: <span style="font-family:Calibri; font-size: 11pt;">Congratulations!  You have been approved to exem...
+
+==================================================
+Subject: Semester Exam Exemption Status Update
+From: Semester Exam Exemption Request <no-reply@katyisd.org>
+Date: 13 Dec 2024 17:30:45 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <span style="font-family:Calibri; font-size: 11pt;">Congratulations!  You have been approved to exem...
+
+==================================================
+Subject: Early access has arrived🙌​
+From: TJ MAXX EARLY ACCESS <tjmaxx@eml.tjmaxx.com>
+Date: 13 Dec 2024 13:12:57 -0000
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: It looks like your email client might not support HTML formatted email.
+
+Try opening this email in...
+
+==================================================
+Subject: Your statement is now available online
+From: "Costco Anywhere Visa® Card" <citicards@info6.citi.com>
+Date: 13 Dec 2024 13:02:38 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: Citi(R) 
+
+Add citicards@info6.citi.com to your address book to ensure delivery.
+
+===================...
+
+==================================================
+Subject: Staffer suspended amid teen's death + Meow Wolf layoffs + Travis Hunter's trophy watch
+From: "Denver Post // Roundup" <newsletters@denverpost.com>
+Date: 13 Dec 2024 12:16:34 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
+Subject: Suffer from Dry Mouth? Try The NEW Aquoral Dry Mouth Spray (ONLY $85!)
+From: AdaptHealth Marketplace <reply@adapthealthmarketplace.com>
+Date: 13 Dec 2024 11:10:07 -0500
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: adapthealth marketplace (https://enews.adapthealthmarketplace.com/q/6_jzzTvH7Cq0XQ-TAd6tIdhTkfwYJXTm...
+
+==================================================
+Subject: 📣 Up to $100 OFF is still happening.  
+From: Ninja Kitchen <ninjakitchen@us.e.sharkninja.com>
+Date: 13 Dec 2024 10:30:21 -0500
+Labels: CATEGORY_PROMOTIONS,Label_169
+--------------------------------------------------
+Body preview: View online (https://link.us.e.sharkninja.com/q/4GIblngOyV1BOGXgl700hWSCgmsh-RGfdHH9FwksmBITA9hQa4cm...
+
+==================================================
+Subject: United Refund request
+From: United Airlines <noreply@united.com>
+Date: 13 Dec 2024 00:52:14 +0000
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html>
+
+<html>
+<head id="Head1">
+    <meta name="viewport" content="width=device-width" />
+...
+
+==================================================
+Subject: Yay! Book Your STUDIO Stations on the App!
+From: VASA Fitness <vasateam@email.vasafitness.com>
+Date: 12 Dec 2024 15:31:11 -0500
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: <!DOCTYPE html> <html lang="en"> <!--[if (gte mso 9)|(IE)]><html xmlns="http://www.w3.org/1999/xhtml...
+
+==================================================
+Subject: Have You Heard of Stelo? Start Tracking Your Sugar Levels (No Rx Needed!)
+From: AdaptHealth Marketplace <reply@adapthealthmarketplace.com>
+Date: 12 Dec 2024 11:39:30 -0500
+Labels: CATEGORY_PROMOTIONS,UNREAD,Label_167
+--------------------------------------------------
+Body preview: adapthealth marketplace (https://enews.adapthealthmarketplace.com/q/Q__ss_O7Cif0XAz5VquHzil_ks7lcVW2...
+
+==================================================
+Subject: Suncor treatment "bewildering" + food prices up + Bo Nix doesn't curse
+From: "Denver Post // Roundup" <newsletters@denverpost.com>
+Date: 12 Dec 2024 11:11:07 -0500
+Labels: Label_169,IMPORTANT,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-str...
+
+==================================================
+Subject: Semester Exam Exemption Request Submission
+From: Semester Exam Exemption Request <no-reply@katyisd.org>
+Date: 11 Dec 2024 18:05:40 -0600
+Labels: UNREAD,Label_167,CATEGORY_UPDATES
+--------------------------------------------------
+Body preview: <span style="font-family:Calibri; font-size: 11pt;">Your request has been submitted.  <b>Please reme...
 
 Database connection closed
