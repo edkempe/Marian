@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-maxResults = 1000  # Adjust as needed
+maxResults = 10  # Adjust as needed
 
 def connect_to_database():
     try:

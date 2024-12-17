@@ -7,8 +7,11 @@ import email
 from datetime import datetime, timedelta
 import json
 import argparse
+from pytz import timezone
+import time
+from dateutil import parser
 
-days_to_fetch = 5  # Number of days to fetch emails
+days_to_fetch = 1  # Number of days to fetch emails
 maxResults = 500  # Gmail API limit is 500
 
 def get_gmail_service():
@@ -20,38 +23,43 @@ def init_database():
     conn = sqlite3.connect('email_store.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
-                 (id TEXT PRIMARY KEY,
-                  subject TEXT,
-                  sender TEXT,
-                  date TEXT,
-                  body TEXT,
-                  labels TEXT,
-                  raw_data TEXT)''')
+    (id TEXT PRIMARY KEY,
+    subject TEXT,
+    sender TEXT,
+    date TEXT,
+    body TEXT,
+    labels TEXT,
+    raw_data TEXT)''')
     conn.commit()
     return conn
 
 def clear_database(conn):
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM emails')
-    conn.commit()
-    print("Database cleared successfully")
+    confirmation = input("Are you sure you want to clear the database? This action cannot be undone. (y/n): ")
+    if confirmation.lower() == 'y':
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM emails')
+        conn.commit()
+        print("Database cleared successfully")
+    else:
+        print("Database clearing cancelled")
 
 def fetch_emails(start_date=None, end_date=None):
     service = get_gmail_service()
     try:
         query = ''
         if start_date:
-            query += f'after:{start_date.strftime("%Y/%m/%d")}'
+            start_timestamp = int(time.mktime(start_date.astimezone(timezone('UTC')).timetuple()))
+            query += f'after:{start_timestamp} '
         if end_date:
-            query += f' before:{end_date.strftime("%Y/%m/%d")}'
-        
+            end_timestamp = int(time.mktime(end_date.astimezone(timezone('UTC')).timetuple()))
+            query += f'before:{end_timestamp}'
         messages = []
         next_page_token = None
         while True:
             results = service.users().messages().list(
                 userId='me',
-                q=query,
-                maxResults=500,
+                q=query.strip(),
+                maxResults=maxResults,
                 pageToken=next_page_token
             ).execute()
             messages.extend(results.get('messages', []))
@@ -63,18 +71,33 @@ def fetch_emails(start_date=None, end_date=None):
         print(f'An error occurred: {e}')
         return []
 
-def process_email(service, msg_id):
+def process_email(service, msg_id, conn):
     try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM emails WHERE id = ?', (msg_id,))
+        if cursor.fetchone():
+            print(f"Duplicate email found, skipping: {msg_id}")
+            return None
+
         message = service.users().messages().get(
             userId='me',
             id=msg_id,
             format='full'
         ).execute()
-
         headers = message['payload']['headers']
         subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), '')
         sender = next((h['value'] for h in headers if h['name'].lower() == 'from'), '')
         date = next((h['value'] for h in headers if h['name'].lower() == 'date'), '')
+
+        try:
+            date_obj = parser.parse(date)
+        except ValueError:
+            print(f"Error parsing date for message {msg_id}: {date}")
+            date_obj = datetime.now(timezone('UTC'))
+
+        # Store in UTC
+        date_utc = date_obj.astimezone(timezone('UTC'))
+        formatted_date = date_utc.strftime('%Y-%m-%d %H:%M:%S %z')
 
         if 'parts' in message['payload']:
             parts = message['payload']['parts']
@@ -90,7 +113,7 @@ def process_email(service, msg_id):
             'id': msg_id,
             'subject': subject,
             'sender': sender,
-            'date': date,
+            'date': formatted_date,
             'body': body,
             'labels': ','.join(message['labelIds']),
             'raw_data': json.dumps(message)
@@ -103,13 +126,17 @@ def get_oldest_email_date(conn):
     cursor = conn.cursor()
     cursor.execute('SELECT MIN(date) FROM emails')
     oldest_date = cursor.fetchone()[0]
-    return datetime.strptime(oldest_date, '%a, %d %b %Y %H:%M:%S %z') if oldest_date else None
+    if oldest_date:
+        return parser.parse(oldest_date).replace(tzinfo=timezone('UTC'))
+    return None
 
 def get_newest_email_date(conn):
     cursor = conn.cursor()
     cursor.execute('SELECT MAX(date) FROM emails')
     newest_date = cursor.fetchone()[0]
-    return datetime.strptime(newest_date, '%a, %d %b %Y %H:%M:%S %z') if newest_date else None
+    if newest_date:
+        return parser.parse(newest_date).replace(tzinfo=timezone('UTC'))
+    return None
 
 def fetch_older_emails(conn):
     oldest_date = get_oldest_email_date(conn)
@@ -123,7 +150,8 @@ def fetch_newer_emails(conn):
     newest_date = get_newest_email_date(conn)
     if newest_date:
         start_date = newest_date + timedelta(seconds=1)
-        return fetch_emails(start_date)
+        end_date = datetime.now(timezone('UTC'))
+        return fetch_emails(start_date, end_date)
     return []
 
 def count_emails(conn):
@@ -144,13 +172,12 @@ def main():
 
     if args.clear:
         clear_database(conn)
-        print("Database cleared.")
 
     total_emails = count_emails(conn)
-
+    
     if total_emails == 0:
         print(f"Database is empty. Fetching last {days_to_fetch} days of emails.")
-        end_date = datetime.now()
+        end_date = datetime.now(timezone('UTC'))
         start_date = end_date - timedelta(days=days_to_fetch)
         messages = fetch_emails(start_date, end_date)
     elif args.older:
@@ -161,18 +188,18 @@ def main():
         messages = fetch_newer_emails(conn)
 
     for msg in messages:
-        email_data = process_email(service, msg['id'])
+        email_data = process_email(service, msg['id'], conn)
         if email_data:
             try:
-                conn.execute('''INSERT OR REPLACE INTO emails
-                                (id, subject, sender, date, body, labels, raw_data)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                             (email_data['id'], email_data['subject'],
-                              email_data['sender'], email_data['date'],
-                              email_data['body'], email_data['labels'],
-                              email_data['raw_data']))
+                conn.execute('''INSERT OR IGNORE INTO emails
+                (id, subject, sender, date, body, labels, raw_data)
+                VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (email_data['id'], email_data['subject'],
+                email_data['sender'], email_data['date'],
+                email_data['body'], email_data['labels'],
+                email_data['raw_data']))
                 conn.commit()
-                print(f"Stored email: {email_data['subject']}")
+                print(f"Stored email: {email_data['date']} - {email_data['subject']}")
             except Exception as e:
                 print(f"Error storing email: {e}")
 
