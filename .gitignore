@@ -54,3 +54,12 @@ samconfig.toml
 # OS
 .DS_Store
 Thumbs.db
+
+# databases 
+*.db
+backups/
+
+# credentials
+credentials.json
+token.json
+*.pickle
