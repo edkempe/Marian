@@ -57,6 +57,7 @@ Thumbs.db
 
 # databases 
 *.db
+!prompts.db
 backups/
 
 # credentials
