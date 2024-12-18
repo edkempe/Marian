@@ -18,10 +18,12 @@ Dependencies:
 - pytz: For timezone handling
 
 Usage:
-python get_mail.py [--newer] [--older] [--clear]
+python get_mail.py [--newer] [--older] [--clear] [--label] [--list-labels]
   --newer: Fetch emails newer than the most recent in database
   --older: Fetch emails older than the oldest in database
   --clear: Clear the database before fetching
+  --label: Filter emails by label
+  --list-labels: List all available labels
 
 Notes:
 - Requires a token.pickle file with Gmail API credentials
@@ -80,7 +82,20 @@ def clear_database(conn):
     else:
         print("Database clearing cancelled")
 
-def fetch_emails(service, start_date=None, end_date=None):
+def get_label_id(service, label_name):
+    """Get the ID of a label by its name."""
+    try:
+        results = service.users().labels().list(userId='me').execute()
+        labels = results.get('labels', [])
+        for label in labels:
+            if label['name'].lower() == label_name.lower():
+                return label['id']
+        return None
+    except Exception as e:
+        print(f'Error getting label ID: {e}')
+        return None
+
+def fetch_emails(service, start_date=None, end_date=None, label=None):
     try:
         query = ''
         if start_date:
@@ -89,8 +104,12 @@ def fetch_emails(service, start_date=None, end_date=None):
 
         if end_date:
             timestamp = int(end_date.timestamp())
-            query += f'before:{timestamp}'
+            query += f'before:{timestamp} '
 
+        if label:
+            query += f'label:{label}'
+
+        print(f"Using query: {query}")
         messages = []
         next_page_token = None
         
@@ -182,20 +201,20 @@ def get_newest_email_date(conn):
         return parser.parse(newest_date).replace(tzinfo=UTC_TZ)
     return None
 
-def fetch_older_emails(conn, service):
+def fetch_older_emails(conn, service, label=None):
     oldest_date = get_oldest_email_date(conn)
     if oldest_date:
-        end_date = oldest_date - timedelta(seconds=1)
-        start_date = end_date - timedelta(days=days_to_fetch)
-        return fetch_emails(service, start_date, end_date)
+        messages = fetch_emails(service, end_date=oldest_date, label=label)
+        return messages
     return []
 
-def fetch_newer_emails(conn, service):
+def fetch_newer_emails(conn, service, label=None):
     newest_date = get_newest_email_date(conn)
     if newest_date:
+        # Add 1-minute overlap to avoid missing emails
         start_date = newest_date - timedelta(minutes=1)
-        end_date = datetime.now(UTC_TZ)
-        return fetch_emails(service, start_date, end_date)
+        messages = fetch_emails(service, start_date=start_date, label=label)
+        return messages
     return []
 
 def count_emails(conn):
@@ -203,11 +222,26 @@ def count_emails(conn):
     cursor.execute('SELECT COUNT(*) FROM emails')
     return cursor.fetchone()[0]
 
+def list_labels(service):
+    """List all available Gmail labels."""
+    try:
+        results = service.users().labels().list(userId='me').execute()
+        labels = results.get('labels', [])
+        print("\nAvailable labels:")
+        for label in labels:
+            print(f"- {label['name']} (ID: {label['id']})")
+        return labels
+    except Exception as e:
+        print(f'Error listing labels: {e}')
+        return []
+
 def main():
     parser = argparse.ArgumentParser(description='Fetch emails from Gmail')
     parser.add_argument('--older', action='store_true', help='Fetch older emails')
     parser.add_argument('--newer', action='store_true', help='Fetch newer emails')
     parser.add_argument('--clear', action='store_true', help='Clear the database before fetching')
+    parser.add_argument('--label', type=str, help='Filter emails by label')
+    parser.add_argument('--list-labels', action='store_true', help='List all available labels')
     
     args = parser.parse_args()
 
@@ -215,21 +249,26 @@ def main():
     conn = init_database()
     service = get_gmail_service()
 
+    if args.list_labels:
+        list_labels(service)
+        return
+
     if args.clear:
         clear_database(conn)
 
     total_emails = count_emails(conn)
     print(f"Current email count: {total_emails}")
 
-    if total_emails == 0:
+    if args.label:
+        print(f"Fetching all emails with label: {args.label}")
+        messages = fetch_emails(service, label=args.label)
+    elif total_emails == 0:
         print(f"Database is empty. Fetching last {days_to_fetch} days of emails.")
         end_date = datetime.now(UTC_TZ)
         start_date = end_date - timedelta(days=days_to_fetch)
         messages = fetch_emails(service, start_date, end_date)
-    
     elif args.older:
         messages = fetch_older_emails(conn, service)
-
     elif args.newer or not (args.older or args.newer):
         messages = fetch_newer_emails(conn, service)
 
