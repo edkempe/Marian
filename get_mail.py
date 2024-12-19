@@ -48,8 +48,8 @@ from pytz import timezone
 import time
 from dateutil import parser
 
-days_to_fetch = 30  # Number of days to fetch emails
-maxResults = 500  # Gmail API limit is 500
+days_to_fetch = 5  # Temporarily set to 5 days to get roughly 50 emails
+maxResults = 50  # Set max results to 50
 MOUNTAIN_TZ = timezone('US/Mountain')
 UTC_TZ = timezone('UTC')
 

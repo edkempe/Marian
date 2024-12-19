@@ -8,7 +8,11 @@ import os
 import json
 import pickle
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.compose'
+]
 TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
 
