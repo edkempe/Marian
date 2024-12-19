@@ -1,19 +1,15 @@
 # Core dependencies
-anthropic~=0.7.7           # Anthropic API client
+requests==2.31.0           # HTTP client for API calls
 google-api-python-client==2.108.0
 google-auth-oauthlib==1.1.0
 boto3==1.33.6
-requests==2.31.0
 
-# Data processing and utilities
-pandas>=2.1.0
-tqdm>=4.66.0
-python-dotenv>=1.0.0
-backoff>=2.2.0
+# Data processing and visualization
+pandas==2.1.4
+plotly==5.18.0
+textblob==0.17.1
+jinja2==3.1.2
 
-# Date and time handling
-python-dateutil>=2.8.2
-pytz>=2023.3
-
-# Type support
-typing-extensions>=4.6.1
+# Environment and utilities
+python-dotenv==1.0.0
+tqdm==4.66.1
