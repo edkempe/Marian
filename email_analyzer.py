@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import sqlite3
-import requests
 import json
 from datetime import datetime
 import logging
@@ -12,6 +11,7 @@ from tqdm import tqdm
 import time
 from typing import List, Dict, Any
 import re
+import anthropic
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -34,424 +34,331 @@ def get_api_key():
         raise EnvironmentError("Failed to load ANTHROPIC_API_KEY from environment")
     return api_key
 
-class EmailProcessor:
-    def __init__(self, api_key: str):
-        """Initialize EmailProcessor."""
-        self.api_key = api_key
-        self.base_url = "https://api.anthropic.com/v1/complete"
-        self.headers = {
-            "x-api-key": self.api_key,
-            "content-type": "application/json",
-            "anthropic-version": "2023-06-01"
-        }
-        
-        # Connect to source email database
-        self.email_db = sqlite3.connect('email_store.db')
-        self.email_cursor = self.email_db.cursor()
-        
-        # Connect to analysis database
-        self.analysis_db = sqlite3.connect('email_analysis.db')
-        self.analysis_cursor = self.analysis_db.cursor()
-        
-        # Initialize analysis database tables
-        self._init_analysis_db()
+class EmailAnalyzer:
+    """Analyzes emails using Claude-3-Haiku."""
 
-    def _init_analysis_db(self):
-        """Initialize the analysis database tables"""
-        self.analysis_cursor.execute('''
-            CREATE TABLE IF NOT EXISTS email_analysis (
-                email_id TEXT PRIMARY KEY,
-                analysis_result TEXT,
-                analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                sentiment TEXT,
-                topics TEXT,
-                project TEXT,
-                action_items TEXT,
-                summary TEXT,
-                confidence REAL DEFAULT 0.0
-            )
-        ''')
-        self.analysis_db.commit()
+    ANALYSIS_PROMPT = """You are an email analysis assistant. Your task is to analyze the email below and extract key information.
+You MUST respond with ONLY a single-line JSON object containing the analysis - no other text, no newlines, no formatting.
 
-    def analyze_email(self, email_id: str, subject: str, sender: str, date: str, body: str) -> Dict[str, Any]:
-        """Analyze a single email using Anthropic's Claude API."""
-        prompt = f"""Analyze this email and provide a structured analysis with the following information:
-
-Email:
+Email to analyze:
 Subject: {subject}
 From: {sender}
+Type: {email_type}
+Labels: {labels}
+Thread ID: {thread_id}
 Date: {date}
-Body:
-{body}
+Has Attachments: {has_attachments}
 
-Provide a JSON object with the following fields:
-- intent: The main purpose of the email
-- tone: The emotional tone (formal, friendly, urgent)
-- urgency: How urgent is it (high, medium, low)
-- importance: How important is it (high, medium, low)
-- actions_required: List of specific actions needed
-- deadlines: Any mentioned deadlines
-- key_topics: Main topics (3-7 key topics)
-- project: Related project name
-- summary: Brief 1-2 sentence summary
+Content:
+{truncated_body}
 
-Format your response as a valid JSON object."""
+Required JSON response format (single line, no newlines, no formatting):
+{{"summary": "brief summary", "category": ["category1"], "priority": {{"score": 1-5, "reason": "reason"}}, "action": {{"needed": true/false, "type": ["action1"], "deadline": "YYYY-MM-DD"}}, "key_points": ["point1"], "people_mentioned": ["person1"], "links_found": ["url1"], "context": {{"project": "project name", "topic": "topic", "ref_docs": "references"}}, "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
 
+Important:
+1. Respond with ONLY the JSON object on a single line - no other text, no newlines, no formatting
+2. For any URLs in links_found, truncate them to maximum 100 characters and add ... at the end if longer
+3. Make sure all JSON fields are present
+4. Use empty arrays [] for missing lists
+5. Use empty strings "" for missing text fields"""
+
+    def __init__(self):
+        """Initialize the analyzer with database connections."""
+        self.email_db_path = "email_store.db"
+        self.analysis_db_path = "email_analysis.db"
+        
+        # Connect to email database
+        self.email_db = sqlite3.connect(self.email_db_path)
+        self.email_db.row_factory = sqlite3.Row
+        self.cursor = self.email_db.cursor()
+        
+        # Attach analysis database
+        self.cursor.execute(f"ATTACH DATABASE '{self.analysis_db_path}' AS analysis")
+        
+        # Enable foreign keys
+        self.cursor.execute("PRAGMA foreign_keys = ON")
+        
+        # Initialize Anthropic client
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.client = anthropic.Anthropic(api_key=api_key)
+        
+        # Set up database schema
+        self._setup_analysis_db()
+        
+    def _setup_analysis_db(self):
+        """Set up the analysis database schema."""
         try:
-            # Call Anthropic API with retries
-            max_retries = 3
-            retry_delay = 2
+            # Drop existing table if it exists
+            self.cursor.execute("DROP TABLE IF EXISTS analysis.email_analysis")
+            self.email_db.commit()
             
-            for attempt in range(max_retries):
-                try:
-                    response = requests.post(
-                        self.base_url,
-                        headers=self.headers,
-                        json={
-                            "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
-                            "model": "claude-2.1",
-                            "max_tokens_to_sample": 1000,
-                            "temperature": 0.0
-                        }
-                    )
-                    response.raise_for_status()
-                    completion = response.json()["completion"]
-                    break
-                except Exception as e:
-                    if attempt == max_retries - 1:  # Last attempt
-                        raise
-                    logging.warning(f"API call failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
-                    time.sleep(retry_delay * (attempt + 1))
-
-            # Extract JSON from the response
-            try:
-                # Try to parse as JSON directly
-                analysis = json.loads(completion)
-            except json.JSONDecodeError:
-                # If that fails, try to extract JSON from the response
-                json_match = re.search(r'\{[\s\S]*\}', completion)
-                if json_match:
-                    analysis = json.loads(json_match.group(0))
-                else:
-                    raise ValueError("Could not extract valid JSON from response")
-
-            # Add confidence score based on completeness
-            required_fields = ['intent', 'tone', 'urgency', 'importance', 'actions_required', 
-                             'deadlines', 'key_topics', 'project', 'summary']
-            completeness = sum(1 for field in required_fields if field in analysis) / len(required_fields)
-            analysis['confidence'] = round(completeness, 2)
-
-            # Store analysis results
-            self.save_analysis(email_id, analysis)
-            logging.info(f"Successfully analyzed email {email_id}")
-            logging.info(f"Analysis: {json.dumps(analysis, indent=2)}")
-            return analysis
-
+            # Create new table with strict schema matching
+            self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS analysis.email_analysis (
+                email_id TEXT PRIMARY KEY,
+                analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                summary TEXT NOT NULL,
+                category TEXT NOT NULL CHECK(json_valid(category)),  -- JSON array
+                priority_score INTEGER NOT NULL CHECK(priority_score BETWEEN 1 AND 5),
+                priority_reason TEXT NOT NULL,
+                action_needed INTEGER NOT NULL CHECK(action_needed IN (0, 1)),  -- Boolean
+                action_type TEXT NOT NULL CHECK(json_valid(action_type)),  -- JSON array
+                action_deadline TEXT,  -- Optional
+                key_points TEXT NOT NULL CHECK(json_valid(key_points)),  -- JSON array
+                people_mentioned TEXT NOT NULL CHECK(json_valid(people_mentioned)),  -- JSON array
+                links_found TEXT NOT NULL CHECK(json_valid(links_found)),  -- JSON array of full URLs
+                links_display TEXT NOT NULL CHECK(json_valid(links_display)),  -- JSON array of truncated URLs
+                project TEXT,  -- Optional
+                topic TEXT,  -- Optional
+                ref_docs TEXT,  -- Optional
+                sentiment TEXT NOT NULL CHECK(sentiment IN ('positive', 'negative', 'neutral')),
+                confidence_score REAL NOT NULL CHECK(confidence_score BETWEEN 0 AND 1),
+                raw_analysis TEXT NOT NULL CHECK(json_valid(raw_analysis))  -- Full JSON response
+            )""")
+            self.email_db.commit()
+            
+            # Verify table exists
+            self.cursor.execute("SELECT name FROM analysis.sqlite_master WHERE type='table' AND name='email_analysis'")
+            if not self.cursor.fetchone():
+                raise Exception("Failed to create email_analysis table")
+            logger.info("Successfully created email_analysis table")
+            
         except Exception as e:
-            logger.error(f"Error analyzing email {email_id}: {str(e)}")
-            return {
-                'error': str(e),
-                'intent': 'unknown',
-                'tone': 'unknown',
-                'urgency': 'low',
-                'importance': 'low',
-                'actions_required': [],
-                'deadlines': [],
-                'key_topics': [],
-                'project': 'unknown',
-                'summary': 'Failed to analyze email',
-                'confidence': 0.0
-            }
-
-    def save_analysis(self, email_id: str, analysis_result: dict):
-        """Save analysis results to the analysis database"""
-        # Extract topics and sentiment from the analysis
-        topics = json.dumps(analysis_result.get('key_topics', []))
-        sentiment = json.dumps([analysis_result.get('tone', '')])
-        action_items = json.dumps(analysis_result.get('actions_required', []))
-        project = analysis_result.get('project', '')
-        confidence = analysis_result.get('confidence', 0.85)  # Default confidence if not provided
-        
-        self.analysis_cursor.execute('''
-            INSERT OR REPLACE INTO email_analysis
-            (email_id, analysis_result, sentiment, topics, project, action_items, summary, confidence)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            email_id,
-            json.dumps(analysis_result),
-            sentiment,
-            topics,
-            project,
-            action_items,
-            analysis_result.get('summary', ''),
-            confidence
-        ))
-        self.analysis_db.commit()
-
-    def get_unanalyzed_emails(self, limit: int = 50) -> List[Dict]:
-        """Get emails that haven't been analyzed yet"""
-        # Debug: Check total emails in source database
-        self.email_cursor.execute('SELECT COUNT(*) FROM emails')
-        total_emails = self.email_cursor.fetchone()[0]
-        logging.info(f"Total emails in source database: {total_emails}")
-        
-        # Get list of already analyzed emails
-        self.analysis_cursor.execute('SELECT email_id FROM email_analysis')
-        analyzed_ids = {row[0] for row in self.analysis_cursor.fetchall()}
-        logging.info(f"Already analyzed emails: {len(analyzed_ids)}")
-        
-        # Get emails from source database that haven't been analyzed
-        query = '''
-            SELECT id, subject, sender, date, body
-            FROM emails
-            ORDER BY date DESC
-            LIMIT ?
-        '''
-        logging.info(f"Executing query: {query}")
-        self.email_cursor.execute(query, (limit,))
-        
-        emails = []
-        for row in self.email_cursor.fetchall():
-            emails.append({
-                'id': row[0],
-                'subject': row[1],
-                'sender': row[2],
-                'date': row[3],
-                'body': row[4]
-            })
-        logging.info(f"Found {len(emails)} emails to analyze")
-        return emails
-
-    def process_email(self, email_data, max_retries=3, retry_delay=2):
-        """Process a single email"""
+            logger.error(f"Error setting up database: {str(e)}")
+            self.email_db.rollback()
+            raise
+            
+    def analyze_email(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze email content using Claude-3-Haiku."""
         try:
-            email_id, subject, sender, date, body = email_data
-            logging.info(f"Processing email {email_id}")
-            
-            # Truncate the body if it's too long
-            max_body_length = 4000  # Reasonable limit for API
-            truncated_body = body[:max_body_length] if body else ""
-            
-            # Format prompt with email data
-            analysis_prompt = {
-                'prompt_text': '''You are an expert email analyst. Analyze the following email and extract key information.
-
-Consider:
-1. The sender's intent and tone
-2. The urgency and importance
-3. Required actions or responses
-4. Key dates or deadlines
-5. Important entities or topics mentioned
-
-Format your response as a JSON object with these fields:
-- intent: Primary purpose of the email
-- tone: Professional/casual/urgent/etc
-- urgency: high/medium/low
-- importance: high/medium/low
-- actions_required: List of required actions
-- deadlines: Any mentioned deadlines
-- key_topics: Main topics or entities
-- project: The project or initiative this email relates to (if any)
-- summary: Brief summary of the email
-
-Email details:
-Subject: {0}
-From: {1}
-Date: {2}
-Has Attachments: {3}
-Body Length: {4} characters
-Body truncated: {5}
-
-Email body:
-{6}
-
-Analyze the above email and respond with a valid JSON object containing all the required fields.''',
-                'prompt_name': 'test_anthropic_email.email.analysis',
-                'purpose': 'email',
-                'task': 'analysis',
-                'model_name': 'claude-2.1',
-                'max_tokens': 1500,
-                'temperature': None,
-                'expected_response_format': {
-                    "intent": "string",
-                    "tone": "string",
-                    "urgency": "string",
-                    "importance": "string",
-                    "actions_required": ["string"],
-                    "deadlines": ["string"],
-                    "key_topics": ["string"],
-                    "project": "string",
-                    "summary": "string"
-                }
+            # Format the prompt with email data
+            prompt_data = {
+                'subject': email_data.get('subject', 'No Subject'),
+                'sender': email_data.get('sender', 'Unknown'),
+                'email_type': email_data.get('type', 'Unknown'),
+                'labels': email_data.get('labels', []),
+                'thread_id': email_data.get('thread_id', ''),
+                'date': email_data.get('date', 'Unknown'),
+                'has_attachments': email_data.get('has_attachments', False),
+                'truncated_body': email_data.get('content', '')[:2000]  # Truncate long emails
             }
-            raw_prompt = analysis_prompt['prompt_text'].format(
-                subject,
-                sender,
-                date,
-                bool(False),
-                len(body) if body else 0,
-                len(body) > max_body_length if body else False,
-                truncated_body
+            
+            formatted_prompt = self.ANALYSIS_PROMPT.format(**prompt_data)
+
+            # Make API call to Claude-3-Haiku
+            response = self.client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=1024,
+                messages=[
+                    {"role": "user", "content": formatted_prompt}
+                ]
             )
-            
-            # Call Anthropic API with retries
-            for attempt in range(max_retries):
-                try:
-                    completion = self._call_anthropic_api(raw_prompt)
-                    break  # Success, exit retry loop
-                except Exception as e:
-                    if attempt == max_retries - 1:  # Last attempt
-                        raise  # Re-raise the last error
-                    logging.warning(f"API call failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
-                    time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
-            
-            # Parse response and validate JSON
-            response_text = completion
-            try:
-                # Try to parse as JSON directly
-                analysis = json.loads(response_text)
-            except json.JSONDecodeError:
-                # If that fails, try to extract JSON from the response
-                import re
-                json_match = re.search(r'\{[\s\S]*\}', response_text)
-                if json_match:
-                    analysis = json.loads(json_match.group(0))
-                else:
-                    raise ValueError("Could not extract valid JSON from response")
-            
-            # Store analysis results
-            self.save_analysis(email_id, analysis)
-            logging.info(f"Successfully analyzed email {email_id}")
-            logging.info(f"Analysis: {json.dumps(analysis, indent=2)}")
-            return True
-            
-        except Exception as e:
-            logging.error(f"Error processing email {email_id}: {str(e)}")
-            return False
 
-    def _call_anthropic_api(self, prompt: str, max_tokens: int = 1500, temperature: float = 0.7) -> str:
-        """Make a direct API call to Anthropic's Claude API"""
-        url = f"{self.base_url}"
-        data = {
-            "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
-            "model": "claude-2.1",
-            "max_tokens_to_sample": max_tokens,
-            "temperature": temperature
-        }
-        
-        response = requests.post(url, headers=self.headers, json=data)
-        response.raise_for_status()
-        return response.json()["completion"]
+            # Parse and validate the response
+            try:
+                # Extract JSON from response
+                text = response.content[0].text if isinstance(response.content, list) else response.content
+                
+                # Try to parse as JSON directly first
+                try:
+                    analysis = json.loads(text)
+                except json.JSONDecodeError:
+                    # If that fails, try to extract JSON from text
+                    start = text.find('{')
+                    end = text.rfind('}') + 1
+                    if start >= 0 and end > start:
+                        raw_analysis = text[start:end]
+                        analysis = json.loads(raw_analysis)
+                    else:
+                        logger.error(f"Could not find JSON in response: {text}")
+                        return None
+
+                # Validate and normalize the response
+                try:
+                    # Helper function to safely convert to JSON array
+                    def safe_json_array(value, field_name):
+                        if not value:
+                            return json.dumps([])
+                        if isinstance(value, str):
+                            try:
+                                value = json.loads(value)
+                            except json.JSONDecodeError:
+                                logger.warning(f"Invalid JSON in {field_name}, using empty array")
+                                return json.dumps([])
+                        if not isinstance(value, list):
+                            logger.warning(f"Expected list for {field_name}, got {type(value)}, using empty array")
+                            return json.dumps([])
+                        return json.dumps(value)
+
+                    # Helper function to safely convert to int within range
+                    def safe_int_range(value, min_val, max_val, default, field_name):
+                        try:
+                            if isinstance(value, str):
+                                value = int(float(value))
+                            elif isinstance(value, float):
+                                value = int(value)
+                            elif not isinstance(value, int):
+                                raise ValueError(f"Cannot convert {type(value)} to int")
+                            return max(min_val, min(max_val, value))
+                        except (ValueError, TypeError):
+                            logger.warning(f"Invalid {field_name}: {value}, using default {default}")
+                            return default
+
+                    # Helper function to safely convert to float within range
+                    def safe_float_range(value, min_val, max_val, default, field_name):
+                        try:
+                            if isinstance(value, str):
+                                value = float(value)
+                            elif not isinstance(value, (int, float)):
+                                raise ValueError(f"Cannot convert {type(value)} to float")
+                            return max(min_val, min(max_val, float(value)))
+                        except (ValueError, TypeError):
+                            logger.warning(f"Invalid {field_name}: {value}, using default {default}")
+                            return default
+
+                    normalized = {
+                        'summary': str(analysis.get('summary', '')).strip(),
+                        'category': safe_json_array(analysis.get('category'), 'category'),
+                        'priority': {
+                            'score': safe_int_range(
+                                analysis.get('priority', {}).get('score'), 
+                                1, 5, 3, 
+                                'priority score'
+                            ),
+                            'reason': str(analysis.get('priority', {}).get('reason', 'Default priority')).strip()
+                        },
+                        'action': {
+                            'needed': bool(analysis.get('action', {}).get('needed', False)),
+                            'type': safe_json_array(analysis.get('action', {}).get('type'), 'action type'),
+                            'deadline': str(analysis.get('action', {}).get('deadline', '')).strip()
+                        },
+                        'key_points': safe_json_array(analysis.get('key_points'), 'key_points'),
+                        'people_mentioned': safe_json_array(analysis.get('people_mentioned'), 'people_mentioned'),
+                        'links_found': safe_json_array(analysis.get('links_found'), 'links_found'),
+                        'links_display': json.dumps([
+                            url[:100] + '...' if len(url) > 100 else url 
+                            for url in (analysis.get('links_found', []) if isinstance(analysis.get('links_found'), list) else [])
+                        ]),
+                        'context': {
+                            'project': str(analysis.get('context', {}).get('project', '')).strip(),
+                            'topic': str(analysis.get('context', {}).get('topic', '')).strip(),
+                            'ref_docs': str(analysis.get('context', {}).get('ref_docs', '')).strip()
+                        },
+                        'sentiment': str(analysis.get('sentiment', 'neutral')).lower().strip(),
+                        'confidence_score': safe_float_range(
+                            analysis.get('confidence_score'), 
+                            0.0, 1.0, 0.9, 
+                            'confidence score'
+                        ),
+                        'raw_analysis': json.dumps(analysis)
+                    }
+
+                    # Final sentiment validation
+                    if normalized['sentiment'] not in ('positive', 'negative', 'neutral'):
+                        logger.warning(f"Invalid sentiment: {normalized['sentiment']}, using neutral")
+                        normalized['sentiment'] = 'neutral'
+
+                except Exception as e:
+                    logger.error(f"Error normalizing response: {str(e)}")
+                    logger.error(f"Raw response: {text}")
+                    return None
+
+                return normalized
+
+            except Exception as e:
+                logger.error(f"Error parsing response: {str(e)}")
+                logger.error(f"Raw response: {text}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error analyzing email: {str(e)}")
+            return None
+
+    def process_emails(self, batch_size: int = 10) -> None:
+        """Process a batch of unanalyzed emails."""
+        try:
+            # Get unanalyzed emails
+            self.cursor.execute("""
+                SELECT id, subject, sender, date, body, labels
+                FROM emails 
+                WHERE id NOT IN (
+                    SELECT email_id FROM analysis.email_analysis
+                )
+                LIMIT ?
+            """, (batch_size,))
+            
+            emails = self.cursor.fetchall()
+            if not emails:
+                logger.info("No new emails to analyze")
+                return
+
+            logger.info(f"Found {len(emails)} emails to analyze")
+            for email in tqdm(emails, desc="Analyzing emails"):
+                email_data = {
+                    'id': email['id'],
+                    'subject': email['subject'],
+                    'sender': email['sender'],
+                    'date': email['date'],
+                    'content': email['body'],
+                    'thread_id': '',  # Not available in schema
+                    'labels': email['labels']
+                }
+
+                analysis = self.analyze_email(email_data)
+                if analysis:
+                    # Store analysis results
+                    insert_query = """
+                        INSERT INTO analysis.email_analysis (
+                            email_id, summary, category, priority_score, priority_reason,
+                            action_needed, action_type, action_deadline, key_points,
+                            people_mentioned, links_found, links_display, project, topic, ref_docs,
+                            sentiment, confidence_score, raw_analysis
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """
+                    logger.info(f"Inserting analysis for email {email_data['id']}")
+                    self.cursor.execute(insert_query, (
+                        email_data['id'],
+                        analysis.get('summary', ''),
+                        analysis.get('category', ''),
+                        analysis['priority']['score'],
+                        analysis['priority']['reason'],
+                        1 if analysis['action']['needed'] else 0,
+                        analysis['action']['type'],
+                        analysis['action']['deadline'],
+                        analysis.get('key_points', ''),
+                        analysis.get('people_mentioned', ''),
+                        analysis.get('links_found', ''),
+                        analysis.get('links_display', ''),
+                        analysis['context']['project'],
+                        analysis['context']['topic'],
+                        analysis['context']['ref_docs'],
+                        analysis.get('sentiment', 'neutral'),
+                        analysis.get('confidence_score', 0.9),
+                        analysis.get('raw_analysis', '')
+                    ))
+                    self.email_db.commit()
+
+                # Add delay to respect rate limits
+                time.sleep(1)
+
+        except Exception as e:
+            logger.error(f"Error processing emails: {str(e)}")
+            self.email_db.rollback()
+            raise
 
     def close(self):
-        """Close database connections"""
+        """Close database connections."""
         self.email_db.close()
-        self.analysis_db.close()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-def test_email_analysis():
-    """Test email analysis with a single test email"""
-    try:
-        # Initialize processor
-        api_key = get_api_key()
-        with EmailProcessor(api_key=api_key) as processor:
-            # Insert a test email
-            test_email = (
-                'test123',  # id
-                'Team Meeting Next Week',  # subject
-                'alice@example.com',  # sender
-                '2024-12-18',  # date
-                '''Hi team,
-                
-                Let's have our weekly sync meeting next Tuesday at 2 PM PST.
-                Please review the Q4 metrics before the meeting and come prepared
-                with your updates.
-                
-                Important agenda items:
-                1. Q4 Review
-                2. 2024 Planning
-                3. New Project Kickoff
-                
-                Best regards,
-                Alice''',  # body
-            )
-            
-            processor.email_cursor.execute('''
-                INSERT OR REPLACE INTO emails (id, subject, sender, date, body)
-                VALUES (?, ?, ?, ?, ?)
-            ''', test_email)
-            processor.email_db.commit()
-            
-            # Process the email
-            logging.info("Processing test email...")
-            if processor.process_email(test_email):
-                # Fetch and display the analysis
-                processor.analysis_cursor.execute('''
-                    SELECT analysis_result
-                    FROM email_analysis
-                    WHERE email_id = ?
-                ''', (test_email[0],))
-                
-                result = processor.analysis_cursor.fetchone()
-                if result:
-                    analysis = json.loads(result[0])
-                    logging.info("Analysis results:")
-                    logging.info(json.dumps(analysis, indent=2))
-                else:
-                    logging.error("No analysis found for test email")
-            else:
-                logging.error("Failed to process test email")
-                
-    except Exception as e:
-        logging.error(f"Error in test: {str(e)}")
-        raise
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
-    
+def main():
     try:
         verify_environment()
-        api_key = get_api_key()
-        
-        with EmailProcessor(api_key=api_key) as processor:
-            # Get unanalyzed emails (testing with just 50 first)
-            emails = processor.get_unanalyzed_emails(limit=50)
-            logging.info(f"Found {len(emails)} unanalyzed emails")
-            
-            # Process each email
-            for email in tqdm(emails, desc="Processing emails"):
-                success = processor.process_email((
-                    email['id'],
-                    email['subject'],
-                    email['sender'],
-                    email['date'],
-                    email['body']
-                ))
-                if not success:
-                    logging.error(f"Failed to process email {email['id']}")
-                
-            # Show results
-            processor.analysis_cursor.execute('''
-                SELECT email_id, analysis_result
-                FROM email_analysis
-            ''')
-            results = processor.analysis_cursor.fetchall()
-            logging.info(f"\nProcessed {len(results)} emails:")
-            for email_id, analysis in results:
-                analysis_dict = json.loads(analysis)
-                logging.info(f"\nEmail {email_id}:")
-                logging.info(f"Summary: {analysis_dict.get('summary', 'No summary available')}")
-            
-            logging.info("\nEmail analysis complete")
-            
+        analyzer = EmailAnalyzer()
+        analyzer.process_emails(batch_size=10)  # Process 10 emails
     except Exception as e:
-        logging.error(f"Error in main: {str(e)}")
-        raise
+        logger.error(f"Error in main: {str(e)}")
+    finally:
+        analyzer.close()
+
+if __name__ == "__main__":
+    main()
