@@ -64,3 +64,6 @@ backups/
 credentials.json
 token.json
 *.pickle
+
+# generated files
+self_email_log.json

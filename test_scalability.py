@@ -2,7 +2,7 @@
 import pytest
 import time
 from unittest.mock import Mock, patch
-from utils.scalability import (
+from util_scalability import (
     cache,
     rate_limit,
     circuit_breaker,
@@ -14,7 +14,7 @@ from utils.scalability import (
 @pytest.fixture
 def mock_redis():
     """Mock Redis client."""
-    with patch('utils.scalability.redis_client') as mock:
+    with patch('util_scalability.redis_client') as mock:
         # Set up mock for circuit breaker
         mock.get.side_effect = None  # Reset any previous side effects
         mock.pipeline.return_value = mock  # Make pipeline return self for chaining

@@ -1,11 +1,9 @@
 """Email analysis models."""
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, Boolean, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, Boolean
 from pydantic import BaseModel, Field, model_validator
-
-Base = declarative_base()
+from model_base import Base
 
 class PriorityModel(BaseModel):
     """Priority information for an email."""
@@ -56,8 +54,10 @@ class EmailAnalysis(Base):
     """SQLAlchemy model for email analysis storage."""
     __tablename__ = 'email_analysis'
 
-    email_id = Column(String, primary_key=True)
+    email_id = Column(Integer, primary_key=True)
     analysis_date = Column(DateTime, default=datetime.utcnow)
+    analyzed_date = Column(DateTime, nullable=False)  # Date when email was analyzed
+    prompt_version = Column(String(50), nullable=False)  # Version of prompt used for analysis
     summary = Column(String, nullable=False)
     category = Column(JSON, nullable=False)
     priority_score = Column(Integer, nullable=False)
@@ -82,6 +82,8 @@ class EmailAnalysis(Base):
         return cls(
             email_id=email_id,
             analysis_date=datetime.utcnow(),
+            analyzed_date=datetime.utcnow(),
+            prompt_version="",
             summary=response.summary,
             category=response.category,
             priority_score=response.priority.score,

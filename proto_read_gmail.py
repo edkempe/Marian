@@ -1,9 +1,10 @@
-#  uses token.json rather than token.pickle
+#  uses token.pickle rather than token.json
 # 
 
 import os.path
 import sys
 import os
+import pickle
 
 # Add the local library folder to sys.path
 sys.path.append(os.path.abspath("./lib"))
@@ -15,13 +16,14 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import base64
 
-# If modifying these scopes, delete the file token.json.
+# If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def get_credentials():
     creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -29,8 +31,8 @@ def get_credentials():
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
     return creds
 
 def read_email(service, user_id, msg_id):

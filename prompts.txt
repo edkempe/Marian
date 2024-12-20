@@ -1,0 +1,123 @@
+# Email Analysis Prompts
+
+## Main Analysis Prompt
+```
+Analyze the following email and provide a structured analysis in JSON format.
+Include the following information:
+
+Email Details:
+- Subject: {subject}
+- Sender: {sender}
+- Type: {email_type}
+- Labels: {labels}
+- Thread ID: {thread_id}
+- Date: {date}
+- Has Attachments: {has_attachments}
+
+Email Body:
+{truncated_body}
+
+Provide your analysis in the following JSON format:
+{
+    "summary": "Brief summary of the email content",
+    "category": ["primary category", "secondary category"],
+    "priority": {
+        "score": 1-5 (1=lowest, 5=highest),
+        "reason": "Explanation for priority score"
+    },
+    "action": {
+        "needed": true/false,
+        "type": ["action type 1", "action type 2"],
+        "deadline": "YYYY-MM-DD or empty if no deadline"
+    },
+    "key_points": ["key point 1", "key point 2"],
+    "people_mentioned": ["person1@email.com", "person2@email.com"],
+    "links_found": ["http://..."],
+    "links_display": ["shortened or display version of links"],
+    "context": {
+        "project": "project name or null",
+        "topic": "topic or null",
+        "ref_docs": "referenced documents or null"
+    },
+    "sentiment": "positive/negative/neutral",
+    "confidence_score": 0.0-1.0
+}
+
+Requirements:
+1. Ensure all fields are present
+2. Use proper JSON format
+3. Keep summary concise (max 200 chars)
+4. List key points in order of importance
+5. Include all mentioned people and links
+6. Set appropriate priority based on content
+7. Identify any required actions and deadlines
+```
+
+## Priority Scoring Guidelines
+1 = Low priority
+- General information
+- No action required
+- Non-time-sensitive
+- Social/casual content
+
+2 = Normal priority
+- Routine updates
+- Minor action items
+- Standard team communications
+- FYI messages
+
+3 = Medium priority
+- Important updates
+- Action items with flexible deadlines
+- Team coordination needed
+- Relevant project information
+
+4 = High priority
+- Urgent updates
+- Time-sensitive actions
+- Critical project information
+- Important decisions needed
+
+5 = Critical priority
+- Production issues
+- Immediate action required
+- System outages
+- Security incidents
+- Executive escalations
+
+## Category Guidelines
+Primary Categories:
+- Project Update
+- Technical Issue
+- Team Communication
+- Client Communication
+- Administrative
+- Meeting
+- Alert/Notification
+- Request
+- Report
+- Announcement
+
+Secondary Categories:
+- Status Update
+- Problem Report
+- Solution Proposal
+- Action Item
+- Discussion
+- Planning
+- Review
+- Question
+- Response
+- Social
+
+## Action Types
+- Review Required
+- Response Needed
+- Approval Required
+- Task Assignment
+- Meeting Schedule
+- Document Update
+- Follow-up Required
+- Decision Required
+- Information Request
+- Implementation Required

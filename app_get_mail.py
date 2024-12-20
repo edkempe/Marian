@@ -92,24 +92,33 @@ def get_label_id(service, label_name):
                 return label['id']
         return None
     except Exception as e:
-        print(f'Error getting label ID: {e}')
+        print('Error getting label ID: {}'.format(e))
         return None
 
 def fetch_emails(service, start_date=None, end_date=None, label=None):
+    """Fetch emails from Gmail API."""
     try:
+        # Base query
         query = ''
+        
+        # Add date filters if provided
         if start_date:
             timestamp = int(start_date.timestamp())
-            query += f'after:{timestamp} '
-
+            query += 'after:{} '.format(timestamp)
         if end_date:
             timestamp = int(end_date.timestamp())
-            query += f'before:{timestamp} '
-
+            query += 'before:{} '.format(timestamp)
+            
+        # Add label filter if provided
         if label:
-            query += f'label:{label}'
-
-        print(f"Using query: {query}")
+            label_id = get_label_id(service, label)
+            if label_id:
+                query += 'label:{} '.format(label_id)
+            else:
+                print('Label not found: {}'.format(label))
+                return []
+        
+        print('Fetching emails with query: {}'.format(query))
         messages = []
         next_page_token = None
         
@@ -131,7 +140,7 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
 
         return messages
     except Exception as e:
-        print(f'An error occurred while fetching emails: {e}')
+        print('An error occurred while fetching emails: {}'.format(e))
         return []
 
 def process_email(service, msg_id, conn):
@@ -159,7 +168,7 @@ def process_email(service, msg_id, conn):
             date_utc = date_obj.astimezone(UTC_TZ)
             formatted_date = date_utc.strftime('%Y-%m-%d %H:%M:%S %z')
         except ValueError:
-            print(f"Error parsing date for message {msg_id}")
+            print('Error parsing date for message {}'.format(msg_id))
             return None
 
         body = ''
@@ -182,7 +191,7 @@ def process_email(service, msg_id, conn):
             'raw_data': json.dumps(message)
         }
     except Exception as e:
-        print(f'Error processing message {msg_id}: {e}')
+        print('Error processing message {}: {}'.format(msg_id, e))
         return None
 
 def get_oldest_email_date(conn):
@@ -229,10 +238,10 @@ def list_labels(service):
         labels = results.get('labels', [])
         print("\nAvailable labels:")
         for label in labels:
-            print(f"- {label['name']} (ID: {label['id']})")
+            print("- {} (ID: {})".format(label['name'], label['id']))
         return labels
     except Exception as e:
-        print(f'Error listing labels: {e}')
+        print('Error listing labels: {}'.format(e))
         return []
 
 def main():
@@ -257,13 +266,13 @@ def main():
         clear_database(conn)
 
     total_emails = count_emails(conn)
-    print(f"Current email count: {total_emails}")
+    print("Current email count: {}".format(total_emails))
 
     if args.label:
-        print(f"Fetching all emails with label: {args.label}")
+        print("Fetching all emails with label: {}".format(args.label))
         messages = fetch_emails(service, label=args.label)
     elif total_emails == 0:
-        print(f"Database is empty. Fetching last {days_to_fetch} days of emails.")
+        print("Database is empty. Fetching last {} days of emails.".format(days_to_fetch))
         end_date = datetime.now(UTC_TZ)
         start_date = end_date - timedelta(days=days_to_fetch)
         messages = fetch_emails(service, start_date, end_date)
@@ -272,7 +281,7 @@ def main():
     elif args.newer or not (args.older or args.newer):
         messages = fetch_newer_emails(conn, service)
 
-    print(f"Processing {len(messages) if messages else 0} messages...")
+    print("Processing {} messages...".format(len(messages) if messages else 0))
 
     for msg in messages:
         email_data = process_email(service, msg['id'], conn)
@@ -290,13 +299,13 @@ def main():
                 # Display in Mountain Time
                 utc_date = datetime.strptime(email_data['date'], '%Y-%m-%d %H:%M:%S %z')
                 display_date = utc_date.astimezone(MOUNTAIN_TZ).strftime('%Y-%m-%d %H:%M:%S %Z')
-                print(f"Stored email: {display_date} - {email_data['subject']}")
+                print("Stored email: {} - {}".format(display_date, email_data['subject']))
                 
             except Exception as e:
-                print(f"Error storing email: {e}")
+                print("Error storing email: {}".format(e))
 
     final_count = count_emails(conn)
-    print(f"Final email count: {final_count}")
+    print("Final email count: {}".format(final_count))
     conn.close()
 
 if __name__ == '__main__':
