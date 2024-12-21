@@ -7,14 +7,36 @@ from dotenv import load_dotenv
 from contextlib import contextmanager
 import time
 import json
+import ssl
+import certifi
 from sqlalchemy import text
 
-from model_email_analysis import EmailAnalysisResponse, EmailAnalysis
+from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from database.config import get_email_session, get_analysis_session
 from util_logging import (
     logger, EMAIL_ANALYSIS_COUNTER, EMAIL_ANALYSIS_DURATION,
     log_validation_error, start_metrics_server
 )
+
+"""Email analyzer using Claude-3-Haiku for processing and categorizing emails.
+
+This module provides functionality to analyze emails using the Anthropic Claude API.
+It processes emails in batches, analyzes their content, and stores the results in a database.
+
+Note on SSL/Network Configuration:
+    - If you encounter SSL certificate verification errors, check if you're connected to a corporate VPN
+    - Corporate VPNs often use self-signed certificates which can interfere with API connections
+    - Disconnect from VPN if experiencing SSL certificate chain errors
+    - The script uses Python's default certificate handling when not on VPN
+
+Dependencies:
+    - anthropic: For Claude API access
+    - sqlalchemy: For database operations
+    - python-dotenv: For environment variable management
+
+Environment Variables:
+    - ANTHROPIC_API_KEY: Required for Claude API authentication
+"""
 
 class EmailAnalyzer:
     """Analyzes emails using Claude-3-Haiku with improved error handling and validation.
@@ -78,6 +100,13 @@ Important:
         api_key = os.getenv('ANTHROPIC_API_KEY')
         if not api_key:
             raise EnvironmentError("ANTHROPIC_API_KEY not found in environment")
+        
+        # Log first few characters of API key for verification (safely)
+        logger.info(
+            "api_key_check",
+            prefix=api_key[:7] if len(api_key) > 7 else "too_short",
+            length=len(api_key)
+        )
             
         # Initialize API client
         self.client = anthropic.Client(api_key=api_key)
@@ -131,83 +160,254 @@ Important:
             log_api_error('api_call', str(e))
             return None
 
+    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysis) -> None:
+        """Save email analysis to database."""
+        try:
+            with get_analysis_session() as session:
+                # Try to update existing record first
+                result = session.execute(
+                    text("""
+                    UPDATE email_analysis 
+                    SET analysis_date = :analysis_date,
+                        thread_id = :thread_id,
+                        prompt_version = :prompt_version,
+                        summary = :summary,
+                        category = :category,
+                        priority_score = :priority_score,
+                        priority_reason = :priority_reason,
+                        action_needed = :action_needed,
+                        action_type = :action_type,
+                        action_deadline = :action_deadline,
+                        key_points = :key_points,
+                        people_mentioned = :people_mentioned,
+                        links_found = :links_found,
+                        links_display = :links_display,
+                        project = :project,
+                        topic = :topic,
+                        sentiment = :sentiment,
+                        confidence_score = :confidence_score,
+                        raw_analysis = :raw_analysis
+                    WHERE email_id = :email_id
+                    """),
+                    {
+                        "email_id": email_id,
+                        "thread_id": thread_id,
+                        "analysis_date": datetime.utcnow(),
+                        "prompt_version": "1.0",  # TODO: Make this configurable
+                        "summary": analysis.summary,
+                        "category": json.dumps(analysis.category),
+                        "priority_score": analysis.priority.score,
+                        "priority_reason": analysis.priority.reason,
+                        "action_needed": analysis.action.needed,
+                        "action_type": json.dumps(analysis.action.type),
+                        "action_deadline": analysis.action.deadline,
+                        "key_points": json.dumps(analysis.key_points),
+                        "people_mentioned": json.dumps(analysis.people_mentioned),
+                        "links_found": json.dumps(analysis.links_found),
+                        "links_display": json.dumps(analysis.links_display),
+                        "project": json.dumps([analysis.context.project] if analysis.context.project else []),
+                        "topic": json.dumps([analysis.context.topic] if analysis.context.topic else []),
+                        "sentiment": analysis.sentiment,
+                        "confidence_score": analysis.confidence_score,
+                        "raw_analysis": analysis.raw_json
+                    }
+                )
+                
+                # If no rows were updated, insert a new record
+                if result.rowcount == 0:
+                    session.execute(
+                        text("""
+                        INSERT INTO email_analysis (
+                            email_id, thread_id, analysis_date, prompt_version,
+                            summary, category, priority_score, priority_reason,
+                            action_needed, action_type, action_deadline,
+                            key_points, people_mentioned, links_found, links_display,
+                            project, topic, sentiment, confidence_score,
+                            raw_analysis
+                        ) VALUES (
+                            :email_id, :thread_id, :analysis_date, :prompt_version,
+                            :summary, :category, :priority_score, :priority_reason,
+                            :action_needed, :action_type, :action_deadline,
+                            :key_points, :people_mentioned, :links_found, :links_display,
+                            :project, :topic, :sentiment, :confidence_score,
+                            :raw_analysis
+                        )
+                        """),
+                        {
+                            "email_id": email_id,
+                            "thread_id": thread_id,
+                            "analysis_date": datetime.utcnow(),
+                            "prompt_version": "1.0",  # TODO: Make this configurable
+                            "summary": analysis.summary,
+                            "category": json.dumps(analysis.category),
+                            "priority_score": analysis.priority.score,
+                            "priority_reason": analysis.priority.reason,
+                            "action_needed": analysis.action.needed,
+                            "action_type": json.dumps(analysis.action.type),
+                            "action_deadline": analysis.action.deadline,
+                            "key_points": json.dumps(analysis.key_points),
+                            "people_mentioned": json.dumps(analysis.people_mentioned),
+                            "links_found": json.dumps(analysis.links_found),
+                            "links_display": json.dumps(analysis.links_display),
+                            "project": json.dumps([analysis.context.project] if analysis.context.project else []),
+                            "topic": json.dumps([analysis.context.topic] if analysis.context.topic else []),
+                            "sentiment": analysis.sentiment,
+                            "confidence_score": analysis.confidence_score,
+                            "raw_analysis": analysis.raw_json
+                        }
+                    )
+                session.commit()
+        except Exception as e:
+            logger.error("database_error", error=str(e), email_id=email_id)
+
     def process_emails(self, batch_size: int = 50) -> None:
         """Process a batch of unanalyzed emails."""
         try:
-            # Get database sessions
+            # Test API connection first
+            try:
+                test_response = self.client.messages.create(
+                    model="claude-3-haiku-20240307",
+                    max_tokens=10,
+                    temperature=0.0,
+                    messages=[{"role": "user", "content": "test"}]
+                )
+            except Exception as e:
+                logger.error("api_connection_error", error=str(e))
+                raise Exception(f"Failed to connect to Claude API. Please check your API key and network connection. Error: {str(e)}")
+
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
                 unanalyzed = email_session.execute(text("""
-                    SELECT e.id, e.subject, e.body, e.sender, e.received_date, 
-                           e.labels, e.thread_id, e.has_attachments 
+                    SELECT e.id, e.subject, e.body, e.sender, e.date, 
+                           e.labels, e.raw_data, e.thread_id
                     FROM emails e
-                    LEFT JOIN email_analysis a ON e.id = a.email_id
-                    WHERE a.email_id IS NULL
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM email_analysis a 
+                        WHERE a.email_id = e.id AND a.thread_id = e.thread_id
+                    )
                     LIMIT :batch_size
                 """), {"batch_size": batch_size}).mappings().all()
                 
                 logger.info("processing_batch", count=len(unanalyzed))
                 
                 # Process each email
-                for email in unanalyzed:
-                    email_data = dict(email)
-                    
-                    # Format email for analysis
-                    truncated_body = email_data['body'][:10000] if email_data['body'] else ""
-                    email_type = "internal" if "@company.com" in email_data['sender'] else "external"
-                    
-                    # Call Claude API for analysis
-                    prompt = self.ANALYSIS_PROMPT.format(
-                        subject=email_data['subject'],
-                        sender=email_data['sender'],
-                        email_type=email_type,
-                        labels=email_data['labels'],
-                        thread_id=email_data['thread_id'],
-                        date=email_data['received_date'],
-                        has_attachments=email_data['has_attachments'],
-                        truncated_body=truncated_body
-                    )
-                    
-                    # Get analysis from Claude
-                    response = self.client.messages.create(
-                        model="claude-3-haiku-20240307",
-                        max_tokens=1000,
-                        temperature=0.0,
-                        messages=[{
-                            "role": "user",
-                            "content": prompt
-                        }]
-                    )
-
-                    # Extract and validate the analysis
+                for i, email_data in enumerate(unanalyzed):
+                    # Rate limit: process 5 emails then wait to avoid hitting API limits
+                    if i > 0 and i % 5 == 0:
+                        logger.info("rate_limit_pause", processed=i)
+                        time.sleep(60)  # Wait 60 seconds to respect rate limit
+                        
                     try:
-                        analysis_json = response.content[0].text
-                        analysis = json.loads(analysis_json)
+                        email_data = dict(email_data)
                         
-                        # Ensure links_display is present
-                        if 'links_found' in analysis and 'links_display' not in analysis:
-                            analysis['links_display'] = [
-                                url[:100] + '...' if len(url) > 100 else url
-                                for url in analysis['links_found']
-                            ]
+                        # Format email for analysis
+                        truncated_body = email_data['body'][:5000] if email_data['body'] else ""  
+                        email_type = "internal" if "@company.com" in email_data['sender'] else "external"
                         
-                        analysis_response = EmailAnalysisResponse.model_validate(analysis)
+                        email_request = EmailRequest(
+                            id=email_data['id'],
+                            subject=email_data['subject'] or '',
+                            body=email_data['body'] or '',
+                            sender=email_data['sender'] or '',
+                            date=email_data['date'] or '',
+                            labels=email_data['labels'] or '[]',
+                            raw_data=email_data['raw_data'] or '',
+                            email_type=email_type,
+                            truncated_body=truncated_body
+                        )
                         
-                        # Create and return EmailAnalysis instance
-                        analysis = EmailAnalysis.from_response(email_data['id'], analysis_response)
+                        # Call Claude API for analysis with retry
+                        max_retries = 3
+                        retry_delay = 5  # seconds
                         
-                        # Save to database
-                        analysis_session.add(analysis)
-                        analysis_session.commit()
-                        
-                    except json.JSONDecodeError as e:
-                        log_api_error('json_decode', str(e), analysis_json)
+                        for retry in range(max_retries):
+                            try:
+                                prompt = self.ANALYSIS_PROMPT.format(
+                                    subject=email_request.subject,
+                                    sender=email_request.sender,
+                                    email_type=email_request.email_type,
+                                    labels=email_request.labels,
+                                    thread_id=email_request.id,
+                                    date=email_request.date,
+                                    has_attachments="false",
+                                    truncated_body=email_request.truncated_body
+                                )
+                                
+                                response = self.client.messages.create(
+                                    model="claude-3-haiku-20240307",
+                                    max_tokens=1000,
+                                    temperature=0.0,
+                                    messages=[{
+                                        "role": "user",
+                                        "content": prompt
+                                    }]
+                                )
+                                break  # Success, exit retry loop
+                            except Exception as api_error:
+                                if retry < max_retries - 1:
+                                    logger.warning(f"API call failed (attempt {retry + 1}/{max_retries}), retrying in {retry_delay} seconds...")
+                                    time.sleep(retry_delay)
+                                    retry_delay *= 2  # Exponential backoff
+                                else:
+                                    raise api_error
+
+                        # Extract and validate the analysis
+                        try:
+                            analysis_json = response.content[0].text
+                            analysis = json.loads(analysis_json)
+                            
+                            # Ensure links_display is present
+                            if 'links_found' in analysis and 'links_display' not in analysis:
+                                analysis['links_display'] = [
+                                    url[:100] + '...' if len(url) > 100 else url
+                                    for url in analysis['links_found']
+                                ]
+                            
+                            analysis_response = EmailAnalysisResponse.model_validate(analysis)
+                            
+                            # Create EmailAnalysis instance with thread_id
+                            email_analysis = EmailAnalysis.from_response(
+                                email_id=email_data['id'],
+                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
+                                response=analysis_response
+                            )
+                            
+                            # Save analysis with thread_id
+                            self.save_analysis(
+                                email_id=email_data['id'],
+                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
+                                analysis=email_analysis
+                            )
+                        except json.JSONDecodeError as e:
+                            log_api_error('json_decode', str(e), analysis_json)
+                            continue
+                        except Exception as e:
+                            log_api_error('validation', str(e), analysis_json)
+                            continue
+                            
                     except Exception as e:
-                        log_api_error('validation', str(e), analysis_json)
-                        
+                        logger.error("process_email_error", error=str(e))
+                        continue
+
         except Exception as e:
             logger.error("process_emails_error", error=str(e))
             raise
+
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class EmailRequest:
+    """Data class for email analysis request."""
+    id: str
+    subject: str
+    body: str
+    sender: str
+    date: str
+    labels: str
+    raw_data: str
+    email_type: str
+    truncated_body: str
 
 def log_api_error(error_type: str, error_message: str, response_text: str = None) -> None:
     """Log an API error with context."""
@@ -231,7 +431,7 @@ def main():
     """Main entry point."""
     try:
         analyzer = EmailAnalyzer()
-        analyzer.process_emails(batch_size=50)
+        analyzer.process_emails(batch_size=10)
     except Exception as e:
         logger.error("main_error", error=str(e))
         raise

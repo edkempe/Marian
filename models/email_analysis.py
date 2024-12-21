@@ -1,10 +1,13 @@
 """Email analysis models."""
 from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean
-from pydantic import BaseModel, Field, model_validator
-from model_base import Base
+from typing import Optional, List, Dict, Any
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Text, Boolean, Float
+from sqlalchemy.orm import relationship
+
+from models.base import Base
+from models.email import Email
 import json
+from pydantic import BaseModel, Field, model_validator
 
 class PriorityModel(BaseModel):
     """Priority information for an email."""
@@ -31,8 +34,8 @@ class EmailAnalysisResponse(BaseModel):
     action: ActionModel
     key_points: List[str]
     people_mentioned: List[str]
-    links_found: List[str]
-    links_display: List[str]
+    links_found: List[str]  # Full URLs
+    links_display: List[str]  # Truncated URLs for display
     context: ContextModel
     sentiment: str = Field(..., pattern="^(positive|negative|neutral)$")
     confidence_score: float = Field(default=0.9, ge=0.0, le=1.0)
@@ -40,66 +43,87 @@ class EmailAnalysisResponse(BaseModel):
     @model_validator(mode='before')
     @classmethod
     def validate_urls(cls, data):
-        """Validate URLs."""
+        """Validate and process URLs.
+        
+        - Ensures links_found contains complete URLs
+        - Creates truncated versions in links_display for UI
+        - Validates URLs are strings
+        """
         if not isinstance(data, dict):
             return data
         
         if 'links_found' in data:
-            data['links_found'] = [
-                url[:100] + '...' if len(url) > 100 else url
-                for url in data['links_found']
-            ]
+            # Ensure links_found is a list
+            if not isinstance(data['links_found'], list):
+                data['links_found'] = []
+            
+            # Convert all URLs to strings and store full versions
+            data['links_found'] = [str(url).strip() for url in data['links_found']]
+            
+            # Create truncated versions for display
+            data['links_display'] = []
+            for url in data['links_found']:
+                if len(url) > 100:
+                    # Keep the first 97 chars and add ...
+                    truncated = url[:97] + '...'
+                    data['links_display'].append(truncated)
+                else:
+                    data['links_display'].append(url)
+        else:
+            # Initialize empty lists if no links found
+            data['links_found'] = []
+            data['links_display'] = []
+            
         return data
 
 class EmailAnalysis(Base):
     """SQLAlchemy model for email analysis storage."""
     __tablename__ = 'email_analysis'
 
-    email_id = Column(String, primary_key=True)  # References emails.id
+    email_id = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
+    thread_id = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails
     analysis_date = Column(DateTime, default=datetime.utcnow)
-    analyzed_date = Column(DateTime, nullable=False)  # Date when email was analyzed
-    prompt_version = Column(String(50), nullable=False)  # Version of prompt used for analysis
-    summary = Column(String, nullable=False)
-    category = Column(String, nullable=False)  # JSON string
-    priority_score = Column(Integer, nullable=False)
-    priority_reason = Column(String, nullable=False)
-    action_needed = Column(Boolean, nullable=False, default=False)
-    action_type = Column(String, nullable=False)  # JSON string
-    action_deadline = Column(String)
-    key_points = Column(String, nullable=False)  # JSON string
-    people_mentioned = Column(String, nullable=False)  # JSON string
-    links_found = Column(String, nullable=False)  # JSON string
-    links_display = Column(String, nullable=False)  # JSON string
-    project = Column(String)
-    topic = Column(String)
-    ref_docs = Column(String)
-    sentiment = Column(String, nullable=False)
-    confidence_score = Column(Float, nullable=False)
-    raw_analysis = Column(String, nullable=False)  # JSON string
+    prompt_version = Column(Text)
+    summary = Column(Text)
+    category = Column(JSON)  # List of categories
+    priority_score = Column(Integer)
+    priority_reason = Column(Text)
+    action_needed = Column(Boolean, default=False)
+    action_type = Column(JSON)  # List of action types
+    action_deadline = Column(Text)  # Optional YYYY-MM-DD
+    key_points = Column(JSON)  # List of key points
+    people_mentioned = Column(JSON)  # List of people
+    links_found = Column(JSON)  # List of full URLs
+    links_display = Column(JSON)  # List of truncated URLs
+    project = Column(Text)
+    topic = Column(Text)
+    sentiment = Column(Text)
+    confidence_score = Column(Float)
+    raw_analysis = Column(JSON)  # Full API response
+    email = relationship("Email", backref="analysis")
 
     @classmethod
-    def from_response(cls, email_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
+    def from_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
         return cls(
             email_id=email_id,
+            thread_id=thread_id,
             analysis_date=datetime.utcnow(),
-            analyzed_date=datetime.utcnow(),
-            prompt_version="",
+            prompt_version="1.0",
             summary=response.summary,
-            category=json.dumps(response.category),  # Convert to JSON string for SQLite
+            category=response.category,
             priority_score=response.priority.score,
             priority_reason=response.priority.reason,
             action_needed=response.action.needed,
-            action_type=json.dumps(response.action.type),  # Convert to JSON string for SQLite
+            action_type=response.action.type,
             action_deadline=response.action.deadline,
-            key_points=json.dumps(response.key_points),  # Convert to JSON string for SQLite
-            people_mentioned=json.dumps(response.people_mentioned),  # Convert to JSON string for SQLite
-            links_found=json.dumps(response.links_found),  # Convert to JSON string for SQLite
-            links_display=json.dumps(response.links_display),  # Convert to JSON string for SQLite
+            key_points=response.key_points,
+            people_mentioned=response.people_mentioned,
+            links_found=response.links_found,
+            links_display=response.links_display,
             project=response.context.project,
             topic=response.context.topic,
-            ref_docs=response.context.ref_docs,
             sentiment=response.sentiment,
             confidence_score=response.confidence_score,
-            raw_analysis=json.dumps(response.model_dump())  # Convert to JSON string for SQLite
+            raw_analysis=response.model_dump()
         )
