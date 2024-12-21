@@ -1,6 +1,6 @@
 """Email database model."""
 from sqlalchemy import Column, String, Text
-from model_base import Base
+from models.base import Base
 
 class Email(Base):
     """SQLAlchemy model for email storage.

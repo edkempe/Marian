@@ -61,7 +61,7 @@ def init_database():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,
-                  thread_id TEXT,  # Gmail thread ID for grouping related emails
+                  thread_id TEXT,
                   subject TEXT,
                   sender TEXT,
                   date TEXT,
@@ -182,7 +182,7 @@ def process_email(service, msg_id, conn):
 
         return {
             'id': msg_id,
-            'thread_id': message['threadId'],  # Gmail thread ID for grouping related emails
+            'thread_id': message['threadId'],  
             'subject': subject,
             'sender': sender,
             'date': formatted_date,
@@ -290,7 +290,7 @@ def main():
                 conn.execute('''INSERT OR IGNORE INTO emails
                                 (id, thread_id, subject, sender, date, body, labels, raw_data)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                             (email_data['id'], email_data.get('thread_id', ''),  # Update thread_id to use get() method
+                             (email_data['id'], email_data.get('thread_id', ''),  
                               email_data['subject'], email_data['sender'],
                               email_data['date'], email_data['body'],
                               email_data['labels'], email_data['raw_data']))
