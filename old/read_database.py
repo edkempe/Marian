@@ -5,7 +5,7 @@ maxResults = 10  # Adjust as needed
 
 def connect_to_database():
     try:
-        conn = sqlite3.connect('email_store.db')
+        conn = sqlite3.connect('db_email_store.db')
         print("Successfully connected to database")
         return conn
     except Exception as e:

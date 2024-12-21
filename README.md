@@ -10,66 +10,6 @@ An AI-powered email analysis and management system that uses advanced language m
   - `db_email_store.db`: Main database for email storage and analysis
     - `emails`: Raw email data
     - `email_analysis`: AI analysis results
-    - `email_triage`: Legacy triage data (deprecated)
-
-## Project Structure
-```
-marian/
-├── app_*.py              # Main application files
-├── config/              # Configuration files
-│   ├── constants.py    # Central source of truth for constants
-│   └── __init__.py
-├── database/           # Database related code
-│   ├── config.py      # Database configuration
-│   └── __init__.py
-├── model_*.py          # SQLAlchemy and Pydantic models
-├── utils/             # Utility functions
-│   ├── logging_config.py  # Logging configuration
-│   └── __init__.py
-├── tests/             # Test files
-├── logs/              # Log files
-├── docs/              # Documentation
-├── requirements.txt   # Python dependencies
-└── README.md         # This file
-```
-
-## Configuration
-The project uses a centralized configuration system:
-
-1. **Constants** (`config/constants.py`):
-   - Database file names and URLs
-   - Table names
-   - API configuration
-   - Logging settings
-   - Email processing parameters
-
-2. **Environment Variables**:
-   ```bash
-   export ANTHROPIC_API_KEY=your_api_key_here
-   export EMAIL_DB_URL=sqlite:///db_email_store.db      # Optional
-   export ANALYSIS_DB_URL=sqlite:///db_email_analysis.db # Optional
-   ```
-
-## Logging
-The project uses structured JSON logging with both file and console output:
-
-- Log files are stored in `logs/marian.log`
-- Logs rotate at 10MB with 5 backup files
-- Each log entry includes:
-  - Timestamp
-  - Event name
-  - Error type and message (if applicable)
-  - Additional context
-
-## File Naming Convention
-- Processors: `processor_<type>.py` (e.g., processor_email.py)
-- Utilities: `util_<purpose>.py` (e.g., util_db.py)
-- Models: `model_<type>.py` (e.g., model_email.py)
-- Tests: `test_<module>.py` (e.g., test_processor_email.py)
-
-## Prompt Naming Convention
-Format: `<domain>.<task>.<subtask>.v<version>`
-Example: `email.analysis.triage.v1.0.0`
 
 ## Prerequisites
 1. Python 3.13 or higher
@@ -84,26 +24,10 @@ Example: `email.analysis.triage.v1.0.0`
 5. Set up environment variables:
    ```bash
    export ANTHROPIC_API_KEY=your_api_key_here
+   export EMAIL_DB_URL=sqlite:///db_email_store.db      # Optional
+   export ANALYSIS_DB_URL=sqlite:///db_email_analysis.db # Optional
    ```
 6. Place your Gmail API `credentials.json` in the project root
-
-## Pre-Run Checklist
-1. Verify virtual environment is activated
-2. Check core files exist and are up to date:
-   - `app_get_mail.py`: Email fetching script
-   - `app_email_analyzer.py`: Email analysis script
-   - `lib_gmail.py`: Gmail API authentication
-   - `model_email.py`: Email database model
-   - `model_email_analysis.py`: Analysis database model
-   - `model_base.py`: SQLAlchemy base model
-3. Verify database files:
-   - `db_email_store.db`: Main database for emails and analysis
-4. Confirm environment variables are set:
-   - `ANTHROPIC_API_KEY`
-5. Ensure `credentials.json` and `token.pickle` exist for Gmail API
-
-## Database Architecture
-The project uses SQLite for data storage. See [Database Schema](docs/database_schema.md) for detailed information about tables and fields.
 
 ## Usage
 1. Fetch emails:
@@ -115,69 +39,215 @@ The project uses SQLite for data storage. See [Database Schema](docs/database_sc
    python app_email_analyzer.py
    ```
 
-## Common Issues and Solutions
+## Project Structure
+```
+marian/
+├── app_*.py           # Main application files
+├── config/           # Configuration files
+├── database/        # Database related code
+├── models/         # SQLAlchemy models
+├── utils/         # Utility functions
+├── tests/        # Test files
+└── README.md    # This file
+```
 
-### 1. Database Schema Mismatches
-If you encounter database errors like "no such column" or "datatype mismatch":
+## Security and Compliance
+1. **Data Security**
+   - Store API keys in environment variables
+   - Use secure database connections
+   - Encrypt sensitive data
+   - Follow GDPR/privacy guidelines
+   - Implement data retention policies
 
-a) **Schema vs Model Mismatch**:
-   - Check that your SQLAlchemy models match the database schema
-   - Use `sqlite3 db_email_store.db ".schema"` to view current schema
-   - Compare with models in `model_*.py` files
+2. **Access Control**
+   - Implement proper authentication
+   - Regular security audits
+   - Monitor for suspicious activity
 
-b) **JSON Field Issues**:
-   - SQLite requires JSON fields to be stored as TEXT/STRING
-   - Always use `json.dumps()` before storing lists/dicts
-   - Use `json.loads()` when retrieving
+## Monitoring and Maintenance
+1. **Logging**
+   - Use structured JSON logging
+   - Log files stored in `logs/marian.log`
+   - Logs rotate at 10MB with 5 backup files
+   - Each log includes:
+     * Timestamp
+     * Event name
+     * Error details
+     * Context
 
-c) **Migration Required**:
-   - If schema changes are needed, either:
-     1. Delete the database and let it recreate (development only)
-     2. Create a proper migration script (production)
+2. **Performance**
+   - Monitor API rate limits
+   - Track database performance
+   - Implement proper caching
+   - Use connection pooling
 
-### 2. API Response Parsing
-When dealing with Claude API responses:
+## File Naming Conventions
+1. **Application Files**
+   - Main apps: `app_*.py` (e.g., `app_email_analyzer.py`)
+   - Models: `model_*.py` (e.g., `model_email.py`)
+   - Tests: `test_*.py` (e.g., `test_email_analyzer.py`)
 
-a) **Incomplete JSON**:
-   - Increase `max_tokens` if responses are getting truncated
-   - Validate JSON structure before parsing
-   - Use error handling around `json.loads()`
-
-b) **Missing Fields**:
-   - Ensure all required fields are in the prompt
-   - Add default values for optional fields
-   - Validate response against Pydantic models
-
-### 3. File Naming Conflicts
-To avoid confusion:
-
-a) **Database Files**:
-   - Email database: `db_email_store.db`
-   - Analysis database: `db_email_analysis.db`
+2. **Database Files**
+   - Main database: `db_email_store.db`
    - Never use generic names like `emails.db`
 
-b) **Log Files**:
-   - Main log: `logs/marian.log`
-   - Rotated logs: `marian.log.1`, `marian.log.2`, etc.
+## Schema Management
+1. **Verification Process**
+   ```python
+   # Example schema verification
+   from sqlalchemy import inspect
+   
+   def verify_schema(engine, model_class):
+       inspector = inspect(engine)
+       table_name = model_class.__tablename__
+       columns = {col.name: col for col in model_class.__table__.columns}
+       db_columns = {col['name']: col for col in inspector.get_columns(table_name)}
+       
+       # Verify columns match
+       missing_in_db = set(columns.keys()) - set(db_columns.keys())
+       if missing_in_db:
+           raise ValueError(f"Columns missing in database: {missing_in_db}")
+   ```
+
+2. **Migration Management**
+   - Track schema changes in migrations
+   - Test migrations in development
+   - Document migration dependencies
+
+## Data Models as Source of Truth
+
+The SQLAlchemy models in `models/` are the SINGLE SOURCE OF TRUTH for data structures in this project.
+
+1. **Model Definition**
+   ```python
+   # models/email.py - Source of truth for email structure
+   class Email(Base):
+       __tablename__ = 'emails'
+       
+       id = Column(Integer, primary_key=True)
+       subject = Column(String, nullable=False)
+       body = Column(Text, nullable=False)
+       sender = Column(String, nullable=False)
+       date = Column(DateTime, nullable=False)
+       labels = Column(String)
+       analyzed = Column(Boolean, default=False)
+   ```
+
+2. **Schema Alignment**
+   - Database schemas MUST match model definitions
+   - Code accessing data MUST use model field names
+   - API responses MUST be validated against models
+   - Never create parallel definitions of data structures
+
+3. **Making Changes**
+   - Always update the model first
+   - Create database migrations based on model changes
+   - Update dependent code to match model changes
+   - Never modify database schema directly
+
+4. **Verification**
+   - Run schema verification on startup
+   - Use Alembic for migration management
+   - Write tests that verify data consistency
+   - Log any schema mismatches as critical errors
+
+Example of enforcing model as source of truth:
+```python
+# Right way: Use model fields directly
+email = Email(
+    subject=data['subject'],
+    body=data['body'],
+    sender=data['sender'],
+    date=datetime.now()
+)
+
+# Wrong way: Define fields separately from model
+email_fields = {  # DON'T DO THIS
+    'subject': 'text',
+    'body': 'text',
+    'sender': 'text',
+    'date': 'datetime'
+}
+```
+
+## Common Issues and Solutions
+
+### 1. API Response Handling
+- **Issue**: Claude API may return responses with extra text around JSON
+- **Solution**: 
+  - Use robust JSON extraction
+  - Validate response structure
+  - Handle missing fields gracefully
+  ```python
+  # Example of handling API response
+  try:
+      json_str = extract_json(response)  # Remove extra text
+      data = json.loads(json_str)       # Parse JSON
+      validate_response(data)           # Validate structure
+  except json.JSONDecodeError:
+      handle_invalid_json()
+  ```
+
+### 2. Data Validation
+- **Issue**: Schema constraints may fail with unexpected data
+- **Solution**:
+  - Use Pydantic models for validation
+  - Add database constraints
+  - Test with edge cases
+  ```python
+  # Example of data validation
+  class EmailAnalysis(BaseModel):
+      summary: str
+      sentiment: Literal["positive", "negative", "neutral"]
+      priority: int = Field(ge=1, le=5)
+  ```
+
+### 3. URL Handling
+- **Issue**: Long URLs can break JSON parsing
+- **Solution**:
+  - Store full URLs separately from display URLs
+  - Truncate display URLs to 100 characters
+  - Use TEXT type for URL storage
+
+### 4. Database Operations
+- **Issue**: Connection management and transaction handling
+- **Solution**:
+  - Use SQLAlchemy session management
+  - Implement proper error handling
+  - Use transactions appropriately
+  ```python
+  # Example of proper database handling
+  with Session() as session:
+      try:
+          session.add(email)
+          session.commit()
+      except SQLAlchemyError:
+          session.rollback()
+          raise
+  ```
 
 ## Best Practices
 
-1. **Constants**:
-   - Always use constants from `config/constants.py`
-   - Never hardcode values in application code
-   - Update constants file when adding new configuration
+1. **API Usage**
+   - Set appropriate token limits
+   - Use temperature=0 for consistent results
+   - Handle rate limits properly
+   - Log API errors with context
 
-2. **Logging**:
-   - Use structured logging with event names
-   - Include relevant context in log entries
-   - Use appropriate log levels (INFO, ERROR, etc.)
+2. **Error Handling**
+   - Catch specific exceptions
+   - Log errors with context
+   - Use proper error types
+   - Implement graceful fallbacks
 
-3. **Error Handling**:
-   - Always catch and log specific exceptions
-   - Include context in error logs
-   - Use transaction rollback when appropriate
+3. **Data Management**
+   - Validate data before storage
+   - Use appropriate data types
+   - Implement proper constraints
+   - Handle duplicates appropriately
 
-4. **Database Operations**:
-   - Use session context managers
-   - Implement proper error handling
-   - Validate data before insertion
+4. **Testing**
+   - Write unit tests for core functionality
+   - Test edge cases
+   - Mock external APIs
+   - Use consistent test data

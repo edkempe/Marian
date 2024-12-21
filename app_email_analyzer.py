@@ -17,8 +17,34 @@ from util_logging import (
 )
 
 class EmailAnalyzer:
-    """Analyzes emails using Claude-3-Haiku with improved error handling and validation."""
+    """Analyzes emails using Claude-3-Haiku with improved error handling and validation.
+    
+    This analyzer uses the Claude-3-Haiku model exclusively for consistent performance and cost efficiency.
+    Do not change to other models without thorough testing and approval.
+    
+    Known Issues:
+    1. Claude API Response Formatting:
+       - The API may prefix responses with text like "Here is the JSON response:"
+       - This causes json.loads() to fail with "Expecting value: line 1 column 2 (char 1)"
+       - Solution: Use _extract_json() to clean the response
+       
+    2. JSON Validation:
+       - Sometimes the API response may be missing required fields
+       - Always validate the JSON structure before processing
+       - Use empty strings/arrays instead of null values
+       
+    Model Requirements:
+    - Always use claude-3-haiku-20240307
+    - Keep max_tokens_to_sample at 1000 for consistent response sizes
+    - Use temperature=0 for deterministic outputs
+    
+    Example API Response Issues:
+    1. "Here is the JSON response: {...}"
+    2. "{...} Hope this helps!"
+    3. "I've analyzed the email. Here's the JSON: {...}"
+    """
 
+    # Standard prompt template for consistent API responses
     ANALYSIS_PROMPT = """You are an email analysis assistant. Your task is to analyze the email below and extract key information.
 You MUST respond with ONLY a single-line JSON object containing the analysis - no other text, no newlines, no formatting.
 
