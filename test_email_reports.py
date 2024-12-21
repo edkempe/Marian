@@ -95,7 +95,7 @@ def analytics(mock_email_db, mock_label_db, mock_analysis_db):
     """Create EmailAnalytics instance with test databases."""
     with patch('sqlite3.connect') as mock_connect:
         def side_effect(path):
-            if 'email_store.db' in str(path) or 'email_store.db' in str(path).split('/')[-1]:
+            if 'db_email_store.db' in str(path) or 'db_email_store.db' in str(path).split('/')[-1]:
                 return mock_email_db
             elif 'email_labels.db' in str(path) or 'email_labels.db' in str(path).split('/')[-1]:
                 return mock_label_db

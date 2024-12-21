@@ -89,7 +89,7 @@ def test_init_database():
         
         conn = init_database()
         
-        mock_connect.assert_called_once_with('email_store.db')
+        mock_connect.assert_called_once_with('db_email_store.db')
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called_once()
 

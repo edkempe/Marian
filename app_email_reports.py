@@ -9,7 +9,7 @@ from typing import Dict
 import argparse
 
 class EmailAnalytics:
-    def __init__(self, email_db_path="email_store.db", label_db_path="email_labels.db", analysis_db_path="email_analysis.db"):
+    def __init__(self, email_db_path="db_email_store.db", label_db_path="db_email_labels.db", analysis_db_path="db_email_analysis.db"):
         self.email_db_path = email_db_path
         self.label_db_path = label_db_path
         self.analysis_db_path = analysis_db_path
@@ -596,7 +596,7 @@ def main():
     # Sync labels first
     sync_gmail_labels()
     
-    analytics = EmailAnalytics("email_store.db", "email_labels.db", "email_analysis.db")
+    analytics = EmailAnalytics("db_email_store.db", "db_email_labels.db", "db_email_analysis.db")
     
     try:
         if args.report:

@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Main Test Suite
@@ -26,9 +25,9 @@ from app_email_reports import EmailAnalytics
 from app_email_self_log import EmailSelfAnalyzer
 
 # Test database paths
-TEST_EMAIL_DB = "test_email_store.db"
-TEST_ANALYSIS_DB = "test_email_analysis.db"
-TEST_LABELS_DB = "test_email_labels.db"
+TEST_EMAIL_DB = "test_db_email_store.db"
+TEST_ANALYSIS_DB = "test_db_email_analysis.db"
+TEST_LABELS_DB = "test_db_email_labels.db"
 
 @pytest.fixture(scope="function")
 def setup_test_dbs():

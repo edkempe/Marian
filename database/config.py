@@ -41,3 +41,24 @@ def get_analysis_session() -> Generator:
         raise
     finally:
         session.close()
+
+def init_db():
+    """Initialize database tables."""
+    from model_email_analysis import Base
+    from sqlalchemy import create_engine
+    import os
+
+    # Default paths match the actual database files
+    analysis_db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///db_email_analysis.db')
+    email_db_url = os.getenv('EMAIL_DB_URL', 'sqlite:///db_email_store.db')
+
+    # Create analysis database and tables
+    analysis_engine = create_engine(analysis_db_url)
+    Base.metadata.create_all(analysis_engine)
+
+    # Create email database and tables
+    email_engine = create_engine(email_db_url)
+    Base.metadata.create_all(email_engine)
+
+if __name__ == "__main__":
+    init_db()

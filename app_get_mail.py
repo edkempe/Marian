@@ -26,7 +26,7 @@ python get_mail.py [--newer] [--older] [--clear] [--label] [--list-labels]
   --list-labels: List all available labels
 
 Notes:
-- Requires a token.pickle file with Gmail API credentials
+- Uses lib_gmail.py for Gmail API authentication
 - Uses Unix timestamps for Gmail API queries for reliable date filtering
 - Keeps a 1-minute overlap window when fetching newer emails
 - Stores dates in UTC but displays in Mountain Time
@@ -35,10 +35,7 @@ Notes:
 Date: December 2024
 """
 
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 import sqlite3
-import pickle
 import base64
 import email
 from datetime import datetime, timedelta
@@ -47,6 +44,7 @@ import argparse
 from pytz import timezone
 import time
 from dateutil import parser
+from lib_gmail import GmailAPI
 
 days_to_fetch = 5  # Temporarily set to 5 days to get roughly 50 emails
 maxResults = 50  # Set max results to 50
@@ -54,12 +52,12 @@ MOUNTAIN_TZ = timezone('US/Mountain')
 UTC_TZ = timezone('UTC')
 
 def get_gmail_service():
-    with open('token.pickle', 'rb') as token:
-        creds = pickle.load(token)
-    return build('gmail', 'v1', credentials=creds)
+    """Get an authenticated Gmail service using lib_gmail."""
+    gmail_api = GmailAPI()
+    return gmail_api.service
 
 def init_database():
-    conn = sqlite3.connect('email_store.db')
+    conn = sqlite3.connect('db_email_store.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,
