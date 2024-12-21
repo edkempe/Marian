@@ -67,30 +67,36 @@ class EmailAnalyzer:
     """
 
     # Standard prompt template for consistent API responses
-    ANALYSIS_PROMPT = """You are an email analysis assistant. Your task is to analyze the email below and extract key information.
-You MUST respond with ONLY a single-line JSON object containing the analysis - no other text, no newlines, no formatting.
+    ANALYSIS_PROMPT = """Analyze the email below and provide a structured response with the following information:
+1. A brief summary of the main points (1-2 sentences)
+2. List of categories that best describe the email content (e.g., meeting, request, update)
+3. Priority score (1-5) where:
+   1 = Low priority (FYI only)
+   2 = Normal priority (routine task/update)
+   3 = Medium priority (needs attention this week)
+   4 = High priority (needs attention today)
+   5 = Urgent (needs immediate attention)
+4. Priority reason explaining the score
+5. Action assessment:
+   - action_needed: true/false if any action is required
+   - action_type: list of required actions (e.g., ["reply", "review", "schedule"])
+   - action_deadline: YYYY-MM-DD format if there's a deadline, null if none
+6. List of key points from the email
+7. List of people mentioned
+8. List of URLs found in the email (both full and display versions)
+9. Context:
+   - project: project name if mentioned
+   - topic: general topic/subject matter
+10. Overall sentiment (positive/negative/neutral)
+11. Confidence score (0.0-1.0) for the analysis
+
+Format the response as a JSON object with these exact field names:
+{{"summary": "brief summary", "category": ["category1"], "priority_score": 1-5, "priority_reason": "reason", "action_needed": true/false, "action_type": ["action1"], "action_deadline": "YYYY-MM-DD", "key_points": ["point1"], "people_mentioned": ["person1"], "links_found": ["url1"], "links_display": ["display_url1"], "project": "project name", "topic": "topic", "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
 
 Email to analyze:
-Subject: {subject}
-From: {sender}
-Type: {email_type}
-Labels: {labels}
-Thread ID: {thread_id}
-Date: {date}
-Has Attachments: {has_attachments}
+{text}
 
-Content:
-{truncated_body}
-
-Required JSON response format (single line, no newlines, no formatting):
-{{"summary": "brief summary", "category": ["category1"], "priority": {{"score": 1-5, "reason": "reason"}}, "action": {{"needed": true/false, "type": ["action1"], "deadline": "YYYY-MM-DD"}}, "key_points": ["point1"], "people_mentioned": ["person1"], "links_found": ["url1"], "context": {{"project": "project name", "topic": "topic", "ref_docs": "references"}}, "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
-
-Important:
-1. Respond with ONLY the JSON object on a single line - no other text, no newlines, no formatting
-2. For any URLs in links_found, truncate them to maximum 100 characters and add ... at the end if longer
-3. Make sure all JSON fields are present
-4. Use empty arrays [] for missing lists
-5. Use empty strings "" for missing text fields"""
+JSON response:"""
 
     def __init__(self, metrics_port: int = 8000):
         """Initialize the analyzer with API client and start metrics server."""
@@ -119,16 +125,27 @@ Important:
         """Analyze a single email and return structured analysis."""
         try:
             # Format the email content for analysis
-            email_content = f"Subject: {email_data.get('subject', '')}\n\nBody: {email_data.get('body', '')}"
+            email_content = f"""Subject: {email_data.get('subject', '')}
+From: {email_data.get('sender', '')}
+Type: {email_data.get('email_type', '')}
+Labels: {email_data.get('labels', '')}
+Thread ID: {email_data.get('thread_id', '')}
+Date: {email_data.get('date', '')}
+Has Attachments: {email_data.get('has_attachments', False)}
+
+Content:
+{email_data.get('body', '')}"""
             
             # Get analysis from Claude
             response = self.client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=1000,
-                temperature=0.0,
+                temperature=0.05,
                 messages=[{
                     "role": "user",
-                    "content": self.ANALYSIS_PROMPT + "\n\nEmail:\n" + email_content
+                    "content": self.ANALYSIS_PROMPT.format(
+                        text=email_content
+                    )
                 }]
             )
 
@@ -144,10 +161,18 @@ Important:
                         for url in analysis['links_found']
                     ]
                 
+                # Set default empty string for project if it's None
+                if analysis.get('project') is None:
+                    analysis['project'] = ""
+                
                 analysis_response = EmailAnalysisResponse.model_validate(analysis)
                 
                 # Create and return EmailAnalysis instance
-                return EmailAnalysis.from_response(email_data['id'], analysis_response)
+                return EmailAnalysis.from_response(
+                    email_id=email_data['id'],
+                    thread_id=email_data['thread_id'],
+                    response=analysis_response
+                )
                 
             except json.JSONDecodeError as e:
                 log_api_error('json_decode', str(e), analysis_json)
@@ -160,103 +185,54 @@ Important:
             log_api_error('api_call', str(e))
             return None
 
-    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysis) -> None:
-        """Save email analysis to database."""
+    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse) -> None:
+        """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
-                # Try to update existing record first
-                result = session.execute(
-                    text("""
-                    UPDATE email_analysis 
-                    SET analysis_date = :analysis_date,
-                        thread_id = :thread_id,
-                        prompt_version = :prompt_version,
-                        summary = :summary,
-                        category = :category,
-                        priority_score = :priority_score,
-                        priority_reason = :priority_reason,
-                        action_needed = :action_needed,
-                        action_type = :action_type,
-                        action_deadline = :action_deadline,
-                        key_points = :key_points,
-                        people_mentioned = :people_mentioned,
-                        links_found = :links_found,
-                        links_display = :links_display,
-                        project = :project,
-                        topic = :topic,
-                        sentiment = :sentiment,
-                        confidence_score = :confidence_score,
-                        raw_analysis = :raw_analysis
-                    WHERE email_id = :email_id
-                    """),
-                    {
-                        "email_id": email_id,
-                        "thread_id": thread_id,
-                        "analysis_date": datetime.utcnow(),
-                        "prompt_version": "1.0",  # TODO: Make this configurable
-                        "summary": analysis.summary,
-                        "category": json.dumps(analysis.category),
-                        "priority_score": analysis.priority.score,
-                        "priority_reason": analysis.priority.reason,
-                        "action_needed": analysis.action.needed,
-                        "action_type": json.dumps(analysis.action.type),
-                        "action_deadline": analysis.action.deadline,
-                        "key_points": json.dumps(analysis.key_points),
-                        "people_mentioned": json.dumps(analysis.people_mentioned),
-                        "links_found": json.dumps(analysis.links_found),
-                        "links_display": json.dumps(analysis.links_display),
-                        "project": json.dumps([analysis.context.project] if analysis.context.project else []),
-                        "topic": json.dumps([analysis.context.topic] if analysis.context.topic else []),
-                        "sentiment": analysis.sentiment,
-                        "confidence_score": analysis.confidence_score,
-                        "raw_analysis": analysis.raw_json
-                    }
-                )
+                # Convert EmailAnalysisResponse to dict
+                analysis_dict = {
+                    'email_id': email_id,
+                    'thread_id': thread_id,
+                    'analysis_date': datetime.utcnow(),
+                    'prompt_version': "1.0",  # TODO: Make this configurable
+                    'summary': analysis.summary,
+                    'category': json.dumps(analysis.category),
+                    'priority_score': analysis.priority_score,
+                    'priority_reason': analysis.priority_reason,
+                    'action_needed': analysis.action_needed,
+                    'action_type': json.dumps(analysis.action_type),
+                    'action_deadline': analysis.action_deadline,
+                    'key_points': json.dumps(analysis.key_points),
+                    'people_mentioned': json.dumps(analysis.people_mentioned),
+                    'links_found': json.dumps(analysis.links_found),
+                    'links_display': json.dumps(analysis.links_display),
+                    'project': analysis.project,
+                    'topic': analysis.topic,
+                    'sentiment': analysis.sentiment,
+                    'confidence_score': analysis.confidence_score,
+                }
                 
-                # If no rows were updated, insert a new record
-                if result.rowcount == 0:
-                    session.execute(
-                        text("""
-                        INSERT INTO email_analysis (
-                            email_id, thread_id, analysis_date, prompt_version,
-                            summary, category, priority_score, priority_reason,
-                            action_needed, action_type, action_deadline,
-                            key_points, people_mentioned, links_found, links_display,
-                            project, topic, sentiment, confidence_score,
-                            raw_analysis
-                        ) VALUES (
-                            :email_id, :thread_id, :analysis_date, :prompt_version,
-                            :summary, :category, :priority_score, :priority_reason,
-                            :action_needed, :action_type, :action_deadline,
-                            :key_points, :people_mentioned, :links_found, :links_display,
-                            :project, :topic, :sentiment, :confidence_score,
-                            :raw_analysis
-                        )
-                        """),
-                        {
-                            "email_id": email_id,
-                            "thread_id": thread_id,
-                            "analysis_date": datetime.utcnow(),
-                            "prompt_version": "1.0",  # TODO: Make this configurable
-                            "summary": analysis.summary,
-                            "category": json.dumps(analysis.category),
-                            "priority_score": analysis.priority.score,
-                            "priority_reason": analysis.priority.reason,
-                            "action_needed": analysis.action.needed,
-                            "action_type": json.dumps(analysis.action.type),
-                            "action_deadline": analysis.action.deadline,
-                            "key_points": json.dumps(analysis.key_points),
-                            "people_mentioned": json.dumps(analysis.people_mentioned),
-                            "links_found": json.dumps(analysis.links_found),
-                            "links_display": json.dumps(analysis.links_display),
-                            "project": json.dumps([analysis.context.project] if analysis.context.project else []),
-                            "topic": json.dumps([analysis.context.topic] if analysis.context.topic else []),
-                            "sentiment": analysis.sentiment,
-                            "confidence_score": analysis.confidence_score,
-                            "raw_analysis": analysis.raw_json
-                        }
-                    )
+                # Convert the raw analysis to JSON string
+                analysis_dict['raw_analysis'] = json.dumps({
+                    k: v for k, v in analysis.__dict__.items()
+                    if not k.startswith('_')  # Exclude SQLAlchemy internal state
+                }, default=json_serial)
+                
+                # Try to get existing record
+                record = session.query(EmailAnalysis).filter_by(email_id=email_id).first()
+                
+                if record:
+                    # Update existing record
+                    for key, value in analysis_dict.items():
+                        setattr(record, key, value)
+                else:
+                    # Create new record
+                    record = EmailAnalysis(**analysis_dict)
+                    session.add(record)
+                
+                # Commit the changes
                 session.commit()
+                
         except Exception as e:
             logger.error("database_error", error=str(e), email_id=email_id)
 
@@ -268,7 +244,7 @@ Important:
                 test_response = self.client.messages.create(
                     model="claude-3-haiku-20240307",
                     max_tokens=10,
-                    temperature=0.0,
+                    temperature=0.05,
                     messages=[{"role": "user", "content": "test"}]
                 )
             except Exception as e:
@@ -323,20 +299,13 @@ Important:
                         for retry in range(max_retries):
                             try:
                                 prompt = self.ANALYSIS_PROMPT.format(
-                                    subject=email_request.subject,
-                                    sender=email_request.sender,
-                                    email_type=email_request.email_type,
-                                    labels=email_request.labels,
-                                    thread_id=email_request.id,
-                                    date=email_request.date,
-                                    has_attachments="false",
-                                    truncated_body=email_request.truncated_body
+                                    text=email_request.truncated_body
                                 )
                                 
                                 response = self.client.messages.create(
                                     model="claude-3-haiku-20240307",
                                     max_tokens=1000,
-                                    temperature=0.0,
+                                    temperature=0.05,
                                     messages=[{
                                         "role": "user",
                                         "content": prompt
@@ -362,6 +331,10 @@ Important:
                                     url[:100] + '...' if len(url) > 100 else url
                                     for url in analysis['links_found']
                                 ]
+                            
+                            # Set default empty string for project if it's None
+                            if analysis.get('project') is None:
+                                analysis['project'] = ""
                             
                             analysis_response = EmailAnalysisResponse.model_validate(analysis)
                             
@@ -408,6 +381,12 @@ class EmailRequest:
     raw_data: str
     email_type: str
     truncated_body: str
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 def log_api_error(error_type: str, error_message: str, response_text: str = None) -> None:
     """Log an API error with context."""

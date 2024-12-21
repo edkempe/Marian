@@ -13,7 +13,8 @@ textblob==0.17.1
 jinja2==3.1.2
 
 # Environment and utilities
-anthropic==0.18.1
+anthropic==0.18.1  # Using latest version for Claude-3 API support
+httpx==0.27.2  # Pinned version to avoid proxies error with Anthropic client
 python-dotenv==1.0.1
 tqdm==4.66.1
 sqlalchemy==2.0.36

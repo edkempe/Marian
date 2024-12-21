@@ -12,7 +12,7 @@ An AI-powered email analysis and management system that uses advanced language m
     - `email_analysis`: AI analysis results
 
 ## Prerequisites
-1. Python 3.13 or higher
+1. Python 3.12.8 or higher
 2. Gmail API credentials (`credentials.json`) from Google Cloud Console
 3. Anthropic API key for Claude-3-Haiku
 

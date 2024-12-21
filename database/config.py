@@ -44,7 +44,9 @@ def get_analysis_session() -> Generator:
 
 def init_db():
     """Initialize database tables."""
-    from model_email_analysis import Base
+    from models.base import Base
+    from models.email_analysis import EmailAnalysis
+    from models.email import Email
     from sqlalchemy import create_engine
     import os
 

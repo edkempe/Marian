@@ -11,16 +11,20 @@ from model_email_analysis import EmailAnalysisResponse, EmailAnalysis
 def valid_api_response():
     """Valid API response data"""
     return {
-        "summary": "Test summary",
+        "summary": "test summary",
         "category": ["test"],
-        "priority": {"score": 3, "reason": "test"},
-        "action": {"needed": True, "type": ["review"], "deadline": "2024-12-20"},
-        "key_points": ["point1"],
-        "people_mentioned": ["person1"],
+        "priority_score": 3,
+        "priority_reason": "test",
+        "action_needed": True,
+        "action_type": ["test"],
+        "action_deadline": "2024-01-01",
+        "key_points": ["test"],
+        "people_mentioned": ["test"],
         "links_found": ["http://test.com"],
-        "links_display": ["test.com"],
-        "context": {"project": "test", "topic": "test", "ref_docs": "test"},
-        "sentiment": "neutral",
+        "links_display": ["http://test.com"],
+        "project": "test",
+        "topic": "test",
+        "sentiment": "positive",
         "confidence_score": 0.9
     }
 
@@ -59,10 +63,11 @@ def valid_email_data():
 def test_email_analysis_response_validation(valid_api_response):
     """Test EmailAnalysisResponse validation."""
     response = EmailAnalysisResponse.model_validate(valid_api_response)
-    assert response.summary == "Test summary"
-    assert response.priority.score == 3
-    assert response.action.needed is True
-    assert response.sentiment == "neutral"
+    assert response.summary == "test summary"
+    assert response.priority_score == 3
+    assert response.priority_reason == "test"
+    assert response.action_needed is True
+    assert response.sentiment == "positive"
     assert 0 <= response.confidence_score <= 1
 
 def test_email_analysis_response_validation_errors():
@@ -75,14 +80,18 @@ def test_email_analysis_response_validation_errors():
             "data": {
                 "summary": "",  # Invalid: empty summary
                 "category": ["test"],
-                "priority": {"score": 3, "reason": "test"},
-                "action": {"needed": True, "type": ["review"], "deadline": "2024-12-20"},
-                "key_points": ["point1"],
-                "people_mentioned": ["person1"],
+                "priority_score": 3,
+                "priority_reason": "test",
+                "action_needed": True,
+                "action_type": ["test"],
+                "action_deadline": "2024-01-01",
+                "key_points": ["test"],
+                "people_mentioned": ["test"],
                 "links_found": ["http://test.com"],
-                "links_display": ["test.com"],
-                "context": {"project": "test", "topic": "test", "ref_docs": "test"},
-                "sentiment": "neutral",
+                "links_display": ["http://test.com"],
+                "project": "test",
+                "topic": "test",
+                "sentiment": "positive",
                 "confidence_score": 0.9
             },
             "expected_error": "String should have at least 1 character"
@@ -92,14 +101,18 @@ def test_email_analysis_response_validation_errors():
             "data": {
                 "summary": "test",
                 "category": "not_a_list",  # Invalid: should be a list
-                "priority": {"score": 3, "reason": "test"},
-                "action": {"needed": True, "type": ["review"], "deadline": "2024-12-20"},
-                "key_points": ["point1"],
-                "people_mentioned": ["person1"],
+                "priority_score": 3,
+                "priority_reason": "test",
+                "action_needed": True,
+                "action_type": ["test"],
+                "action_deadline": "2024-01-01",
+                "key_points": ["test"],
+                "people_mentioned": ["test"],
                 "links_found": ["http://test.com"],
-                "links_display": ["test.com"],
-                "context": {"project": "test", "topic": "test", "ref_docs": "test"},
-                "sentiment": "neutral",
+                "links_display": ["http://test.com"],
+                "project": "test",
+                "topic": "test",
+                "sentiment": "positive",
                 "confidence_score": 0.9
             },
             "expected_error": "Input should be a valid list"
@@ -109,14 +122,18 @@ def test_email_analysis_response_validation_errors():
             "data": {
                 "summary": "test",
                 "category": ["test"],
-                "priority": {"score": 6, "reason": "test"},  # Invalid: score > 5
-                "action": {"needed": True, "type": ["review"], "deadline": "2024-12-20"},
-                "key_points": ["point1"],
-                "people_mentioned": ["person1"],
+                "priority_score": 6,  # Invalid: score > 5
+                "priority_reason": "test",
+                "action_needed": True,
+                "action_type": ["test"],
+                "action_deadline": "2024-01-01",
+                "key_points": ["test"],
+                "people_mentioned": ["test"],
                 "links_found": ["http://test.com"],
-                "links_display": ["test.com"],
-                "context": {"project": "test", "topic": "test", "ref_docs": "test"},
-                "sentiment": "neutral",
+                "links_display": ["http://test.com"],
+                "project": "test",
+                "topic": "test",
+                "sentiment": "positive",
                 "confidence_score": 0.9
             },
             "expected_error": "Input should be less than or equal to 5"
@@ -126,13 +143,17 @@ def test_email_analysis_response_validation_errors():
             "data": {
                 "summary": "test",
                 "category": ["test"],
-                "priority": {"score": 3, "reason": "test"},
-                "action": {"needed": True, "type": ["review"], "deadline": "2024-12-20"},
-                "key_points": ["point1"],
-                "people_mentioned": ["person1"],
+                "priority_score": 3,
+                "priority_reason": "test",
+                "action_needed": True,
+                "action_type": ["test"],
+                "action_deadline": "2024-01-01",
+                "key_points": ["test"],
+                "people_mentioned": ["test"],
                 "links_found": ["http://test.com"],
-                "links_display": ["test.com"],
-                "context": {"project": "test", "topic": "test", "ref_docs": "test"},
+                "links_display": ["http://test.com"],
+                "project": "test",
+                "topic": "test",
                 "sentiment": "invalid",  # Invalid: not in allowed values
                 "confidence_score": 0.9
             },
@@ -169,13 +190,13 @@ def test_analyze_email_success(analyzer, valid_email_data, valid_api_response):
     # Content assertions
     assert result.summary == valid_api_response['summary']
     assert result.category == valid_api_response['category']
-    assert result.priority_score == valid_api_response['priority']['score']
-    assert result.priority_reason == valid_api_response['priority']['reason']
+    assert result.priority_score == valid_api_response['priority_score']
+    assert result.priority_reason == valid_api_response['priority_reason']
     
     # Action assertions
-    assert result.action_needed == valid_api_response['action']['needed']
-    assert result.action_type == valid_api_response['action']['type']
-    assert result.action_deadline == valid_api_response['action']['deadline']
+    assert result.action_needed == valid_api_response['action_needed']
+    assert result.action_type == valid_api_response['action_type']
+    assert result.action_deadline == valid_api_response['action_deadline']
     
     # Lists assertions
     assert result.key_points == valid_api_response['key_points']
@@ -184,9 +205,8 @@ def test_analyze_email_success(analyzer, valid_email_data, valid_api_response):
     assert result.links_display == valid_api_response['links_display']
     
     # Context assertions
-    assert result.project == valid_api_response['context']['project']
-    assert result.topic == valid_api_response['context']['topic']
-    assert result.ref_docs == valid_api_response['context']['ref_docs']
+    assert result.project == valid_api_response['project']
+    assert result.topic == valid_api_response['topic']
     
     # Analysis assertions
     assert result.sentiment == valid_api_response['sentiment']
@@ -199,13 +219,17 @@ def test_analyze_email_with_empty_fields(analyzer, valid_email_data, mock_anthro
     minimal_response = {
         "summary": "Minimal summary",
         "category": ["test"],
-        "priority": {"score": 1, "reason": "low priority"},
-        "action": {"needed": False, "type": [], "deadline": None},
+        "priority_score": 1,
+        "priority_reason": "low priority",
+        "action_needed": False,
+        "action_type": [],
+        "action_deadline": None,
         "key_points": [],
         "people_mentioned": [],
         "links_found": [],
         "links_display": [],
-        "context": {"project": "", "topic": "", "ref_docs": ""},
+        "project": "",
+        "topic": "",
         "sentiment": "neutral",
         "confidence_score": 0.5
     }
@@ -221,7 +245,7 @@ def test_analyze_email_with_empty_fields(analyzer, valid_email_data, mock_anthro
     assert result.key_points == []
     assert result.people_mentioned == []
     assert result.links_found == []
-    assert result.action_needed == 0
+    assert result.action_needed == False
     assert result.project == ""
     assert result.topic == ""
 
@@ -272,13 +296,16 @@ def test_analyze_email_validation_error(analyzer, mock_anthropic, valid_email_da
             "response": {
                 "summary": "",
                 "category": "not_a_list",
-                "priority": {"score": 6, "reason": ""},
-                "action": {"needed": "not_bool", "type": []},
+                "priority_score": 6,
+                "priority_reason": "",
+                "action_needed": "not_bool",
+                "action_type": [],
                 "key_points": None,
                 "people_mentioned": {},
                 "links_found": ["invalid_url"],
                 "links_display": None,
-                "context": {},
+                "project": "",
+                "topic": "",
                 "sentiment": "invalid",
                 "confidence_score": 2.0
             },
@@ -314,13 +341,17 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
     mock_response = {
         'summary': 'Test summary',
         'category': ['test'],
-        'priority': {'score': 3, 'reason': 'test'},
-        'action': {'needed': True, 'type': ['review'], 'deadline': '2024-12-20'},
+        'priority_score': 3,
+        'priority_reason': 'test',
+        'action_needed': True,
+        'action_type': ['review'],
+        'action_deadline': '2024-12-20',
         'key_points': ['point1'],
         'people_mentioned': ['person1'],
         'links_found': ['http://test.com'],
         'links_display': ['test.com'],
-        'context': {'project': 'test', 'topic': 'test', 'ref_docs': 'test'},
+        'project': 'test',
+        'topic': 'test',
         'sentiment': 'neutral',
         'confidence_score': 0.9
     }

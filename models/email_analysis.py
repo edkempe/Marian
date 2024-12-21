@@ -24,19 +24,22 @@ class ContextModel(BaseModel):
     """Context information for an email."""
     project: Optional[str] = ""  # Default to empty string instead of None
     topic: Optional[str] = ""    # Default to empty string instead of None
-    ref_docs: Optional[str] = "" # Default to empty string instead of None
 
 class EmailAnalysisResponse(BaseModel):
     """Pydantic model for API response validation."""
     summary: str = Field(..., min_length=1, description="Brief summary of the email")
     category: List[str]
-    priority: PriorityModel
-    action: ActionModel
+    priority_score: int = Field(..., ge=1, le=5, description="Priority score from 1-5")
+    priority_reason: str = Field(..., min_length=1, max_length=500)
+    action_needed: bool = Field(default=False)
+    action_type: List[str] = Field(default_factory=list)
+    action_deadline: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$|^$')
     key_points: List[str]
     people_mentioned: List[str]
     links_found: List[str]  # Full URLs
     links_display: List[str]  # Truncated URLs for display
-    context: ContextModel
+    project: str = Field(default="")
+    topic: str = Field(default="")
     sentiment: str = Field(..., pattern="^(positive|negative|neutral)$")
     confidence_score: float = Field(default=0.9, ge=0.0, le=1.0)
 
@@ -77,7 +80,17 @@ class EmailAnalysisResponse(BaseModel):
         return data
 
 class EmailAnalysis(Base):
-    """SQLAlchemy model for email analysis storage."""
+    """SQLAlchemy model for storing email analysis data.
+    
+    This model stores the analyzed data from emails, including:
+    - Email identification (email_id, thread_id)
+    - Analysis metadata (date, prompt version)
+    - Content analysis (summary, categories, priority)
+    - Action items and deadlines
+    - Key information (points, people, URLs)
+    - Classification (project, topic, sentiment)
+    - Raw API response for debugging
+    """
     __tablename__ = 'email_analysis'
 
     email_id = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
@@ -109,21 +122,21 @@ class EmailAnalysis(Base):
             email_id=email_id,
             thread_id=thread_id,
             analysis_date=datetime.utcnow(),
-            prompt_version="1.0",
+            prompt_version="1.0",  # TODO: Make this configurable
             summary=response.summary,
             category=response.category,
-            priority_score=response.priority.score,
-            priority_reason=response.priority.reason,
-            action_needed=response.action.needed,
-            action_type=response.action.type,
-            action_deadline=response.action.deadline,
+            priority_score=response.priority_score,
+            priority_reason=response.priority_reason,
+            action_needed=response.action_needed,
+            action_type=response.action_type,
+            action_deadline=response.action_deadline,
             key_points=response.key_points,
             people_mentioned=response.people_mentioned,
             links_found=response.links_found,
             links_display=response.links_display,
-            project=response.context.project,
-            topic=response.context.topic,
+            project=response.project,
+            topic=response.topic,
             sentiment=response.sentiment,
             confidence_score=response.confidence_score,
-            raw_analysis=response.model_dump()
+            raw_analysis=response.dict()
         )
