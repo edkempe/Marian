@@ -39,17 +39,27 @@ An AI-powered email analysis and management system that uses advanced language m
    python app_email_analyzer.py
    ```
 
+## Troubleshooting
+If you encounter any issues while running the application, please refer to our comprehensive [Troubleshooting Guide](docs/troubleshooting.md). The guide covers:
+- Database initialization issues
+- Data model validation errors
+- Port management
+- Common error messages and their solutions
+- Best practices for development
+
 ## Project Structure
-```
 marian/
 ├── app_*.py           # Main application files
+├── util_*.py         # Utility scripts
+│   └── util_email_analysis_db.py  # Email analysis database verification tool
 ├── config/           # Configuration files
-├── database/        # Database related code
-├── models/         # SQLAlchemy models
-├── utils/         # Utility functions
-├── tests/        # Test files
-└── README.md    # This file
-```
+├── database/         # Database related code
+├── models/          # SQLAlchemy models
+├── utils/           # Utility functions
+├── docs/            # Documentation
+│   └── troubleshooting.md  # Troubleshooting guide
+├── tests/           # Test files
+└── README.md        # This file
 
 ## Security and Compliance
 1. **Data Security**
@@ -169,6 +179,23 @@ email_fields = {  # DON'T DO THIS
     'date': 'datetime'
 }
 ```
+
+## Known Issues and Solutions
+
+### Anthropic Client Initialization Error
+If you encounter an error like `__init__() got an unexpected keyword argument 'proxies'` when running the email analyzer, this is due to a compatibility issue between newer versions of `httpx` and the Anthropic client library. The error occurs because newer versions of httpx (0.28.0+) have removed the deprecated 'proxies' argument.
+
+**Solution**: We've pinned `httpx==0.27.2` in requirements.txt to resolve this issue. If you still encounter this error:
+
+1. Manually install the correct version:
+   ```bash
+   pip install httpx==0.27.2
+   ```
+
+2. Verify your Anthropic client version is correct:
+   ```bash
+   pip install anthropic==0.18.1
+   ```
 
 ## Common Issues and Solutions
 
