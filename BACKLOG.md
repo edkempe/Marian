@@ -1,40 +1,15 @@
-# Development Backlog
+# Marian Development Backlog
 
 ## High Priority
 
-### Code DRY (Don't Repeat Yourself) Review
-**Status**: Planned  
-**Priority**: High  
-**Description**: Review and refactor code to eliminate duplication and improve maintainability.
-
-#### Areas to Review
-1. Email Analysis Logic
-   - Check for duplicate analysis code between files
-   - Consolidate common email processing functions
-   - Create shared utilities for email data transformation
-
-2. Database Queries
-   - Look for repeated query patterns
-   - Create reusable query builders
-   - Consolidate similar database operations
-
-3. Report Generation
-   - Review duplicate report formatting code
-   - Create shared report templates
-   - Consolidate common data aggregation logic
-
-#### Implementation Steps
-1. Audit codebase for duplicated logic
-2. Identify common patterns and functionality
-3. Create shared utilities and helper functions
-4. Refactor code to use shared components
-5. Add tests for shared functionality
-
-#### Benefits
-- Easier maintenance
-- Reduced bug surface area
-- More consistent behavior
-- Better code reusability
+### Session Management Testing
+- [ ] Test and refine chat session workflow
+  - Test session_manager.py functionality
+  - Validate start/close procedures
+  - Verify documentation updates
+  - Test environment checks
+  - Add any missing checks or features
+  - Document best practices learned
 
 ### Setup Script Creation
 **Status**: Planned  
@@ -113,6 +88,40 @@ class DatabaseSessions:
 2. Gradually migrate one file at a time
 3. Run both systems in parallel during transition
 4. Remove old system once migration is complete
+
+### Code DRY (Don't Repeat Yourself) Review
+**Status**: Planned  
+**Priority**: High  
+**Description**: Review and refactor code to eliminate duplication and improve maintainability.
+
+#### Areas to Review
+1. Email Analysis Logic
+   - Check for duplicate analysis code between files
+   - Consolidate common email processing functions
+   - Create shared utilities for email data transformation
+
+2. Database Queries
+   - Look for repeated query patterns
+   - Create reusable query builders
+   - Consolidate similar database operations
+
+3. Report Generation
+   - Review duplicate report formatting code
+   - Create shared report templates
+   - Consolidate common data aggregation logic
+
+#### Implementation Steps
+1. Audit codebase for duplicated logic
+2. Identify common patterns and functionality
+3. Create shared utilities and helper functions
+4. Refactor code to use shared components
+5. Add tests for shared functionality
+
+#### Benefits
+- Easier maintenance
+- Reduced bug surface area
+- More consistent behavior
+- Better code reusability
 
 ## Medium Priority
 
