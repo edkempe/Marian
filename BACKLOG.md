@@ -11,6 +11,28 @@
   - Add any missing checks or features
   - Document best practices learned
 
+#### Improvements Needed
+- [ ] Fix python command handling in chat_session_manager.py
+  - Handle both 'python' and 'python3' commands
+  - Add fallback mechanism
+  - Document required Python version
+
+- [ ] Improve test execution and reporting
+  - Add proper error handling for missing test directory
+  - Show test coverage when available
+  - Report specific test failures
+
+- [ ] Enhance BACKLOG.md parsing
+  - Better task extraction
+  - Priority level awareness
+  - Task status tracking
+
+- [ ] Add environment section to session reports
+  - Python version
+  - Key package versions
+  - Database status
+  - API configurations
+
 ### Setup Script Creation
 **Status**: Planned  
 **Priority**: High  
