@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from sqlalchemy import create_engine
-from model_base import Base
-from model_email import Email
-from model_email_analysis import EmailAnalysis
+from models.base import Base
+from models.email import Email
+from models.email_analysis import EmailAnalysis
 from database.config import EMAIL_DB_URL, ANALYSIS_DB_URL
 
 def init_databases():
