@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import anthropic
 from dotenv import load_dotenv
@@ -10,6 +10,7 @@ import json
 import ssl
 import certifi
 from sqlalchemy import text
+import argparse
 
 from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from database.config import get_email_session, get_analysis_session
@@ -185,58 +186,39 @@ Content:
             log_api_error('api_call', str(e))
             return None
 
-    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse) -> None:
+    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
         """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
-                # Convert EmailAnalysisResponse to dict
-                analysis_dict = {
-                    'email_id': email_id,
-                    'thread_id': thread_id,
-                    'analysis_date': datetime.utcnow(),
-                    'prompt_version': "1.0",  # TODO: Make this configurable
-                    'summary': analysis.summary,
-                    'category': json.dumps(analysis.category),
-                    'priority_score': analysis.priority_score,
-                    'priority_reason': analysis.priority_reason,
-                    'action_needed': analysis.action_needed,
-                    'action_type': json.dumps(analysis.action_type),
-                    'action_deadline': analysis.action_deadline,
-                    'key_points': json.dumps(analysis.key_points),
-                    'people_mentioned': json.dumps(analysis.people_mentioned),
-                    'links_found': json.dumps(analysis.links_found),
-                    'links_display': json.dumps(analysis.links_display),
-                    'project': analysis.project,
-                    'topic': analysis.topic,
-                    'sentiment': analysis.sentiment,
-                    'confidence_score': analysis.confidence_score,
-                }
+                existing = session.query(EmailAnalysis).filter_by(email_id=email_id).first()
+                analysis_obj = existing or EmailAnalysis(email_id=email_id, thread_id=thread_id)
                 
-                # Convert the raw analysis to JSON string
-                analysis_dict['raw_analysis'] = json.dumps({
-                    k: v for k, v in analysis.__dict__.items()
-                    if not k.startswith('_')  # Exclude SQLAlchemy internal state
-                }, default=json_serial)
-                
-                # Try to get existing record
-                record = session.query(EmailAnalysis).filter_by(email_id=email_id).first()
-                
-                if record:
-                    # Update existing record
-                    for key, value in analysis_dict.items():
-                        setattr(record, key, value)
-                else:
-                    # Create new record
-                    record = EmailAnalysis(**analysis_dict)
-                    session.add(record)
-                
-                # Commit the changes
+                # Update fields
+                analysis_obj.summary = analysis.summary[:100]  # Update summary field
+                analysis_obj.category = analysis.category
+                analysis_obj.priority_score = analysis.priority_score
+                analysis_obj.priority_reason = analysis.priority_reason
+                analysis_obj.action_needed = analysis.action_needed
+                analysis_obj.action_type = analysis.action_type
+                analysis_obj.action_deadline = analysis.action_deadline
+                analysis_obj.key_points = analysis.key_points
+                analysis_obj.people_mentioned = analysis.people_mentioned
+                analysis_obj.links_found = analysis.links_found
+                analysis_obj.links_display = analysis.links_display
+                analysis_obj.project = analysis.project
+                analysis_obj.topic = analysis.topic
+                analysis_obj.sentiment = analysis.sentiment
+                analysis_obj.confidence_score = analysis.confidence_score
+                analysis_obj.analysis_date = datetime.now(timezone.utc)
+                analysis_obj.raw_analysis = json.loads(raw_json)
+
+                if not existing:
+                    session.add(analysis_obj)
                 session.commit()
-                
         except Exception as e:
             logger.error("database_error", error=str(e), email_id=email_id)
 
-    def process_emails(self, batch_size: int = 50) -> None:
+    def process_emails(self, batch_size: int = 50):
         """Process a batch of unanalyzed emails."""
         try:
             # Test API connection first
@@ -349,7 +331,8 @@ Content:
                             self.save_analysis(
                                 email_id=email_data['id'],
                                 thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
-                                analysis=email_analysis
+                                analysis=email_analysis,
+                                raw_json=analysis_json
                             )
                         except json.JSONDecodeError as e:
                             log_api_error('json_decode', str(e), analysis_json)
@@ -408,9 +391,14 @@ def log_validation_error(error_type: str, error_message: str, response_text: str
 
 def main():
     """Main entry point."""
+    parser = argparse.ArgumentParser(description='Email analyzer with configurable batch size')
+    parser.add_argument('--batch_size', type=int, default=500,
+                      help='Number of emails to process in each batch (default: 500)')
+    args = parser.parse_args()
+
     try:
         analyzer = EmailAnalyzer()
-        analyzer.process_emails(batch_size=10)
+        analyzer.process_emails(batch_size=args.batch_size)
     except Exception as e:
         logger.error("main_error", error=str(e))
         raise

@@ -1,9 +1,11 @@
 """Email analysis models."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Text, Boolean, Float
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.sql import func
+from sqlalchemy.types import TypeDecorator
+from pytz import UTC
 from models.base import Base
 from models.email import Email
 import json
@@ -95,23 +97,23 @@ class EmailAnalysis(Base):
 
     email_id = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
     thread_id = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails
-    analysis_date = Column(DateTime, default=datetime.utcnow)
+    analysis_date = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     prompt_version = Column(Text)
     summary = Column(Text)
     category = Column(JSON)  # List of categories
     priority_score = Column(Integer)
     priority_reason = Column(Text)
-    action_needed = Column(Boolean, default=False)
+    action_needed = Column(Boolean)
     action_type = Column(JSON)  # List of action types
-    action_deadline = Column(Text)  # Optional YYYY-MM-DD
+    action_deadline = Column(DateTime(timezone=True), nullable=True)
     key_points = Column(JSON)  # List of key points
-    people_mentioned = Column(JSON)  # List of people
-    links_found = Column(JSON)  # List of full URLs
-    links_display = Column(JSON)  # List of truncated URLs
-    project = Column(Text)
-    topic = Column(Text)
-    sentiment = Column(Text)
-    confidence_score = Column(Float)
+    people_mentioned = Column(JSON)  # List of people mentioned
+    links_found = Column(JSON)  # List of links found in the email
+    links_display = Column(JSON)  # List of display text for links
+    project = Column(Text, nullable=True)  # Project name if email is project-related
+    topic = Column(Text, nullable=True)  # Topic classification
+    sentiment = Column(Text, nullable=True)  # Sentiment analysis
+    confidence_score = Column(Float, nullable=True)  # Confidence score of the analysis
     raw_analysis = Column(JSON)  # Full API response
     email = relationship("Email", backref="analysis")
 
@@ -121,7 +123,7 @@ class EmailAnalysis(Base):
         return cls(
             email_id=email_id,
             thread_id=thread_id,
-            analysis_date=datetime.utcnow(),
+            analysis_date=datetime.now(UTC),
             prompt_version="1.0",  # TODO: Make this configurable
             summary=response.summary,
             category=response.category,
@@ -138,5 +140,5 @@ class EmailAnalysis(Base):
             topic=response.topic,
             sentiment=response.sentiment,
             confidence_score=response.confidence_score,
-            raw_analysis=response.dict()
+            raw_analysis=response.model_dump()
         )
