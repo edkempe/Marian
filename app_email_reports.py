@@ -1,395 +1,317 @@
 #!/usr/bin/env python3
-import sqlite3
 import json
 from collections import Counter, defaultdict
 import pandas as pd
 from tabulate import tabulate
-from datetime import datetime
-from typing import Dict
+from datetime import datetime, timezone
+from typing import Dict, List
+from database.config import get_email_session, get_analysis_session
+from models.email_analysis import EmailAnalysis
+from models.email import Email
 import argparse
 
 class EmailAnalytics:
-    def __init__(self, email_db_path="db_email_store.db", label_db_path="db_email_labels.db", analysis_db_path="db_email_analysis.db"):
-        self.email_db_path = email_db_path
-        self.label_db_path = label_db_path
-        self.analysis_db_path = analysis_db_path
-        
-        # Connect to email database
-        self.email_conn = sqlite3.connect(email_db_path)
-        self.email_conn.row_factory = sqlite3.Row
-        
-        # Connect to analysis database
-        self.analysis_conn = sqlite3.connect(analysis_db_path)
-        self.analysis_conn.row_factory = sqlite3.Row
+    """Analytics for email and analysis data."""
+    
+    def __init__(self):
+        """Initialize analytics."""
+        pass  # Sessions will be created as needed using context managers
 
     def get_total_emails(self):
         """Get total number of emails in the database"""
-        cursor = self.email_conn.cursor()
-        cursor.execute("SELECT COUNT(*) as count FROM emails")
-        return cursor.fetchone()['count']
+        with get_email_session() as session:
+            return session.query(Email).count()
 
     def get_top_senders(self, limit=10):
         """Get top email senders by volume"""
-        cursor = self.email_conn.cursor()
-        cursor.execute("""
-            SELECT sender, COUNT(*) as count 
-            FROM emails 
-            GROUP BY sender 
-            ORDER BY count DESC 
-            LIMIT ?
-        """, (limit,))
-        return [(row['sender'], row['count']) for row in cursor.fetchall()]
+        with get_email_session() as session:
+            return session.query(Email.sender, Email.id).group_by(Email.sender).order_by(Email.id.desc()).limit(limit).all()
 
     def get_email_by_date(self):
         """Get email distribution by date"""
-        cursor = self.email_conn.cursor()
-        cursor.execute("""
-            SELECT date(substr(date, 1, 10)) as email_date, 
-                   COUNT(*) as count 
-            FROM emails 
-            GROUP BY email_date 
-            ORDER BY email_date DESC 
-            LIMIT 10
-        """)
-        return [(row['email_date'], row['count']) for row in cursor.fetchall()]
+        with get_email_session() as session:
+            return session.query(Email.date, Email.id).group_by(Email.date).order_by(Email.date.desc()).limit(10).all()
 
     def get_label_distribution(self) -> Dict[str, int]:
         """Get distribution of email labels."""
         # Get all labels first
-        label_cursor = sqlite3.connect(self.label_db_path).cursor()
-        label_cursor.execute('SELECT label_id, name FROM gmail_labels')
-        label_map = {row[0]: row[1] for row in label_cursor.fetchall()}
-        print("Label map:", label_map)  # Debug
-        label_cursor.close()
+        with get_email_session() as session:
+            labels = session.query(Email.labels).all()
         
         # Count labels in emails
-        email_cursor = self.email_conn.cursor()
-        email_cursor.execute('SELECT labels FROM emails')
         label_counts = defaultdict(int)
         
-        for (labels_str,) in email_cursor.fetchall():
-            print("Labels string:", labels_str)  # Debug
-            if not labels_str:
+        for labels_str in labels:
+            if not labels_str[0]:
                 continue
                 
             # Split comma-separated label IDs
-            label_ids = [label_id.strip() for label_id in labels_str.split(',')]
-            print("Label IDs:", label_ids)  # Debug
+            label_ids = [label_id.strip() for label_id in labels_str[0].split(',')]
             
             for label_id in label_ids:
                 # Get human-readable label name from map
-                label_name = label_map.get(label_id, label_id)
-                print(f"Label ID: {label_id}, Label name: {label_name}")  # Debug
+                label_name = label_id
                 label_counts[label_name] += 1
         
-        print("Final label counts:", dict(label_counts))  # Debug
         return dict(sorted(label_counts.items(), key=lambda x: x[1], reverse=True))
 
     def get_anthropic_analysis(self):
-        """Get AI analysis results."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT 
-                a.email_id,
-                a.summary,
-                a.category,
-                a.priority_score,
-                a.priority_reason,
-                a.action_needed,
-                a.action_type,
-                a.action_deadline,
-                a.key_points,
-                a.people_mentioned,
-                a.links_found,
-                a.project,
-                a.topic,
-                a.ref_docs,
-                a.sentiment,
-                a.confidence_score
-            FROM email_analysis a
-            ORDER BY a.analysis_date DESC
-        ''')
+        """Get all Anthropic analysis results."""
+        analyses = []
         
-        results = []
-        for row in cursor.fetchall():
-            # Get email details from email database
-            email_cursor = self.email_conn.cursor()
-            email_cursor.execute('SELECT subject, sender FROM emails WHERE id = ?', (row[0],))
-            email_row = email_cursor.fetchone()
-            
-            if email_row:
-                analysis = {
-                    'email_id': row[0],
-                    'subject': email_row[0],
-                    'sender': email_row[1],
-                    'summary': row[1],
-                    'category': json.loads(row[2]) if row[2] else [],
-                    'priority': {
-                        'score': row[3],
-                        'reason': row[4]
-                    },
-                    'action': {
-                        'needed': bool(row[5]),
-                        'type': json.loads(row[6]) if row[6] else [],
-                        'deadline': row[7] or ''
-                    },
-                    'key_points': json.loads(row[8]) if row[8] else [],
-                    'people_mentioned': json.loads(row[9]) if row[9] else [],
-                    'links_found': json.loads(row[10]) if row[10] else [],
-                    'project': row[11] or '',
-                    'topic': row[12] or '',
-                    'ref_docs': row[13] or '',
-                    'sentiment': row[14],
-                    'confidence_score': row[15]
-                }
-                results.append(analysis)
+        with get_analysis_session() as analysis_session:
+            with get_email_session() as email_session:
+                results = analysis_session.query(EmailAnalysis).order_by(EmailAnalysis.analysis_date.desc()).all()
+                
+                for result in results:
+                    # Get email details from email database
+                    email = email_session.query(Email).filter(Email.id == result.email_id).first()
+                    
+                    if email:
+                        analysis = {
+                            'email_id': result.email_id,
+                            'thread_id': result.thread_id,
+                            'analysis_date': result.analysis_date,
+                            'subject': email.subject,
+                            'sender': email.sender,
+                            'summary': result.summary,
+                            'category': result.category if isinstance(result.category, list) else json.loads(result.category) if result.category else [],
+                            'priority': {
+                                'score': result.priority_score,
+                                'reason': result.priority_reason
+                            },
+                            'action': {
+                                'needed': bool(result.action_needed),
+                                'type': result.action_type if isinstance(result.action_type, list) else json.loads(result.action_type) if result.action_type else [],
+                                'deadline': result.action_deadline.isoformat() if result.action_deadline else ''
+                            },
+                            'key_points': result.key_points if isinstance(result.key_points, list) else json.loads(result.key_points) if result.key_points else [],
+                            'people_mentioned': result.people_mentioned if isinstance(result.people_mentioned, list) else json.loads(result.people_mentioned) if result.people_mentioned else [],
+                            'links': {
+                                'found': result.links_found if isinstance(result.links_found, list) else json.loads(result.links_found) if result.links_found else [],
+                                'display': result.links_display if isinstance(result.links_display, list) else json.loads(result.links_display) if result.links_display else []
+                            },
+                            'project': result.project or '',
+                            'topic': result.topic or '',
+                            'sentiment': result.sentiment,
+                            'confidence_score': result.confidence_score,
+                            'raw_analysis': result.raw_analysis
+                        }
+                        analyses.append(analysis)
         
-        return results
+        return analyses
 
     def get_priority_distribution(self):
         """Get distribution of priority scores."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT 
-                CASE 
-                    WHEN priority_score >= 3 THEN 'High (3)'
-                    WHEN priority_score >= 2 THEN 'Medium (2)'
-                    ELSE 'Low (1)'
-                END as priority_level,
-                COUNT(*) as count
-            FROM email_analysis
-            GROUP BY priority_level
-            ORDER BY priority_score DESC
-        ''')
-        return {row[0]: row[1] for row in cursor.fetchall()}
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.priority_score).all()
+        
+        priorities = {}
+        for score in results:
+            if score[0] >= 3:
+                priorities['High (3)'] = priorities.get('High (3)', 0) + 1
+            elif score[0] >= 2:
+                priorities['Medium (2)'] = priorities.get('Medium (2)', 0) + 1
+            else:
+                priorities['Low (1)'] = priorities.get('Low (1)', 0) + 1
+        
+        return priorities
 
     def get_sentiment_distribution(self):
         """Get distribution of sentiment analysis."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT sentiment, COUNT(*) as count
-            FROM email_analysis
-            GROUP BY sentiment
-        ''')
-        return {row[0]: row[1] for row in cursor.fetchall()}
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.sentiment).all()
+        
+        sentiments = {}
+        for sentiment in results:
+            sentiments[sentiment[0]] = sentiments.get(sentiment[0], 0) + 1
+        
+        return sentiments
 
     def get_action_needed_distribution(self):
         """Get distribution of emails needing action."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT action_needed, COUNT(*) as count
-            FROM email_analysis
-            GROUP BY action_needed
-        ''')
-        return {bool(row[0]): row[1] for row in cursor.fetchall()}
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.action_needed).all()
+        
+        actions = {}
+        for action in results:
+            actions[bool(action[0])] = actions.get(bool(action[0]), 0) + 1
+        
+        return actions
 
     def get_project_distribution(self):
         """Get distribution of projects."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT project, COUNT(*) as count
-            FROM email_analysis
-            WHERE project IS NOT NULL AND project != ''
-            GROUP BY project
-        ''')
-        return {row[0]: row[1] for row in cursor.fetchall()}
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.project).filter(EmailAnalysis.project != None, EmailAnalysis.project != '').all()
+        
+        projects = {}
+        for project in results:
+            projects[project[0]] = projects.get(project[0], 0) + 1
+        
+        return projects
 
     def get_topic_distribution(self):
         """Get distribution of topics."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT topic, COUNT(*) as count
-            FROM email_analysis
-            WHERE topic IS NOT NULL AND topic != ''
-            GROUP BY topic
-        ''')
-        return {row[0]: row[1] for row in cursor.fetchall()}
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.topic).filter(EmailAnalysis.topic != None, EmailAnalysis.topic != '').all()
+        
+        topics = {}
+        for topic in results:
+            topics[topic[0]] = topics.get(topic[0], 0) + 1
+        
+        return topics
 
     def get_category_distribution(self):
         """Get distribution of categories."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT category FROM email_analysis')
-        category_counts = defaultdict(int)
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.category).all()
         
-        for (categories_json,) in cursor.fetchall():
-            if categories_json:
-                categories = json.loads(categories_json)
-                for category in categories:
-                    category_counts[category] += 1
+        categories = defaultdict(int)
+        for categories_json in results:
+            if categories_json[0]:
+                categories_list = json.loads(categories_json[0])
+                for category in categories_list:
+                    categories[category] += 1
         
-        return dict(category_counts)
+        return dict(categories)
 
     def get_analysis_by_date(self):
         """Get analysis distribution by date."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT date(analysis_date) as analysis_date,
-                   COUNT(*) as count
-            FROM email_analysis
-            GROUP BY analysis_date
-            ORDER BY analysis_date DESC
-        ''')
-        return [(row[0], row[1]) for row in cursor.fetchall()]
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.analysis_date).all()
+        
+        dates = {}
+        for date in results:
+            dates[date[0]] = dates.get(date[0], 0) + 1
+        
+        return list(dates.items())
 
     def get_detailed_analysis(self, email_id):
         """Get detailed analysis for a specific email."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT *
-            FROM email_analysis
-            WHERE email_id = ?
-        ''', (email_id,))
-        row = cursor.fetchone()
-        
-        if not row:
-            return None
-        
-        return {
-            'email_id': row['email_id'],
-            'summary': row['summary'],
-            'category': json.loads(row['category']) if row['category'] else [],
-            'priority': {
-                'score': row['priority_score'],
-                'reason': row['priority_reason']
-            },
-            'action': {
-                'needed': bool(row['action_needed']),
-                'type': json.loads(row['action_type']) if row['action_type'] else [],
-                'deadline': row['action_deadline'] or ''
-            },
-            'key_points': json.loads(row['key_points']) if row['key_points'] else [],
-            'people_mentioned': json.loads(row['people_mentioned']) if row['people_mentioned'] else [],
-            'links_found': json.loads(row['links_found']) if row['links_found'] else [],
-            'project': row['project'] or '',
-            'topic': row['topic'] or '',
-            'ref_docs': row['ref_docs'] or '',
-            'sentiment': row['sentiment'],
-            'confidence_score': row['confidence_score']
-        }
-
-    def get_analysis_with_action_needed(self):
-        """Get all analyses that require action."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE action_needed = 1')
-        analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
-            if analysis:
-                analyses.append(analysis)
-        return analyses
-
-    def get_high_priority_analysis(self):
-        """Get all high priority analyses (score >= 3)."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE priority_score >= 3')
-        analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
-            if analysis:
-                analyses.append(analysis)
-        return analyses
-
-    def get_analysis_by_sentiment(self, sentiment):
-        """Get all analyses with a specific sentiment."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE sentiment = ?', (sentiment,))
-        analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
-            if analysis:
-                analyses.append(analysis)
-        return analyses
-
-    def get_analysis_by_project(self, project):
-        """Get all analyses for a specific project."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE project = ?', (project,))
-        analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
-            if analysis:
-                analyses.append(analysis)
-        return analyses
-
-    def get_analysis_by_topic(self, topic):
-        """Get all analyses for a specific topic."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE topic = ?', (topic,))
-        analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
-            if analysis:
-                analyses.append(analysis)
-        return analyses
+        with get_analysis_session() as analysis_session:
+            with get_email_session() as email_session:
+                result = analysis_session.query(EmailAnalysis).filter(EmailAnalysis.email_id == email_id).first()
+                if not result:
+                    return None
+                
+                email = email_session.query(Email).filter(Email.id == email_id).first()
+                if not email:
+                    return None
+                
+                analysis = {
+                    'email_id': result.email_id,
+                    'thread_id': result.thread_id,
+                    'analysis_date': result.analysis_date,
+                    'subject': email.subject,
+                    'sender': email.sender,
+                    'summary': result.summary,
+                    'category': result.category if isinstance(result.category, list) else json.loads(result.category) if result.category else [],
+                    'priority': {
+                        'score': result.priority_score,
+                        'reason': result.priority_reason
+                    },
+                    'action': {
+                        'needed': bool(result.action_needed),
+                        'type': result.action_type if isinstance(result.action_type, list) else json.loads(result.action_type) if result.action_type else [],
+                        'deadline': result.action_deadline.isoformat() if result.action_deadline else ''
+                    },
+                    'key_points': result.key_points if isinstance(result.key_points, list) else json.loads(result.key_points) if result.key_points else [],
+                    'people_mentioned': result.people_mentioned if isinstance(result.people_mentioned, list) else json.loads(result.people_mentioned) if result.people_mentioned else [],
+                    'links': {
+                        'found': result.links_found if isinstance(result.links_found, list) else json.loads(result.links_found) if result.links_found else [],
+                        'display': result.links_display if isinstance(result.links_display, list) else json.loads(result.links_display) if result.links_display else []
+                    },
+                    'project': result.project or '',
+                    'topic': result.topic or '',
+                    'sentiment': result.sentiment,
+                    'confidence_score': result.confidence_score,
+                    'raw_analysis': result.raw_analysis
+                }
+                
+                return analysis
 
     def get_analysis_by_category(self, category):
         """Get all analyses with a specific category."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('SELECT email_id FROM email_analysis WHERE category LIKE ?', (f'%{category}%',))
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).all()
+            matching_ids = []
+            for result in results:
+                categories = result.category if isinstance(result.category, list) else json.loads(result.category) if result.category else []
+                if category in categories:
+                    matching_ids.append(result.email_id)
+        
         analyses = []
-        for row in cursor.fetchall():
-            analysis = self.get_detailed_analysis(row['email_id'])
+        for email_id in matching_ids:
+            analysis = self.get_detailed_analysis(email_id)
             if analysis:
                 analyses.append(analysis)
+        
         return analyses
 
     def get_analysis_stats(self):
         """Get overall analysis statistics."""
-        cursor = self.analysis_conn.cursor()
-        stats = {}
-        
-        # Get total analyzed emails
-        cursor.execute('SELECT COUNT(*) as count FROM email_analysis')
-        stats['total_analyzed'] = cursor.fetchone()['count']
-        
-        # Get average confidence score
-        cursor.execute('SELECT AVG(confidence_score) as avg_conf FROM email_analysis')
-        stats['avg_confidence'] = round(cursor.fetchone()['avg_conf'], 2)
-        
-        # Get count of emails needing action
-        cursor.execute('SELECT COUNT(*) as count FROM email_analysis WHERE action_needed = 1')
-        stats['action_needed_count'] = cursor.fetchone()['count']
-        
-        # Get count of high priority emails
-        cursor.execute('SELECT COUNT(*) as count FROM email_analysis WHERE priority_score >= 3')
-        stats['high_priority_count'] = cursor.fetchone()['count']
-        
-        # Get sentiment counts
-        cursor.execute('''
-            SELECT sentiment, COUNT(*) as count
-            FROM email_analysis
-            GROUP BY sentiment
-        ''')
-        stats['sentiment_counts'] = {row[0]: row[1] for row in cursor.fetchall()}
-        
-        return stats
+        with get_analysis_session() as session:
+            stats = {}
+            
+            # Basic counts
+            stats['total_analyzed'] = session.query(EmailAnalysis).count()
+            stats['action_needed_count'] = session.query(EmailAnalysis).filter(EmailAnalysis.action_needed == True).count()
+            stats['high_priority_count'] = session.query(EmailAnalysis).filter(EmailAnalysis.priority_score >= 3).count()
+            
+            # Confidence scores
+            confidence_scores = [score[0] for score in session.query(EmailAnalysis.confidence_score).all() if score[0] is not None]
+            if confidence_scores:
+                stats['avg_confidence'] = sum(confidence_scores) / len(confidence_scores)
+                stats['min_confidence'] = min(confidence_scores)
+                stats['max_confidence'] = max(confidence_scores)
+            else:
+                stats['avg_confidence'] = 0
+                stats['min_confidence'] = 0
+                stats['max_confidence'] = 0
+            
+            # Sentiment distribution
+            sentiment_counts = Counter(s[0] for s in session.query(EmailAnalysis.sentiment).all() if s[0])
+            stats['sentiment_counts'] = dict(sentiment_counts)
+            
+            # Project and topic counts
+            stats['unique_projects'] = len(set(p[0] for p in session.query(EmailAnalysis.project).all() if p[0]))
+            stats['unique_topics'] = len(set(t[0] for t in session.query(EmailAnalysis.topic).all() if t[0]))
+            
+            # Analysis dates
+            dates = [d[0] for d in session.query(EmailAnalysis.analysis_date).order_by(EmailAnalysis.analysis_date).all()]
+            if dates:
+                stats['first_analysis'] = dates[0]
+                stats['last_analysis'] = dates[-1]
+                stats['analysis_timespan'] = (dates[-1] - dates[0]).days
+            
+            return stats
 
     def get_confidence_distribution(self):
         """Get distribution of confidence scores."""
-        cursor = self.analysis_conn.cursor()
-        cursor.execute('''
-            SELECT 
-                CASE 
-                    WHEN confidence_score >= 0.9 THEN '0.9-1.0'
-                    WHEN confidence_score >= 0.8 THEN '0.8-0.89'
-                    WHEN confidence_score >= 0.7 THEN '0.7-0.79'
-                    WHEN confidence_score >= 0.6 THEN '0.6-0.69'
-                    ELSE '<0.6'
-                END as range,
-                COUNT(*) as count
-            FROM email_analysis
-            GROUP BY range
-            ORDER BY range DESC
-        ''')
-        return cursor.fetchall()
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis.confidence_score).all()
+        
+        confidence_dist = {}
+        for score in results:
+            if score[0] >= 0.9:
+                confidence_dist['0.9-1.0'] = confidence_dist.get('0.9-1.0', 0) + 1
+            elif score[0] >= 0.8:
+                confidence_dist['0.8-0.89'] = confidence_dist.get('0.8-0.89', 0) + 1
+            elif score[0] >= 0.7:
+                confidence_dist['0.7-0.79'] = confidence_dist.get('0.7-0.79', 0) + 1
+            elif score[0] >= 0.6:
+                confidence_dist['0.6-0.69'] = confidence_dist.get('0.6-0.69', 0) + 1
+            else:
+                confidence_dist['<0.6'] = confidence_dist.get('<0.6', 0) + 1
+        
+        return list(confidence_dist.items())
 
     def print_analysis_report(self):
         """Print a comprehensive analysis report."""
         print("\n=== Email Analysis Report ===\n")
         
         # Get total analyzed emails
-        self.analysis_conn.execute("SELECT COUNT(*) as count FROM email_analysis")
-        total = self.analysis_conn.fetchone()['count']
+        total = self.get_total_emails()
         print(f"Total Analyzed Emails: {total}\n")
         
         # Priority Distribution
@@ -512,11 +434,6 @@ class EmailAnalytics:
         confidence_dist = self.get_confidence_distribution()
         print(tabulate(confidence_dist, headers=['Confidence Level', 'Count'], tablefmt='psql'))
 
-    def close_connections(self):
-        """Close database connections"""
-        self.email_conn.close()
-        self.analysis_conn.close()
-
 def sync_gmail_labels():
     """Sync Gmail labels with local database."""
     from lib_gmail import GmailAPI
@@ -596,7 +513,7 @@ def main():
     # Sync labels first
     sync_gmail_labels()
     
-    analytics = EmailAnalytics("db_email_store.db", "db_email_labels.db", "db_email_analysis.db")
+    analytics = EmailAnalytics()
     
     try:
         if args.report:
@@ -631,7 +548,7 @@ def main():
     except KeyboardInterrupt:
         print("\nExiting...")
     finally:
-        analytics.close_connections()
+        pass
 
 if __name__ == "__main__":
     main()
