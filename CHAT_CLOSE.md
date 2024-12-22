@@ -62,6 +62,9 @@ git push origin main
 # Get recent changes for NEXT_SESSION.md
 git log --oneline -n 5
 git diff --name-status HEAD~1
+
+# Run chat session manager to update documentation
+python chat_session_manager.py close
 ```
 
 Update the following sections:

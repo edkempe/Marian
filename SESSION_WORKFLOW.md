@@ -9,7 +9,7 @@
 source venv/bin/activate
 
 # 2. Run session start checks
-python session_manager.py start
+python chat_session_manager.py start
 
 # 3. Review documentation
 cat NEXT_SESSION.md
@@ -60,7 +60,7 @@ mypy .
 python -m pytest tests/
 
 # 2. Generate session close documentation
-python session_manager.py close
+python chat_session_manager.py close
 
 # 3. Review and commit changes
 git add .
@@ -108,11 +108,11 @@ All changes have been committed and pushed. The project is ready for the next se
 - Guidelines for git cleanup
 
 ### NEXT_SESSION.md
-- Updated automatically by session_manager.py
+- Updated automatically by chat_session_manager.py
 - Contains current project state
 - Lists next priority tasks
 
-### session_manager.py
+### chat_session_manager.py
 - Automates documentation updates
 - Performs environment checks
 - Generates session summaries
