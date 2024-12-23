@@ -15,17 +15,23 @@ Please review the project documentation and perform the standard checks as outli
    - Core features and functionality
    - Tech stack and dependencies
 
-2. `NEXT_SESSION.md`
+2. `SETUP.md`
+   - Complete setup instructions
+   - Environment configuration
+   - Development workflow
+   - Common issues and solutions
+
+3. `NEXT_SESSION.md`
    - Recent changes and progress
    - Current state of the project
    - Suggested next steps
 
-3. `guidelines.md`
+4. `guidelines.md`
    - Project guidelines and constraints
    - Code style preferences
    - Security requirements
 
-4. `BACKLOG.md`
+5. `BACKLOG.md`
    - Prioritized task list
    - Implementation details
    - Dependencies between tasks
@@ -34,22 +40,26 @@ Please review the project documentation and perform the standard checks as outli
 
 ### 1. Review Previous Sessions
 - Check recent session summaries in `docs/sessions/`
+- Review NEXT_SESSION.md from last session
 - Pay special attention to:
   - Issues and blockers from last session
   - Incomplete tasks
   - Environment changes
   - Testing status
+  - Recent schema modifications
+  - API integration updates
 
-### 2. Environment Setup
+### 2. Environment Verification
 ```bash
-# Activate virtual environment
-source venv/bin/activate
+# Verify virtual environment is activated
+which python  # Should point to venv/bin/python
 
-# Verify Python version
+# Check Python version and packages
 python --version
-
-# Check installed packages
 pip list
+
+# Verify environment variables
+python -c "import os; print('ANTHROPIC_API_KEY:', bool(os.getenv('ANTHROPIC_API_KEY')))"
 ```
 
 ### 3. Repository Status
@@ -64,7 +74,19 @@ git pull origin main
 git log -n 5 --oneline
 ```
 
-### 4. Project Structure Review
+### 4. Code Quality Tools
+```bash
+# Run pre-commit hooks
+pre-commit run --all-files
+
+# Format code
+black .
+
+# Run type checks
+mypy .
+```
+
+### 5. Project Structure Review
 ```bash
 # View directory structure
 tree -L 2 -I 'venv|__pycache__|*.pyc'
@@ -73,9 +95,10 @@ tree -L 2 -I 'venv|__pycache__|*.pyc'
 ls -la *.py
 ls -la models/
 ls -la database/
+ls -la tests/
 ```
 
-### 5. Database Status
+### 6. Database Status
 ```bash
 # Check database files
 ls -la *.db
@@ -84,23 +107,32 @@ ls -la *.db
 python -c "from database.config import get_email_session, get_analysis_session; print('Database connections OK')"
 ```
 
-### 6. Code Review Checks
+### 7. Test Suite
+```bash
+# Run all tests
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=.
+```
+
+### 8. Code Review Checks
 - [ ] Review any open pull requests
 - [ ] Check for pending code reviews
 - [ ] Look for TODO comments in recent changes
 - [ ] Verify test coverage for recent changes
 
-### 7. Documentation Sync
+### 9. Documentation Sync
 - [ ] Verify README.md is up to date
 - [ ] Check NEXT_SESSION.md reflects latest changes
 - [ ] Review BACKLOG.md for task priorities
 - [ ] Update documentation if needed
 
-### 8. Development Tools
+### 10. Development Tools
 - [ ] IDE/Editor configuration
-- [ ] Linter settings
+- [ ] Linter settings (see .pre-commit-config.yaml)
 - [ ] Debugger setup
-- [ ] API keys and credentials
+- [ ] API keys and credentials (check .env)
 
 ## After Checks
 1. Confirm understanding of current state
@@ -110,9 +142,10 @@ python -c "from database.config import get_email_session, get_analysis_session; 
 
 ## End of Session
 1. Update NEXT_SESSION.md
-2. Commit all changes with clear messages
-3. Push to remote repository
-4. Document any new tasks in BACKLOG.md
+2. Run pre-commit hooks on changes
+3. Commit with clear messages
+4. Push to remote repository
+5. Document any new tasks in BACKLOG.md
 
 ## Common Commands
 ```bash
@@ -125,9 +158,27 @@ python analysis_viewer.py --timeframe today --detail normal
 # Run tests
 python -m pytest
 
-# Format code
-black .
+# Format and check code
+pre-commit run --all-files
 
 # Check types
 mypy .
+
+# View setup instructions
+cat SETUP.md
 ```
+
+## Troubleshooting
+If you encounter any issues:
+1. Check SETUP.md for common issues and solutions
+2. Verify your environment matches .env.example requirements
+3. Ensure all dependencies are installed: `pip install -r requirements.txt`
+4. Try reinitializing the development environment:
+   ```bash
+   deactivate  # Exit current venv
+   rm -rf venv  # Remove old venv
+   python -m venv venv  # Create new venv
+   source venv/bin/activate  # Activate
+   pip install -e .  # Install package
+   pip install -r requirements.txt  # Install dependencies
+   ```
