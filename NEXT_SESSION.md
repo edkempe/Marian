@@ -23,3 +23,12 @@ High priority tasks from BACKLOG.md:
 -  
 -  
 -  
+
+## Email Analysis Improvements
+
+### Suggested Next Steps
+1. Add database queries to review processed email analyses and their extracted URLs
+2. Consider implementing URL validation to ensure extracted URLs are valid
+3. Add tests for the new URL extraction functionality
+4. Consider adding URL categorization (e.g., social media, documentation, etc.)
+5. Add metrics tracking for URL extraction success/failure rates
