@@ -22,6 +22,31 @@ def run_command(cmd: List[str]) -> str:
         print(f"Error running command {' '.join(cmd)}: {e}")
         return ""
 
+def get_python_command() -> str:
+    """Find the available Python command (python3 or python)."""
+    for cmd in ['python3', 'python']:
+        try:
+            subprocess.run([cmd, '--version'], capture_output=True, check=True)
+            return cmd
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+    raise RuntimeError("No Python command (python3 or python) found in PATH")
+
+def get_pip_command() -> str:
+    """Find the available pip command (pip3 or pip)."""
+    python_cmd = get_python_command()
+    return f"{python_cmd} -m pip"  # Use python -m pip for reliability
+
+def run_pip_list() -> str:
+    """Run pip list command safely."""
+    pip_cmd = get_pip_command()
+    try:
+        result = subprocess.run(f"{pip_cmd} list".split(), 
+                              capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        return f"Error listing packages: {e}"
+
 def get_recent_changes(num_commits: int = 5) -> Dict[str, List[str]]:
     """Get recent git changes."""
     changes = {
@@ -53,7 +78,8 @@ def get_test_status() -> Dict[str, str]:
     }
     
     try:
-        result = run_command(['python', '-m', 'pytest', 'tests/', '--quiet'])
+        python_cmd = get_python_command()
+        result = run_command([python_cmd, '-m', 'pytest', 'tests/', '--quiet'])
         status['passing'] = 'all tests passing' if result else 'tests failing'
     except Exception as e:
         status['failures'].append(str(e))
@@ -182,18 +208,27 @@ def main():
         
     elif command == 'start':
         print("Performing session start checks...")
+        # Get Python command first
+        python_cmd = get_python_command()
+        
         # Run checks from CHAT_START.md
         checks = [
             ('Git Status', ['git', 'status']),
             ('Recent Commits', ['git', 'log', '-n3', '--oneline']),
-            ('Test Status', ['python', '-m', 'pytest', 'tests/', '--quiet']),
-            ('Environment', ['pip', 'list'])
+            ('Test Status', [python_cmd, '-m', 'pytest', 'tests/', '--quiet']),
+            ('Environment', None)  # Special handling for pip list
         ]
         
         for name, cmd in checks:
             print(f"\n{name}:")
-            result = run_command(cmd)
-            print(result if result else "No output")
+            if cmd is None:  # Special handling for pip list
+                print(run_pip_list())
+            else:
+                result = run_command(cmd)
+                if result:
+                    print(result)
+                else:
+                    print("No output or command failed")
 
 if __name__ == "__main__":
     main()
