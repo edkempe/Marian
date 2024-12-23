@@ -1,12 +1,13 @@
-"""Tests for email analyzer functionality."""
-import pytest
-from unittest.mock import Mock, patch, call, MagicMock
+"""Tests for the email analyzer module."""
 import json
-from datetime import datetime, timedelta
-import anthropic
-from ..app_email_analyzer import EmailAnalyzer
-from ..models.email_analysis import EmailAnalysisResponse, EmailAnalysis
-from config.constants import API_CONFIG
+import pytest
+from unittest.mock import Mock, MagicMock
+from datetime import datetime
+from typing import Dict, Any
+
+from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
+from models.email import Email
+from app_email_analyzer import EmailAnalyzer
 
 @pytest.fixture
 def valid_api_response():
@@ -294,7 +295,7 @@ def test_analyze_email_validation_error(analyzer, mock_anthropic, valid_email_da
             "name": "invalid_types",
             "response": {
                 "summary": "",
-                "category": "not_a_list",
+                "category": "not_a_list",  # Invalid: should be a list
                 "priority_score": 6,
                 "priority_reason": "",
                 "action_needed": "not_bool",
@@ -381,11 +382,11 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
             args, kwargs = call_args
             
             # Check model version
-            assert kwargs.get('model') == API_CONFIG['TEST_MODEL'], \
-                f"Incorrect model version. Expected {API_CONFIG['TEST_MODEL']}, got {kwargs.get('model')}"
+            assert kwargs.get('model') == 'test_model', \
+                f"Incorrect model version. Expected test_model, got {kwargs.get('model')}"
             
             # Check required fields are present and non-empty
-            for field in API_CONFIG['REQUIRED_FIELDS']:
+            for field in ['content', 'messages']:
                 assert kwargs.get(field) is not None, f"Missing required field: {field}"
                 
             # Check messages structure

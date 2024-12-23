@@ -16,13 +16,15 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 
 # Import core applications
-from ..app_get_mail import (
+from app_get_mail import (
     get_gmail_service, init_database, fetch_emails,
     process_email, get_newest_email_date
 )
-from ..app_email_analyzer import EmailAnalyzer
-from ..app_email_reports import EmailAnalytics
-from ..app_email_self_log import EmailSelfAnalyzer
+from app_email_analyzer import EmailAnalyzer
+from app_email_reports import EmailAnalytics
+from app_email_self_log import EmailSelfAnalyzer
+from models.email import Email
+from models.email_analysis import EmailAnalysis
 
 # Test database paths
 TEST_EMAIL_DB = "test_db_email_store.db"

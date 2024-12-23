@@ -13,6 +13,7 @@ import re
 from sqlalchemy import text
 import argparse
 
+from models.email import Email
 from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from database.config import get_email_session, get_analysis_session
 from util_logging import (

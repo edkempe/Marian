@@ -75,6 +75,14 @@ marian/
 ├── tests/           # Test files
 └── README.md        # This file
 
+## Development Standards
+
+- Follow the code standards in `docs/code_standards.md`
+- Pay special attention to SQLAlchemy model standards to avoid common issues:
+  - Use absolute imports for models (`from models.email import Email`)
+  - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)
+  - Follow type hint guidelines for SQLAlchemy 2.0
+
 ## Security and Compliance
 1. **Data Security**
    - Store API keys in environment variables
