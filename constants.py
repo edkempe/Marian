@@ -103,7 +103,7 @@ Email:
 {email_content}
 
 Respond with ONLY a JSON object containing these fields:
-{
+{{
     "summary": "string",
     "category": ["string"],
     "priority_score": int,
@@ -119,7 +119,7 @@ Respond with ONLY a JSON object containing these fields:
     "topic": "string",
     "sentiment": "string",
     "confidence_score": float
-}''',
+}}''',
     'ERROR_MESSAGES': {
         "api_error": "Error calling Anthropic API: {error}",
         "validation_error": "Error validating analysis response: {error}",

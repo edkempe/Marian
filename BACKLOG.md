@@ -145,6 +145,32 @@ class DatabaseSessions:
 - More consistent behavior
 - Better code reusability
 
+### Model Improvements
+
+#### Email Analysis Model
+- [ ] Fix ID type mismatch
+  - Current: Using Integer for email_id in schema but receiving string IDs from Gmail
+  - Impact: Potential data loss or conversion issues
+  - Solution: Change to string/text type in future migration
+  - Priority: Medium
+
+- [ ] Improve type safety and documentation
+  - Add specific type hints for JSON columns
+  - Make nullable status explicit
+  - Document type constraints and validation rules
+  - Priority: Low
+
+- [ ] Standardize date handling
+  - Review action_deadline field type (DateTime vs String from API)
+  - Create consistent date handling strategy
+  - Priority: Low
+
+#### Schema Management
+- [ ] Implement model-first approach
+  - Use models as single source of truth
+  - Generate schema migrations from models using Alembic autogenerate
+  - Priority: Medium
+
 ## Medium Priority
 
 ## Low Priority

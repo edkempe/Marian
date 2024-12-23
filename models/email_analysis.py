@@ -7,7 +7,6 @@ from sqlalchemy.sql import func
 from sqlalchemy.types import TypeDecorator
 from pytz import UTC
 from models.base import Base
-from models.email import Email
 import json
 from pydantic import BaseModel, Field, model_validator
 
@@ -102,6 +101,7 @@ class EmailAnalysis(Base):
     
     # Analysis metadata
     analysis_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    analyzed_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))  # When analysis was performed
     prompt_version: Mapped[str] = Column(Text)  # Version of the prompt used for analysis
     
     # Content analysis
