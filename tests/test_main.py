@@ -214,7 +214,7 @@ def test_self_email_analysis(setup_test_dbs):
     # Mock Gmail API first
     mock_gmail = MagicMock()
     mock_profile = MagicMock()
-    mock_profile.execute.return_value = {'emailAddress': 'eddiekempe@gmail.com'}
+    mock_profile.execute.return_value = {'emailAddress': 'test.user@example.com'}
     mock_gmail.service = MagicMock()
     mock_gmail.service.users = MagicMock()
     mock_gmail.service.users.return_value = MagicMock()
@@ -252,8 +252,8 @@ def test_self_email_analysis(setup_test_dbs):
                 id='test1',
                 thread_id='thread1',
                 subject='Note to Self',
-                from_address='eddiekempe@gmail.com',
-                to_address='eddiekempe@gmail.com',
+                from_address='test.user@example.com',
+                to_address='test.user@example.com',
                 received_date=datetime.now(),
                 content='Remember to review the code',
                 labels='["INBOX"]'
