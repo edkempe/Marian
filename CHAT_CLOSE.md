@@ -1,5 +1,17 @@
 # Closing a Development Session
 
+## Important Guidelines
+1. Once the closing process begins:
+   - DO NOT make any new code changes
+   - DO NOT attempt to fix issues discovered during closing
+   - Instead, document all issues in NEXT_SESSION.md and BACKLOG.md
+   - Revert any changes made during the closing process
+
+2. If issues are discovered:
+   - Add them to the "Issues and Blockers" section in NEXT_SESSION.md
+   - Add corresponding tasks to BACKLOG.md with appropriate priority
+   - Document any temporary workarounds or important context
+
 ## Session Summary Template
 ```markdown
 ## Session Summary [DATE]
@@ -30,119 +42,40 @@
 
 ## Pre-Close Checklist
 
-### 1. Code Quality
-- [ ] Run linter and type checks
-```bash
-black .
-mypy .
-```
-- [ ] Run all tests
-```bash
-python -m pytest
-```
-- [ ] Review TODOs added during session
+### 1. Documentation Updates
+- [ ] Update NEXT_SESSION.md
+  - Add recent changes
+  - Document current state
+  - List issues and blockers
+  - Define next steps
+- [ ] Update BACKLOG.md
+  - Add new tasks discovered
+  - Update priorities
+  - Add technical debt items
 
-### 2. Documentation Updates
-- [ ] Update docstrings for new/modified functions
-- [ ] Update README.md if features added
-- [ ] Add/update API documentation
-- [ ] Review/update BACKLOG.md
-
-### 3. Git Cleanup
+### 2. Git Status
 - [ ] Review uncommitted changes
-- [ ] Squash/rebase if needed
-- [ ] Push all changes
-```bash
-git status
-git push origin main
-```
+- [ ] Commit or revert changes
+- [ ] Push final commits
 
-### 4. Update NEXT_SESSION.md
-```bash
-# Get recent changes for NEXT_SESSION.md
-git log --oneline -n 5
-git diff --name-status HEAD~1
-
-# Run chat session manager to update documentation
-python chat_session_manager.py close
-```
-
-Update the following sections:
-1. Recent Changes
-   - Code changes
-   - New features
-   - Refactoring
-   
-2. Current State
-   - Branch status
-   - Test status
-   - Known issues
-   
-3. High Priority Tasks
-   - Next steps
-   - Blocked tasks
-   - Technical debt
-   
-4. Environment
-   - New dependencies
-   - Configuration changes
-   - Required setup
-
-### 5. Final Checks
+### 3. Final Review
 - [ ] All files saved
 - [ ] All changes committed
-- [ ] All changes pushed
-- [ ] Environment documented
+- [ ] Documentation updated
 - [ ] Next steps clear
 
 ## Updating NEXT_SESSION.md
 
 ### Command to Generate Changes Summary
 ```bash
-# Create changes summary
-echo "## Recent Changes" > changes.tmp
-git log --pretty=format:"- %s" -n 5 >> changes.tmp
-echo -e "\n\n## Modified Files" >> changes.tmp
-git diff --name-status HEAD~5 >> changes.tmp
-```
+# Get recent changes
+git log --oneline -n 5
 
-### Template for NEXT_SESSION.md Update
-```markdown
-# Starting Point for Next Session
+# Get modified files
+git diff --name-status HEAD~1
 
-## Recent Changes
-[Auto-generated from git log]
-
-## Current State
-- Branch: [current branch]
-- Tests: [passing/failing]
-- Coverage: [percentage]
-- Environment: [any changes]
-
-## High Priority Tasks
-1. [Next immediate task]
-   - Implementation details
-   - Dependencies
-   - Acceptance criteria
-
-2. [Following tasks]
-   - Priority order
-   - Blocked/unblocked status
-
-## Next Steps Suggestions
-1. [Specific next implementation]
-2. [Required preparation]
-3. [Alternative paths]
-
-## Environment
-- New dependencies: [list]
-- Configuration changes: [list]
-- Database changes: [list]
-
-## Important Files
-- [List of key files modified]
-- [New files added]
-- [Files pending review]
+# Update documentation
+python chat_session_manager.py close
 ```
 
 ## Common Close-out Commands

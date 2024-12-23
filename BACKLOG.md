@@ -171,6 +171,24 @@ class DatabaseSessions:
   - Generate schema migrations from models using Alembic autogenerate
   - Priority: Medium
 
+### Testing Infrastructure
+- [ ] Fix failing tests after schema changes
+  - [ ] Update test database setup
+  - [ ] Fix column name mismatches
+  - [ ] Update mock data and API responses
+- [ ] Improve test data management
+  - [ ] Create reusable test fixtures
+  - [ ] Add database setup helpers
+  - [ ] Improve test isolation
+- [ ] Add integration tests for email processing workflow
+- [ ] Add performance tests for database operations
+
+### Documentation
+- [ ] Document new database schema
+- [ ] Update API documentation
+- [ ] Add migration guide for schema changes
+- [ ] Document test data management
+
 ## Medium Priority
 
 ## Low Priority

@@ -23,6 +23,10 @@
    - Added analyzed_date field to model but tests still failing
    - Need to verify schema migration and test database setup
    - Check if test data needs to be updated for new field
+   - Update test database setup to match new schema
+   - Fix column name mismatches in tests
+   - Update mock data to match new schema
+   - Update API response mocks
 
 2. **Review Other Changes**
    - Several files have uncommitted changes that need review:
