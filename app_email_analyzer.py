@@ -281,17 +281,17 @@ Content: {email_data.get('content', '')}"""
                         email_data = dict(email_data)
                         
                         # Format email for analysis
-                        truncated_body = email_data['body'][:5000] if email_data['body'] else ""  
-                        email_type = "internal" if "@company.com" in email_data['sender'] else "external"
+                        truncated_body = email_data.get('body', '')[:5000]
+                        email_type = "internal" if "@company.com" in email_data.get('sender', '') else "external"
                         
                         email_request = EmailRequest(
-                            id=email_data['id'],
-                            subject=email_data['subject'] or '',
-                            body=email_data['body'] or '',
-                            sender=email_data['sender'] or '',
-                            date=email_data['date'] or '',
-                            labels=email_data['labels'] or '[]',
-                            full_api_response=email_data['full_api_response'] or '',
+                            id=email_data.get('id', ''),
+                            subject=email_data.get('subject', ''),
+                            body=email_data.get('body', ''),
+                            sender=email_data.get('sender', ''),
+                            date=email_data.get('date', ''),
+                            labels=email_data.get('labels', '[]'),
+                            full_api_response=email_data.get('full_api_response', '{}'),
                             email_type=email_type,
                             truncated_body=truncated_body
                         )
@@ -345,15 +345,15 @@ Content: {email_request.truncated_body}"""
                             
                             # Create EmailAnalysis instance with thread_id
                             email_analysis = EmailAnalysis.from_api_response(
-                                email_id=email_data['id'],
-                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
+                                email_id=email_data.get('id', ''),
+                                thread_id=email_data.get('thread_id', email_data.get('id', '')),  # Fallback to email_id if thread_id not present
                                 response=analysis_response
                             )
                             
                             # Save analysis with thread_id
                             self.save_analysis(
-                                email_id=email_data['id'],
-                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
+                                email_id=email_data.get('id', ''),
+                                thread_id=email_data.get('thread_id', email_data.get('id', '')),  # Fallback to email_id if thread_id not present
                                 analysis=email_analysis,
                                 raw_json=analysis_json
                             )

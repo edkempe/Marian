@@ -417,14 +417,37 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
 
 def test_process_emails_error_handling(analyzer, valid_email_data, mock_anthropic, valid_api_response):
     """Test error handling during batch processing."""
-    test_emails = [valid_email_data.copy() for _ in range(3)]
+    # Create test emails with all required fields
+    test_emails = [
+        {
+            'id': f'test_id_{i}',
+            'thread_id': f'thread_{i}',
+            'subject': f'Test {i}',
+            'sender': 'test@example.com',
+            'date': '2024-12-23T12:25:31',
+            'body': f'Test content {i}',
+            'labels': 'INBOX',
+            'has_attachments': False,
+            'full_api_response': '{}'
+        }
+        for i in range(3)
+    ]
     
     with patch('app_email_analyzer.get_email_session') as mock_session, \
-         patch('app_email_analyzer.get_analysis_session'):
-        # Setup mock to raise an exception on second email
+         patch('app_email_analyzer.get_analysis_session'), \
+         patch('time.sleep'):  # Mock sleep to speed up tests
+        # Setup mock to raise an exception on second email's attempts
         def side_effect(*args, **kwargs):
-            if mock_anthropic.return_value.messages.create.call_count == 2:
+            call_count = mock_anthropic.return_value.messages.create.call_count
+            # Call sequence:
+            # 1. API test - success
+            # 2. First email - success
+            # 3-5. Second email (3 retries) - all fail
+            # 6. Third email - success
+            if 3 <= call_count <= 5:  # All attempts for second email fail
                 raise Exception("API Error")
+            
+            # All other calls succeed
             mock_content = Mock()
             mock_content.text = json.dumps(valid_api_response)
             return Mock(content=[mock_content])
@@ -435,5 +458,11 @@ def test_process_emails_error_handling(analyzer, valid_email_data, mock_anthropi
         # Process emails
         analyzer.process_emails(batch_size=1)
         
-        # Verify that processing continued after error
-        assert mock_anthropic.return_value.messages.create.call_count == 3
+        # Verify total API calls
+        expected_calls = (
+            1 +  # Initial API test
+            1 +  # First email (success)
+            3 +  # Second email (3 failed retries)
+            1    # Third email (success)
+        )
+        assert mock_anthropic.return_value.messages.create.call_count == expected_calls
