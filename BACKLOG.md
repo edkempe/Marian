@@ -2,6 +2,64 @@
 
 ## High Priority
 
+### Schema Validation and Testing
+**Status**: Pending
+**Priority**: Highest
+**Description**: Validate and test recent schema changes across the application.
+
+#### Technical Details
+1. Database Schema Testing
+   - Verify new field names in all operations
+   - Test timezone handling
+   - Validate label history schema
+   - Create database migration plan
+
+2. Component Integration
+   - Update affected components
+   - Test email retrieval with new schema
+   - Verify date/time handling
+   - Update documentation
+
+### Email Processing Prototype
+**Status**: In Progress
+**Priority**: Highest
+**Description**: Implement a working prototype for email retrieval and processing workflow.
+
+#### Technical Details
+1. Email Retrieval
+   - Implement Gmail API connection
+   - Add batch retrieval of messages
+   - Handle rate limiting
+   - Store raw messages in database
+
+2. Email Processing
+   - Parse email content and metadata
+   - Extract key fields (subject, sender, date, body)
+   - Handle different email formats
+   - Process attachments flag
+   - Basic error handling
+
+3. Testing & Validation
+   - Add integration tests
+   - Test with various email formats
+   - Validate data storage
+   - Monitor API usage
+
+#### Success Criteria
+- Can retrieve emails from Gmail
+- Successfully stores in database
+- Handles common email formats
+- Basic error handling in place
+- Reasonable performance with batches
+
+#### Implementation Steps
+1. Complete Gmail API integration
+2. Implement message retrieval
+3. Add database storage
+4. Add basic processing
+5. Add error handling
+6. Test with real data
+
 ### Session Management Testing
 - [ ] Test and refine chat session workflow
   - Test session_manager.py functionality
@@ -172,8 +230,16 @@ class DatabaseSessions:
 
 - [ ] Standardize date handling
   - Review action_deadline field type (DateTime vs String from API)
+  - Change Email model date field from TEXT to DateTime(timezone=True)
   - Create consistent date handling strategy
   - Priority: Low
+
+- [ ] Future JSON Type Migration
+  - Plan migration of TEXT fields to JSON type
+  - Create data migration script
+  - Add validation for JSON format
+  - Update tests
+  - Priority: Low - after validation improvements
 
 #### Schema Management
 - [ ] Implement model-first approach
@@ -270,5 +336,21 @@ class DatabaseSessions:
   - Priority: High
 
 ## Medium Priority
+
+### Documentation Updates
+**Status**: Pending
+**Priority**: Medium
+**Description**: Update documentation to reflect recent schema changes.
+
+#### Areas to Update
+1. API Documentation
+   - Document new field names
+   - Update examples
+   - Add timezone handling guidelines
+
+2. Database Schema
+   - Document new schema
+   - Add migration guidelines
+   - Update field descriptions
 
 ## Low Priority

@@ -21,9 +21,10 @@ def setup_test_email_db():
         id TEXT PRIMARY KEY,
         thread_id TEXT,
         subject TEXT,
-        sender TEXT,
-        date TEXT,  -- Store as ISO format string
-        body TEXT,
+        from_address TEXT,
+        to_address TEXT,
+        received_date TEXT,  -- Store as ISO format string
+        content TEXT,
         labels VARCHAR(150),
         has_attachments BOOLEAN DEFAULT 0 NOT NULL,
         full_api_response TEXT
@@ -98,58 +99,54 @@ def insert_test_data(email_conn, analysis_conn):
     # Insert test emails
     test_emails = [
         ('18ab4cc9d45e2f1a', '18ab4cc9d45e2f1a', 'Test Email 1', 'sender1@test.com', 
-         datetime.now(timezone.utc).isoformat(), 'Test content 1', 'INBOX,IMPORTANT', False,
-         json.dumps({'raw': 'data1'})),
-        ('18ab4cc9d45e2f1b', '18ab4cc9d45e2f1b', 'Test Email 2', 'sender2@test.com',
-         datetime.now(timezone.utc).isoformat(), 'Test content 2', 'INBOX', True,
-         json.dumps({'raw': 'data2'}))
+         'recipient1@test.com', datetime.now(timezone.utc).isoformat(), 'Test content 1', 
+         'INBOX,IMPORTANT', False, '{}'),
+        ('28ab4cc9d45e2f2b', '28ab4cc9d45e2f2b', 'Test Email 2', 'sender2@test.com',
+         'recipient2@test.com', datetime.now(timezone.utc).isoformat(), 'Test content 2',
+         'INBOX', False, '{}')
     ]
     
     email_cursor.executemany('''
-        INSERT INTO emails (id, thread_id, subject, sender, date, body, labels, has_attachments, full_api_response)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO emails (id, thread_id, subject, from_address, to_address, received_date, 
+                          content, labels, has_attachments, full_api_response)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', test_emails)
 
-    # Insert test analysis data
-    test_analyses = [
-        ('18ab4cc9d45e2f1a', '18ab4cc9d45e2f1a', datetime.now(timezone.utc), datetime.now(timezone.utc), 'v1',
-         'Test summary 1', json.dumps(['category1']), 3, 'Test reason',
-         True, json.dumps(['action1']), datetime.now(timezone.utc),
-         json.dumps(['point1']), json.dumps(['person1']), 
-         json.dumps(['link1']), json.dumps(['display1']),
-         'project1', 'topic1', 'positive', 0.9,
-         json.dumps({'raw': 'data1'})),
-        ('18ab4cc9d45e2f1b', '18ab4cc9d45e2f1b', datetime.now(timezone.utc), datetime.now(timezone.utc), 'v1',
-         'Test summary 2', json.dumps(['category2']), 2, 'Test reason 2',
-         False, json.dumps([]), None,
-         json.dumps(['point2']), json.dumps([]), 
-         json.dumps([]), json.dumps([]),
-         'project2', 'topic2', 'neutral', 0.8,
-         json.dumps({'raw': 'data2'}))
+    # Insert test analysis
+    test_analysis = [
+        ('18ab4cc9d45e2f1a', '18ab4cc9d45e2f1a', datetime.now(timezone.utc).isoformat(),
+         datetime.now(timezone.utc).isoformat(), '1.0', 'Test summary 1', 'work',
+         3, 'Important work email', True, 'follow_up', None, json.dumps(['point1', 'point2']),
+         json.dumps(['person1']), json.dumps([]), json.dumps([]), 'Project1', 'Topic1',
+         'positive', 0.9, '{}'),
+        ('28ab4cc9d45e2f2b', '28ab4cc9d45e2f2b', datetime.now(timezone.utc).isoformat(),
+         datetime.now(timezone.utc).isoformat(), '1.0', 'Test summary 2', 'personal',
+         1, 'Regular update', False, None, None, json.dumps(['point3']),
+         json.dumps([]), json.dumps([]), json.dumps([]), None, 'Topic2',
+         'neutral', 0.8, '{}')
     ]
 
     analysis_cursor.executemany('''
-        INSERT INTO email_analysis (
-            email_id, thread_id, analysis_date, analyzed_date, prompt_version,
-            summary, category, priority_score, priority_reason,
-            action_needed, action_type, action_deadline,
-            key_points, people_mentioned, links_found, links_display,
-            project, topic, sentiment, confidence_score, full_api_response
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', test_analyses)
+        INSERT INTO email_analysis (email_id, thread_id, analysis_date, analyzed_date,
+                                  prompt_version, summary, category, priority_score,
+                                  priority_reason, action_needed, action_type,
+                                  action_deadline, key_points, people_mentioned,
+                                  links_found, links_display, project, topic,
+                                  sentiment, confidence_score, full_api_response)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', test_analysis)
 
     email_conn.commit()
     analysis_conn.commit()
 
 @pytest.fixture
-def setup_test_data_fixture():
+def setup_test_data():
     """Fixture to set up test data in databases."""
     email_conn, analysis_conn = setup_test_dbs()
     insert_test_data(email_conn, analysis_conn)
-    
     yield
     
-    # Cleanup
+    # Clean up
     email_conn.close()
     analysis_conn.close()
     if os.path.exists(TEST_EMAIL_DB):

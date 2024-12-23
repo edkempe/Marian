@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 from database.config import get_email_session
 from models.email import Email
 
 test_emails = [
     {
+        "id": "msg_001",
         "subject": "Project Update: Q4 Roadmap",
-        "body": """Hi team,
+        "content": """Hi team,
 
 I wanted to share a quick update on our Q4 roadmap progress. Here are the key points:
 
@@ -24,15 +25,18 @@ Let me know if you have any questions or concerns.
 
 Best regards,
 John""",
-        "sender": "john@company.com",
-        "received_date": datetime.now() - timedelta(days=1),
+        "from_address": "john@company.com",
+        "to_address": "team@company.com",
+        "received_date": datetime.now(timezone.utc) - timedelta(days=1),
         "labels": "important,project-updates",
         "thread_id": "thread_001",
-        "has_attachments": False
+        "has_attachments": False,
+        "full_api_response": "{}"
     },
     {
+        "id": "msg_002",
         "subject": "Urgent: Server Performance Issues",
-        "body": """Team,
+        "content": """Team,
 
 We're experiencing critical performance issues in the production environment:
 
@@ -54,15 +58,18 @@ Please treat this as high priority.
 
 Thanks,
 Sarah""",
-        "sender": "sarah@company.com",
-        "received_date": datetime.now() - timedelta(hours=2),
+        "from_address": "sarah@company.com",
+        "to_address": "team@company.com",
+        "received_date": datetime.now(timezone.utc) - timedelta(hours=2),
         "labels": "urgent,production-issues",
         "thread_id": "thread_002",
-        "has_attachments": False
+        "has_attachments": False,
+        "full_api_response": "{}"
     },
     {
+        "id": "msg_003",
         "subject": "Team Lunch Next Week",
-        "body": """Hello everyone!
+        "content": """Hello everyone!
 
 To celebrate our successful Q3, we're organizing a team lunch next Wednesday at 12:30 PM.
 
@@ -75,11 +82,13 @@ Looking forward to seeing everyone!
 
 Best,
 Emma""",
-        "sender": "emma@company.com",
-        "received_date": datetime.now() - timedelta(days=2),
+        "from_address": "emma@company.com",
+        "to_address": "team@company.com",
+        "received_date": datetime.now(timezone.utc) - timedelta(days=2),
         "labels": "team-events,social",
         "thread_id": "thread_003",
-        "has_attachments": False
+        "has_attachments": False,
+        "full_api_response": "{}"
     }
 ]
 

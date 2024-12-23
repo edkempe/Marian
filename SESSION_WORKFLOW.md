@@ -52,6 +52,14 @@ git commit -m "docs: update API documentation
 - Add error handling details"
 ```
 
+### Development Guidelines
+
+1. Make Small Incremental Changes
+   - Focus on one issue at a time
+   - Only make necessary changes
+   - Avoid making unrelated modifications
+   - Test and verify each change before moving to the next
+
 ### 3. Closing a Session
 
 ```bash

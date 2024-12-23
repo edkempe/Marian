@@ -110,6 +110,11 @@ Legacy table for email triage (deprecated). This table is no longer used and its
 ### Historical Changes
 
 ### 2024-12-23
+- Decided to keep full_api_response as TEXT instead of JSON type
+  - Rationale: Preserves exact API responses even when malformed
+  - Enables better debugging of API issues
+  - Allows tracking of non-JSON responses and parsing errors
+  - Validation and parsing handled in application layer
 - Changed email_id in email_analysis from INTEGER to TEXT to match Gmail IDs
 - Added thread_id and has_attachments to emails table
 - Consolidated analysis into main database
