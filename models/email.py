@@ -18,6 +18,8 @@ class Email(Base):
     - subject: Email subject
     - from_address: Sender email address
     - to_address: Recipient email address
+    - cc_address: CC recipient email address
+    - bcc_address: BCC recipient email address
     - received_date: When the email was received (as DateTime)
     - content: Email content
     - labels: Comma-separated Gmail label IDs
@@ -39,6 +41,8 @@ class Email(Base):
     subject: Mapped[str] = Column(Text, server_default='No Subject')
     from_address: Mapped[str] = Column(Text, nullable=False)
     to_address: Mapped[str] = Column(Text, nullable=False)
+    cc_address: Mapped[str] = Column(Text, server_default='')
+    bcc_address: Mapped[str] = Column(Text, server_default='')
     received_date: Mapped[datetime] = Column(DateTime(timezone=True), nullable=False)
     content: Mapped[str] = Column(Text, server_default='')
     labels: Mapped[str] = Column(String(150), server_default='')

@@ -77,6 +77,8 @@ def init_database(conn=None):
                   subject TEXT,
                   from_address TEXT,
                   to_address TEXT,
+                  cc_address TEXT DEFAULT '',
+                  bcc_address TEXT DEFAULT '',
                   received_date TEXT,
                   content TEXT,
                   labels TEXT,  
@@ -228,15 +230,18 @@ def process_email(service, msg_id, conn):
         cursor = conn.cursor()
         cursor.execute('''
             INSERT OR REPLACE INTO emails (
-                id, thread_id, subject, from_address, to_address, received_date,
-                content, labels, has_attachments, full_api_response
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, thread_id, subject, from_address, to_address, cc_address,
+                bcc_address, received_date, content, labels, has_attachments,
+                full_api_response
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             msg_id,
             msg['threadId'],
             headers.get('Subject', ''),
             headers.get('From', ''),
             headers.get('To', ''),
+            headers.get('Cc', ''),
+            headers.get('Bcc', ''),
             date.isoformat(),
             body,
             ','.join(msg.get('labelIds', [])),
@@ -251,6 +256,8 @@ def process_email(service, msg_id, conn):
             'subject': headers.get('Subject', ''),
             'from_address': headers.get('From', ''),
             'to_address': headers.get('To', ''),
+            'cc_address': headers.get('Cc', ''),
+            'bcc_address': headers.get('Bcc', ''),
             'received_date': date.isoformat(),
             'content': body,
             'labels': msg.get('labelIds', []),

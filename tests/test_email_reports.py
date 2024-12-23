@@ -16,20 +16,28 @@ def mock_email_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,
-                  subject TEXT,
-                  sender TEXT,
-                  date TEXT,
-                  body TEXT,
-                  labels TEXT,
-                  raw_data TEXT)''')
+                  thread_id TEXT NOT NULL,
+                  subject TEXT DEFAULT 'No Subject',
+                  from_address TEXT NOT NULL,
+                  to_address TEXT NOT NULL,
+                  cc_address TEXT DEFAULT '',
+                  bcc_address TEXT DEFAULT '',
+                  received_date TIMESTAMP NOT NULL,
+                  content TEXT DEFAULT '',
+                  labels TEXT DEFAULT '',
+                  has_attachments BOOLEAN NOT NULL DEFAULT 0,
+                  full_api_response TEXT DEFAULT '{}')''')
     
     # Insert test data
     test_data = [
-        ('1', 'Test Subject 1', 'sender1@test.com', '2024-12-19 10:00:00', 'Test body 1', 'INBOX,IMPORTANT', 'raw1'),
-        ('2', 'Test Subject 2', 'sender2@test.com', '2024-12-19 11:00:00', 'Test body 2', 'INBOX,UNREAD', 'raw2'),
-        ('3', 'Test Subject 3', 'sender1@test.com', '2024-12-19 12:00:00', 'Test body 3', 'INBOX,SENT', 'raw3')
+        ('1', 'thread1', 'Test Subject 1', 'sender1@test.com', 'to1@test.com', '', '',
+         '2024-12-19 10:00:00', 'Test body 1', 'INBOX,IMPORTANT', False, '{}'),
+        ('2', 'thread2', 'Test Subject 2', 'sender2@test.com', 'to2@test.com', '', '',
+         '2024-12-19 11:00:00', 'Test body 2', 'INBOX,UNREAD', False, '{}'),
+        ('3', 'thread3', 'Test Subject 3', 'sender1@test.com', 'to3@test.com', '', '',
+         '2024-12-19 12:00:00', 'Test body 3', 'INBOX,SENT', False, '{}')
     ]
-    c.executemany('INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?)', test_data)
+    c.executemany('INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', test_data)
     conn.commit()
     return conn
 
@@ -64,51 +72,47 @@ def mock_analysis_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS email_analysis
                  (email_id TEXT PRIMARY KEY,
+                  thread_id TEXT NOT NULL,
                   analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  analyzed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  prompt_version TEXT,
                   summary TEXT,
                   category TEXT,
                   priority_score INTEGER,
                   priority_reason TEXT,
                   action_needed BOOLEAN,
                   action_type TEXT,
-                  action_deadline TEXT,
+                  action_deadline TIMESTAMP,
                   key_points TEXT,
                   people_mentioned TEXT,
                   links_found TEXT,
+                  links_display TEXT,
                   project TEXT,
                   topic TEXT,
-                  ref_docs TEXT,
                   sentiment TEXT,
                   confidence_score REAL,
-                  raw_analysis TEXT)''')
+                  full_api_response TEXT)''')
     
     # Insert test data
     test_data = [
-        ('1', '2024-12-19', 'Summary 1', '["work"]', 3, 'reason1', 1, '["review"]', '2024-12-20',
-         '["point1"]', '["person1"]', '[]', 'project1', 'topic1', 'ref1', 'positive', 0.9, 'raw1'),
-        ('2', '2024-12-19', 'Summary 2', '["personal"]', 2, 'reason2', 0, '[]', '',
-         '["point2"]', '[]', '[]', 'project2', 'topic2', 'ref2', 'neutral', 0.8, 'raw2')
+        ('1', 'thread1', '2024-12-19', '2024-12-19', 'v1', 'Summary 1', 
+         '["work"]', 3, 'Important meeting', True, '["review"]', '2024-12-20',
+         '["point1"]', '["person1"]', '[]', '[]', 'project1', 'topic1', 
+         'positive', 0.9, '{}'),
+        ('2', 'thread2', '2024-12-19', '2024-12-19', 'v1', 'Summary 2', 
+         '["personal"]', 2, 'Follow-up needed', False, '[]', None,
+         '["point2"]', '[]', '[]', '[]', 'project2', 'topic2', 
+         'neutral', 0.8, '{}')
     ]
     c.executemany('''INSERT INTO email_analysis VALUES
-                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', test_data)
+                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', test_data)
     conn.commit()
     return conn
 
 @pytest.fixture
 def analytics(mock_email_db, mock_label_db, mock_analysis_db):
     """Create EmailAnalytics instance with test databases."""
-    with patch('sqlite3.connect') as mock_connect:
-        def side_effect(path):
-            if 'db_email_store.db' in str(path) or 'db_email_store.db' in str(path).split('/')[-1]:
-                return mock_email_db
-            elif 'email_labels.db' in str(path) or 'email_labels.db' in str(path).split('/')[-1]:
-                return mock_label_db
-            elif 'email_analysis.db' in str(path) or 'email_analysis.db' in str(path).split('/')[-1]:
-                return mock_analysis_db
-            return sqlite3.connect(':memory:')
-        
-        mock_connect.side_effect = side_effect
-        return EmailAnalytics()
+    return EmailAnalytics(email_conn=mock_email_db, analysis_conn=mock_analysis_db)
 
 def test_get_total_emails(analytics):
     """Test getting total email count."""
@@ -224,7 +228,7 @@ def test_get_detailed_analysis(analytics):
     assert analysis['summary'] == 'Summary 1'
     assert analysis['category'] == ['work']
     assert analysis['priority']['score'] == 3
-    assert analysis['priority']['reason'] == 'reason1'
+    assert analysis['priority']['reason'] == 'Important meeting'
     assert analysis['action']['needed'] is True
     assert analysis['action']['type'] == ['review']
     assert analysis['action']['deadline'] == '2024-12-20'
