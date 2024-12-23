@@ -5,7 +5,8 @@ An AI-powered email analysis and management system that uses advanced language m
 
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
-- **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3-Haiku and stores insights
+- **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3 and stores insights
+- **Configuration** (`config/constants.py`): Central configuration for all components
 - **Database**:
   - `db_email_store.db`: Main database for email storage and analysis
     - `emails`: Raw email data
@@ -14,7 +15,7 @@ An AI-powered email analysis and management system that uses advanced language m
 ## Prerequisites
 1. Python 3.12.8 or higher
 2. Gmail API credentials (`credentials.json`) from Google Cloud Console
-3. Anthropic API key for Claude-3-Haiku
+3. Anthropic API key for Claude-3
 
 ## Setup Instructions
 1. Clone the repository
@@ -24,10 +25,23 @@ An AI-powered email analysis and management system that uses advanced language m
 5. Set up environment variables:
    ```bash
    export ANTHROPIC_API_KEY=your_api_key_here
-   export EMAIL_DB_URL=sqlite:///db_email_store.db      # Optional
-   export ANALYSIS_DB_URL=sqlite:///db_email_analysis.db # Optional
    ```
 6. Place your Gmail API `credentials.json` in the project root
+
+## Configuration
+The project uses a centralized configuration system in `config/constants.py`. This file contains all configuration settings for:
+
+- API settings (model versions, tokens, temperature)
+- Database configuration (file paths, URLs, table names)
+- Metrics and logging settings
+- Email processing parameters
+
+To modify any settings:
+1. Navigate to `config/constants.py`
+2. Update the relevant configuration section
+3. Changes will be automatically reflected across the codebase
+
+See `config/constants.py` for the full configuration reference.
 
 ## Usage
 1. Fetch emails:

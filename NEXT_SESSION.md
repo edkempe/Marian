@@ -20,7 +20,22 @@
 
 ## Next Steps
 High priority tasks from BACKLOG.md:
--  
+- **Code DRY Improvements with Constants**
+   - **Priority**: High
+   - **Description**: Make codebase more DRY (Don't Repeat Yourself) by leveraging the `config/constants.py` file
+   - **Subtasks**:
+     - [ ] Audit codebase for hardcoded values that should be in constants
+     - [ ] Move all API configuration (models, tokens, temperature) to constants
+     - [ ] Centralize database configuration values
+     - [ ] Update tests to use shared constants
+     - [ ] Document constants usage in README.md
+   - **Impact**: Reduces maintenance burden, improves consistency, makes updates easier
+   - **Areas to Focus**:
+     - Email analyzer configuration
+     - Database connection settings
+     - API parameters and models
+     - Test configurations
+     - Metrics and logging settings
 -  
 -  
 
