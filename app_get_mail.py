@@ -1,130 +1,75 @@
-"""
-Gmail Email Fetcher
-------------------
-This script fetches emails from Gmail and stores them in a SQLite database.
+"""Gmail email fetching and storage module.
 
-Key Features:
-- Fetches emails in batches with configurable time windows
-- Stores emails with full content and metadata
-- Supports incremental fetching (newer/older emails)
-- Handles timezone conversion properly
-- Prevents duplicate storage
-- Displays dates in Mountain Time
+This module provides functionality to:
+1. Fetch emails from Gmail API
+2. Store emails in a local database
+3. Track email labels and their history
 
-Dependencies:
-- google-auth-oauthlib: For Gmail API authentication
+Requirements:
 - google-api-python-client: For Gmail API access
 - python-dateutil: For robust date parsing
 - pytz: For timezone handling
+- sqlalchemy: For database operations
 
 Usage:
 python get_mail.py [--newer] [--older] [--clear] [--label] [--list-labels]
-  --newer: Fetch emails newer than the most recent in database
-  --older: Fetch emails older than the oldest in database
-  --clear: Clear the database before fetching
-  --label: Filter emails by label
-  --list-labels: List all available labels
-
-Notes:
-- Uses lib_gmail.py for Gmail API authentication
-- Uses Unix timestamps for Gmail API queries for reliable date filtering
-- Keeps a 1-minute overlap window when fetching newer emails
-- Stores dates in UTC but displays in Mountain Time
-- Default fetch window is 30 days when starting with empty database
-- Label history is stored in a separate database (db_label_history.db)
-
-Date: December 2024
 """
 
-import sqlite3
-import base64
-import email
-from datetime import datetime, timedelta
-import json
 import argparse
+import json
+import os
+from datetime import datetime, timedelta
 from pytz import timezone
 import time
 from dateutil import parser
-from lib_gmail import GmailAPI
+from base64 import urlsafe_b64decode
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from models.base import Base
+from models.email import Email
+from models.gmail_label import GmailLabel
+from lib_gmail import GmailAPI
+from database.config import get_email_session, get_analysis_session, init_db
+
+# Configuration
 days_to_fetch = 5  # Temporarily set to 5 days to get roughly 50 emails
 maxResults = 50  # Set max results to 50
-MOUNTAIN_TZ = timezone('US/Mountain')
 UTC_TZ = timezone('UTC')
 
-def get_email_db():
-    """Get connection to email database."""
-    return sqlite3.connect('db_email_store.db')
+def init_database(session: Session = None) -> Session:
+    """Initialize the email database schema."""
+    # Import models to ensure they are registered with SQLAlchemy
+    from models.base import Base
+    from models.email import Email
+    from models.email_analysis import EmailAnalysis
+    from models.gmail_label import GmailLabel
+    
+    init_db()
+    return session
 
-def get_label_db():
-    """Get connection to label history database."""
-    return sqlite3.connect('db_label_history.db')
-
-def init_database(conn=None):
-    """Initialize the email database.
+def init_label_database(session: Session = None) -> Session:
+    """Initialize the label database schema."""
+    # Import models to ensure they are registered with SQLAlchemy
+    from models.base import Base
+    from models.email import Email
+    from models.email_analysis import EmailAnalysis
+    from models.gmail_label import GmailLabel
     
-    Args:
-        conn: Optional SQLite connection. If not provided, uses default connection.
-    """
-    if conn is None:
-        conn = get_email_db()
-    c = conn.cursor()
-    
-    # Create emails table with updated schema
-    c.execute('''CREATE TABLE IF NOT EXISTS emails
-                 (id TEXT PRIMARY KEY,
-                  thread_id TEXT,
-                  subject TEXT,
-                  from_address TEXT,
-                  to_address TEXT,
-                  cc_address TEXT DEFAULT '',
-                  bcc_address TEXT DEFAULT '',
-                  received_date TEXT,
-                  content TEXT,
-                  labels TEXT,  
-                  has_attachments BOOLEAN DEFAULT 0,
-                  full_api_response TEXT)''')
-    
-    conn.commit()
-    return conn
-
-def init_label_database(conn=None):
-    """Initialize the label history database.
-    
-    Args:
-        conn: Optional SQLite connection. If not provided, uses default connection.
-    """
-    if conn is None:
-        conn = get_label_db()
-    c = conn.cursor()
-    
-    # Create gmail_labels table
-    c.execute('''CREATE TABLE IF NOT EXISTS gmail_labels
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  label_id TEXT NOT NULL,  
-                  name TEXT NOT NULL,
-                  type TEXT,
-                  is_active BOOLEAN DEFAULT 1,
-                  first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                  last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                  deleted_at DATETIME)''')
-    
-    conn.commit()
-    return conn
+    init_db()
+    return session
 
 def get_gmail_service():
-    """Get an authenticated Gmail service using lib_gmail."""
+    """Get an authenticated Gmail service."""
     gmail_api = GmailAPI()
     return gmail_api.get_service()
 
-def clear_database(conn=None):
+def clear_database(session: Session = None) -> Session:
     """Clear all data from the email database."""
-    if conn is None:
-        conn = get_email_db()
-    c = conn.cursor()
-    c.execute('DELETE FROM emails')
-    conn.commit()
-    return conn
+    with get_email_session() as session:
+        session.query(Email).delete()
+        session.commit()
+    return session
 
 def get_label_id(service, label_name):
     """Get the ID of a label by its name."""
@@ -138,6 +83,22 @@ def get_label_id(service, label_name):
     except Exception as e:
         print(f"Error getting label ID: {str(e)}")
         return None
+
+def get_email_engine():
+    """Get SQLAlchemy engine for email database."""
+    return get_email_session().get_bind()
+
+def get_label_engine():
+    """Get SQLAlchemy engine for label database."""
+    return get_email_session().get_bind()
+
+def get_email_session() -> Session:
+    """Get SQLAlchemy session for email database."""
+    return get_email_session()
+
+def get_label_session() -> Session:
+    """Get SQLAlchemy session for label database."""
+    return get_email_session()
 
 def fetch_emails(service, start_date=None, end_date=None, label=None):
     """Fetch emails from Gmail API.
@@ -189,13 +150,13 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         print(f"Error fetching emails: {str(e)}")
         return []
 
-def process_email(service, msg_id, conn):
+def process_email(service, msg_id, session):
     """Process a single email message and store in database.
     
     Args:
         service: Gmail API service instance
         msg_id: ID of message to process
-        conn: Database connection
+        session: Database session
     
     Returns:
         Dictionary containing processed email data
@@ -212,7 +173,7 @@ def process_email(service, msg_id, conn):
         if 'body' in msg['payload']:
             body = msg['payload']['body'].get('data', '')
             if body:
-                body = base64.urlsafe_b64decode(body).decode('utf-8')
+                body = urlsafe_b64decode(body).decode('utf-8')
         else:
             body = ''
         
@@ -227,29 +188,26 @@ def process_email(service, msg_id, conn):
             date = datetime.now(UTC_TZ)
         
         # Store in database
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT OR REPLACE INTO emails (
-                id, thread_id, subject, from_address, to_address, cc_address,
-                bcc_address, received_date, content, labels, has_attachments,
-                full_api_response
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            msg_id,
-            msg['threadId'],
-            headers.get('Subject', ''),
-            headers.get('From', ''),
-            headers.get('To', ''),
-            headers.get('Cc', ''),
-            headers.get('Bcc', ''),
-            date.isoformat(),
-            body,
-            ','.join(msg.get('labelIds', [])),
-            bool(msg.get('payload', {}).get('parts', [])),
-            json.dumps(msg)
-        ))
-        conn.commit()
+        email_obj = Email(
+            id=msg_id,
+            thread_id=msg['threadId'],
+            subject=headers.get('Subject', ''),
+            from_address=headers.get('From', ''),
+            to_address=headers.get('To', ''),
+            cc_address=headers.get('Cc', ''),
+            bcc_address=headers.get('Bcc', ''),
+            received_date=date,  
+            content=body,
+            labels=','.join(msg.get('labelIds', [])),
+            has_attachments=bool(msg.get('payload', {}).get('parts', [])),
+            full_api_response=json.dumps(msg)
+        )
         
+        # Add to database
+        session.merge(email_obj)
+        session.commit()
+        
+        # Return processed data
         return {
             'id': msg_id,
             'thread_id': msg['threadId'],
@@ -262,126 +220,92 @@ def process_email(service, msg_id, conn):
             'content': body,
             'labels': msg.get('labelIds', []),
             'has_attachments': bool(msg.get('payload', {}).get('parts', [])),
+            'full_api_response': msg
         }
     except Exception as e:
         print(f"Error processing message {msg_id}: {str(e)}")
         return None
 
-def get_oldest_email_date(conn):
+def get_oldest_email_date(session):
     """Get the date of the oldest email in the database."""
-    c = conn.cursor()
-    c.execute('SELECT MIN(received_date) FROM emails')
-    date_str = c.fetchone()[0]
-    return parser.parse(date_str) if date_str else None
+    oldest_email = session.query(Email).order_by(Email.received_date.asc()).first()
+    return parser.parse(oldest_email.received_date) if oldest_email else None
 
-def get_newest_email_date(conn):
+def get_newest_email_date(session):
     """Get the date of the newest email in the database."""
-    c = conn.cursor()
-    c.execute('SELECT MAX(received_date) FROM emails')
-    date_str = c.fetchone()[0]
-    return parser.parse(date_str) if date_str else None
+    newest_email = session.query(Email).order_by(Email.received_date.desc()).first()
+    return parser.parse(newest_email.received_date) if newest_email else None
 
-def fetch_older_emails(conn, service, label=None):
+def fetch_older_emails(session, service, label=None):
     """Fetch emails older than the oldest in database."""
-    oldest_date = get_oldest_email_date(conn)
+    oldest_date = get_oldest_email_date(session)
     if oldest_date:
         return fetch_emails(service, end_date=oldest_date, label=label)
     return []
 
-def fetch_newer_emails(conn, service, label=None):
+def fetch_newer_emails(session, service, label=None):
     """Fetch emails newer than the newest in database."""
-    newest_date = get_newest_email_date(conn)
+    newest_date = get_newest_email_date(session)
     if newest_date:
         # Add 1-minute overlap to avoid missing emails
         start_date = newest_date - timedelta(minutes=1)
         return fetch_emails(service, start_date=start_date, label=label)
     return []
 
-def count_emails(conn):
+def count_emails(session):
     """Get total number of emails in database."""
-    c = conn.cursor()
-    c.execute('SELECT COUNT(*) FROM emails')
-    return c.fetchone()[0]
+    return session.query(Email).count()
 
 def list_labels(service):
     """List all available Gmail labels and store them in the database with history.
     
     Args:
-        service: Gmail API service instance
-    
-    Returns:
-        List of label dictionaries
+        service: Authenticated Gmail API service instance.
     """
     try:
-        # Get current time in UTC
-        current_time = datetime.utcnow().isoformat()
-        
-        # Get all labels from Gmail API
+        # Get all labels
         results = service.users().labels().list(userId='me').execute()
         labels = results.get('labels', [])
         
         # Connect to label database
-        conn = get_label_db()
-        cursor = conn.cursor()
+        session = get_email_session()
         
         # Initialize database if needed
-        init_label_database(conn)
+        init_label_database(session)
+        
+        # Update label history
+        current_time = datetime.utcnow()
         
         # Update label history
         for label in labels:
             # Check if label exists
-            cursor.execute('''
-                SELECT id, is_active, deleted_at 
-                FROM gmail_labels 
-                WHERE label_id = ?
-            ''', (label['id'],))
-            result = cursor.fetchone()
-            
-            if result:
+            existing_label = session.query(GmailLabel).filter_by(label_id=label['id']).first()
+            if existing_label:
                 # Label exists, update last_seen_at
-                label_id, is_active, deleted_at = result
-                if not is_active:
-                    # Reactivate label if it was deleted
-                    cursor.execute('''
-                        UPDATE gmail_labels 
-                        SET is_active = 1, 
-                            deleted_at = NULL,
-                            last_seen_at = ?
-                        WHERE id = ?
-                    ''', (current_time, label_id))
-                else:
-                    # Just update last_seen_at
-                    cursor.execute('''
-                        UPDATE gmail_labels 
-                        SET last_seen_at = ?
-                        WHERE id = ?
-                    ''', (current_time, label_id))
+                existing_label.last_seen_at = current_time
+                session.commit()
             else:
                 # New label, insert it
-                cursor.execute('''
-                    INSERT INTO gmail_labels (
-                        label_id, name, type, 
-                        first_seen_at, last_seen_at
-                    ) VALUES (?, ?, ?, ?, ?)
-                ''', (
-                    label['id'], 
-                    label['name'],
-                    label.get('type', ''),
-                    current_time,
-                    current_time
-                ))
+                new_label = GmailLabel(
+                    label_id=label['id'],
+                    name=label['name'],
+                    type=label.get('type', ''),
+                    first_seen_at=current_time,
+                    last_seen_at=current_time
+                )
+                session.add(new_label)
+                session.commit()
         
         # Mark labels not seen in this update as deleted
-        cursor.execute('''
-            UPDATE gmail_labels 
-            SET is_active = 0, 
-                deleted_at = ? 
-            WHERE last_seen_at < ? 
-            AND is_active = 1
-        ''', (current_time, current_time))
+        session.query(GmailLabel).filter(
+            GmailLabel.last_seen_at < current_time
+        ).update({
+            'is_active': False,
+            'deleted_at': current_time
+        })
+        session.commit()
         
-        conn.commit()
-        conn.close()
+        session.close()
         
         return labels
     except Exception as e:
@@ -417,22 +341,22 @@ def main():
             print(f"- {label['name']} ({label['id']})")
         return
     
-    # Get database connection
-    conn = get_email_db()
+    # Get database session
+    session = get_email_session()
     
     # Initialize database
-    init_database(conn)
+    init_database(session)
     
     # Clear database if requested
     if args.clear:
-        clear_database(conn)
+        clear_database(session)
         print("Database cleared")
     
     # Fetch emails based on arguments
     if args.newer:
-        messages = fetch_newer_emails(conn, service, args.label)
+        messages = fetch_newer_emails(session, service, args.label)
     elif args.older:
-        messages = fetch_older_emails(conn, service, args.label)
+        messages = fetch_older_emails(session, service, args.label)
     else:
         # Default: fetch last N days of emails
         end_date = datetime.now(UTC_TZ)
@@ -441,13 +365,13 @@ def main():
     
     # Process messages
     for msg in messages:
-        process_email(service, msg['id'], conn)
+        process_email(service, msg['id'], session)
     
     # Print summary
-    total_emails = count_emails(conn)
+    total_emails = count_emails(session)
     print(f"\nTotal emails in database: {total_emails}")
     
-    conn.close()
+    session.close()
 
 if __name__ == '__main__':
     main()

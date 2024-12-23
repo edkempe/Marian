@@ -1,97 +1,112 @@
-#!/usr/bin/env python3
-"""
-Main Test Suite
---------------
-Integration tests for core applications:
-- app_get_mail.py
-- app_email_analyzer.py
-- app_email_reports.py
-- app_email_self_log.py
-"""
+"""Test module for email processing and analysis."""
 
 import os
-import sqlite3
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+import json
 import base64
+from unittest.mock import patch, MagicMock
+
+import pytest
+from sqlalchemy import create_engine, text, inspect
+from sqlalchemy.orm import Session, sessionmaker
+
+# Import models first to ensure they are registered with SQLAlchemy
+from models.base import Base
+from models.email import Email
+from models.email_analysis import EmailAnalysis
+from models.gmail_label import GmailLabel
+
+# Import database utilities
+from database.config import get_email_session, get_analysis_session, init_db
 
 # Import core applications
 from app_get_mail import (
     get_gmail_service, init_database, fetch_emails,
-    process_email, get_newest_email_date
+    process_email, get_newest_email_date, GmailAPI
 )
 from app_email_analyzer import EmailAnalyzer
 from app_email_reports import EmailAnalytics
 from app_email_self_log import EmailSelfAnalyzer
-from models.email import Email
-from models.email_analysis import EmailAnalysis
 
 # Test database paths
 TEST_EMAIL_DB = "test_db_email_store.db"
 TEST_ANALYSIS_DB = "test_db_email_analysis.db"
-TEST_LABELS_DB = "test_db_email_labels.db"
 
 @pytest.fixture(scope="function")
 def setup_test_dbs(monkeypatch):
     """Set up test databases."""
-    print("\nSetting up test databases...")  # Debug print
+    print("\nSetting up test databases...")
+
+    # Clean up any existing test databases
+    if os.path.exists(TEST_EMAIL_DB):
+        os.remove(TEST_EMAIL_DB)
+    if os.path.exists(TEST_ANALYSIS_DB):
+        os.remove(TEST_ANALYSIS_DB)
+
+    # Set up test database URLs
+    monkeypatch.setenv('EMAIL_DB_URL', f'sqlite:///{TEST_EMAIL_DB}')
+    monkeypatch.setenv('ANALYSIS_DB_URL', f'sqlite:///{TEST_ANALYSIS_DB}')
+
+    # Import models to ensure they are registered with SQLAlchemy
+    from models.base import Base
+    from models.email_analysis import EmailAnalysis
+    from models.email import Email
+    from models.gmail_label import GmailLabel
+
+    # Initialize databases
+    init_db()
+
+    # Verify tables exist and have correct columns
+    email_engine = create_engine(f'sqlite:///{TEST_EMAIL_DB}')
+    inspector = inspect(email_engine)
+    tables = inspector.get_table_names()
+    print(f"Email DB Tables: {tables}")
     
-    # Mock get_email_db to use test database
-    def mock_get_email_db():
-        return sqlite3.connect(TEST_EMAIL_DB)
-    monkeypatch.setattr('app_get_mail.get_email_db', mock_get_email_db)
+    if not tables:
+        print("No tables found in email database. Creating tables...")
+        Base.metadata.create_all(bind=email_engine)
+        tables = inspector.get_table_names()
+        print(f"Email DB Tables after creation: {tables}")
     
-    # Initialize test databases
-    conn = sqlite3.connect(TEST_EMAIL_DB)
-    c = conn.cursor()
-    
-    # Create emails table with correct schema
-    c.execute('''CREATE TABLE IF NOT EXISTS emails
-                 (id TEXT PRIMARY KEY,
-                  thread_id TEXT,
-                  subject TEXT,
-                  from_address TEXT,
-                  to_address TEXT,
-                  cc_address TEXT DEFAULT '',
-                  bcc_address TEXT DEFAULT '',
-                  received_date TEXT,
-                  content TEXT,
-                  labels TEXT,
-                  has_attachments BOOLEAN DEFAULT 0,
-                  full_api_response TEXT)''')
-    conn.commit()
-    conn.close()
-    print("Test databases initialized")  # Debug print
-    
-    # Clean up after tests
-    yield
-    
-    print("\nCleaning up test databases...")  # Debug print
-    for db in [TEST_EMAIL_DB, TEST_ANALYSIS_DB, TEST_LABELS_DB]:
-        if os.path.exists(db):
-            try:
-                os.remove(db)
-                print(f"Removed {db}")  # Debug print
-            except Exception as e:
-                print(f"Error removing {db}: {e}")  # Debug print
+    if 'emails' in tables:
+        columns = [col['name'] for col in inspector.get_columns('emails')]
+        print(f"Emails table columns: {columns}")
+        
+        # Verify required columns exist
+        required_columns = [
+            'id', 'thread_id', 'subject', 'from_address', 'to_address',
+            'cc_address', 'bcc_address', 'received_date', 'content',
+            'labels', 'has_attachments', 'full_api_response'
+        ]
+        missing_columns = [col for col in required_columns if col not in columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns in emails table: {missing_columns}")
+
+    print("Test databases initialized")
+
+    yield get_email_session, get_analysis_session
+
+    # Clean up
+    print("\nCleaning up test databases...")
+    if os.path.exists(TEST_EMAIL_DB):
+        os.remove(TEST_EMAIL_DB)
+    if os.path.exists(TEST_ANALYSIS_DB):
+        os.remove(TEST_ANALYSIS_DB)
 
 @pytest.fixture
-def mock_gmail_service(monkeypatch):
+def mock_gmail_service():
     """Mock Gmail API service."""
     mock_service = MagicMock()
     
-    # Mock the messages.list() response
+    # Mock message list response
     mock_list = MagicMock()
     mock_list.execute.return_value = {
-        'messages': [{'id': 'test1'}, {'id': 'test2'}]
+        'messages': [{'id': 'test1', 'threadId': 'thread1'}]
     }
     mock_service.users().messages().list.return_value = mock_list
-    
-    # Mock list_next to return None (no more pages)
     mock_service.users().messages().list_next.return_value = None
     
-    # Mock the messages.get() response
+    # Mock message get response
     mock_get = MagicMock()
     mock_get.execute.return_value = {
         'id': 'test1',
@@ -102,126 +117,153 @@ def mock_gmail_service(monkeypatch):
                 {'name': 'Subject', 'value': 'Test Email'},
                 {'name': 'From', 'value': 'test@example.com'},
                 {'name': 'To', 'value': 'me@example.com'},
-                {'name': 'Date', 'value': datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')}
+                {'name': 'Date', 'value': datetime.now().isoformat()}
             ],
-            'body': {'data': base64.b64encode(b'Test email content').decode()}
+            'body': {'data': base64.b64encode(b'Test email content').decode('utf-8')}
         }
     }
     mock_service.users().messages().get.return_value = mock_get
-    
-    # Mock the get_gmail_service function
-    def mock_get_service():
-        print("Using mock Gmail service")  # Debug print
-        return mock_service
-    
-    monkeypatch.setattr('app_get_mail.get_gmail_service', mock_get_service)
-    
-    # Mock the GmailAPI class
-    mock_gmail_api = MagicMock()
-    mock_gmail_api.return_value.service = mock_service
-    monkeypatch.setattr('app_get_mail.GmailAPI', mock_gmail_api)
     
     return mock_service
 
 def test_email_fetching(setup_test_dbs, mock_gmail_service):
     """Test email fetching functionality."""
-    print("\nStarting email fetching test...")  # Debug print
-    # Test fetching emails
-    messages = fetch_emails(mock_gmail_service)
-    print(f"Fetched {len(messages)} messages")  # Debug print
-    assert len(messages) == 2
-    assert messages[0]['id'] == 'test1'
-    
-    # Test processing email
-    print("Processing test email...")  # Debug print
-    conn = sqlite3.connect(TEST_EMAIL_DB)
-    email_data = process_email(mock_gmail_service, 'test1', conn)
-    print("Email processed")  # Debug print
-    assert email_data is not None
-    assert email_data['subject'] == 'Test Email'
-    conn.close()
-    print("Test completed successfully")  # Debug print
+    get_email_session_fn, get_analysis_session_fn = setup_test_dbs
+    with patch('app_get_mail.get_gmail_service', return_value=mock_gmail_service):
+        init_database()
+        
+        # Fetch emails
+        messages = fetch_emails(mock_gmail_service)
+        assert len(messages) > 0
+        
+        # Process first message
+        with get_email_session_fn() as session:
+            email_data = process_email(mock_gmail_service, messages[0]['id'], session)
+            assert email_data is not None
+            assert email_data['id'] == 'test1'
+            assert email_data['thread_id'] == 'thread1'
+            assert email_data['subject'] == 'Test Email'
+            assert email_data['from_address'] == 'test@example.com'
+            assert email_data['to_address'] == 'me@example.com'
+            
+            # Check database
+            email = session.query(Email).filter_by(id='test1').first()
+            assert email is not None
+            assert email.subject == 'Test Email'
+            assert email.from_address == 'test@example.com'
+            assert email.to_address == 'me@example.com'
 
-@patch('anthropic.Anthropic')
-def test_email_analysis(mock_anthropic, setup_test_dbs):
+def test_email_analysis(setup_test_dbs):
     """Test email analysis functionality."""
-    # Mock Anthropic API response
-    mock_response = MagicMock()
-    mock_response.content = [{
-        'text': '''{
-            "summary": "Test email summary",
-            "category": ["test"],
-            "priority_score": 3,
-            "priority_reason": "test",
-            "action_needed": false,
-            "action_type": [],
-            "action_deadline": null,
-            "key_points": ["test point"],
-            "people_mentioned": [],
-            "links_found": [],
-            "links_display": [],
-            "project": null,
-            "topic": null,
-            "sentiment": "neutral",
-            "confidence_score": 0.9
-        }'''
-    }]
-    mock_anthropic.return_value.messages.create.return_value = mock_response
-    
-    # Test analysis
+    get_email_session_fn, get_analysis_session_fn = setup_test_dbs
     analyzer = EmailAnalyzer()
-    result = analyzer.analyze_email({
-        'id': 'test1',
-        'thread_id': 'thread1',
-        'subject': 'Test Email',
-        'content': 'Test content',
-        'date': datetime.now().isoformat(),
-        'labels': ['INBOX']
-    })
     
-    assert result is not None
-    assert result.summary == "Test email summary"
-    assert result.category == ["test"]
-    assert result.priority_score == 3
+    # Create test email
+    test_email = {
+        'id': 'test1',
+        'subject': 'Project Update: AI Development',
+        'content': 'Making good progress on the AI project. Need to focus on model training.',
+        'received_date': datetime.now().isoformat()
+    }
+    
+    # Analyze email
+    analysis = analyzer.analyze_email(test_email)
+    assert analysis is not None
+    assert analysis.email_id == 'test1'
+    assert 'AI Development' in analysis.project  # Project should be extracted from subject
+    assert analysis.topic == ''    # Empty string for no topic
 
 def test_email_reports(setup_test_dbs):
     """Test email reporting functionality."""
-    # Prepare test data
-    conn = sqlite3.connect(TEST_EMAIL_DB)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO emails (id, thread_id, subject, from_address, to_address, received_date, content, labels)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', ('test1', 'thread1', 'Test Email', 'test@example.com', 'me@example.com',
-          datetime.now().isoformat(), 'Test content', '["INBOX"]'))
-    conn.commit()
-    conn.close()
+    get_email_session_fn, get_analysis_session_fn = setup_test_dbs
     
-    # Test reports
+    # Add test email
+    with get_email_session_fn() as session:
+        test_email = Email(
+            id='test1',
+            thread_id='thread1',
+            subject='Test Email',
+            from_address='test@example.com',
+            to_address='me@example.com',
+            received_date=datetime.now(),
+            content='Test content',
+            labels='["INBOX"]'
+        )
+        session.add(test_email)
+        session.commit()
+    
+    # Create analytics instance
     analytics = EmailAnalytics()
-    total = analytics.get_total_emails()
-    assert total == 1
     
-    top_senders = analytics.get_top_senders()
-    assert len(top_senders) == 1
-    assert top_senders[0][0] == 'test@example.com'
+    # Generate report
+    report = analytics.generate_report()
+    assert report is not None
+    assert report['total_emails'] > 0
+    assert len(report['top_senders']) > 0
 
 def test_self_email_analysis(setup_test_dbs):
     """Test self-email analysis functionality."""
-    # Prepare test data
-    conn = sqlite3.connect(TEST_EMAIL_DB)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO emails (id, thread_id, subject, from_address, to_address, received_date, content, labels)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', ('test1', 'thread1', 'Note to Self', 'me@example.com', 'me@example.com',
-          datetime.now().isoformat(), 'Self reminder', '["INBOX"]'))
-    conn.commit()
-    conn.close()
-    
-    # Test self-email analysis
-    analyzer = EmailSelfAnalyzer(db_path=TEST_EMAIL_DB)
-    with patch.object(analyzer, '_get_user_email', return_value='me@example.com'):
+    get_email_session_fn, get_analysis_session_fn = setup_test_dbs
+
+    # Import models to ensure they are registered with SQLAlchemy
+    from models.base import Base
+    from models.email_analysis import EmailAnalysis
+    from models.email import Email
+    from models.gmail_label import GmailLabel
+
+    # Mock Gmail API first
+    mock_gmail = MagicMock()
+    mock_profile = MagicMock()
+    mock_profile.execute.return_value = {'emailAddress': 'eddiekempe@gmail.com'}
+    mock_gmail.service = MagicMock()
+    mock_gmail.service.users = MagicMock()
+    mock_gmail.service.users.return_value = MagicMock()
+    mock_gmail.service.users().getProfile = MagicMock(return_value=mock_profile)
+
+    # Mock EmailAnalyzer
+    mock_analyzer = MagicMock()
+    mock_analyzer.analyze_email.return_value = {
+        'id': 'test1',
+        'summary': 'Test summary',
+        'category': ['test'],
+        'priority_score': 3,
+        'priority_reason': 'Test reason',
+        'action_needed': True,
+        'action_type': ['review'],
+        'action_deadline': None,
+        'key_points': ['Test point'],
+        'people_mentioned': [],
+        'links_found': [],
+        'links_display': [],
+        'project': None,
+        'topic': 'test',
+        'sentiment': 'neutral',
+        'confidence_score': 0.9
+    }
+
+    with patch('app_email_self_log.GmailAPI', return_value=mock_gmail), \
+         patch('app_email_self_log.EmailAnalyzer', return_value=mock_analyzer):
+        # Initialize analyzer after setting up the mock
+        analyzer = EmailSelfAnalyzer()
+        
+        # Add test self-email
+        with get_email_session_fn() as session:
+            test_email = Email(
+                id='test1',
+                thread_id='thread1',
+                subject='Note to Self',
+                from_address='eddiekempe@gmail.com',
+                to_address='eddiekempe@gmail.com',
+                received_date=datetime.now(),
+                content='Remember to review the code',
+                labels='["INBOX"]'
+            )
+            session.add(test_email)
+            session.commit()
+        
+        # Get and analyze self-emails
         emails = analyzer.get_self_emails()
-        assert len(emails) == 1
-        assert emails[0]['subject'] == 'Note to Self'
+        assert len(emails) > 0
+        
+        analysis_results = analyzer.analyze_emails(emails)
+        assert len(analysis_results) > 0

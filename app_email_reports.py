@@ -5,7 +5,7 @@ import pandas as pd
 from tabulate import tabulate
 from datetime import datetime, timezone
 from typing import Dict, List
-from database.config import get_email_session, get_analysis_session
+from database.config import get_email_session, get_analysis_session, EmailSession, AnalysisSession
 from models.email_analysis import EmailAnalysis
 from models.email import Email
 import argparse
@@ -40,12 +40,7 @@ class EmailAnalytics:
     def get_total_emails(self):
         """Get total number of emails in the database"""
         with self._get_email_session() as session:
-            if isinstance(session, sqlite3.Connection):
-                cursor = session.cursor()
-                cursor.execute("SELECT COUNT(*) FROM emails")
-                return cursor.fetchone()[0]
-            else:
-                return session.query(Email).count()
+            return session.query(Email).count()
 
     def _execute_sqlite_query(self, session, query: str, params: tuple = ()) -> List[str]:
         """Helper method to execute SQLite query and return email IDs."""
@@ -701,6 +696,46 @@ class EmailAnalytics:
             'confidence_score': analysis.confidence_score,
             'full_api_response': analysis.full_api_response
         }
+
+    def generate_report(self):
+        """Generate a summary report of email data.
+        
+        Returns:
+            Dictionary containing report data
+        """
+        with self._get_email_session() as session:
+            # Get total emails
+            total_emails = self.get_total_emails()
+
+            # Get date range
+            date_range = session.query(
+                func.min(Email.received_date).label('oldest'),
+                func.max(Email.received_date).label('newest')
+            ).first()
+
+            # Get top senders
+            top_senders = session.query(
+                Email.from_address,
+                func.count(Email.id).label('count')
+            ).group_by(Email.from_address).order_by(desc('count')).limit(10).all()
+
+            # Get top recipients
+            top_recipients = session.query(
+                Email.to_address,
+                func.count(Email.id).label('count')
+            ).group_by(Email.to_address).order_by(desc('count')).limit(10).all()
+
+            report = {
+                'total_emails': total_emails,
+                'date_range': {
+                    'oldest': date_range.oldest if date_range else None,
+                    'newest': date_range.newest if date_range else None
+                },
+                'top_senders': [{'email': s[0], 'count': s[1]} for s in top_senders],
+                'top_recipients': [{'email': r[0], 'count': r[1]} for r in top_recipients]
+            }
+
+            return report
 
     def print_analysis_report(self):
         """Print a comprehensive analysis report."""

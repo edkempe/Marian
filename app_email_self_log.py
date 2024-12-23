@@ -13,17 +13,13 @@ personal documentation.
 import os
 import json
 from datetime import datetime, timedelta
-from collections import defaultdict
-from typing import Dict, List, Any, Tuple
-import logging
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from database.config import get_email_session, get_analysis_session
-from utils.logging_config import setup_logging, log_error
-from constants import DATABASE_CONFIG, EMAIL_CONFIG
 from app_email_analyzer import EmailAnalyzer
+from app_get_mail import GmailAPI
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -31,71 +27,74 @@ from jinja2 import Template
 from dateutil import parser
 import numpy as np
 from textblob import TextBlob
+from utils.logging_config import setup_logging, log_error
+from constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 logger = setup_logging(__name__)
 
 class EmailSelfAnalyzer:
-    """Analyzes self-sent emails for personal knowledge management."""
+    """Analyzer for self-emails (emails sent to oneself)."""
 
     def __init__(self):
-        """Initialize the analyzer with database configuration."""
-        self.analyzer = EmailAnalyzer()
+        """Initialize the analyzer."""
+        self.gmail = GmailAPI()
         self.user_email = self._get_user_email()
-        
+        self.analyzer = EmailAnalyzer()
+
     def _get_user_email(self) -> str:
-        """Get the user's email address from Gmail profile."""
-        gmail = GmailAPI()
-        profile = gmail.service.users().getProfile(userId='me').execute()
+        """Get the user's email address from Gmail API."""
+        profile = self.gmail.service.users().getProfile(userId='me').execute()
         return profile['emailAddress']
 
-    def _get_db_connection(self) -> Session:
-        """Get a database connection."""
-        return get_email_session()
-
-    def get_self_emails(self, days: int = None) -> List[Dict[str, Any]]:
+    def get_self_emails(self, days: Optional[int] = None) -> List[Dict[str, Any]]:
         """Get self-emails from the database."""
-        session = self._get_db_connection()
-        query = session.query(Email).filter(Email.sender == self.user_email, Email.recipient == self.user_email)
-        
-        if days:
-            query = query.filter(Email.date >= datetime.now() - timedelta(days=days))
-        
-        emails = query.order_by(Email.date.desc()).all()
-        session.close()
-        
-        return [email.to_dict() for email in emails]
+        with get_email_session() as session:
+            # Print debug info
+            print(f"Looking for emails from/to: {self.user_email}")
+            
+            query = session.query(Email).filter(
+                Email.from_address == self.user_email,
+                Email.to_address == self.user_email
+            )
+            
+            if days:
+                cutoff = datetime.now() - timedelta(days=days)
+                query = query.filter(Email.received_date >= cutoff)
+            
+            # Print debug info
+            print(f"Total emails in database: {session.query(Email).count()}")
+            print(f"Self-emails found: {query.count()}")
+            
+            emails = query.all()
+            return [email.__dict__ for email in emails]
 
     def analyze_emails(self, emails: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Analyze the content of each email."""
-        analyzed_emails = []
+        results = []
         
         with get_analysis_session() as session:
             for email in emails:
-                # Check if analysis already exists
-                existing = session.query(EmailAnalysis).filter_by(email_id=email['id']).first()
-                
-                if existing:
-                    analysis = existing.to_dict()
-                else:
-                    # Get new analysis
-                    analysis = self.analyzer.analyze_email(email)
-                    if analysis:
-                        session.add(EmailAnalysis(**analysis))
-                        session.commit()
-                
+                analysis = self.analyzer.analyze_email(email)
                 if analysis:
-                    email.update(analysis)
-                    analyzed_emails.append(email)
-                    
-        return analyzed_emails
+                    if isinstance(analysis, dict):
+                        results.append(analysis)
+                    else:
+                        results.append(analysis.__dict__)
+            
+            return results
+
+    def run_analysis(self, days: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Run complete analysis on self-emails."""
+        emails = self.get_self_emails(days)
+        return self.analyze_emails(emails)
 
     def cluster_by_time(self, emails: List[Dict[str, Any]]) -> Dict[str, Dict]:
         """Group emails by time periods."""
         clusters = {
-            'today': {'emails': [], 'topics': defaultdict(int)},
-            'this_week': {'emails': [], 'topics': defaultdict(int)},
-            'this_month': {'emails': [], 'topics': defaultdict(int)},
-            'older': {'emails': [], 'topics': defaultdict(int)}
+            'today': {'emails': [], 'topics': {}},
+            'this_week': {'emails': [], 'topics': {}},
+            'this_month': {'emails': [], 'topics': {}},
+            'older': {'emails': [], 'topics': {}}
         }
         
         now = datetime.now()
@@ -118,7 +117,7 @@ class EmailSelfAnalyzer:
             # Update topic counts
             if 'topics' in email:
                 for topic in email['topics']:
-                    clusters[period]['topics'][topic] += 1
+                    clusters[period]['topics'][topic] = clusters[period]['topics'].get(topic, 0) + 1
         
         return clusters
 
