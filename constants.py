@@ -81,7 +81,7 @@ DATABASE_CONFIG: DatabaseConfig = {
 
 # API Configuration
 API_CONFIG: APIConfig = {
-    'ANTHROPIC_MODEL': 'claude-3-opus-20240229',
+    'ANTHROPIC_MODEL': 'claude-3-haiku-20240307',
     'TEST_MODEL': 'claude-3-haiku-20240307',  # Model used in tests
     'MAX_TOKENS': 4000,
     'API_TEST_MAX_TOKENS': 10,  # Minimal tokens for API connectivity test

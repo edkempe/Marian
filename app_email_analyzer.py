@@ -11,6 +11,7 @@ from prometheus_client import Counter, start_http_server
 import structlog
 import time
 import argparse
+from sqlalchemy import text
 
 from models.email import Email
 from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
@@ -122,30 +123,40 @@ Content: {email_data.get('content', '')}"""
             )
 
             # Get analysis from API
-            response = self.client.messages.create(
-                model=API_CONFIG['ANTHROPIC_MODEL'],
-                max_tokens=API_CONFIG['MAX_TOKENS'],
-                temperature=API_CONFIG['TEMPERATURE'],
-                messages=[{
-                    "role": "user",
-                    "content": content
-                }]
-            )
-
-            # Parse API response
-            analysis_data = json.loads(response.content[0].text)
-            
-            # Create and return EmailAnalysis object
-            return EmailAnalysis.from_response(
-                email_id=email_data['id'],
-                thread_id=email_data.get('thread_id', ''),
-                response=EmailAnalysisResponse(**analysis_data)
-            )
+            response = None
+            try:
+                response = self.client.messages.create(
+                    model=API_CONFIG['ANTHROPIC_MODEL'],
+                    max_tokens=API_CONFIG['MAX_TOKENS'],
+                    temperature=API_CONFIG['TEMPERATURE'],
+                    messages=[{
+                        "role": "user",
+                        "content": content
+                    }]
+                )
+                # Parse API response
+                analysis_data = json.loads(response.content[0].text)
+                
+                # Create and return EmailAnalysis object
+                return EmailAnalysis.from_api_response(
+                    email_id=email_data['id'],
+                    thread_id=email_data.get('thread_id', ''),
+                    response=EmailAnalysisResponse(**analysis_data)
+                )
+            except Exception as e:
+                error_context = {
+                    'error_type': "analysis",
+                    'error': str(e),
+                    'response': response.content[0].text if response and hasattr(response, 'content') else None,
+                    'email_id': email_data.get('id'),
+                    'subject': email_data.get('subject', '')
+                }
+                logger.error(API_CONFIG['ERROR_MESSAGES']["api_error"].format(error=str(e)), **error_context)
+                return None
         except Exception as e:
             logger.error(API_CONFIG['ERROR_MESSAGES']["api_error"].format(error=str(e)), 
                         error_type="analysis",
-                        error=str(e),
-                        response=response.content[0].text if response else None)
+                        error=str(e))
             return None
 
     def _extract_urls(self, text: str) -> Tuple[List[str], List[str]]:
@@ -286,13 +297,14 @@ Content: {email_data.get('content', '')}"""
                         )
                         
                         # Call Claude API for analysis with retry
-                        max_retries = 3
-                        retry_delay = 5  # seconds
+                        max_retries = EMAIL_CONFIG['MAX_RETRIES']
+                        retry_delay = EMAIL_CONFIG['RETRY_DELAY']  # seconds
                         
                         for retry in range(max_retries):
                             try:
-                                prompt = EMAIL_ANALYSIS_PROMPT.format(
-                                    text=email_request.truncated_body
+                                prompt = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
+                                    email_content=f"""Subject: {email_request.subject}
+Content: {email_request.truncated_body}"""
                                 )
                                 
                                 response = self.client.messages.create(
@@ -332,7 +344,7 @@ Content: {email_data.get('content', '')}"""
                             analysis_response = EmailAnalysisResponse.model_validate(analysis)
                             
                             # Create EmailAnalysis instance with thread_id
-                            email_analysis = EmailAnalysis.from_response(
+                            email_analysis = EmailAnalysis.from_api_response(
                                 email_id=email_data['id'],
                                 thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
                                 response=analysis_response
@@ -346,10 +358,10 @@ Content: {email_data.get('content', '')}"""
                                 raw_json=analysis_json
                             )
                         except json.JSONDecodeError as e:
-                            log_api_error('json_decode', str(e), analysis_json)
+                            log_api_error('json_decode', str(e))
                             continue
                         except Exception as e:
-                            log_api_error('validation', str(e), analysis_json)
+                            log_api_error('validation', str(e))
                             continue
                             
                     except Exception as e:

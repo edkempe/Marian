@@ -334,7 +334,18 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
     """Test email batch processing with different batch sizes and scenarios."""
     # Create test data
     test_emails = [
-        {**valid_email_data, 'id': f'test_id_{i}', 'subject': f'Test {i}'}
+        {
+            **valid_email_data,
+            'id': f'test_id_{i}',
+            'thread_id': f'thread_{i}',
+            'subject': f'Test {i}',
+            'sender': 'test@example.com',
+            'date': '2024-12-23T12:25:31',
+            'body': f'Test content {i}',
+            'labels': 'INBOX',
+            'has_attachments': False,
+            'full_api_response': '{}'
+        }
         for i in range(5)
     ]
 
@@ -358,20 +369,25 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
     }
 
     test_cases = [
-        {"batch_size": 1, "expected_calls": 5},
-        {"batch_size": 2, "expected_calls": 5},  # Each email requires one API call
-        {"batch_size": 5, "expected_calls": 5},
-        {"batch_size": 10, "expected_calls": 5}
+        {"batch_size": 1, "expected_calls": 6},  # 5 emails + 1 API test
+        {"batch_size": 2, "expected_calls": 6},  # 5 emails + 1 API test
+        {"batch_size": 5, "expected_calls": 6},  # 5 emails + 1 API test
+        {"batch_size": 10, "expected_calls": 6}  # 5 emails + 1 API test
     ]
 
     for case in test_cases:
         # Setup mock session
         mock_session = Mock()
-        mock_session.execute.return_value.fetchall.return_value = test_emails
+        mock_session.__enter__ = Mock(return_value=mock_session)
+        mock_session.__exit__ = Mock(return_value=None)
+        mock_session.execute.return_value.mappings.return_value.all.return_value = test_emails
         analyzer.client.messages.create.return_value = Mock(content=[Mock(text=json.dumps(mock_response))])
-
-        # Process emails
-        analyzer.process_emails(batch_size=case["batch_size"])
+        
+        # Mock both database sessions
+        with patch('app_email_analyzer.get_email_session', return_value=mock_session), \
+             patch('app_email_analyzer.get_analysis_session', return_value=mock_session):
+            # Process emails
+            analyzer.process_emails(batch_size=case["batch_size"])
 
         # Verify number of API calls
         assert analyzer.client.messages.create.call_count == case["expected_calls"], \
@@ -383,11 +399,11 @@ def test_process_emails_batch_handling(analyzer, valid_email_data):
             args, kwargs = call_args
             
             # Check model version
-            assert kwargs.get('model') == 'test_model', \
-                f"Incorrect model version. Expected test_model, got {kwargs.get('model')}"
+            assert kwargs.get('model') == API_CONFIG['TEST_MODEL'], \
+                f"Incorrect model version. Expected {API_CONFIG['TEST_MODEL']}, got {kwargs.get('model')}"
             
             # Check required fields are present and non-empty
-            for field in ['content', 'messages']:
+            for field in API_CONFIG['REQUIRED_FIELDS']:
                 assert kwargs.get(field) is not None, f"Missing required field: {field}"
                 
             # Check messages structure
@@ -414,7 +430,7 @@ def test_process_emails_error_handling(analyzer, valid_email_data, mock_anthropi
             return Mock(content=[mock_content])
         
         mock_anthropic.return_value.messages.create.side_effect = side_effect
-        mock_session.return_value.__enter__.return_value.execute.return_value.fetchall.return_value = test_emails
+        mock_session.return_value.__enter__.return_value.execute.return_value.mappings.return_value.all.return_value = test_emails
         
         # Process emails
         analyzer.process_emails(batch_size=1)
