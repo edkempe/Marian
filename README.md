@@ -9,8 +9,7 @@ An AI-powered email analysis and management system that uses advanced language m
 - **Configuration** (`config/constants.py`): Central configuration for all components
 - **Database**:
   - `db_email_store.db`: Main database for email storage and analysis
-    - `emails`: Raw email data
-    - `email_analysis`: AI analysis results
+  - See [Database Design](docs/database_design.md) for schema details
 
 ## Prerequisites
 1. Python 3.12.8 or higher
@@ -97,6 +96,11 @@ marian/
 ├── tests/           # Test files
 └── README.md        # This file
 
+## Documentation
+- [Database Design](docs/database_design.md): Complete database documentation
+- [API Usage](docs/api_usage.md): Guidelines for using external APIs
+- [Development Guide](docs/development.md): Setup and development practices
+
 ## Development Standards
 
 - Follow the code standards in `docs/code_standards.md`
@@ -146,27 +150,11 @@ marian/
    - Never use generic names like `emails.db`
 
 ## Schema Management
-1. **Verification Process**
-   ```python
-   # Example schema verification
-   from sqlalchemy import inspect
-   
-   def verify_schema(engine, model_class):
-       inspector = inspect(engine)
-       table_name = model_class.__tablename__
-       columns = {col.name: col for col in model_class.__table__.columns}
-       db_columns = {col['name']: col for col in inspector.get_columns(table_name)}
-       
-       # Verify columns match
-       missing_in_db = set(columns.keys()) - set(db_columns.keys())
-       if missing_in_db:
-           raise ValueError(f"Columns missing in database: {missing_in_db}")
-   ```
-
-2. **Migration Management**
-   - Track schema changes in migrations
-   - Test migrations in development
-   - Document migration dependencies
+See [Database Design](docs/database_design.md) for complete documentation on:
+- Database schema and design decisions
+- ID handling and validation
+- Migration procedures
+- Data type choices
 
 ## Data Models as Source of Truth
 

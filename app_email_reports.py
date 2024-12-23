@@ -95,7 +95,7 @@ class EmailAnalytics:
                             'topic': result.topic or '',
                             'sentiment': result.sentiment,
                             'confidence_score': result.confidence_score,
-                            'raw_analysis': result.raw_analysis
+                            'full_api_response': result.full_api_response
                         }
                         analyses.append(analysis)
         
@@ -225,7 +225,7 @@ class EmailAnalytics:
                     'topic': result.topic or '',
                     'sentiment': result.sentiment,
                     'confidence_score': result.confidence_score,
-                    'raw_analysis': result.raw_analysis
+                    'full_api_response': result.full_api_response
                 }
                 
                 return analysis
@@ -364,6 +364,7 @@ class EmailAnalytics:
             'topic': analysis.topic,
             'sentiment': analysis.sentiment,
             'confidence_score': analysis.confidence_score,
+            'full_api_response': analysis.full_api_response
         }
 
     def print_analysis_report(self):

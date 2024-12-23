@@ -83,14 +83,19 @@ class EmailAnalysisResponse(BaseModel):
 class EmailAnalysis(Base):
     """SQLAlchemy model for storing email analysis data.
     
-    This model stores the analyzed data from emails, including:
+    Maps to the 'email_analysis' table in the database. This model stores analysis data
+    for each email, including:
     - Email identification (email_id, thread_id)
-    - Analysis metadata (date, prompt version)
-    - Content analysis (summary, categories, priority)
-    - Action items and deadlines
-    - Key information (points, people, URLs)
+    - Analysis metadata (dates, prompt version)
+    - Core analysis (summary, category, priority)
+    - Action items (needed, type, deadline)
+    - Extracted data (key points, people, links)
     - Classification (project, topic, sentiment)
-    - Raw API response for debugging
+    - Analysis quality (confidence score)
+    - full_api_response: Complete analysis response
+    
+    Note: This model is the source of truth for the database schema.
+    Any changes should be made here first, then migrated to the database.
     """
     __tablename__ = 'email_analysis'
     __table_args__ = {'extend_existing': True}
@@ -128,13 +133,13 @@ class EmailAnalysis(Base):
     confidence_score: Mapped[Optional[float]] = Column(Float, nullable=True)  # Confidence score of the analysis
     
     # Raw data
-    raw_analysis: Mapped[Dict] = Column(JSON)  # Full API response for debugging
+    full_api_response: Mapped[Dict] = Column(JSON)  # Full API response for debugging
     
     # Relationships
     email = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
 
     @classmethod
-    def from_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
+    def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
         return cls(
             email_id=email_id,
@@ -156,5 +161,5 @@ class EmailAnalysis(Base):
             topic=response.topic,
             sentiment=response.sentiment,
             confidence_score=response.confidence_score,
-            raw_analysis=response.model_dump()
+            full_api_response=response.model_dump()
         )

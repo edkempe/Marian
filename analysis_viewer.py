@@ -104,6 +104,13 @@ def view_analyses(timeframe: str = 'today', detail_level: str = 'normal', valida
                         print("\nPeople Mentioned:")
                         for person in people:
                             print(f"- {person}")
+                    
+                    print(f"Topic: {analysis.topic}")
+                    print(f"Sentiment: {analysis.sentiment}")
+                    print(f"Confidence: {analysis.confidence_score}")
+                    if analysis.full_api_response:
+                        print("\nFull API Response:")
+                        print(json.dumps(analysis.full_api_response, indent=2))
                 
                 # Validation checks
                 if validate:

@@ -33,6 +33,22 @@
   - Database status
   - API configurations
 
+### Session Management
+- [ ] Update chat_session_manager.py for new workflow
+  - [ ] Create session summaries in docs/sessions/
+  - [ ] Use standardized file naming (session_YYYYMMDD_HHMM.md)
+  - [ ] Include timezone in timestamps
+  - [ ] Implement session summary template
+  - [ ] Add session file cleanup/archival
+- [ ] Add session summary validation
+  - [ ] Check required sections
+  - [ ] Validate timestamps
+  - [ ] Verify file location
+- [ ] Improve session documentation
+  - [ ] Update workflow documentation
+  - [ ] Add file naming conventions
+  - [ ] Document archival process
+
 ### Setup Script Creation
 **Status**: Planned  
 **Priority**: High  
@@ -148,12 +164,6 @@ class DatabaseSessions:
 ### Model Improvements
 
 #### Email Analysis Model
-- [ ] Fix ID type mismatch
-  - Current: Using Integer for email_id in schema but receiving string IDs from Gmail
-  - Impact: Potential data loss or conversion issues
-  - Solution: Change to string/text type in future migration
-  - Priority: Medium
-
 - [ ] Improve type safety and documentation
   - Add specific type hints for JSON columns
   - Make nullable status explicit
@@ -170,6 +180,60 @@ class DatabaseSessions:
   - Use models as single source of truth
   - Generate schema migrations from models using Alembic autogenerate
   - Priority: Medium
+
+### Database
+- [x] Fix ID type mismatch (Completed 2024-12-23)
+  - Changed to TEXT type for email_id and thread_id
+  - Added validation in models and handlers
+  - Updated test data to use realistic Gmail IDs
+
+- [ ] Database Documentation Improvements
+  - Move schema documentation from models to docs/database_design.md
+  - Add ERD diagram
+  - Document validation rules
+  - Add migration guide
+  - Priority: High
+
+- [ ] Add Database Validation Tests
+  - Test ID validation
+  - Test foreign key constraints
+  - Test data type constraints
+  - Priority: Medium
+
+### Database Improvements
+- [ ] Migrate TEXT fields to JSON type
+  - Change analysis fields from TEXT to JSON type
+  - Fields to update:
+    - category
+    - action_type
+    - key_points
+    - people_mentioned
+    - links_found
+    - links_display
+    - full_api_response
+  - Add data migration script
+  - Add validation for JSON format
+  - Update tests
+  - Priority: Low
+
+### Database Cleanup
+- [ ] Legacy Component Cleanup
+  - Remove email_triage table
+  - Archive old analysis database
+  - Update documentation
+  - Priority: Low
+
+- [ ] Batch Processing Implementation
+  - Track batch_id and processing_status
+  - Handle retries and error states
+  - Migrate from email_triage approach
+  - Priority: Medium
+
+- [ ] Schema Optimization
+  - Add indexes for common queries
+  - Consider partitioning by date
+  - Measure and optimize performance
+  - Priority: Low
 
 ### Testing Infrastructure
 - [ ] Fix failing tests after schema changes
@@ -188,6 +252,22 @@ class DatabaseSessions:
 - [ ] Update API documentation
 - [ ] Add migration guide for schema changes
 - [ ] Document test data management
+- [ ] Make documentation DRY
+  - Review all documentation for redundancy
+  - Move common information to central location
+  - Update references to point to central docs
+  - Priority: High
+
+### Code Quality
+- [ ] Improve Gmail API Data Validation
+  - Add GmailMessageValidator for API responses
+  - Add GmailHeaderValidator for message headers
+  - Add type validation for all fields
+  - Add size limits and content validation
+  - Add proper error handling and logging
+  - Update lib_gmail.py to use validators
+  - Add tests for validation
+  - Priority: High
 
 ## Medium Priority
 

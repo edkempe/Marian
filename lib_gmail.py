@@ -23,6 +23,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from dateutil import parser
 from pytz import timezone
+import logging
 
 # Constants
 SCOPES = [
@@ -35,6 +36,8 @@ TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
 DEFAULT_LABEL_DB = 'email_labels.db'
 UTC_TZ = timezone('UTC')
+
+logger = logging.getLogger(__name__)
 
 class GmailAPI:
     """Main class for Gmail API operations"""
@@ -175,7 +178,21 @@ class GmailAPI:
             conn.close()
 
     def process_email(self, msg_id):
-        """Process a single email message"""
+        """Process a single email message.
+        
+        Args:
+            msg_id: Gmail message ID (string)
+            
+        Returns:
+            Dict containing email data or None if processing fails
+            
+        Raises:
+            ValueError: If msg_id is not a string or is empty
+            RuntimeError: If Gmail API response is missing required fields
+        """
+        if not isinstance(msg_id, str) or not msg_id.strip():
+            raise ValueError("Message ID must be a non-empty string")
+            
         try:
             message = self.service.users().messages().get(
                 userId='me',
@@ -183,8 +200,16 @@ class GmailAPI:
                 format='full'
             ).execute()
 
+            # Validate required fields
+            if 'id' not in message:
+                raise RuntimeError("Gmail API response missing 'id' field")
+            if 'threadId' not in message:
+                raise RuntimeError("Gmail API response missing 'threadId' field")
+            if 'payload' not in message:
+                raise RuntimeError("Gmail API response missing 'payload' field")
+
             payload = message['payload']
-            headers = payload['headers']
+            headers = payload.get('headers', [])
 
             # Extract header fields
             subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), 'No Subject')
@@ -196,10 +221,17 @@ class GmailAPI:
             if 'parts' in payload:
                 for part in payload['parts']:
                     if part['mimeType'] == 'text/plain':
-                        body = base64.urlsafe_b64decode(part['body']['data']).decode()
-                        break
+                        if 'body' in part and 'data' in part['body']:
+                            try:
+                                body = base64.urlsafe_b64decode(part['body']['data']).decode()
+                                break
+                            except Exception as e:
+                                logger.error(f"Error decoding email body: {str(e)}")
             elif 'body' in payload and 'data' in payload['body']:
-                body = base64.urlsafe_b64decode(payload['body']['data']).decode()
+                try:
+                    body = base64.urlsafe_b64decode(payload['body']['data']).decode()
+                except Exception as e:
+                    logger.error(f"Error decoding email body: {str(e)}")
 
             return {
                 'id': message['id'],
@@ -209,11 +241,17 @@ class GmailAPI:
                 'sender': from_email,
                 'body': body,
                 'labels': [self.get_label_name(label_id) for label_id in message.get('labelIds', [])],
-                'full_api_response': json.dumps(message)  # Complete Gmail API response for future reference
+                'full_api_response': json.dumps(message)
             }
 
+        except googleapiclient.errors.HttpError as e:
+            if e.resp.status == 404:
+                logger.error(f"Message {msg_id} not found in Gmail")
+            else:
+                logger.error(f"Gmail API error for message {msg_id}: {str(e)}")
+            return None
         except Exception as e:
-            print(f"Error processing message {msg_id}: {str(e)}")
+            logger.error(f"Error processing message {msg_id}: {str(e)}")
             return None
 
     def send_email(self, to, subject, body, reply_to=None):

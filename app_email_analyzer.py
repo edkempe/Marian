@@ -170,7 +170,24 @@ Content: {email_data.get('content', '')}"""
         return full_urls, display_urls
 
     def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
-        """Save the analysis to the database."""
+        """Save the analysis to the database.
+        
+        Args:
+            email_id: Gmail message ID (string)
+            thread_id: Gmail thread ID (string)
+            analysis: EmailAnalysisResponse object
+            raw_json: Raw JSON response from analysis
+            
+        Raises:
+            ValueError: If email_id or thread_id is invalid
+            RuntimeError: If database operation fails
+        """
+        # Validate IDs
+        if not isinstance(email_id, str) or not email_id.strip():
+            raise ValueError("email_id must be a non-empty string")
+        if not isinstance(thread_id, str) or not thread_id.strip():
+            raise ValueError("thread_id must be a non-empty string")
+            
         try:
             with get_analysis_session() as session:
                 existing = session.query(EmailAnalysis).filter_by(email_id=email_id).first()
@@ -193,13 +210,24 @@ Content: {email_data.get('content', '')}"""
                 analysis_obj.sentiment = analysis.sentiment
                 analysis_obj.confidence_score = analysis.confidence_score
                 analysis_obj.analysis_date = datetime.now(timezone.utc)
-                analysis_obj.raw_analysis = json.loads(raw_json)
+                
+                try:
+                    analysis_obj.raw_analysis = json.loads(raw_json)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Invalid JSON for email {email_id}: {str(e)}")
+                    analysis_obj.raw_analysis = {}
+                analysis_obj.full_api_response = raw_json
 
                 if not existing:
                     session.add(analysis_obj)
                 session.commit()
+                
+        except sqlalchemy.exc.IntegrityError as e:
+            logger.error(f"Database integrity error for email {email_id}: {str(e)}")
+            raise RuntimeError(f"Database integrity error: {str(e)}")
         except Exception as e:
-            logger.error("database_error", error=str(e), email_id=email_id)
+            logger.error(f"Database error for email {email_id}: {str(e)}")
+            raise RuntimeError(f"Database error: {str(e)}")
 
     def process_emails(self, batch_size: int = EMAIL_CONFIG['BATCH_SIZE']):
         """Process a batch of unanalyzed emails."""
