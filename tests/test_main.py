@@ -14,6 +14,7 @@ import sqlite3
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
+import base64
 
 # Import core applications
 from app_get_mail import (
@@ -32,28 +33,67 @@ TEST_ANALYSIS_DB = "test_db_email_analysis.db"
 TEST_LABELS_DB = "test_db_email_labels.db"
 
 @pytest.fixture(scope="function")
-def setup_test_dbs():
+def setup_test_dbs(monkeypatch):
     """Set up test databases."""
+    print("\nSetting up test databases...")  # Debug print
+    
+    # Mock get_email_db to use test database
+    def mock_get_email_db():
+        return sqlite3.connect(TEST_EMAIL_DB)
+    monkeypatch.setattr('app_get_mail.get_email_db', mock_get_email_db)
+    
     # Initialize test databases
     conn = sqlite3.connect(TEST_EMAIL_DB)
-    init_database(conn)
+    c = conn.cursor()
+    
+    # Create emails table with correct schema
+    c.execute('''CREATE TABLE IF NOT EXISTS emails
+                 (id TEXT PRIMARY KEY,
+                  thread_id TEXT,
+                  subject TEXT,
+                  from_address TEXT,
+                  to_address TEXT,
+                  cc_address TEXT DEFAULT '',
+                  bcc_address TEXT DEFAULT '',
+                  received_date TEXT,
+                  content TEXT,
+                  labels TEXT,
+                  has_attachments BOOLEAN DEFAULT 0,
+                  full_api_response TEXT)''')
+    conn.commit()
     conn.close()
+    print("Test databases initialized")  # Debug print
     
     # Clean up after tests
     yield
     
+    print("\nCleaning up test databases...")  # Debug print
     for db in [TEST_EMAIL_DB, TEST_ANALYSIS_DB, TEST_LABELS_DB]:
         if os.path.exists(db):
-            os.remove(db)
+            try:
+                os.remove(db)
+                print(f"Removed {db}")  # Debug print
+            except Exception as e:
+                print(f"Error removing {db}: {e}")  # Debug print
 
 @pytest.fixture
-def mock_gmail_service():
+def mock_gmail_service(monkeypatch):
     """Mock Gmail API service."""
-    service = MagicMock()
-    service.users().messages().list().execute.return_value = {
+    mock_service = MagicMock()
+    
+    # Mock the messages.list() response
+    mock_list = MagicMock()
+    mock_list.execute.return_value = {
         'messages': [{'id': 'test1'}, {'id': 'test2'}]
     }
-    service.users().messages().get().execute.return_value = {
+    mock_service.users().messages().list.return_value = mock_list
+    
+    # Mock list_next to return None (no more pages)
+    mock_service.users().messages().list_next.return_value = None
+    
+    # Mock the messages.get() response
+    mock_get = MagicMock()
+    mock_get.execute.return_value = {
         'id': 'test1',
         'threadId': 'thread1',
         'labelIds': ['INBOX'],
@@ -64,24 +104,43 @@ def mock_gmail_service():
                 {'name': 'To', 'value': 'me@example.com'},
                 {'name': 'Date', 'value': datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')}
             ],
-            'body': {'data': 'Test email content'}
+            'body': {'data': base64.b64encode(b'Test email content').decode()}
         }
     }
-    return service
+    mock_service.users().messages().get.return_value = mock_get
+    
+    # Mock the get_gmail_service function
+    def mock_get_service():
+        print("Using mock Gmail service")  # Debug print
+        return mock_service
+    
+    monkeypatch.setattr('app_get_mail.get_gmail_service', mock_get_service)
+    
+    # Mock the GmailAPI class
+    mock_gmail_api = MagicMock()
+    mock_gmail_api.return_value.service = mock_service
+    monkeypatch.setattr('app_get_mail.GmailAPI', mock_gmail_api)
+    
+    return mock_service
 
 def test_email_fetching(setup_test_dbs, mock_gmail_service):
     """Test email fetching functionality."""
+    print("\nStarting email fetching test...")  # Debug print
     # Test fetching emails
     messages = fetch_emails(mock_gmail_service)
+    print(f"Fetched {len(messages)} messages")  # Debug print
     assert len(messages) == 2
     assert messages[0]['id'] == 'test1'
     
     # Test processing email
+    print("Processing test email...")  # Debug print
     conn = sqlite3.connect(TEST_EMAIL_DB)
     email_data = process_email(mock_gmail_service, 'test1', conn)
+    print("Email processed")  # Debug print
     assert email_data is not None
     assert email_data['subject'] == 'Test Email'
     conn.close()
+    print("Test completed successfully")  # Debug print
 
 @patch('anthropic.Anthropic')
 def test_email_analysis(mock_anthropic, setup_test_dbs):
