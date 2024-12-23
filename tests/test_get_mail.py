@@ -67,7 +67,7 @@ def mock_db():
                   date TEXT,
                   body TEXT,
                   labels TEXT,
-                  raw_data TEXT)''')
+                  full_api_response TEXT)''')  # Complete Gmail API response for future reference
     conn.commit()
     return conn
 

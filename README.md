@@ -21,12 +21,34 @@ An AI-powered email analysis and management system that uses advanced language m
 1. Clone the repository
 2. Create virtual environment: `python3 -m venv venv`
 3. Activate: `source venv/bin/activate`
-4. Install dependencies: `pip install -r requirements.txt`
-5. Set up environment variables:
+4. Install project in development mode:
+   ```bash
+   # This installs the project as an editable package,
+   # making it available in your Python path
+   python3 -m pip install -e .
+   ```
+5. Install dependencies: `pip install -r requirements.txt`
+6. Set up environment variables:
    ```bash
    export ANTHROPIC_API_KEY=your_api_key_here
    ```
-6. Place your Gmail API `credentials.json` in the project root
+7. Place your Gmail API `credentials.json` in the project root
+
+## Development Setup
+The project uses setuptools for package management. The `setup.py` file defines:
+- Project metadata
+- Dependencies
+- Package structure
+
+This setup ensures that:
+- All project modules are importable
+- Dependencies are properly tracked
+- Database migrations can find model definitions
+- Tests can import project modules
+
+To make changes to the project structure or dependencies:
+1. Update `setup.py` with new requirements or packages
+2. Reinstall in development mode: `python3 -m pip install -e .`
 
 ## Configuration
 The project uses a centralized configuration system in `config/constants.py`. This file contains all configuration settings for:

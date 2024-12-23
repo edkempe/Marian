@@ -9,11 +9,24 @@ from dotenv import load_dotenv
 import os
 from prometheus_client import Counter, start_http_server
 import structlog
+import time
+import argparse
 
 from models.email import Email
 from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from database.config import get_email_session, get_analysis_session
 from constants import API_CONFIG, EMAIL_CONFIG
+
+# Set up structured logging
+logger = structlog.get_logger()
+
+def start_metrics_server(port: int) -> None:
+    """Start Prometheus metrics server."""
+    try:
+        start_http_server(port)
+        logger.info("metrics_server_started", port=port)
+    except Exception as e:
+        logger.error("metrics_server_error", error=str(e))
 
 """Email analyzer using Claude-3-Haiku for processing and categorizing emails.
 
@@ -206,8 +219,8 @@ Content: {email_data.get('content', '')}"""
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
                 unanalyzed = email_session.execute(text("""
-                    SELECT e.id, e.subject, e.body, e.sender, e.date, 
-                           e.labels, e.raw_data, e.thread_id
+                    SELECT e.id, e.subject, e.sender, e.date, e.body,
+                           e.labels, e.full_api_response, e.thread_id
                     FROM emails e
                     WHERE NOT EXISTS (
                         SELECT 1 FROM email_analysis a 
@@ -239,7 +252,7 @@ Content: {email_data.get('content', '')}"""
                             sender=email_data['sender'] or '',
                             date=email_data['date'] or '',
                             labels=email_data['labels'] or '[]',
-                            raw_data=email_data['raw_data'] or '',
+                            full_api_response=email_data['full_api_response'] or '',
                             email_type=email_type,
                             truncated_body=truncated_body
                         )
@@ -331,7 +344,7 @@ class EmailRequest:
     sender: str
     date: str
     labels: str
-    raw_data: str
+    full_api_response: str  # Complete Gmail API response for future reference
     email_type: str
     truncated_body: str
 

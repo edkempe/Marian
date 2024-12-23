@@ -209,7 +209,7 @@ class GmailAPI:
                 'sender': from_email,
                 'body': body,
                 'labels': [self.get_label_name(label_id) for label_id in message.get('labelIds', [])],
-                'raw_data': json.dumps(message)
+                'full_api_response': json.dumps(message)  # Complete Gmail API response for future reference
             }
 
         except Exception as e:

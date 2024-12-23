@@ -31,6 +31,7 @@ Notes:
 - Keeps a 1-minute overlap window when fetching newer emails
 - Stores dates in UTC but displays in Mountain Time
 - Default fetch window is 30 days when starting with empty database
+- Label history is stored in a separate database (db_label_history.db)
 
 Date: December 2024
 """
@@ -51,20 +52,25 @@ maxResults = 50  # Set max results to 50
 MOUNTAIN_TZ = timezone('US/Mountain')
 UTC_TZ = timezone('UTC')
 
-def get_gmail_service():
-    """Get an authenticated Gmail service using lib_gmail."""
-    gmail_api = GmailAPI()
-    return gmail_api.service
+def get_email_db():
+    """Get connection to email database."""
+    return sqlite3.connect('db_email_store.db')
+
+def get_label_db():
+    """Get connection to label history database."""
+    return sqlite3.connect('db_label_history.db')
 
 def init_database(conn=None):
-    """Initialize the database with required tables.
+    """Initialize the email database.
     
     Args:
         conn: Optional SQLite connection. If not provided, uses default connection.
     """
     if conn is None:
-        conn = sqlite3.connect('db_email_store.db')
+        conn = get_email_db()
     c = conn.cursor()
+    
+    # Create emails table
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,
                   thread_id TEXT,
@@ -72,10 +78,43 @@ def init_database(conn=None):
                   sender TEXT,
                   date TEXT,
                   body TEXT,
-                  labels TEXT,
-                  raw_data TEXT)''')
+                  labels TEXT,  
+                  has_attachments BOOLEAN DEFAULT 0,
+                  full_api_response TEXT)''')
+    
     conn.commit()
     return conn
+
+def init_label_database(conn=None):
+    """Initialize the label history database.
+    
+    Args:
+        conn: Optional SQLite connection. If not provided, uses default connection.
+    """
+    if conn is None:
+        conn = get_label_db()
+    c = conn.cursor()
+    
+    # Create gmail_labels table
+    c.execute('''CREATE TABLE IF NOT EXISTS gmail_labels
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  label_id TEXT NOT NULL,  
+                  name TEXT NOT NULL,  
+                  type TEXT,  
+                  message_list_visibility TEXT,
+                  label_list_visibility TEXT,
+                  is_active BOOLEAN DEFAULT 1,
+                  first_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  deleted_at TIMESTAMP)''')
+    
+    conn.commit()
+    return conn
+
+def get_gmail_service():
+    """Get an authenticated Gmail service using lib_gmail."""
+    gmail_api = GmailAPI()
+    return gmail_api.service
 
 def clear_database(conn):
     confirmation = input("Are you sure you want to clear the database? This action cannot be undone. (y/n): ")
@@ -194,7 +233,7 @@ def process_email(service, msg_id, conn):
             'date': formatted_date,
             'body': body,
             'labels': ','.join(message['labelIds']),
-            'raw_data': json.dumps(message)
+            'full_api_response': json.dumps(message)
         }
     except Exception as e:
         print('Error processing message {}: {}'.format(msg_id, e))
@@ -238,55 +277,133 @@ def count_emails(conn):
     return cursor.fetchone()[0]
 
 def list_labels(service):
-    """List all available Gmail labels."""
+    """List all available Gmail labels and store them in the database with history."""
     try:
         results = service.users().labels().list(userId='me').execute()
         labels = results.get('labels', [])
-        print("\nAvailable labels:")
+        
+        # Store labels in database
+        conn = get_label_db()
+        c = conn.cursor()
+        
+        # Get current timestamp
+        current_time = datetime.utcnow().isoformat()
+        
+        # Mark all existing active labels as potentially inactive
+        # We'll re-activate ones we still see
+        c.execute('''UPDATE gmail_labels 
+                    SET is_active = 0, 
+                        deleted_at = ? 
+                    WHERE is_active = 1''', (current_time,))
+        
+        # Process current labels
         for label in labels:
-            print("- {} (ID: {})".format(label['name'], label['id']))
+            # Check if this exact label configuration exists
+            c.execute('''SELECT id, is_active, deleted_at 
+                        FROM gmail_labels 
+                        WHERE label_id = ? 
+                        AND name = ? 
+                        AND type = ? 
+                        AND message_list_visibility = ? 
+                        AND label_list_visibility = ?''',
+                     (label['id'],
+                      label['name'],
+                      label.get('type', ''),
+                      label.get('messageListVisibility', ''),
+                      label.get('labelListVisibility', '')))
+            
+            existing = c.fetchone()
+            
+            if existing:
+                # This exact configuration exists, just update timestamps
+                c.execute('''UPDATE gmail_labels 
+                           SET is_active = 1,
+                               last_seen_at = ?,
+                               deleted_at = NULL
+                           WHERE id = ?''',
+                        (current_time, existing[0]))
+            else:
+                # Insert new record
+                c.execute('''INSERT INTO gmail_labels 
+                           (label_id, name, type, 
+                            message_list_visibility, label_list_visibility,
+                            first_seen_at, last_seen_at)
+                           VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                        (label['id'],
+                         label['name'],
+                         label.get('type', ''),
+                         label.get('messageListVisibility', ''),
+                         label.get('labelListVisibility', ''),
+                         current_time,
+                         current_time))
+        
+        conn.commit()
+        
+        # Print current labels with their history
+        print("\nAvailable labels:")
+        c.execute('''SELECT label_id, name, first_seen_at, 
+                           CASE WHEN is_active = 1 
+                                THEN 'Active' 
+                                ELSE 'Inactive (removed ' || deleted_at || ')' 
+                           END as status
+                    FROM gmail_labels
+                    ORDER BY name, first_seen_at DESC''')
+        
+        for row in c.fetchall():
+            print(f"- {row[1]} (ID: {row[0]}, {row[3]}, First seen: {row[2]})")
+        
+        conn.close()
         return labels
     except Exception as e:
         print('Error listing labels: {}'.format(e))
         return []
 
 def main():
+    """Main function to fetch emails."""
     parser = argparse.ArgumentParser(description='Fetch emails from Gmail')
-    parser.add_argument('--older', action='store_true', help='Fetch older emails')
-    parser.add_argument('--newer', action='store_true', help='Fetch newer emails')
-    parser.add_argument('--clear', action='store_true', help='Clear the database before fetching')
-    parser.add_argument('--label', type=str, help='Filter emails by label')
-    parser.add_argument('--list-labels', action='store_true', help='List all available labels')
-    
+    parser.add_argument('--newer', action='store_true',
+                       help='Fetch emails newer than most recent in database')
+    parser.add_argument('--older', action='store_true',
+                       help='Fetch emails older than oldest in database')
+    parser.add_argument('--clear', action='store_true',
+                       help='Clear the database before fetching')
+    parser.add_argument('--label', type=str,
+                       help='Filter emails by label')
+    parser.add_argument('--list-labels', action='store_true',
+                       help='List all available labels')
     args = parser.parse_args()
-
-    print("Initializing database...")
-    conn = init_database()
+    
+    # Get Gmail API service
     service = get_gmail_service()
-
+    
+    # Initialize databases
+    conn = init_database()
+    label_conn = init_label_database()
+    
+    if args.clear:
+        clear_database(conn)
+    
     if args.list_labels:
         list_labels(service)
         return
-
-    if args.clear:
-        clear_database(conn)
-
-    total_emails = count_emails(conn)
-    print("Current email count: {}".format(total_emails))
-
+    
+    label_id = None
     if args.label:
-        print("Fetching all emails with label: {}".format(args.label))
-        messages = fetch_emails(service, label=args.label)
-    elif total_emails == 0:
-        print("Database is empty. Fetching last {} days of emails.".format(days_to_fetch))
-        end_date = datetime.now(UTC_TZ)
-        start_date = end_date - timedelta(days=days_to_fetch)
-        messages = fetch_emails(service, start_date, end_date)
+        label_id = get_label_id(service, args.label)
+        if not label_id:
+            print(f"Label '{args.label}' not found")
+            return
+    
+    if args.newer:
+        messages = fetch_newer_emails(conn, service, label_id)
     elif args.older:
-        messages = fetch_older_emails(conn, service)
-    elif args.newer or not (args.older or args.newer):
-        messages = fetch_newer_emails(conn, service)
-
+        messages = fetch_older_emails(conn, service, label_id)
+    else:
+        # Default: fetch emails from last N days
+        end_date = datetime.now(MOUNTAIN_TZ)
+        start_date = end_date - timedelta(days=days_to_fetch)
+        messages = fetch_emails(service, start_date, end_date, label_id)
+    
     print("Processing {} messages...".format(len(messages) if messages else 0))
 
     for msg in messages:
@@ -294,12 +411,12 @@ def main():
         if email_data:
             try:
                 conn.execute('''INSERT OR IGNORE INTO emails
-                                (id, thread_id, subject, sender, date, body, labels, raw_data)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                                (id, thread_id, subject, sender, date, body, labels, has_attachments, full_api_response)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                              (email_data['id'], email_data.get('thread_id', ''),  
                               email_data['subject'], email_data['sender'],
                               email_data['date'], email_data['body'],
-                              email_data['labels'], email_data['raw_data']))
+                              email_data['labels'], False, email_data['full_api_response']))
                 conn.commit()
 
                 # Display in Mountain Time
@@ -313,6 +430,7 @@ def main():
     final_count = count_emails(conn)
     print("Final email count: {}".format(final_count))
     conn.close()
+    label_conn.close()
 
 if __name__ == '__main__':
     main()
