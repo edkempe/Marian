@@ -31,74 +31,89 @@ from models.email import Email
 from models.gmail_label import GmailLabel
 from lib_gmail import GmailAPI
 from database.config import get_email_session, get_analysis_session, init_db
+from constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 # Configuration
-days_to_fetch = 5  # Temporarily set to 5 days to get roughly 50 emails
-maxResults = 50  # Set max results to 50
 UTC_TZ = timezone('UTC')
 
 def init_database(session: Session = None) -> Session:
     """Initialize the email database schema."""
-    # Import models to ensure they are registered with SQLAlchemy
-    from models.base import Base
-    from models.email import Email
-    from models.email_analysis import EmailAnalysis
-    from models.gmail_label import GmailLabel
-    
-    init_db()
-    return session
+    if session is None:
+        # Use SQLite connection for direct database operations
+        import sqlite3
+        conn = sqlite3.connect(DATABASE_CONFIG['EMAIL_DB_FILE'])
+        cursor = conn.cursor()
+        
+        # Create emails table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS emails (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL,
+                subject TEXT DEFAULT 'No Subject',
+                from_address TEXT NOT NULL,
+                to_address TEXT NOT NULL,
+                cc_address TEXT DEFAULT '',
+                bcc_address TEXT DEFAULT '',
+                received_date TIMESTAMP WITH TIME ZONE NOT NULL,
+                content TEXT DEFAULT '',
+                labels TEXT DEFAULT '',
+                has_attachments BOOLEAN NOT NULL DEFAULT 0,
+                full_api_response TEXT DEFAULT '{}'
+            )
+        ''')
+        conn.commit()
+        return conn
+    else:
+        # Use SQLAlchemy session
+        Base.metadata.create_all(session.bind)
+        return session
 
 def init_label_database(session: Session = None) -> Session:
     """Initialize the label database schema."""
-    # Import models to ensure they are registered with SQLAlchemy
-    from models.base import Base
-    from models.email import Email
-    from models.email_analysis import EmailAnalysis
-    from models.gmail_label import GmailLabel
-    
-    init_db()
-    return session
+    if session is None:
+        import sqlite3
+        conn = sqlite3.connect(DATABASE_CONFIG['EMAIL_DB_FILE'])
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gmail_labels (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                message_list_visibility TEXT,
+                label_list_visibility TEXT,
+                updated_date TIMESTAMP WITH TIME ZONE NOT NULL
+            )
+        ''')
+        conn.commit()
+        return conn
+    else:
+        Base.metadata.create_all(session.bind)
+        return session
 
 def get_gmail_service():
     """Get an authenticated Gmail service."""
-    gmail_api = GmailAPI()
-    return gmail_api.get_service()
+    return GmailAPI().service
 
-def clear_database(session: Session = None) -> Session:
+def clear_database(session: Session = None):
     """Clear all data from the email database."""
-    with get_email_session() as session:
-        session.query(Email).delete()
-        session.commit()
-    return session
+    if session is None:
+        session = get_email_session()
+    session.query(Email).delete()
+    session.commit()
 
 def get_label_id(service, label_name):
     """Get the ID of a label by its name."""
     try:
-        labels = list_labels(service)
+        results = service.users().labels().list(userId='me').execute()
+        labels = results.get('labels', [])
+        
         for label in labels:
             if label['name'] == label_name:
                 return label['id']
-        print(f"Label not found: {label_name}")
         return None
-    except Exception as e:
-        print(f"Error getting label ID: {str(e)}")
+    except Exception as error:
+        print(f'An error occurred: {error}')
         return None
-
-def get_email_engine():
-    """Get SQLAlchemy engine for email database."""
-    return get_email_session().get_bind()
-
-def get_label_engine():
-    """Get SQLAlchemy engine for label database."""
-    return get_email_session().get_bind()
-
-def get_email_session() -> Session:
-    """Get SQLAlchemy session for email database."""
-    return get_email_session()
-
-def get_label_session() -> Session:
-    """Get SQLAlchemy session for label database."""
-    return get_email_session()
 
 def fetch_emails(service, start_date=None, end_date=None, label=None):
     """Fetch emails from Gmail API.
@@ -113,41 +128,47 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         List of email messages
     """
     try:
-        # Build query
         query = []
         if start_date:
-            query.append(f'after:{int(start_date.timestamp())}')
+            query.append(f'after:{start_date.strftime("%Y/%m/%d")}')
         if end_date:
-            query.append(f'before:{int(end_date.timestamp())}')
+            query.append(f'before:{end_date.strftime("%Y/%m/%d")}')
+        
+        # Get label ID if label name provided
+        label_id = None
         if label:
             label_id = get_label_id(service, label)
             if not label_id:
+                print(f'Label "{label}" not found')
                 return []
         
-        query_str = ' '.join(query)
-        print(f"Fetching emails with query: {query_str}")
-        
-        # Get messages
+        # Build the request
         request = service.users().messages().list(
             userId='me',
-            q=query_str,
-            maxResults=maxResults,
-            labelIds=[label_id] if label else None
+            maxResults=EMAIL_CONFIG['BATCH_SIZE'],
+            q=' '.join(query) if query else ''
         )
+        
+        if label_id:
+            request['labelIds'] = [label_id]
         
         messages = []
         while request:
             response = request.execute()
             if 'messages' in response:
                 messages.extend(response['messages'])
-            request = service.users().messages().list_next(request, response)
             
-            if len(messages) >= maxResults:
+            request = service.users().messages().list_next(
+                previous_request=request,
+                previous_response=response
+            )
+            
+            if len(messages) >= EMAIL_CONFIG['BATCH_SIZE']:
                 break
         
         return messages
-    except Exception as e:
-        print(f"Error fetching emails: {str(e)}")
+    except Exception as error:
+        print(f'An error occurred: {error}')
         return []
 
 def process_email(service, msg_id, session):
@@ -357,7 +378,7 @@ def main():
     else:
         # Default: fetch last N days of emails
         end_date = datetime.now(UTC_TZ)
-        start_date = end_date - timedelta(days=days_to_fetch)
+        start_date = end_date - timedelta(days=EMAIL_CONFIG['DAYS_TO_FETCH'])
         messages = fetch_emails(service, start_date, end_date, args.label)
     
     # Process messages

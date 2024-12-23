@@ -11,6 +11,7 @@ from models.email import Email
 import argparse
 import sqlite3
 from sqlalchemy import func, desc
+from constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 class EmailAnalytics:
     """Analytics for email and analysis data."""
@@ -29,13 +30,13 @@ class EmailAnalytics:
         """Get email database session."""
         if self.email_conn:
             return self.email_conn
-        return get_email_session()
+        return get_email_session(DATABASE_CONFIG['email'])
 
     def _get_analysis_session(self):
         """Get analysis database session."""
         if self.analysis_conn:
             return self.analysis_conn
-        return get_analysis_session()
+        return get_analysis_session(DATABASE_CONFIG['analysis'])
 
     def get_total_emails(self):
         """Get total number of emails in the database"""
