@@ -1,23 +1,34 @@
 #!/usr/bin/env python3
 import os
+import json
+import time
+import argparse
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import anthropic
 from dotenv import load_dotenv
-from contextlib import contextmanager
-import time
-import json
-import ssl
-import certifi
 from sqlalchemy import text
-import argparse
+from models.email_analysis import EmailAnalysisModel, EmailAnalysis
+from models.email import Email
+from database.config import get_email_session, get_analysis_session, init_db
+from util_logging import logger
+from dataclasses import dataclass
 
-from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
-from database.config import get_email_session, get_analysis_session
-from util_logging import (
-    logger, EMAIL_ANALYSIS_COUNTER, EMAIL_ANALYSIS_DURATION,
-    log_validation_error, start_metrics_server
-)
+# Load environment variables from .env file
+load_dotenv()
+
+@dataclass
+class EmailRequest:
+    """Data class for email analysis request."""
+    id: str
+    subject: str
+    body: str
+    sender: str
+    date: str
+    labels: str
+    raw_data: str
+    email_type: str = ""
+    truncated_body: str = ""
 
 """Email analyzer using Claude-3-Haiku for processing and categorizing emails.
 
@@ -68,6 +79,25 @@ class EmailAnalyzer:
     """
 
     # Standard prompt template for consistent API responses
+    TRIAGE_PROMPT = """Quickly assess if this email requires detailed analysis. Consider:
+1. Is it a marketing/promotional email? (newsletters, ads, etc.)
+2. Is it an automated notification? (system alerts, social media updates, etc.)
+3. Does it require any action from the recipient?
+4. Is it time-sensitive?
+5. Does it contain important business/personal information?
+
+Respond with a JSON object:
+{
+    "needs_analysis": true/false,
+    "reason": "Brief explanation",
+    "estimated_priority": 1-5
+}
+
+Email to analyze:
+{text}
+
+JSON response:"""
+
     ANALYSIS_PROMPT = """Analyze the email below and provide a structured response with the following information:
 1. A brief summary of the main points (1-2 sentences)
 2. List of categories that best describe the email content (e.g., meeting, request, update)
@@ -99,94 +129,116 @@ Email to analyze:
 
 JSON response:"""
 
-    def __init__(self, metrics_port: int = 8000):
-        """Initialize the analyzer with API client and start metrics server."""
-        load_dotenv(verbose=True)
+    def __init__(self, api_key: Optional[str] = None, email_db: Optional[str] = None, analysis_db: Optional[str] = None):
+        """Initialize the analyzer with optional API key and database paths."""
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        if not self.api_key:
+            raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         
-        # Verify environment
-        api_key = os.getenv('ANTHROPIC_API_KEY')
-        if not api_key:
-            raise EnvironmentError("ANTHROPIC_API_KEY not found in environment")
-        
-        # Log first few characters of API key for verification (safely)
-        logger.info(
-            "api_key_check",
-            prefix=api_key[:7] if len(api_key) > 7 else "too_short",
-            length=len(api_key)
-        )
-            
-        # Initialize API client
-        self.client = anthropic.Client(api_key=api_key)
-        
-        # Start metrics server
-        start_metrics_server(metrics_port)
-        logger.info("analyzer_initialized", metrics_port=metrics_port)
+        self.client = anthropic.Client(api_key=self.api_key)
+        self.email_db = email_db
+        self.analysis_db = analysis_db
 
-    def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysis]:
-        """Analyze a single email and return structured analysis."""
+    def analyze_email(self, email: EmailRequest) -> EmailAnalysis:
+        """Analyze a single email using Claude API and store the result."""
         try:
-            # Format the email content for analysis
-            email_content = f"""Subject: {email_data.get('subject', '')}
-From: {email_data.get('sender', '')}
-Type: {email_data.get('email_type', '')}
-Labels: {email_data.get('labels', '')}
-Thread ID: {email_data.get('thread_id', '')}
-Date: {email_data.get('date', '')}
-Has Attachments: {email_data.get('has_attachments', False)}
-
-Content:
-{email_data.get('body', '')}"""
+            start_time = time.time()
             
-            # Get analysis from Claude
-            response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=1000,
-                temperature=0.05,
-                messages=[{
-                    "role": "user",
-                    "content": self.ANALYSIS_PROMPT.format(
-                        text=email_content
-                    )
-                }]
-            )
-
-            # Extract and validate the analysis
+            # Get API response
+            response_text = self._get_api_response(email)
+            
+            # Clean and parse JSON response
             try:
-                analysis_json = response.content[0].text
-                analysis = json.loads(analysis_json)
+                # Remove any text before the actual JSON
+                json_start = response_text.find('{')
+                json_end = response_text.rfind('}') + 1
+                if json_start == -1 or json_end == 0:
+                    raise ValueError("No JSON object found in response")
                 
-                # Ensure links_display is present
-                if 'links_found' in analysis and 'links_display' not in analysis:
-                    analysis['links_display'] = [
-                        url[:100] + '...' if len(url) > 100 else url
-                        for url in analysis['links_found']
-                    ]
+                json_str = response_text[json_start:json_end]
+                analysis_dict = json.loads(json_str)
                 
-                # Set default empty string for project if it's None
-                if analysis.get('project') is None:
-                    analysis['project'] = ""
+                # Validate and create model
+                try:
+                    analysis_data = EmailAnalysisModel.model_validate(analysis_dict)
+                except Exception as e:
+                    logger.error(
+                        "validation_error",
+                        error_type="validation_error",
+                        error=str(e),
+                        response=json_str if json_str else "N/A"
+                    )
+                    raise
                 
-                analysis_response = EmailAnalysisResponse.model_validate(analysis)
-                
-                # Create and return EmailAnalysis instance
-                return EmailAnalysis.from_response(
-                    email_id=email_data['id'],
-                    thread_id=email_data['thread_id'],
-                    response=analysis_response
+                # Create and store analysis
+                analysis = EmailAnalysis.from_response(
+                    email_id=email.id,
+                    thread_id=email.id,  # Using email.id as thread_id for now
+                    response=analysis_data
                 )
                 
+                # Store in database
+                with get_analysis_session() as session:
+                    session.add(analysis)
+                    session.commit()
+                
+                duration = time.time() - start_time
+                logger.info("email_analysis_success", email_id=email.id, duration=duration)
+                
+                return analysis
+                
             except json.JSONDecodeError as e:
-                log_api_error('json_decode', str(e), analysis_json)
-                return None
+                logger.error(
+                    "json_decode_error",
+                    error_type="json_decode_error",
+                    error=str(e),
+                    response=response_text if response_text else "N/A"
+                )
+                raise
             except Exception as e:
-                log_api_error('validation', str(e), analysis_json)
-                return None
-
+                logger.error(
+                    "analysis_error",
+                    error_type="analysis_error",
+                    error=str(e),
+                    response=response_text if response_text else "N/A"
+                )
+                raise
+                
         except Exception as e:
-            log_api_error('api_call', str(e))
-            return None
+            logger.error("email_analysis_error", error=str(e))
+            raise
 
-    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
+    def _get_api_response(self, email: EmailRequest):
+        """Get API response for the given email."""
+        prompt = self.ANALYSIS_PROMPT.format(
+            text=email.truncated_body
+        )
+        
+        # Add specific instructions about JSON formatting
+        prompt += "\nIMPORTANT: Ensure all JSON strings are properly escaped and terminated. Keep URLs concise."
+        
+        response = self.client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1000,
+            temperature=0.05,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
+        )
+        
+        response_text = response.content[0].text
+        
+        # Clean the response text
+        response_text = response_text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+            
+        return response_text.strip()
+
+    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisModel, raw_json: str):
         """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
@@ -217,6 +269,68 @@ Content:
                 session.commit()
         except Exception as e:
             logger.error("database_error", error=str(e), email_id=email_id)
+
+    def _triage_email(self, email: EmailRequest):
+        """Quick triage to determine if email needs detailed analysis."""
+        prompt = self.TRIAGE_PROMPT.format(
+            text=email.truncated_body[:1000]  # Use shorter content for triage
+        )
+        
+        response = self.client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=200,  # Smaller token limit for faster response
+            temperature=0.05,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
+        )
+        
+        response_text = response.content[0].text.strip()
+        
+        # More aggressive JSON cleaning
+        try:
+            # Remove any markdown code block markers
+            response_text = response_text.replace('```json', '').replace('```', '')
+            
+            # Remove any leading/trailing whitespace and newlines
+            response_text = response_text.strip()
+            
+            # Try to find the JSON object if there's additional text
+            if '{' in response_text and '}' in response_text:
+                start = response_text.find('{')
+                end = response_text.rfind('}') + 1
+                response_text = response_text[start:end]
+            
+            triage_result = json.loads(response_text)
+            
+            # Validate required fields
+            required_fields = {"needs_analysis", "reason", "estimated_priority"}
+            if not all(field in triage_result for field in required_fields):
+                logger.error("triage_missing_fields", 
+                           error="Missing required fields in triage response",
+                           response=response_text)
+                return {"needs_analysis": True, 
+                       "reason": "Triage response missing fields", 
+                       "estimated_priority": 3}
+            
+            # Validate field types
+            if not isinstance(triage_result["needs_analysis"], bool):
+                triage_result["needs_analysis"] = True
+            if not isinstance(triage_result["estimated_priority"], int):
+                triage_result["estimated_priority"] = 3
+            if not isinstance(triage_result["reason"], str):
+                triage_result["reason"] = str(triage_result["reason"])
+                
+            return triage_result
+            
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error("triage_json_error", 
+                        error=str(e),
+                        response=response_text)
+            return {"needs_analysis": True, 
+                   "reason": "Failed to parse triage response", 
+                   "estimated_priority": 3}
 
     def process_emails(self, batch_size: int = 50):
         """Process a batch of unanalyzed emails."""
@@ -250,10 +364,10 @@ Content:
                 
                 # Process each email
                 for i, email_data in enumerate(unanalyzed):
-                    # Rate limit: process 5 emails then wait to avoid hitting API limits
-                    if i > 0 and i % 5 == 0:
+                    # Rate limit: process 10 emails then wait
+                    if i > 0 and i % 10 == 0:
                         logger.info("rate_limit_pause", processed=i)
-                        time.sleep(60)  # Wait 60 seconds to respect rate limit
+                        time.sleep(30)  # Reduced wait time since triage is faster
                         
                     try:
                         email_data = dict(email_data)
@@ -267,103 +381,47 @@ Content:
                             subject=email_data['subject'] or '',
                             body=email_data['body'] or '',
                             sender=email_data['sender'] or '',
-                            date=email_data['date'] or '',
-                            labels=email_data['labels'] or '[]',
+                            date=str(email_data['date']) if email_data['date'] else '',
+                            labels=email_data['labels'] or '',
                             raw_data=email_data['raw_data'] or '',
                             email_type=email_type,
                             truncated_body=truncated_body
                         )
                         
-                        # Call Claude API for analysis with retry
-                        max_retries = 3
-                        retry_delay = 5  # seconds
+                        # First do quick triage
+                        triage_result = self._triage_email(email_request)
                         
-                        for retry in range(max_retries):
-                            try:
-                                prompt = self.ANALYSIS_PROMPT.format(
-                                    text=email_request.truncated_body
-                                )
-                                
-                                response = self.client.messages.create(
-                                    model="claude-3-haiku-20240307",
-                                    max_tokens=1000,
-                                    temperature=0.05,
-                                    messages=[{
-                                        "role": "user",
-                                        "content": prompt
-                                    }]
-                                )
-                                break  # Success, exit retry loop
-                            except Exception as api_error:
-                                if retry < max_retries - 1:
-                                    logger.warning(f"API call failed (attempt {retry + 1}/{max_retries}), retrying in {retry_delay} seconds...")
-                                    time.sleep(retry_delay)
-                                    retry_delay *= 2  # Exponential backoff
-                                else:
-                                    raise api_error
-
-                        # Extract and validate the analysis
-                        try:
-                            analysis_json = response.content[0].text
-                            analysis = json.loads(analysis_json)
-                            
-                            # Ensure links_display is present
-                            if 'links_found' in analysis and 'links_display' not in analysis:
-                                analysis['links_display'] = [
-                                    url[:100] + '...' if len(url) > 100 else url
-                                    for url in analysis['links_found']
-                                ]
-                            
-                            # Set default empty string for project if it's None
-                            if analysis.get('project') is None:
-                                analysis['project'] = ""
-                            
-                            analysis_response = EmailAnalysisResponse.model_validate(analysis)
-                            
-                            # Create EmailAnalysis instance with thread_id
-                            email_analysis = EmailAnalysis.from_response(
-                                email_id=email_data['id'],
-                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
-                                response=analysis_response
+                        if triage_result["needs_analysis"]:
+                            # Do full analysis only if needed
+                            analysis = self.analyze_email(email_request)
+                            logger.info("email_analyzed", 
+                                      email_id=email_request.id, 
+                                      needs_analysis=True,
+                                      reason=triage_result["reason"])
+                        else:
+                            # Create basic analysis for non-important emails
+                            analysis = EmailAnalysis.from_triage(
+                                email_id=email_request.id,
+                                thread_id=email_data['thread_id'],
+                                triage_result=triage_result
                             )
-                            
-                            # Save analysis with thread_id
-                            self.save_analysis(
-                                email_id=email_data['id'],
-                                thread_id=email_data.get('thread_id', email_data['id']),  # Fallback to email_id if thread_id not present
-                                analysis=email_analysis,
-                                raw_json=analysis_json
-                            )
-                        except json.JSONDecodeError as e:
-                            log_api_error('json_decode', str(e), analysis_json)
-                            continue
-                        except Exception as e:
-                            log_api_error('validation', str(e), analysis_json)
-                            continue
+                            with get_analysis_session() as session:
+                                session.add(analysis)
+                                session.commit()
+                            logger.info("email_skipped", 
+                                      email_id=email_request.id,
+                                      needs_analysis=False,
+                                      reason=triage_result["reason"])
                             
                     except Exception as e:
-                        logger.error("process_email_error", error=str(e))
+                        logger.error("email_processing_error", 
+                                   email_id=email_data.get('id', 'unknown'), 
+                                   error=str(e))
                         continue
-
+                        
         except Exception as e:
             logger.error("process_emails_error", error=str(e))
             raise
-
-from dataclasses import dataclass
-from typing import Optional
-
-@dataclass
-class EmailRequest:
-    """Data class for email analysis request."""
-    id: str
-    subject: str
-    body: str
-    sender: str
-    date: str
-    labels: str
-    raw_data: str
-    email_type: str
-    truncated_body: str
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -394,10 +452,18 @@ def main():
     parser = argparse.ArgumentParser(description='Email analyzer with configurable batch size')
     parser.add_argument('--batch_size', type=int, default=500,
                       help='Number of emails to process in each batch (default: 500)')
+    parser.add_argument('--email_db', type=str, default=None,
+                      help='Path to email database (default: None)')
+    parser.add_argument('--analysis_db', type=str, default=None,
+                      help='Path to analysis database (default: None)')
     args = parser.parse_args()
 
     try:
-        analyzer = EmailAnalyzer()
+        # Initialize database if needed
+        from database.config import init_db
+        init_db()
+        
+        analyzer = EmailAnalyzer(email_db=args.email_db, analysis_db=args.analysis_db)
         analyzer.process_emails(batch_size=args.batch_size)
     except Exception as e:
         logger.error("main_error", error=str(e))
