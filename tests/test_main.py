@@ -92,13 +92,17 @@ def test_email_analysis(mock_anthropic, setup_test_dbs):
         'text': '''{
             "summary": "Test email summary",
             "category": ["test"],
-            "priority": {"score": 3, "reason": "test"},
-            "action": {"needed": false, "type": [], "deadline": null},
+            "priority_score": 3,
+            "priority_reason": "test",
+            "action_needed": false,
+            "action_type": [],
+            "action_deadline": null,
             "key_points": ["test point"],
             "people_mentioned": [],
             "links_found": [],
             "links_display": [],
-            "context": {"project": null, "topic": null, "ref_docs": null},
+            "project": null,
+            "topic": null,
             "sentiment": "neutral",
             "confidence_score": 0.9
         }'''
@@ -107,15 +111,19 @@ def test_email_analysis(mock_anthropic, setup_test_dbs):
     
     # Test analysis
     analyzer = EmailAnalyzer()
-    result = analyzer.analyze_email(
-        email_id='test1',
-        subject='Test Email',
-        body='Test content'
-    )
+    result = analyzer.analyze_email({
+        'id': 'test1',
+        'thread_id': 'thread1',
+        'subject': 'Test Email',
+        'content': 'Test content',
+        'date': datetime.now().isoformat(),
+        'labels': ['INBOX']
+    })
     
     assert result is not None
     assert result.summary == "Test email summary"
-    assert result.sentiment == "neutral"
+    assert result.category == ["test"]
+    assert result.priority_score == 3
 
 def test_email_reports(setup_test_dbs):
     """Test email reporting functionality."""
@@ -123,7 +131,7 @@ def test_email_reports(setup_test_dbs):
     conn = sqlite3.connect(TEST_EMAIL_DB)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO emails (id, thread_id, subject, sender, recipient, date, body, labels)
+        INSERT INTO emails (id, thread_id, subject, from_address, to_address, received_date, content, labels)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', ('test1', 'thread1', 'Test Email', 'test@example.com', 'me@example.com',
           datetime.now().isoformat(), 'Test content', '["INBOX"]'))
@@ -131,7 +139,7 @@ def test_email_reports(setup_test_dbs):
     conn.close()
     
     # Test reports
-    analytics = EmailAnalytics(TEST_EMAIL_DB, TEST_LABELS_DB, TEST_ANALYSIS_DB)
+    analytics = EmailAnalytics()
     total = analytics.get_total_emails()
     assert total == 1
     
@@ -145,7 +153,7 @@ def test_self_email_analysis(setup_test_dbs):
     conn = sqlite3.connect(TEST_EMAIL_DB)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO emails (id, thread_id, subject, sender, recipient, date, body, labels)
+        INSERT INTO emails (id, thread_id, subject, from_address, to_address, received_date, content, labels)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', ('test1', 'thread1', 'Note to Self', 'me@example.com', 'me@example.com',
           datetime.now().isoformat(), 'Self reminder', '["INBOX"]'))

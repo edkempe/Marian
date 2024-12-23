@@ -131,7 +131,7 @@ class EmailAnalysis(Base):
     raw_analysis: Mapped[Dict] = Column(JSON)  # Full API response for debugging
     
     # Relationships
-    email: Mapped[Email] = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
+    email = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
 
     @classmethod
     def from_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':

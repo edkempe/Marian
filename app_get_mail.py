@@ -56,8 +56,14 @@ def get_gmail_service():
     gmail_api = GmailAPI()
     return gmail_api.service
 
-def init_database():
-    conn = sqlite3.connect('db_email_store.db')
+def init_database(conn=None):
+    """Initialize the database with required tables.
+    
+    Args:
+        conn: Optional SQLite connection. If not provided, uses default connection.
+    """
+    if conn is None:
+        conn = sqlite3.connect('db_email_store.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,

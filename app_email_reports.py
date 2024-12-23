@@ -306,6 +306,66 @@ class EmailAnalytics:
         
         return list(confidence_dist.items())
 
+    def get_analysis_with_action_needed(self) -> List[Dict]:
+        """Get analyses that require action."""
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).filter(EmailAnalysis.action_needed == True).all()
+            return [self._format_analysis(analysis) for analysis in results]
+
+    def get_high_priority_analysis(self) -> List[Dict]:
+        """Get high priority analyses (priority_score >= 4)."""
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).filter(EmailAnalysis.priority_score >= 4).all()
+            return [self._format_analysis(analysis) for analysis in results]
+
+    def get_analysis_by_sentiment(self, sentiment: str) -> List[Dict]:
+        """Get analyses by sentiment (positive/negative/neutral)."""
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).filter(EmailAnalysis.sentiment == sentiment).all()
+            return [self._format_analysis(analysis) for analysis in results]
+
+    def get_analysis_by_project(self, project: str) -> List[Dict]:
+        """Get analyses by project."""
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).filter(EmailAnalysis.project == project).all()
+            return [self._format_analysis(analysis) for analysis in results]
+
+    def get_analysis_by_topic(self, topic: str) -> List[Dict]:
+        """Get analyses by topic."""
+        with get_analysis_session() as session:
+            results = session.query(EmailAnalysis).filter(EmailAnalysis.topic == topic).all()
+            return [self._format_analysis(analysis) for analysis in results]
+
+    def _format_analysis(self, analysis: EmailAnalysis) -> Dict:
+        """Format an EmailAnalysis object into a dictionary.
+        
+        Args:
+            analysis: EmailAnalysis object to format
+        
+        Returns:
+            Dictionary containing formatted analysis data
+        """
+        return {
+            'id': analysis.email_id,
+            'thread_id': analysis.thread_id,
+            'date': analysis.analysis_date.isoformat(),
+            'summary': analysis.summary,
+            'category': analysis.category,
+            'priority_score': analysis.priority_score,
+            'priority_reason': analysis.priority_reason,
+            'action_needed': analysis.action_needed,
+            'action_type': analysis.action_type,
+            'action_deadline': analysis.action_deadline.isoformat() if analysis.action_deadline else None,
+            'key_points': analysis.key_points,
+            'people_mentioned': analysis.people_mentioned,
+            'links_found': analysis.links_found,
+            'links_display': analysis.links_display,
+            'project': analysis.project,
+            'topic': analysis.topic,
+            'sentiment': analysis.sentiment,
+            'confidence_score': analysis.confidence_score,
+        }
+
     def print_analysis_report(self):
         """Print a comprehensive analysis report."""
         print("\n=== Email Analysis Report ===\n")

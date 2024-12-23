@@ -1,15 +1,15 @@
-"""Tests for Gmail email fetching functionality."""
+"""Tests for email fetching functionality."""
 import pytest
+import sqlite3
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
-from ..app_get_mail import (
-    get_gmail_service,
-    init_database,
-    get_label_id,
-    fetch_emails,
-    process_email
+from models.email import Email
+from app_get_mail import (
+    init_database, get_label_id, fetch_emails,
+    process_email, get_oldest_email_date,
+    get_newest_email_date, count_emails,
+    list_labels
 )
-from ..models.email import Email
 
 @pytest.fixture
 def mock_gmail_service():

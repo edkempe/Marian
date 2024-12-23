@@ -1,13 +1,14 @@
 """Tests for the email analyzer module."""
 import json
 import pytest
-from unittest.mock import Mock, MagicMock
-from datetime import datetime
+from unittest.mock import Mock, MagicMock, patch
+from datetime import datetime, timedelta
 from typing import Dict, Any
 
 from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from models.email import Email
 from app_email_analyzer import EmailAnalyzer
+from config.constants import API_CONFIG
 
 @pytest.fixture
 def valid_api_response():

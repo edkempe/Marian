@@ -124,90 +124,49 @@ JSON response:"""
         logger.info("analyzer_initialized", metrics_port=metrics_port)
 
     def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysis]:
-        """Analyze a single email and return structured analysis."""
+        """Analyze a single email using Anthropic API.
+        
+        Args:
+            email_data: Dictionary containing email data with fields:
+                - id: Email ID
+                - thread_id: Thread ID
+                - subject: Email subject
+                - content: Email content
+                - date: Email received date
+                - labels: List of labels
+                
+        Returns:
+            EmailAnalysis object if successful, None if failed
+        """
         try:
-            # Extract URLs from the email body first
-            body = email_data.get('body', '')
-            full_urls, display_urls = self._extract_urls(body)
-            
-            # Format the email content for analysis
-            email_content = f"""Subject: {email_data.get('subject', '')}
-From: {email_data.get('sender', '')}
-Type: {email_data.get('email_type', '')}
-Labels: {email_data.get('labels', '')}
-Thread ID: {email_data.get('thread_id', '')}
-Date: {email_data.get('date', '')}
-Has Attachments: {email_data.get('has_attachments', False)}
+            # Format email data for analysis
+            content = f"""Subject: {email_data.get('subject', '')}
+Content: {email_data.get('content', '')}"""
 
-Content:
-{body}"""
-            
-            # Get analysis from Claude
+            # Get analysis from API
             response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=4000,  # Increased from 1000 to handle longer responses
-                temperature=0.05,
+                model="claude-3-opus-20240229",
+                max_tokens=1000,
                 messages=[{
                     "role": "user",
-                    "content": self.ANALYSIS_PROMPT.format(
-                        text=email_content
-                    )
+                    "content": self.ANALYSIS_PROMPT.format(email_content=content)
                 }]
             )
 
-            # Extract response content
-            response_text = response.content[0].text
+            # Parse API response
+            analysis_data = json.loads(response.content[0].text)
             
-            # Clean and truncate URLs if needed
-            try:
-                response_json = json.loads(response_text)
-                # Add our pre-extracted URLs
-                response_json["links_found"] = full_urls
-                response_json["links_display"] = display_urls
-                response_text = json.dumps(response_json)
-            except json.JSONDecodeError:
-                logger.error("json_decode_error", error="Failed to parse initial JSON response")
-                return None
-
-            # Extract and validate the analysis
-            try:
-                analysis = json.loads(response_text)
-                
-                # Validate the analysis response
-                analysis_response = EmailAnalysisResponse(
-                    summary=analysis.get('summary', ''),
-                    category=analysis.get('category', []),
-                    priority_score=analysis.get('priority_score', 1),
-                    priority_reason=analysis.get('priority_reason', ''),
-                    action_needed=analysis.get('action_needed', False),
-                    action_type=analysis.get('action_type', []),
-                    action_deadline=analysis.get('action_deadline'),
-                    key_points=analysis.get('key_points', []),
-                    people_mentioned=analysis.get('people_mentioned', []),
-                    links_found=full_urls,
-                    links_display=display_urls,
-                    project=analysis.get('project', ''),
-                    topic=analysis.get('topic', ''),
-                    sentiment=analysis.get('sentiment', 'neutral'),
-                    confidence_score=analysis.get('confidence_score', 0.9)
-                )
-                
-                # Create and return EmailAnalysis instance
-                return EmailAnalysis.from_response(
-                    email_id=email_data['id'],
-                    thread_id=email_data['thread_id'],
-                    response=analysis_response
-                )
-                
-            except json.JSONDecodeError as e:
-                log_api_error('json_decode', str(e), response_text)
-                return None
-            except Exception as e:
-                log_api_error('validation', str(e), response_text)
-                return None
-
+            # Create and return EmailAnalysis object
+            return EmailAnalysis.from_response(
+                email_id=email_data['id'],
+                thread_id=email_data.get('thread_id', ''),
+                response=EmailAnalysisResponse(**analysis_data)
+            )
         except Exception as e:
-            log_api_error('api_call', str(e))
+            logger.error(f"Error analyzing email: {str(e)}", 
+                        error_type="analysis",
+                        error=str(e),
+                        response=response.content[0].text if response else None)
             return None
 
     def _extract_urls(self, text: str) -> Tuple[List[str], List[str]]:
