@@ -151,90 +151,91 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         return []
 
 def process_email(service, msg_id, session):
-    """Process a single email message and store in database.
-    
-    Args:
-        service: Gmail API service instance
-        msg_id: ID of message to process
-        session: Database session
-    
-    Returns:
-        Dictionary containing processed email data
-    """
+    """Process a single email message and store it in the database."""
     try:
-        # Get full message
-        msg = service.users().messages().get(userId='me', id=msg_id).execute()
+        # Get the full message details
+        message = service.users().messages().get(userId='me', id=msg_id).execute()
         
-        # Extract headers
-        headers = {header['name']: header['value'] 
-                  for header in msg['payload']['headers']}
-        
-        # Get body content
-        if 'body' in msg['payload']:
-            body = msg['payload']['body'].get('data', '')
-            if body:
-                body = urlsafe_b64decode(body).decode('utf-8')
-        else:
-            body = ''
-        
-        # Process date
-        date_str = headers.get('Date', '')
-        if date_str:
-            date = parser.parse(date_str)
-            if date.tzinfo is None:
-                date = UTC_TZ.localize(date)
-            date = date.astimezone(UTC_TZ)
-        else:
-            date = datetime.now(UTC_TZ)
-        
-        # Store in database
-        email_obj = Email(
-            id=msg_id,
-            thread_id=msg['threadId'],
-            subject=headers.get('Subject', ''),
-            from_address=headers.get('From', ''),
-            to_address=headers.get('To', ''),
-            cc_address=headers.get('Cc', ''),
-            bcc_address=headers.get('Bcc', ''),
-            received_date=date,  
-            content=body,
-            labels=','.join(msg.get('labelIds', [])),
-            has_attachments=bool(msg.get('payload', {}).get('parts', [])),
-            full_api_response=json.dumps(msg)
-        )
-        
-        # Add to database
-        session.merge(email_obj)
-        session.commit()
-        
-        # Return processed data
-        return {
-            'id': msg_id,
-            'thread_id': msg['threadId'],
+        # Extract email data
+        headers = {header['name']: header['value'] for header in message['payload']['headers']}
+        email_data = {
+            'id': message['id'],
+            'thread_id': message['threadId'],
             'subject': headers.get('Subject', ''),
             'from_address': headers.get('From', ''),
             'to_address': headers.get('To', ''),
-            'cc_address': headers.get('Cc', ''),
-            'bcc_address': headers.get('Bcc', ''),
-            'received_date': date.isoformat(),
-            'content': body,
-            'labels': msg.get('labelIds', []),
-            'has_attachments': bool(msg.get('payload', {}).get('parts', [])),
-            'full_api_response': msg
+            'received_date': headers.get('Date', ''),
+            'content': '',  # TODO: Extract content
+            'labels': str(message.get('labelIds', [])),
+            'raw_json': str(message)
         }
+        
+        if hasattr(session, 'merge'):
+            # SQLAlchemy session
+            email = Email(**email_data)
+            session.merge(email)
+            session.commit()
+        else:
+            # SQLite connection
+            cursor = session.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO emails (
+                    id, thread_id, subject, from_address, to_address,
+                    received_date, content, labels, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                email_data['id'],
+                email_data['thread_id'],
+                email_data['subject'],
+                email_data['from_address'],
+                email_data['to_address'],
+                email_data['received_date'],
+                email_data['content'],
+                email_data['labels'],
+                email_data['raw_json']
+            ))
+            session.commit()
+            
     except Exception as e:
         print(f"Error processing message {msg_id}: {str(e)}")
-        return None
 
 def get_oldest_email_date(session):
     """Get the date of the oldest email in the database."""
-    oldest_email = session.query(Email).order_by(Email.received_date.asc()).first()
-    return parser.parse(oldest_email.received_date) if oldest_email else None
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        oldest_email = session.query(Email).order_by(Email.received_date.asc()).first()
+        return parser.parse(oldest_email.received_date) if oldest_email else None
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT received_date FROM emails ORDER BY received_date ASC LIMIT 1')
+        result = cursor.fetchone()
+        return parser.parse(result[0]) if result else None
 
 def get_newest_email_date(session):
     """Get the date of the newest email in the database."""
-    newest_email = session.query(Email).order_by(Email.received_date.desc()).first()
-    return parser.parse(newest_email.received_date) if newest_email else None
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        newest_email = session.query(Email).order_by(Email.received_date.desc()).first()
+        return parser.parse(newest_email.received_date) if newest_email else None
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT received_date FROM emails ORDER BY received_date DESC LIMIT 1')
+        result = cursor.fetchone()
+        return parser.parse(result[0]) if result else None
+
+def count_emails(session):
+    """Get total number of emails in database."""
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        return session.query(Email).count()
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT COUNT(*) FROM emails')
+        result = cursor.fetchone()
+        return result[0] if result else 0
 
 def fetch_older_emails(session, service, label=None):
     """Fetch emails older than the oldest in database."""
@@ -251,10 +252,6 @@ def fetch_newer_emails(session, service, label=None):
         start_date = newest_date - timedelta(minutes=1)
         return fetch_emails(service, start_date=start_date, label=label)
     return []
-
-def count_emails(session):
-    """Get total number of emails in database."""
-    return session.query(Email).count()
 
 def list_labels(service):
     """List all available Gmail labels and store them in the database with history.

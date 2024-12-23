@@ -95,7 +95,7 @@ API_CONFIG: APIConfig = {
 5. Key points (list)
 6. People mentioned (list)
 7. Links found (list)
-8. Project/topic classification
+8. Project/topic classification (use empty strings if none found)
 9. Sentiment (positive/negative/neutral)
 10. Confidence score (0-1)
 
@@ -119,7 +119,9 @@ Respond with ONLY a JSON object containing these fields:
     "topic": "string",
     "sentiment": "string",
     "confidence_score": float
-}}''',
+}}
+
+Note: For project and topic fields, use empty strings ("") if no clear project or topic is found.''',
     'ERROR_MESSAGES': {
         "api_error": "Error calling Anthropic API: {error}",
         "validation_error": "Error validating analysis response: {error}",

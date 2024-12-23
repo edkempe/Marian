@@ -40,7 +40,15 @@ class EmailAnalytics:
     def get_total_emails(self):
         """Get total number of emails in the database"""
         with self._get_email_session() as session:
-            return session.query(Email).count()
+            if hasattr(session, 'query'):
+                # SQLAlchemy session
+                return session.query(Email).count()
+            else:
+                # SQLite connection
+                cursor = session.cursor()
+                cursor.execute('SELECT COUNT(*) FROM emails')
+                result = cursor.fetchone()
+                return result[0] if result else 0
 
     def _execute_sqlite_query(self, session, query: str, params: tuple = ()) -> List[str]:
         """Helper method to execute SQLite query and return email IDs."""

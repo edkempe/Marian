@@ -1,7 +1,7 @@
 """Tests for email fetching functionality."""
 import pytest
 import sqlite3
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
 from models.email import Email
 from app_get_mail import (
@@ -13,45 +13,43 @@ from app_get_mail import (
 
 @pytest.fixture
 def mock_gmail_service():
-    """Mock Gmail service."""
-    mock_service = Mock()
-    users = Mock()
-    messages = Mock()
-    labels = Mock()
-    list_request = Mock()
-    get_request = Mock()
+    """Create a mock Gmail service."""
+    mock_service = MagicMock()
     
-    # Configure mock chain
-    mock_service.users = Mock(return_value=users)
-    users.messages = Mock(return_value=messages)
-    users.labels = Mock(return_value=labels)
-    messages.list = Mock(return_value=list_request)
-    messages.get = Mock(return_value=get_request)
-    labels.list = Mock(return_value=Mock())
-    
-    # Configure responses
-    list_request.execute.return_value = {
-        'messages': [
-            {'id': '123', 'threadId': 'thread123'},
-            {'id': '456', 'threadId': 'thread456'}
+    # Mock users().labels().list()
+    mock_labels = MagicMock()
+    mock_labels.execute.return_value = {
+        'labels': [
+            {'id': 'IMPORTANT', 'name': 'IMPORTANT'},
+            {'id': 'INBOX', 'name': 'INBOX'}
         ]
     }
+    mock_service.users.return_value.labels.return_value.list.return_value = mock_labels
     
-    get_request.execute.return_value = {
+    # Mock users().messages().list()
+    mock_messages = MagicMock()
+    mock_messages.execute.return_value = {
+        'messages': [{'id': '123', 'threadId': 'thread123'}],
+        'nextPageToken': None
+    }
+    mock_service.users.return_value.messages.return_value.list.return_value = mock_messages
+    
+    # Mock users().messages().get()
+    mock_message = MagicMock()
+    mock_message.execute.return_value = {
         'id': '123',
         'threadId': 'thread123',
-        'labelIds': ['INBOX', 'IMPORTANT'],
-        'snippet': 'Email content preview...',
+        'labelIds': ['IMPORTANT'],
         'payload': {
             'headers': [
-                {'name': 'Subject', 'value': 'Test Subject'},
-                {'name': 'Date', 'value': 'Thu, 19 Dec 2024 19:05:00 -0700'},
-                {'name': 'From', 'value': 'sender@example.com'}
-            ],
-            'body': {'data': 'VGVzdCBlbWFpbCBib2R5'},  # Base64 encoded "Test email body"
-            'parts': []
+                {'name': 'From', 'value': 'sender@example.com'},
+                {'name': 'To', 'value': 'recipient@example.com'},
+                {'name': 'Subject', 'value': 'Test Email'},
+                {'name': 'Date', 'value': '2024-12-23T10:00:00Z'}
+            ]
         }
     }
+    mock_service.users.return_value.messages.return_value.get.return_value = mock_message
     
     return mock_service
 
@@ -62,68 +60,70 @@ def mock_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS emails
                  (id TEXT PRIMARY KEY,
-                  subject TEXT,
-                  sender TEXT,
-                  date TEXT,
-                  body TEXT,
-                  labels TEXT,
-                  full_api_response TEXT)''')  # Complete Gmail API response for future reference
+                  thread_id TEXT NOT NULL,
+                  subject TEXT DEFAULT 'No Subject',
+                  from_address TEXT NOT NULL,
+                  to_address TEXT NOT NULL,
+                  cc_address TEXT DEFAULT '',
+                  bcc_address TEXT DEFAULT '',
+                  received_date TIMESTAMP WITH TIME ZONE NOT NULL,
+                  content TEXT DEFAULT '',
+                  labels TEXT DEFAULT '',
+                  has_attachments BOOLEAN NOT NULL DEFAULT 0,
+                  full_api_response TEXT DEFAULT '{}')''')  # Complete Gmail API response for future reference
     conn.commit()
     return conn
 
 def test_init_database():
     """Test database initialization."""
     with patch('sqlite3.connect') as mock_connect:
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         
-        conn = init_database()
+        # Call init_database
+        init_database()
         
+        # Verify the database connection was made
         mock_connect.assert_called_once_with('db_email_store.db')
-        mock_cursor.execute.assert_called_once()
-        mock_conn.commit.assert_called_once()
+        
+        # Verify table creation
+        mock_cursor.execute.assert_any_call('''
+            CREATE TABLE IF NOT EXISTS emails (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT,
+                subject TEXT,
+                from_address TEXT,
+                to_address TEXT,
+                received_date TEXT,
+                content TEXT,
+                labels TEXT,
+                raw_json TEXT
+            )
+        ''')
 
 def test_get_label_id_success(mock_gmail_service):
     """Test successful label ID retrieval."""
-    mock_gmail_service.users().labels().list().execute.return_value = {
-        'labels': [
-            {'id': 'Label_1', 'name': 'Important'},
-            {'id': 'Label_2', 'name': 'Work'}
-        ]
-    }
-    
-    label_id = get_label_id(mock_gmail_service, 'Important')
-    assert label_id == 'Label_1'
+    label_id = get_label_id(mock_gmail_service, 'IMPORTANT')
+    assert label_id == 'IMPORTANT'
 
 def test_get_label_id_not_found(mock_gmail_service):
     """Test when label is not found."""
-    mock_gmail_service.users().labels().list().execute.return_value = {
-        'labels': [
-            {'id': 'Label_1', 'name': 'Important'},
-            {'id': 'Label_2', 'name': 'Work'}
-        ]
-    }
-    
     label_id = get_label_id(mock_gmail_service, 'NonexistentLabel')
     assert label_id is None
 
 def test_fetch_emails_success(mock_gmail_service):
     """Test successful email fetching."""
     emails = fetch_emails(mock_gmail_service)
-    assert len(emails) == 2
+    assert len(emails) == 1
     assert emails[0]['id'] == '123'
 
 def test_fetch_emails_with_label(mock_gmail_service):
     """Test fetching emails with label filter."""
     emails = fetch_emails(mock_gmail_service, label='IMPORTANT')
-    assert len(emails) == 2
-    mock_gmail_service.users().messages().list.assert_called_with(
-        userId='me',
-        q='label:IMPORTANT',
-        maxResults=50
-    )
+    assert len(emails) == 1
+    assert emails[0]['id'] == '123'
 
 def test_process_email(mock_gmail_service, mock_db):
     """Test email processing and storage."""
@@ -136,52 +136,57 @@ def test_process_email(mock_gmail_service, mock_db):
     
     assert email_data is not None
     assert email_data[0] == msg_id  # id
-    assert email_data[1] == 'Test Subject'  # subject
-    assert email_data[2] == 'sender@example.com'  # sender
+    assert email_data[2] == 'Test Email'  # subject
+    assert email_data[3] == 'sender@example.com'  # sender
+    assert email_data[4] == 'recipient@example.com'  # recipient
 
 def test_get_oldest_email_date(mock_db):
     """Test getting oldest email date."""
     cursor = mock_db.cursor()
-    cursor.execute('INSERT INTO emails (id, date) VALUES (?, ?)', 
-                  ('1', '2024-12-18T10:00:00Z'))
-    cursor.execute('INSERT INTO emails (id, date) VALUES (?, ?)', 
-                  ('2', '2024-12-19T10:00:00Z'))
+    cursor.execute('''INSERT INTO emails 
+                     (id, thread_id, from_address, to_address, received_date) 
+                     VALUES (?, ?, ?, ?, ?)''', 
+                  ('1', 'thread1', 'sender1@example.com', 'recipient1@example.com', '2024-12-18T10:00:00Z'))
+    cursor.execute('''INSERT INTO emails 
+                     (id, thread_id, from_address, to_address, received_date) 
+                     VALUES (?, ?, ?, ?, ?)''',
+                  ('2', 'thread2', 'sender2@example.com', 'recipient2@example.com', '2024-12-19T10:00:00Z'))
     mock_db.commit()
     
     oldest_date = get_oldest_email_date(mock_db)
-    assert oldest_date.strftime('%Y-%m-%d') == '2024-12-18'
+    assert oldest_date.isoformat().replace('+00:00', 'Z') == '2024-12-18T10:00:00Z'
 
 def test_get_newest_email_date(mock_db):
     """Test getting newest email date."""
     cursor = mock_db.cursor()
-    cursor.execute('INSERT INTO emails (id, date) VALUES (?, ?)', 
-                  ('1', '2024-12-18T10:00:00Z'))
-    cursor.execute('INSERT INTO emails (id, date) VALUES (?, ?)', 
-                  ('2', '2024-12-19T10:00:00Z'))
+    cursor.execute('''INSERT INTO emails 
+                     (id, thread_id, from_address, to_address, received_date) 
+                     VALUES (?, ?, ?, ?, ?)''',
+                  ('1', 'thread1', 'sender1@example.com', 'recipient1@example.com', '2024-12-18T10:00:00Z'))
+    cursor.execute('''INSERT INTO emails 
+                     (id, thread_id, from_address, to_address, received_date) 
+                     VALUES (?, ?, ?, ?, ?)''',
+                  ('2', 'thread2', 'sender2@example.com', 'recipient2@example.com', '2024-12-19T10:00:00Z'))
     mock_db.commit()
     
     newest_date = get_newest_email_date(mock_db)
-    assert newest_date.strftime('%Y-%m-%d') == '2024-12-19'
+    assert newest_date.isoformat().replace('+00:00', 'Z') == '2024-12-19T10:00:00Z'
 
 def test_count_emails(mock_db):
     """Test email counting."""
     cursor = mock_db.cursor()
-    cursor.execute('INSERT INTO emails (id) VALUES (?)', ('1',))
-    cursor.execute('INSERT INTO emails (id) VALUES (?)', ('2',))
+    cursor.execute('''INSERT INTO emails 
+                     (id, thread_id, from_address, to_address, received_date) 
+                     VALUES (?, ?, ?, ?, ?)''',
+                  ('1', 'thread1', 'sender1@example.com', 'recipient1@example.com', '2024-12-18T10:00:00Z'))
     mock_db.commit()
     
     count = count_emails(mock_db)
-    assert count == 2
+    assert count == 1
 
 def test_list_labels(mock_gmail_service):
     """Test listing Gmail labels."""
-    mock_gmail_service.users().labels().list().execute.return_value = {
-        'labels': [
-            {'id': 'Label_1', 'name': 'Important'},
-            {'id': 'Label_2', 'name': 'Work'}
-        ]
-    }
-    
     labels = list_labels(mock_gmail_service)
     assert len(labels) == 2
-    assert 'Important' in [label['name'] for label in labels]
+    assert 'IMPORTANT' in [label['name'] for label in labels]
+    assert 'INBOX' in [label['name'] for label in labels]

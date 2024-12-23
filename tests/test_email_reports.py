@@ -26,18 +26,24 @@ def mock_email_db():
                   content TEXT DEFAULT '',
                   labels TEXT DEFAULT '',
                   has_attachments BOOLEAN NOT NULL DEFAULT 0,
-                  full_api_response TEXT DEFAULT '{}')''')
+                  full_api_response TEXT DEFAULT '{}',
+                  reply_to_address TEXT DEFAULT '',
+                  sender_name TEXT DEFAULT '',
+                  to_name TEXT DEFAULT '',
+                  cc_name TEXT DEFAULT '',
+                  bcc_name TEXT DEFAULT '',
+                  reply_to_name TEXT DEFAULT '')''')
     
     # Insert test data
     test_data = [
-        ('1', 'thread1', 'Test Subject 1', 'sender1@test.com', 'to1@test.com', '', '',
-         '2024-12-19 10:00:00', 'Test body 1', 'INBOX,IMPORTANT', False, '{}'),
-        ('2', 'thread2', 'Test Subject 2', 'sender2@test.com', 'to2@test.com', '', '',
-         '2024-12-19 11:00:00', 'Test body 2', 'INBOX,UNREAD', False, '{}'),
-        ('3', 'thread3', 'Test Subject 3', 'sender1@test.com', 'to3@test.com', '', '',
-         '2024-12-19 12:00:00', 'Test body 3', 'INBOX,SENT', False, '{}')
+        ('1', 'thread1', 'Test Subject 1', 'sender1@test.com', 'to1@test.com', 'cc1@test.com', 'bcc1@test.com',
+         '2024-12-19 10:00:00', 'Test body 1', 'INBOX,IMPORTANT', False, '{}', 'reply1@test.com', 'Sender 1', 'To 1', 'CC 1', 'BCC 1', 'Reply To 1'),
+        ('2', 'thread2', 'Test Subject 2', 'sender2@test.com', 'to2@test.com', 'cc2@test.com', 'bcc2@test.com',
+         '2024-12-19 11:00:00', 'Test body 2', 'INBOX,UNREAD', False, '{}', 'reply2@test.com', 'Sender 2', 'To 2', 'CC 2', 'BCC 2', 'Reply To 2'),
+        ('3', 'thread3', 'Test Subject 3', 'sender1@test.com', 'to3@test.com', 'cc3@test.com', 'bcc3@test.com',
+         '2024-12-19 12:00:00', 'Test body 3', 'INBOX,SENT', False, '{}', 'reply3@test.com', 'Sender 3', 'To 3', 'CC 3', 'BCC 3', 'Reply To 3')
     ]
-    c.executemany('INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', test_data)
+    c.executemany('INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', test_data)
     conn.commit()
     return conn
 

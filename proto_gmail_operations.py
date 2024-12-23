@@ -92,7 +92,7 @@ def test_gmail_operations():
     gmail = GmailAPI()
     
     # Test sending an email
-    to = "eddiekempe@gmail.com"
+    to = "test.user@example.com"
     subject = "Test Email with Label"
     message_text = "This is a test email that will have the Jexi_test label."
     
