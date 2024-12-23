@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
 import anthropic
 from dotenv import load_dotenv
 from contextlib import contextmanager
@@ -9,6 +9,7 @@ import time
 import json
 import ssl
 import certifi
+import re
 from sqlalchemy import text
 import argparse
 
@@ -84,15 +85,14 @@ class EmailAnalyzer:
    - action_deadline: YYYY-MM-DD format if there's a deadline, null if none
 6. List of key points from the email
 7. List of people mentioned
-8. List of URLs found in the email (both full and display versions)
-9. Context:
+8. Context:
    - project: project name if mentioned
    - topic: general topic/subject matter
-10. Overall sentiment (positive/negative/neutral)
-11. Confidence score (0.0-1.0) for the analysis
+9. Overall sentiment (positive/negative/neutral)
+10. Confidence score (0.0-1.0) for the analysis
 
 Format the response as a JSON object with these exact field names:
-{{"summary": "brief summary", "category": ["category1"], "priority_score": 1-5, "priority_reason": "reason", "action_needed": true/false, "action_type": ["action1"], "action_deadline": "YYYY-MM-DD", "key_points": ["point1"], "people_mentioned": ["person1"], "links_found": ["url1"], "links_display": ["display_url1"], "project": "project name", "topic": "topic", "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
+{{"summary": "brief summary", "category": ["category1"], "priority_score": 1-5, "priority_reason": "reason", "action_needed": true/false, "action_type": ["action1"], "action_deadline": "YYYY-MM-DD", "key_points": ["point1"], "people_mentioned": ["person1"], "project": "project name", "topic": "topic", "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
 
 Email to analyze:
 {text}
@@ -125,6 +125,10 @@ JSON response:"""
     def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysis]:
         """Analyze a single email and return structured analysis."""
         try:
+            # Extract URLs from the email body first
+            body = email_data.get('body', '')
+            full_urls, display_urls = self._extract_urls(body)
+            
             # Format the email content for analysis
             email_content = f"""Subject: {email_data.get('subject', '')}
 From: {email_data.get('sender', '')}
@@ -135,12 +139,12 @@ Date: {email_data.get('date', '')}
 Has Attachments: {email_data.get('has_attachments', False)}
 
 Content:
-{email_data.get('body', '')}"""
+{body}"""
             
             # Get analysis from Claude
             response = self.client.messages.create(
                 model="claude-3-haiku-20240307",
-                max_tokens=1000,
+                max_tokens=4000,  # Increased from 1000 to handle longer responses
                 temperature=0.05,
                 messages=[{
                     "role": "user",
@@ -150,23 +154,42 @@ Content:
                 }]
             )
 
+            # Extract response content
+            response_text = response.content[0].text
+            
+            # Clean and truncate URLs if needed
+            try:
+                response_json = json.loads(response_text)
+                # Add our pre-extracted URLs
+                response_json["links_found"] = full_urls
+                response_json["links_display"] = display_urls
+                response_text = json.dumps(response_json)
+            except json.JSONDecodeError:
+                logger.error("json_decode_error", error="Failed to parse initial JSON response")
+                return None
+
             # Extract and validate the analysis
             try:
-                analysis_json = response.content[0].text
-                analysis = json.loads(analysis_json)
+                analysis = json.loads(response_text)
                 
-                # Ensure links_display is present
-                if 'links_found' in analysis and 'links_display' not in analysis:
-                    analysis['links_display'] = [
-                        url[:100] + '...' if len(url) > 100 else url
-                        for url in analysis['links_found']
-                    ]
-                
-                # Set default empty string for project if it's None
-                if analysis.get('project') is None:
-                    analysis['project'] = ""
-                
-                analysis_response = EmailAnalysisResponse.model_validate(analysis)
+                # Validate the analysis response
+                analysis_response = EmailAnalysisResponse(
+                    summary=analysis.get('summary', ''),
+                    category=analysis.get('category', []),
+                    priority_score=analysis.get('priority_score', 1),
+                    priority_reason=analysis.get('priority_reason', ''),
+                    action_needed=analysis.get('action_needed', False),
+                    action_type=analysis.get('action_type', []),
+                    action_deadline=analysis.get('action_deadline'),
+                    key_points=analysis.get('key_points', []),
+                    people_mentioned=analysis.get('people_mentioned', []),
+                    links_found=full_urls,
+                    links_display=display_urls,
+                    project=analysis.get('project', ''),
+                    topic=analysis.get('topic', ''),
+                    sentiment=analysis.get('sentiment', 'neutral'),
+                    confidence_score=analysis.get('confidence_score', 0.9)
+                )
                 
                 # Create and return EmailAnalysis instance
                 return EmailAnalysis.from_response(
@@ -176,15 +199,36 @@ Content:
                 )
                 
             except json.JSONDecodeError as e:
-                log_api_error('json_decode', str(e), analysis_json)
+                log_api_error('json_decode', str(e), response_text)
                 return None
             except Exception as e:
-                log_api_error('validation', str(e), analysis_json)
+                log_api_error('validation', str(e), response_text)
                 return None
 
         except Exception as e:
             log_api_error('api_call', str(e))
             return None
+
+    def _extract_urls(self, text: str) -> Tuple[List[str], List[str]]:
+        """Extract URLs from text and create display versions.
+        
+        Args:
+            text: The text to extract URLs from
+            
+        Returns:
+            Tuple of (full_urls, display_urls) where display_urls are truncated
+        """
+        # This pattern matches URLs starting with http:// or https://
+        url_pattern = r'https?://[^\s<>"]+|www\.[^\s<>"]+' 
+        
+        # Find all URLs in the text
+        full_urls = re.findall(url_pattern, text)
+        
+        # Create display versions (truncated to 50 chars)
+        display_urls = [url[:47] + "..." if len(url) > 50 else url 
+                       for url in full_urls]
+        
+        return full_urls, display_urls
 
     def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
         """Save the analysis to the database."""
