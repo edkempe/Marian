@@ -94,6 +94,7 @@ class EmailAnalysis(Base):
     - Raw API response for debugging
     """
     __tablename__ = 'email_analysis'
+    __table_args__ = {'extend_existing': True}
 
     email_id = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
     thread_id = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails

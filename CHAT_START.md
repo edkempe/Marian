@@ -115,7 +115,7 @@ source venv/bin/activate
 python analysis_viewer.py --timeframe today --detail normal
 
 # Run tests
-python -m pytest tests/
+python -m pytest
 
 # Format code
 black .

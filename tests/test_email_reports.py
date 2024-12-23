@@ -1,9 +1,10 @@
 """Tests for email reporting functionality."""
 import pytest
-import sqlite3
 from unittest.mock import Mock, patch
-from collections import defaultdict
-from app_email_reports import EmailAnalytics
+from datetime import datetime, timedelta
+from ..app_email_reports import EmailAnalytics
+from ..models.email_analysis import EmailAnalysis
+from ..models.email import Email
 
 @pytest.fixture
 def mock_email_db():

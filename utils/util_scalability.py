@@ -6,7 +6,7 @@ import time
 
 import redis
 from tenacity import retry, stop_after_attempt, wait_exponential
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, CollectorRegistry
 
 # Redis configuration
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
@@ -21,14 +21,18 @@ redis_client = redis.Redis(
     decode_responses=True
 )
 
+# Custom registry for metrics
+registry = CollectorRegistry()
+
 # Metrics
-CACHE_HITS = Counter('cache_hits_total', 'Number of cache hits')
-CACHE_MISSES = Counter('cache_misses_total', 'Number of cache misses')
-RATE_LIMIT_BLOCKS = Counter('rate_limit_blocks_total', 'Number of rate limit blocks')
+CACHE_HITS = Counter('cache_hits_total', 'Number of cache hits', registry=registry)
+CACHE_MISSES = Counter('cache_misses_total', 'Number of cache misses', registry=registry)
+RATE_LIMIT_BLOCKS = Counter('rate_limit_blocks_total', 'Number of rate limit blocks', registry=registry)
 OPERATION_DURATION = Histogram(
     'operation_duration_seconds',
     'Time spent in operations',
-    ['operation']
+    ['operation'],
+    registry=registry
 )
 
 def cache(ttl: int = 3600) -> Callable:

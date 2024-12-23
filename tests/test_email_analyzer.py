@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch, call
 import json
 from datetime import datetime, timedelta
 import anthropic
-from app_email_analyzer import EmailAnalyzer
-from model_email_analysis import EmailAnalysisResponse, EmailAnalysis
+from ..app_email_analyzer import EmailAnalyzer
+from ..models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 
 @pytest.fixture
 def valid_api_response():

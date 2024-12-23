@@ -57,7 +57,7 @@ git commit -m "docs: update API documentation
 # 1. Run final checks
 black .
 mypy .
-python -m pytest tests/
+python -m pytest
 
 # 2. Generate session close documentation
 python chat_session_manager.py close

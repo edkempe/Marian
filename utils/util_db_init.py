@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Initialize the email database."""
-from model_base import Base
-from model_email import Email
-from model_email_analysis import EmailAnalysis
+"""Database initialization utilities."""
+import os
+from models.base import Base
+from models.email import Email
+from models.email_analysis import EmailAnalysis
 from database.config import email_engine, analysis_engine
 
 def init_db():

@@ -8,6 +8,7 @@ class Email(Base):
     Maps to the 'emails' table in db_email_store.db.
     """
     __tablename__ = 'emails'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True)  # Gmail message ID
     subject = Column(Text)

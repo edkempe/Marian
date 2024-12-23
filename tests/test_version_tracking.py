@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-import os
-from test_anthropic_email import EmailProcessor, get_api_key
+"""Tests for version tracking functionality."""
+import pytest
+from unittest.mock import Mock, patch
+from ..utils.util_test_data import EmailProcessor, load_test_fixtures
 import logging
 
 logging.basicConfig(
@@ -8,10 +10,15 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def test_email_processing():
+@pytest.fixture
+def setup_test_data():
+    """Set up test data."""
+    return load_test_fixtures()
+
+def test_email_processing(setup_test_data):
     """Test email processing with hardcoded prompt"""
     # Initialize processor
-    api_key = get_api_key()
+    api_key = setup_test_data
     processor = EmailProcessor(api_key=api_key)
     
     # Get current prompt info
@@ -31,4 +38,4 @@ def test_email_processing():
         logging.info("No unprocessed emails found")
 
 if __name__ == "__main__":
-    test_email_processing()
+    pytest.main([__file__])

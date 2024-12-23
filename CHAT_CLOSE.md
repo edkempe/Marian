@@ -38,7 +38,7 @@ mypy .
 ```
 - [ ] Run all tests
 ```bash
-python -m pytest tests/
+python -m pytest
 ```
 - [ ] Review TODOs added during session
 
@@ -154,7 +154,7 @@ black .
 mypy .
 
 # Run tests
-python -m pytest tests/
+python -m pytest
 
 # Check git status
 git status

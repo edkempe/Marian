@@ -1,27 +1,47 @@
 """Utility functions for the Marian project."""
 
-from .check_urls import check_url_safety, validate_url
-from .db_init import initialize_database
+from .util_check_urls import check_long_urls
+from .util_db_init import init_db as initialize_database
 from .logging_config import setup_logging, log_error, log_api_response, log_db_operation
-from .scalability import measure_performance, optimize_batch_size
-from .schema_verify import verify_schema, validate_model
-from .security import check_security, validate_credentials
-from .test_data import generate_test_data, load_test_fixtures
+from .util_scalability import cache, rate_limit, circuit_breaker, retry_operation, measure_time
+from .util_schema_verify import verify_schema, verify_code_usage
+from .util_security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    verify_token,
+    encrypt_data,
+    decrypt_data,
+    sanitize_email_content,
+    validate_api_key,
+    check_permissions
+)
+from .util_test_data import generate_test_data, load_test_fixtures, EmailProcessor
 
 __all__ = [
-    'check_url_safety',
-    'validate_url',
+    'check_long_urls',
     'initialize_database',
     'setup_logging',
     'log_error',
     'log_api_response',
     'log_db_operation',
-    'measure_performance',
-    'optimize_batch_size',
+    'cache',
+    'rate_limit',
+    'circuit_breaker',
+    'retry_operation',
+    'measure_time',
     'verify_schema',
-    'validate_model',
-    'check_security',
-    'validate_credentials',
+    'verify_code_usage',
+    'verify_password',
+    'get_password_hash',
+    'create_access_token',
+    'verify_token',
+    'encrypt_data',
+    'decrypt_data',
+    'sanitize_email_content',
+    'validate_api_key',
+    'check_permissions',
     'generate_test_data',
     'load_test_fixtures',
+    'EmailProcessor'
 ]

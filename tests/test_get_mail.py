@@ -1,23 +1,15 @@
 """Tests for Gmail email fetching functionality."""
 import pytest
-from unittest.mock import Mock, patch, mock_open, call
-import sqlite3
-import json
+from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
-from pytz import timezone
-from app_get_mail import (
+from ..app_get_mail import (
     get_gmail_service,
     init_database,
     get_label_id,
     fetch_emails,
-    process_email,
-    get_oldest_email_date,
-    get_newest_email_date,
-    fetch_older_emails,
-    fetch_newer_emails,
-    count_emails,
-    list_labels
+    process_email
 )
+from ..models.email import Email
 
 @pytest.fixture
 def mock_gmail_service():

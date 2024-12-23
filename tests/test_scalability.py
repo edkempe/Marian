@@ -1,20 +1,19 @@
-"""Tests for scalability utilities."""
+"""Tests for system scalability."""
 import pytest
-import time
 from unittest.mock import Mock, patch
-from util_scalability import (
+import time
+from ..utils.util_scalability import (
+    measure_time,
     cache,
     rate_limit,
     circuit_breaker,
-    measure_time,
-    retry_operation,
-    redis_client
+    retry_operation
 )
 
 @pytest.fixture
 def mock_redis():
     """Mock Redis client."""
-    with patch('util_scalability.redis_client') as mock:
+    with patch('..utils.util_scalability.redis_client') as mock:
         # Set up mock for circuit breaker
         mock.get.side_effect = None  # Reset any previous side effects
         mock.pipeline.return_value = mock  # Make pipeline return self for chaining

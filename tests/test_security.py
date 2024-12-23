@@ -1,15 +1,17 @@
 """Tests for security utilities."""
-import os
-import time
 import pytest
-from datetime import timedelta
-from util_security import (
+from unittest.mock import Mock, patch
+import json
+import os
+from ..utils.util_security import (
+    encrypt_data,
+    decrypt_data,
+    validate_api_key,
+    check_permissions,
     verify_password,
     get_password_hash,
     create_access_token,
     verify_token,
-    encrypt_data,
-    decrypt_data,
     sanitize_email_content
 )
 

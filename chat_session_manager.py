@@ -215,7 +215,7 @@ def main():
         checks = [
             ('Git Status', ['git', 'status']),
             ('Recent Commits', ['git', 'log', '-n3', '--oneline']),
-            ('Test Status', [python_cmd, '-m', 'pytest', 'tests/', '--quiet']),
+            ('Test Status', [python_cmd, '-m', 'pytest', '--quiet']),
             ('Environment', None)  # Special handling for pip list
         ]
         

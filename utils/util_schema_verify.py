@@ -7,9 +7,12 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeMeta
 
 from database.config import email_engine, analysis_engine
-from model_email import Email
-from model_email_analysis import EmailAnalysis
-from util_logging import logger
+from models.email import Email
+from models.email_analysis import EmailAnalysis
+from .logging_config import setup_logging
+
+# Set up logger
+logger = setup_logging(__name__)
 
 def get_model_fields(model_class: Type[DeclarativeMeta]) -> Dict[str, Any]:
     """Get all fields from a SQLAlchemy model."""

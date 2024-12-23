@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
-from database.config import get_session
-from model_email import Email
+import os
+from database.config import get_email_session
+from models.email import Email
 
 test_emails = [
     {
@@ -82,14 +83,43 @@ Emma""",
     }
 ]
 
+class EmailProcessor:
+    """Test email processor for version tracking tests."""
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.analysis_prompt = {
+            'prompt_name': 'test_prompt',
+            'version': '1.0',
+            'description': 'Test prompt for email analysis'
+        }
+    
+    def get_unprocessed_emails(self):
+        """Get unprocessed test emails."""
+        with get_email_session() as session:
+            return [(1, email.subject) for email in session.query(Email).limit(5)]
+    
+    def process_email(self, email_tuple):
+        """Process a test email."""
+        email_id, subject = email_tuple
+        return True  # Always succeed in test mode
+
 def add_test_emails():
     """Add test emails to the database."""
-    with get_session() as session:
+    with get_email_session() as session:
         for email_data in test_emails:
             email = Email(**email_data)
             session.add(email)
         session.commit()
         print(f"Added {len(test_emails)} test emails to the database.")
+
+def generate_test_data():
+    """Generate test data for the application."""
+    add_test_emails()
+
+def load_test_fixtures():
+    """Load test fixtures and return a test API key."""
+    generate_test_data()
+    return "test_api_key_12345"
 
 if __name__ == "__main__":
     add_test_emails()
