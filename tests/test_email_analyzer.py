@@ -8,7 +8,7 @@ from typing import Dict, Any
 from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from models.email import Email
 from app_email_analyzer import EmailAnalyzer
-from config.constants import API_CONFIG
+from constants import API_CONFIG
 
 @pytest.fixture
 def valid_api_response():

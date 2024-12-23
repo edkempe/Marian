@@ -22,7 +22,7 @@ from models.email import Email
 from models.email_analysis import EmailAnalysis
 from database.config import get_email_session, get_analysis_session
 from utils.logging_config import setup_logging, log_error
-from config.constants import DATABASE_CONFIG, EMAIL_CONFIG
+from constants import DATABASE_CONFIG, EMAIL_CONFIG
 from app_email_analyzer import EmailAnalyzer
 import pandas as pd
 import plotly.express as px

@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from config.constants import LOGGING_CONFIG
+from constants import LOGGING_CONFIG
 
 def setup_logging(name: str) -> logging.Logger:
     """Set up logging with both file and console handlers.

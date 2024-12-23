@@ -3,23 +3,17 @@ import os
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Tuple
 import anthropic
-from dotenv import load_dotenv
-from contextlib import contextmanager
-import time
 import json
-import ssl
-import certifi
 import re
-from sqlalchemy import text
-import argparse
+from dotenv import load_dotenv
+import os
+from prometheus_client import Counter, start_http_server
+import structlog
 
 from models.email import Email
-from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
+from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from database.config import get_email_session, get_analysis_session
-from util_logging import (
-    logger, EMAIL_ANALYSIS_COUNTER, EMAIL_ANALYSIS_DURATION,
-    log_validation_error, start_metrics_server
-)
+from constants import API_CONFIG, EMAIL_CONFIG
 
 """Email analyzer using Claude-3-Haiku for processing and categorizing emails.
 
@@ -69,37 +63,6 @@ class EmailAnalyzer:
     3. "I've analyzed the email. Here's the JSON: {...}"
     """
 
-    # Standard prompt template for consistent API responses
-    ANALYSIS_PROMPT = """Analyze the email below and provide a structured response with the following information:
-1. A brief summary of the main points (1-2 sentences)
-2. List of categories that best describe the email content (e.g., meeting, request, update)
-3. Priority score (1-5) where:
-   1 = Low priority (FYI only)
-   2 = Normal priority (routine task/update)
-   3 = Medium priority (needs attention this week)
-   4 = High priority (needs attention today)
-   5 = Urgent (needs immediate attention)
-4. Priority reason explaining the score
-5. Action assessment:
-   - action_needed: true/false if any action is required
-   - action_type: list of required actions (e.g., ["reply", "review", "schedule"])
-   - action_deadline: YYYY-MM-DD format if there's a deadline, null if none
-6. List of key points from the email
-7. List of people mentioned
-8. Context:
-   - project: project name if mentioned
-   - topic: general topic/subject matter
-9. Overall sentiment (positive/negative/neutral)
-10. Confidence score (0.0-1.0) for the analysis
-
-Format the response as a JSON object with these exact field names:
-{{"summary": "brief summary", "category": ["category1"], "priority_score": 1-5, "priority_reason": "reason", "action_needed": true/false, "action_type": ["action1"], "action_deadline": "YYYY-MM-DD", "key_points": ["point1"], "people_mentioned": ["person1"], "project": "project name", "topic": "topic", "sentiment": "positive/negative/neutral", "confidence_score": 0.9}}
-
-Email to analyze:
-{text}
-
-JSON response:"""
-
     def __init__(self, metrics_port: int = 8000):
         """Initialize the analyzer with API client and start metrics server."""
         load_dotenv(verbose=True)
@@ -140,16 +103,19 @@ JSON response:"""
         """
         try:
             # Format email data for analysis
-            content = f"""Subject: {email_data.get('subject', '')}
+            content = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
+                email_content=f"""Subject: {email_data.get('subject', '')}
 Content: {email_data.get('content', '')}"""
+            )
 
             # Get analysis from API
             response = self.client.messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=1000,
+                model=API_CONFIG['ANTHROPIC_MODEL'],
+                max_tokens=API_CONFIG['MAX_TOKENS'],
+                temperature=API_CONFIG['TEMPERATURE'],
                 messages=[{
                     "role": "user",
-                    "content": self.ANALYSIS_PROMPT.format(email_content=content)
+                    "content": content
                 }]
             )
 
@@ -163,7 +129,7 @@ Content: {email_data.get('content', '')}"""
                 response=EmailAnalysisResponse(**analysis_data)
             )
         except Exception as e:
-            logger.error(f"Error analyzing email: {str(e)}", 
+            logger.error(API_CONFIG['ERROR_MESSAGES']["api_error"].format(error=str(e)), 
                         error_type="analysis",
                         error=str(e),
                         response=response.content[0].text if response else None)
@@ -222,20 +188,20 @@ Content: {email_data.get('content', '')}"""
         except Exception as e:
             logger.error("database_error", error=str(e), email_id=email_id)
 
-    def process_emails(self, batch_size: int = 50):
+    def process_emails(self, batch_size: int = EMAIL_CONFIG['BATCH_SIZE']):
         """Process a batch of unanalyzed emails."""
         try:
             # Test API connection first
             try:
                 test_response = self.client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    max_tokens=10,
-                    temperature=0.05,
+                    model=API_CONFIG['TEST_MODEL'],
+                    max_tokens=API_CONFIG['API_TEST_MAX_TOKENS'],
+                    temperature=API_CONFIG['TEMPERATURE'],
                     messages=[{"role": "user", "content": "test"}]
                 )
             except Exception as e:
-                logger.error("api_connection_error", error=str(e))
-                raise Exception(f"Failed to connect to Claude API. Please check your API key and network connection. Error: {str(e)}")
+                logger.error(f"API connection test failed: {str(e)}")
+                return
 
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
@@ -284,14 +250,14 @@ Content: {email_data.get('content', '')}"""
                         
                         for retry in range(max_retries):
                             try:
-                                prompt = self.ANALYSIS_PROMPT.format(
+                                prompt = EMAIL_ANALYSIS_PROMPT.format(
                                     text=email_request.truncated_body
                                 )
                                 
                                 response = self.client.messages.create(
-                                    model="claude-3-haiku-20240307",
-                                    max_tokens=1000,
-                                    temperature=0.05,
+                                    model=API_CONFIG['ANTHROPIC_MODEL'],
+                                    max_tokens=API_CONFIG['MAX_TOKENS'],
+                                    temperature=API_CONFIG['TEMPERATURE'],
                                     messages=[{
                                         "role": "user",
                                         "content": prompt
@@ -396,8 +362,8 @@ def log_validation_error(error_type: str, error_message: str, response_text: str
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Email analyzer with configurable batch size')
-    parser.add_argument('--batch_size', type=int, default=500,
-                      help='Number of emails to process in each batch (default: 500)')
+    parser.add_argument('--batch_size', type=int, default=EMAIL_CONFIG['BATCH_SIZE'],
+                      help='Number of emails to process in each batch (default: {})'.format(EMAIL_CONFIG['BATCH_SIZE']))
     args = parser.parse_args()
 
     try:
