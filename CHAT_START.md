@@ -37,135 +37,53 @@ Please review the project documentation and perform the standard checks as outli
    - Dependencies between tasks
 
 ## Pre-Development Checklist
+1. Review Recent Changes
+   - Check NEXT_SESSION.md for latest updates
+   - Review modified files list
+   - Note any pending tasks or blockers
 
-### 1. Review Previous Sessions
-- Check recent session summaries in `docs/sessions/`
-- Review NEXT_SESSION.md from last session
-- Pay special attention to:
-  - Issues and blockers from last session
-  - Incomplete tasks
-  - Environment changes
-  - Testing status
-  - Recent schema modifications
-  - API integration updates
+2. Environment Setup
+   - Activate virtual environment
+   - Install/update dependencies
+   - Check database migrations
+   - Verify test database
 
-### 2. Environment Verification
-```bash
-# Verify virtual environment is activated
-which python  # Should point to venv/bin/python
+3. Code Review
+   - Check git status
+   - Review uncommitted changes
+   - Note modified files
+   - Check branch status
 
-# Check Python version and packages
-python --version
-pip list
+4. Testing Status
+   - Run test suite
+   - Note any failing tests
+   - Check test coverage
+   - Review test requirements
 
-# Verify environment variables
-python -c "import os; print('ANTHROPIC_API_KEY:', bool(os.getenv('ANTHROPIC_API_KEY')))"
-```
-
-### 3. Repository Status
-```bash
-# Check git status
-git status
-
-# Pull latest changes
-git pull origin main
-
-# View recent commits
-git log -n 5 --oneline
-```
-
-### 4. Code Quality Tools
-```bash
-# Run pre-commit hooks
-pre-commit run --all-files
-
-# Format code
-black .
-
-# Run type checks
-mypy .
-```
-
-### 5. Project Structure Review
-```bash
-# View directory structure
-tree -L 2 -I 'venv|__pycache__|*.pyc'
-
-# Check core files
-ls -la *.py
-ls -la models/
-ls -la database/
-ls -la tests/
-```
-
-### 6. Database Status
-```bash
-# Check database files
-ls -la *.db
-
-# Verify database connections
-python -c "from database.config import get_email_session, get_analysis_session; print('Database connections OK')"
-```
-
-### 7. Test Suite
-```bash
-# Run all tests
-python -m pytest
-
-# Run with coverage
-python -m pytest --cov=.
-```
-
-### 8. Code Review Checks
-- [ ] Review any open pull requests
-- [ ] Check for pending code reviews
-- [ ] Look for TODO comments in recent changes
-- [ ] Verify test coverage for recent changes
-
-### 9. Documentation Sync
-- [ ] Verify README.md is up to date
-- [ ] Check NEXT_SESSION.md reflects latest changes
-- [ ] Review BACKLOG.md for task priorities
-- [ ] Update documentation if needed
-
-### 10. Development Tools
-- [ ] IDE/Editor configuration
-- [ ] Linter settings (see .pre-commit-config.yaml)
-- [ ] Debugger setup
-- [ ] API keys and credentials (check .env)
-
-## After Checks
-1. Confirm understanding of current state
-2. Outline implementation plan for chosen task
-3. Create new branch if needed
-4. Start development with clear objectives
-
-## End of Session
-1. Update NEXT_SESSION.md
-2. Run pre-commit hooks on changes
-3. Commit with clear messages
-4. Push to remote repository
-5. Document any new tasks in BACKLOG.md
+5. Documentation
+   - Check for outdated docs
+   - Review API changes
+   - Note needed updates
+   - Check migration guides
 
 ## Common Commands
 ```bash
-# Activate environment
+# Environment
 source venv/bin/activate
+pip install -r requirements.txt
 
-# Run analysis viewer
-python analysis_viewer.py --timeframe today --detail normal
-
-# Run tests
+# Testing
 python -m pytest
+python -m pytest -v tests/specific_test.py
 
-# Format and check code
-pre-commit run --all-files
+# Database
+alembic upgrade head
+alembic history
 
-# Check types
-mypy .
-
-# View setup instructions
-cat SETUP.md
+# Git
+git status
+git branch
+git log --oneline -n 5
 ```
 
 ## Troubleshooting
@@ -173,10 +91,3 @@ If you encounter any issues, refer to:
 1. `docs/troubleshooting.md` - Comprehensive troubleshooting guide
 2. `SETUP.md` - Common setup and environment issues
 3. `.env.example` - Required environment variables
-
-For quick environment reset:
-```bash
-deactivate  # Exit current venv
-source venv/bin/activate  # Reactivate venv
-pip install -r requirements.txt  # Reinstall dependencies
-```

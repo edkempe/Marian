@@ -3,7 +3,7 @@
 ## High Priority
 
 ### Schema Validation and Testing
-**Status**: Pending
+**Status**: In Progress
 **Priority**: Highest
 **Description**: Validate and test recent schema changes across the application.
 
@@ -13,12 +13,16 @@
    - Test timezone handling
    - Validate label history schema
    - Create database migration plan
+   - Test CC/BCC field storage and retrieval
+   - Validate migrations with existing data
 
 2. Component Integration
    - Update affected components
    - Test email retrieval with new schema
    - Verify date/time handling
    - Update documentation
+   - Test CC/BCC handling in email analysis
+   - Verify CC/BCC display in reports
 
 ### Email Processing Prototype
 **Status**: In Progress
@@ -59,6 +63,34 @@
 4. Add basic processing
 5. Add error handling
 6. Test with real data
+
+### Email Processing Improvements
+**Status**: In Progress
+**Priority**: High
+**Description**: Enhance email processing with new fields and validation
+
+#### Technical Details
+1. CC/BCC Implementation
+   - Test with real Gmail messages
+   - Verify storage and retrieval
+   - Handle empty fields correctly
+   - Update processing logic
+   - Add field validation
+   - Test edge cases
+
+2. Email Analysis Enhancement
+   - Add CC/BCC to priority scoring
+   - Include CC/BCC in analysis output
+   - Update report formatting
+   - Add CC/BCC filtering options
+   - Test with various email formats
+
+3. Documentation Updates
+   - Document CC/BCC field usage
+   - Update schema documentation
+   - Add migration guidelines
+   - Update API documentation
+   - Document testing procedures
 
 ### Session Management Testing
 - [ ] Test and refine chat session workflow
