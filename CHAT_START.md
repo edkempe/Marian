@@ -169,16 +169,14 @@ cat SETUP.md
 ```
 
 ## Troubleshooting
-If you encounter any issues:
-1. Check SETUP.md for common issues and solutions
-2. Verify your environment matches .env.example requirements
-3. Ensure all dependencies are installed: `pip install -r requirements.txt`
-4. Try reinitializing the development environment:
-   ```bash
-   deactivate  # Exit current venv
-   rm -rf venv  # Remove old venv
-   python -m venv venv  # Create new venv
-   source venv/bin/activate  # Activate
-   pip install -e .  # Install package
-   pip install -r requirements.txt  # Install dependencies
-   ```
+If you encounter any issues, refer to:
+1. `docs/troubleshooting.md` - Comprehensive troubleshooting guide
+2. `SETUP.md` - Common setup and environment issues
+3. `.env.example` - Required environment variables
+
+For quick environment reset:
+```bash
+deactivate  # Exit current venv
+source venv/bin/activate  # Reactivate venv
+pip install -r requirements.txt  # Reinstall dependencies
+```
