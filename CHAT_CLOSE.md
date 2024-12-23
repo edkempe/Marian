@@ -12,33 +12,40 @@
    - Add corresponding tasks to BACKLOG.md with appropriate priority
    - Document any temporary workarounds or important context
 
-## Session Summary Template
-```markdown
-## Session Summary [DATE]
+## Session Summary
+1. Create a session summary in `docs/sessions/` using the format:
+   ```
+   session_YYYYMMDD_HHMM.md
+   ```
+   Example: `session_20241223_0916.md`
 
-### Completed Tasks
-- [List of completed tasks with PR/commit references]
+2. Use this template:
+   ```markdown
+   ## Session Summary YYYY-MM-DD HH:MM TZ
 
-### Code Changes
-- [List of modified files with brief descriptions]
-- [Any new files or deleted files]
-- [Database schema changes]
+   ### Completed Tasks
+   - [List of completed tasks with PR/commit references]
 
-### Environment Changes
-- [New dependencies added]
-- [Configuration changes]
-- [Database migrations]
+   ### Code Changes
+   - [List of modified files with brief descriptions]
+   - [Any new files or deleted files]
+   - [Database schema changes]
 
-### Issues and Blockers
-- [Any unresolved issues]
-- [Technical debt introduced]
-- [Dependencies on other tasks]
+   ### Environment Changes
+   - [New dependencies added]
+   - [Configuration changes]
+   - [Database migrations]
 
-### Testing Status
-- [Tests added/modified]
-- [Test coverage changes]
-- [Manual testing performed]
-```
+   ### Issues and Blockers
+   - [Any unresolved issues]
+   - [Technical debt introduced]
+   - [Dependencies on other tasks]
+
+   ### Testing Status
+   - [Tests added/modified]
+   - [Test coverage changes]
+   - [Manual testing performed]
+   ```
 
 ## Pre-Close Checklist
 

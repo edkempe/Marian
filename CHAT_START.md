@@ -32,7 +32,15 @@ Please review the project documentation and perform the standard checks as outli
 
 ## Pre-Development Checklist
 
-### 1. Environment Setup
+### 1. Review Previous Sessions
+- Check recent session summaries in `docs/sessions/`
+- Pay special attention to:
+  - Issues and blockers from last session
+  - Incomplete tasks
+  - Environment changes
+  - Testing status
+
+### 2. Environment Setup
 ```bash
 # Activate virtual environment
 source venv/bin/activate
@@ -44,7 +52,7 @@ python --version
 pip list
 ```
 
-### 2. Repository Status
+### 3. Repository Status
 ```bash
 # Check git status
 git status
@@ -56,7 +64,7 @@ git pull origin main
 git log -n 5 --oneline
 ```
 
-### 3. Project Structure Review
+### 4. Project Structure Review
 ```bash
 # View directory structure
 tree -L 2 -I 'venv|__pycache__|*.pyc'
@@ -67,7 +75,7 @@ ls -la models/
 ls -la database/
 ```
 
-### 4. Database Status
+### 5. Database Status
 ```bash
 # Check database files
 ls -la *.db
@@ -76,19 +84,19 @@ ls -la *.db
 python -c "from database.config import get_email_session, get_analysis_session; print('Database connections OK')"
 ```
 
-### 5. Code Review Checks
+### 6. Code Review Checks
 - [ ] Review any open pull requests
 - [ ] Check for pending code reviews
 - [ ] Look for TODO comments in recent changes
 - [ ] Verify test coverage for recent changes
 
-### 6. Documentation Sync
+### 7. Documentation Sync
 - [ ] Verify README.md is up to date
 - [ ] Check NEXT_SESSION.md reflects latest changes
 - [ ] Review BACKLOG.md for task priorities
 - [ ] Update documentation if needed
 
-### 7. Development Tools
+### 8. Development Tools
 - [ ] IDE/Editor configuration
 - [ ] Linter settings
 - [ ] Debugger setup

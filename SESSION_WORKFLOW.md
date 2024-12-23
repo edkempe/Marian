@@ -13,6 +13,7 @@ python chat_session_manager.py start
 
 # 3. Review documentation
 cat NEXT_SESSION.md
+cat docs/sessions/session_YYYYMMDD_HHMM.md
 ```
 
 Example chat start message:
@@ -91,6 +92,7 @@ Session completed! Here's a summary:
    - NEXT_SESSION.md updated with latest changes
    - Added database schema documentation
    - Updated setup instructions in README.md
+   - Created session summary in docs/sessions/session_YYYYMMDD_HHMM.md
 
 All changes have been committed and pushed. The project is ready for the next session.
 ```
@@ -111,6 +113,9 @@ All changes have been committed and pushed. The project is ready for the next se
 - Updated automatically by chat_session_manager.py
 - Contains current project state
 - Lists next priority tasks
+
+### BACKLOG.md
+- Project backlog and priorities
 
 ### chat_session_manager.py
 - Automates documentation updates
