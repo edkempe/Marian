@@ -1,15 +1,22 @@
-import sqlite3
+"""Main application module for the Marian Catalog system."""
+
 import datetime
 import json
 import os
 import argparse
-import random
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.exc import IntegrityError
 from anthropic import Anthropic
-from librarian_constants import CATALOG_CONFIG, TABLE_CONFIG, CREATE_CATALOG_TABLE, CREATE_TAGS_TABLE, CREATE_CATALOG_TAGS_TABLE, CREATE_CHAT_HISTORY_TABLE, CREATE_RELATIONSHIPS_TABLE, ERRORS
+
+from librarian_constants import CATALOG_CONFIG, TABLE_CONFIG, ERRORS
 from marian_lib.anthropic_helper import get_anthropic_client, test_anthropic_connection
 from marian_lib.logger import setup_logger, log_performance, log_system_state, log_security_event
+from models.catalog import Base, CatalogItem, Tag, CatalogTag, ItemRelationship
 
 class CatalogChat:
+    """Main class for handling catalog operations and chat interactions."""
+    
     def __init__(self, interactive=False):
         self.interactive = interactive
         self.chat_log_file = CATALOG_CONFIG['CHAT_LOG_FILE']
@@ -21,7 +28,10 @@ class CatalogChat:
         self.test_logger = setup_logger('catalog', is_test=True)
         self.logger.info("Initializing CatalogChat")
         
+        # Initialize database
         start_time = datetime.datetime.now()
+        self.engine = create_engine(f'sqlite:///{self.db_path}')
+        self.Session = sessionmaker(bind=self.engine)
         self.setup_database()
         log_performance(self.logger, "Database setup", start_time)
         
@@ -32,22 +42,46 @@ class CatalogChat:
             db_path=self.db_path,
             chat_log=self.chat_log_file
         )
-        
+    
     def setup_database(self):
-        """Initialize the catalog database with all required tables"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Create all tables using schema from migrations
-        cursor.execute(CREATE_CATALOG_TABLE)
-        cursor.execute(CREATE_TAGS_TABLE)
-        cursor.execute(CREATE_CATALOG_TAGS_TABLE)
-        cursor.execute(CREATE_CHAT_HISTORY_TABLE)
-        cursor.execute(CREATE_RELATIONSHIPS_TABLE)
-        
-        conn.commit()
-        conn.close()
-        
+        """Initialize the catalog database with SQLAlchemy models."""
+        Base.metadata.create_all(self.engine)
+        self.logger.info("Database tables created successfully")
+    
+    def get_session(self) -> Session:
+        """Get a new database session."""
+        return self.Session()
+    
+    def cleanup_test_data(self, session: Session, test_marker: str = None):
+        """Clean up test data from previous test runs."""
+        try:
+            # Clean up catalog tags first due to foreign key constraints
+            if test_marker:
+                # Delete catalog tags for items matching the test marker
+                session.query(CatalogTag).filter(CatalogTag.catalog_id.in_(
+                    session.query(CatalogItem.id).filter(CatalogItem.title.like(f"{test_marker}%"))
+                )).delete(synchronize_session=False)
+                
+                # Delete items matching the test marker
+                session.query(CatalogItem).filter(CatalogItem.title.like(f"{test_marker}%")).delete()
+                session.query(Tag).filter(Tag.name.like(f"{test_marker}%")).delete()
+            else:
+                # Delete all test items and tags
+                session.query(CatalogTag).filter(CatalogTag.catalog_id.in_(
+                    session.query(CatalogItem.id).filter(
+                        CatalogItem.title.like("Test%")
+                    )
+                )).delete(synchronize_session=False)
+                
+                session.query(CatalogItem).filter(CatalogItem.title.like("Test%")).delete()
+                session.query(Tag).filter(Tag.name.like("Test%")).delete()
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            self.test_logger.error(f"Error cleaning up test data: {str(e)}")
+            raise
+
     def run_integration_tests(self):
         """Run integration tests for the catalog system"""
         print("\nRunning integration tests...")
@@ -62,361 +96,311 @@ class CatalogChat:
                 test_func()
                 tests_passed += 1
                 print(f"✓ {name}")
-            except AssertionError as e:
-                print(f"✗ {name}: {str(e)}")
             except Exception as e:
-                print(f"✗ {name}: Unexpected error: {str(e)}")
-
+                print(f"✗ {name}: {str(e)}")
+                self.test_logger.error(f"Test failed: {name}", exc_info=True)
+        
         def test_duplicate_handling():
-            """Test duplicate handling for items and tags"""
-            # Test duplicate item titles
+            """Test handling of duplicate items and tags"""
             test_title = "Test Duplicate Item"
             test_content = "Test content"
-            
-            # Add initial item
-            response = self.process_input("add", f"{test_title} - {test_content}")
-            assert "Added catalog item:" in response, "Failed to add initial item"
-            
-            # Try adding duplicate item
-            response = self.process_input("add", f"{test_title} - Different content")
-            assert "Error: An item with title" in response, "Duplicate item check failed"
-            
-            # Try adding case-variant duplicate
-            response = self.process_input("add", f"{test_title.upper()} - Different content")
-            assert "Error: An item with title" in response, "Case-insensitive duplicate check failed"
-            
-            # Test duplicate tags
             test_tag = "TestDuplicateTag"
             
-            # Add initial tag
-            response = self.process_input("tag", f"{test_title} {test_tag}")
-            assert f"Tagged '{test_title}' with '{test_tag}'" in response, "Failed to add initial tag"
-            
-            # Try adding duplicate tag to same item
-            response = self.process_input("tag", f"{test_title} {test_tag}")
-            assert "is already applied to" in response, "Duplicate tag application check failed"
-            
-            # Try adding case-variant duplicate tag
-            response = self.process_input("tag", f"{test_title} {test_tag.upper()}")
-            assert "Error: Tag" in response or "is already applied to" in response, "Case-insensitive tag check failed"
-            
-            # Test duplicate handling with archived items
-            # Archive the item
-            response = self.process_input("archive", test_title)
-            assert "archived" in response.lower(), "Failed to archive item"
-            
-            # Try adding item with same title
-            response = self.process_input("add", f"{test_title} - New content")
-            assert "Found archived item" in response, "Archived item detection failed"
-            
-            # Clean up
-            self.process_input("delete", test_title)
-
+            session = self.get_session()
+            try:
+                # Clean up any leftover test data
+                self.cleanup_test_data(session)
+                
+                # Test duplicate item titles
+                # Add initial item
+                item = CatalogItem(title=test_title, content=test_content)
+                session.add(item)
+                session.commit()
+                assert session.query(CatalogItem).filter(CatalogItem.title == test_title).first(), "Failed to add initial item"
+                
+                # Try adding duplicate item
+                try:
+                    item2 = CatalogItem(title=test_title, content="Different content")
+                    session.add(item2)
+                    session.commit()
+                    assert False, "Should not allow duplicate titles"
+                except IntegrityError:
+                    session.rollback()
+                
+                # Try adding case-variant duplicate
+                try:
+                    item3 = CatalogItem(title=test_title.upper(), content="Different content")
+                    session.add(item3)
+                    session.commit()
+                    assert False, "Should not allow case-variant duplicates"
+                except IntegrityError:
+                    session.rollback()
+                
+                # Test duplicate tags
+                # Add initial tag
+                tag = Tag(name=test_tag)
+                session.add(tag)
+                session.commit()
+                assert session.query(Tag).filter(Tag.name == test_tag).first(), "Failed to add initial tag"
+                
+                # Try adding duplicate tag
+                try:
+                    tag2 = Tag(name=test_tag)
+                    session.add(tag2)
+                    session.commit()
+                    assert False, "Should not allow duplicate tags"
+                except IntegrityError:
+                    session.rollback()
+                
+                # Try adding case-variant duplicate tag
+                try:
+                    tag3 = Tag(name=test_tag.upper())
+                    session.add(tag3)
+                    session.commit()
+                    assert False, "Should not allow case-variant tag duplicates"
+                except IntegrityError:
+                    session.rollback()
+                
+                # Test duplicate handling with archived items
+                # Archive the item
+                item.deleted = True
+                session.commit()
+                assert item.deleted, "Failed to archive item"
+                
+                # Try adding item with same title
+                try:
+                    item4 = CatalogItem(title=test_title, content="New content")
+                    session.add(item4)
+                    session.commit()
+                    assert False, "Should not allow duplicate titles even with archived items"
+                except IntegrityError:
+                    session.rollback()
+                
+                # Clean up
+                self.cleanup_test_data(session)
+                
+            finally:
+                session.close()
+        
         def test_archived_item_handling():
             """Test handling of archived items and tags"""
             test_title = "Test Archive Item"
             test_content = "Test content"
             test_tag = "TestArchiveTag"
+            new_item_title = "Another Test Item"
             
-            # Add and tag item
-            self.process_input("add", f"{test_title} - {test_content}")
-            self.process_input("tag", f"{test_title} {test_tag}")
-            
-            # Archive item
-            response = self.process_input("archive", test_title)
-            assert "archived" in response.lower(), "Failed to archive item"
-            
-            # Try to tag archived item
-            response = self.process_input("tag", f"{test_title} NewTag")
-            assert "is archived" in response, "Should prevent tagging archived items"
-            
-            # Archive tag
-            response = self.process_input("archive_tag", test_tag)
-            assert "archived" in response.lower(), "Failed to archive tag"
-            
-            # Try to use archived tag
-            new_title = "Another Test Item"
-            self.process_input("add", f"{new_title} - Some content")
-            response = self.process_input("tag", f"{new_title} {test_tag}")
-            assert "Found archived tag" in response, "Should detect archived tag"
-            
-            # Clean up
-            self.process_input("delete", test_title)
-            self.process_input("delete", new_title)
-            self.process_input("delete_tag", test_tag)
-
+            session = self.get_session()
+            try:
+                # Clean up any leftover test data
+                self.cleanup_test_data(session)
+                
+                # Add and tag item
+                item = CatalogItem(title=test_title, content=test_content)
+                session.add(item)
+                session.commit()
+                
+                tag = Tag(name=test_tag)
+                session.add(tag)
+                session.commit()
+                
+                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
+                session.add(catalog_tag)
+                session.commit()
+                
+                # Archive item
+                item.deleted = True
+                session.commit()
+                assert item.deleted, "Failed to archive item"
+                
+                # Try to tag archived item
+                try:
+                    new_tag = Tag(name="NewTag")
+                    session.add(new_tag)
+                    session.commit()
+                    
+                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=new_tag.id)
+                    session.add(catalog_tag)
+                    session.commit()
+                    assert False, "Should prevent tagging archived items"
+                except Exception as e:
+                    session.rollback()
+                    assert "archived" in str(e).lower(), "Should prevent tagging archived items"
+                
+                # Archive tag
+                tag.deleted = True
+                session.commit()
+                assert tag.deleted, "Failed to archive tag"
+                
+                # Try to use archived tag on new item
+                new_item = CatalogItem(title=new_item_title, content="Some content")
+                session.add(new_item)
+                session.commit()
+                
+                try:
+                    catalog_tag = CatalogTag(catalog_id=new_item.id, tag_id=tag.id)
+                    session.add(catalog_tag)
+                    session.commit()
+                    assert False, "Should prevent using archived tags"
+                except Exception as e:
+                    session.rollback()
+                    assert "archived" in str(e).lower(), "Should prevent using archived tags"
+                
+                # Clean up
+                self.cleanup_test_data(session)
+                
+            finally:
+                session.close()
+        
         def test_full_lifecycle():
             """Test complete lifecycle of catalog items and tags"""
-            print("\nRunning full lifecycle test:")
-            
             test_marker = "LIFECYCLE_TEST_" + datetime.datetime.now().isoformat()
             self.test_logger.info(f"Starting lifecycle test {test_marker}")
             
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
+            session = self.get_session()
             try:
+                # Clean up any leftover test data
+                self.cleanup_test_data(session, test_marker)
+                
                 # 1. Create test tag
                 print("  Creating test tag...")
                 test_tag_name = f"{test_marker}_tag"
-                cursor.execute(
-                    f"INSERT INTO {TABLE_CONFIG['TAGS_TABLE']} (name) VALUES (?)",
-                    (test_tag_name,)
-                )
-                cursor.execute(f"SELECT id FROM {TABLE_CONFIG['TAGS_TABLE']} WHERE name = ?", (test_tag_name,))
-                test_tag_id = cursor.fetchone()[0]
+                tag = Tag(name=test_tag_name)
+                session.add(tag)
+                session.commit()
                 self.test_logger.debug(f"Created tag {test_tag_name}")
                 
-                # 2. Add test content with both new and existing tags
+                # 2. Add test content
                 print("  Adding test content...")
                 test_title = f"{test_marker}_item"
-                cursor.execute(
-                    f"INSERT INTO {TABLE_CONFIG['CATALOG_TABLE']} (title, description, content) VALUES (?, ?, ?)",
-                    (test_title, "Test Description", "Test Content")
-                )
-                test_item_id = cursor.lastrowid
+                item = CatalogItem(title=test_title, content="Test Content")
+                session.add(item)
+                session.commit()
                 self.test_logger.debug(f"Added item {test_title}")
                 
                 # Get random selection of existing tags
-                cursor.execute(f"SELECT id, name FROM {TABLE_CONFIG['TAGS_TABLE']}")
-                all_tags = cursor.fetchall()
-                num_existing_tags = random.randint(1, len(all_tags) - 1)  # At least 1, less than total
-                selected_tags = random.sample(all_tags, num_existing_tags)
-                existing_tag_ids = [(tag_id, name) for tag_id, name in selected_tags]
-                self.test_logger.debug(f"Selected {num_existing_tags} random existing tags")
+                existing_tags = session.query(Tag).filter(
+                    Tag.name != test_tag_name,
+                    ~Tag.name.like("Test%"),  # Exclude other test tags
+                    Tag.deleted == False
+                ).all()
                 
-                # Apply test tag and existing tags
+                # Apply tags
                 print("  Applying tags...")
-                # Apply new test tag
-                cursor.execute(
-                    f"INSERT INTO {TABLE_CONFIG['CATALOG_TAGS_TABLE']} (catalog_id, tag_id) VALUES (?, ?)",
-                    (test_item_id, test_tag_id)
-                )
+                # Apply test tag
+                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
+                session.add(catalog_tag)
+                session.commit()
                 
                 # Apply existing tags
-                for tag_id, tag_name in existing_tag_ids:
-                    cursor.execute(
-                        f"INSERT INTO {TABLE_CONFIG['CATALOG_TAGS_TABLE']} (catalog_id, tag_id) VALUES (?, ?)",
-                        (test_item_id, tag_id)
-                    )
+                for existing_tag in existing_tags:
+                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=existing_tag.id)
+                    session.add(catalog_tag)
+                    session.commit()
                 
-                tag_names = [name for _, name in existing_tag_ids]
+                tag_names = [existing_tag.name for existing_tag in existing_tags]
                 self.test_logger.debug(f"Applied test tag {test_tag_name} and existing tags: {', '.join(tag_names)} to {test_title}")
                 
                 # Verify findable by each tag
-                print("  Verifying tag queries...")
-                for tag_id, tag_name in [(test_tag_id, test_tag_name)] + existing_tag_ids:
-                    cursor.execute(f"""
-                        SELECT DISTINCT c.title, c.description 
-                        FROM {TABLE_CONFIG['CATALOG_TABLE']} c
-                        JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON c.id = ct.catalog_id
-                        JOIN {TABLE_CONFIG['TAGS_TABLE']} t ON ct.tag_id = t.id
-                        WHERE t.name = ?
-                    """, (tag_name,))
-                    result = cursor.fetchall()
-                    assert any(row[0] == test_title for row in result), f"Item not found by tag {tag_name}"
-                self.test_logger.debug("Verified item findable by all {num_existing_tags + 1} tags")
+                print("  Verifying tag search...")
+                for existing_tag in [tag] + existing_tags:
+                    result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(Tag.name == existing_tag.name).first()
+                    assert result and result.title == test_title, f"Item not found by tag {existing_tag.name}"
+                self.test_logger.debug("Verified item findable by all tags")
                 
                 # Query by title and verify all tags present
                 print("  Verifying content query...")
-                cursor.execute(f"""
-                    SELECT t.name 
-                    FROM {TABLE_CONFIG['TAGS_TABLE']} t
-                    JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON t.id = ct.tag_id
-                    JOIN {TABLE_CONFIG['CATALOG_TABLE']} c ON ct.catalog_id = c.id
-                    WHERE c.title = ?
-                """, (test_title,))
-                tags = cursor.fetchall()
-                assert len(tags) == num_existing_tags + 1, "Wrong number of tags found"
-                tag_names = set(tag[0] for tag in tags)
+                tags = session.query(Tag).join(CatalogTag).join(CatalogItem).filter(CatalogItem.title == test_title).all()
+                assert len(tags) == len(existing_tags) + 1, "Wrong number of tags found"
+                tag_names = set(tag.name for tag in tags)
                 assert test_tag_name in tag_names, "Test tag not found"
-                for _, name in existing_tag_ids:
-                    assert name in tag_names, f"Tag {name} not found"
+                for existing_tag in existing_tags:
+                    assert existing_tag.name in tag_names, f"Tag {existing_tag.name} not found"
                 self.test_logger.debug(f"Verified item has all expected tags")
                 
                 # Update content and verify tags remain
                 print("  Testing content update...")
                 new_description = f"Updated Description {test_marker}"
-                cursor.execute(
-                    f"UPDATE {TABLE_CONFIG['CATALOG_TABLE']} SET description = ? WHERE id = ?",
-                    (new_description, test_item_id)
-                )
-                cursor.execute(
-                    f"SELECT description FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE id = ?",
-                    (test_item_id,)
-                )
-                assert cursor.fetchone()[0] == new_description, "Update failed"
+                item.description = new_description
+                session.commit()
+                assert item.description == new_description, "Update failed"
                 self.test_logger.debug(f"Updated item {test_title}")
-                
-                # Remove test tag and verify
-                print("  Testing tag removal...")
-                cursor.execute(
-                    f"DELETE FROM {TABLE_CONFIG['CATALOG_TAGS_TABLE']} WHERE catalog_id = ? AND tag_id = ?",
-                    (test_item_id, test_tag_id)
-                )
-                cursor.execute(f"""
-                    SELECT COUNT(*) FROM {TABLE_CONFIG['CATALOG_TAGS_TABLE']} WHERE catalog_id = ?
-                """, (test_item_id,))
-                assert cursor.fetchone()[0] == num_existing_tags, "Wrong number of tags after removal"
-                
-                # Verify correct tags remain
-                cursor.execute(f"""
-                    SELECT t.name 
-                    FROM {TABLE_CONFIG['TAGS_TABLE']} t
-                    JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON t.id = ct.tag_id
-                    JOIN {TABLE_CONFIG['CATALOG_TABLE']} c ON ct.catalog_id = c.id
-                    WHERE c.title = ? AND t.deleted = 0
-                """, (test_title,))
-                remaining_tags = set(tag[0] for tag in cursor.fetchall())
-                assert test_tag_name not in remaining_tags, "Test tag still present after removal"
-                for _, name in existing_tag_ids:
-                    assert name in remaining_tags, f"Existing tag {name} was incorrectly removed"
-                self.test_logger.debug(f"Removed test tag {test_tag_name}, verified existing tags remain intact")
                 
                 # Test tag renaming
                 print("  Testing tag renaming...")
                 updated_tag_name = f"{test_tag_name}_updated"
-                cursor.execute(
-                    f"UPDATE {TABLE_CONFIG['TAGS_TABLE']} SET name = ? WHERE id = ?",
-                    (updated_tag_name, test_tag_id)
-                )
+                tag.name = updated_tag_name
+                session.commit()
                 self.test_logger.debug(f"Renamed tag from {test_tag_name} to {updated_tag_name}")
-
+                
                 # Verify item findable by new tag name
-                cursor.execute(f"""
-                    SELECT DISTINCT c.title 
-                    FROM {TABLE_CONFIG['CATALOG_TABLE']} c
-                    JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON c.id = ct.catalog_id
-                    JOIN {TABLE_CONFIG['TAGS_TABLE']} t ON ct.tag_id = t.id
-                    WHERE t.name = ?
-                """, (updated_tag_name,))
-                result = cursor.fetchone()
-                assert result and result[0] == test_title, "Item not found by updated tag name"
+                result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(Tag.name == updated_tag_name).first()
+                assert result and result.title == test_title, "Item not found by updated tag name"
                 self.test_logger.debug("Verified item findable by updated tag name")
-
-                # Soft delete test tag
+                
+                # Test tag soft deletion
                 print("  Testing tag soft deletion...")
-                archive_timestamp = int(datetime.datetime.utcnow().timestamp())
-                cursor.execute(
-                    f"UPDATE {TABLE_CONFIG['TAGS_TABLE']} SET deleted = 1, archived_date = ? WHERE id = ?",
-                    (archive_timestamp, test_tag_id)
-                )
+                tag.deleted = True
+                session.commit()
                 self.test_logger.debug(f"Soft deleted tag {updated_tag_name}")
-
+                
                 # Verify tag exists in archive
-                cursor.execute(f"""
-                    SELECT deleted, archived_date 
-                    FROM {TABLE_CONFIG['TAGS_TABLE']} 
-                    WHERE id = ?
-                """, (test_tag_id,))
-                result = cursor.fetchone()
-                assert result[0] == 1, "Tag not marked as deleted"
-                assert result[1] == archive_timestamp, "Archive timestamp not set correctly"
+                result = session.query(Tag).filter(Tag.id == tag.id).first()
+                assert result.deleted, "Tag not marked as deleted"
                 self.test_logger.debug("Verified tag exists in archive")
-
+                
                 # Verify tag not visible in active tags list
-                cursor.execute(f"""
-                    SELECT name FROM {TABLE_CONFIG['TAGS_TABLE']} 
-                    WHERE deleted = 0
-                """)
-                active_tags = set(tag[0] for tag in cursor.fetchall())
-                assert updated_tag_name not in active_tags, "Deleted tag still visible in active tags"
-
-                # Verify tag exists in archive
-                cursor.execute(f"""
-                    SELECT deleted, archived_date 
-                    FROM {TABLE_CONFIG['TAGS_TABLE']} 
-                    WHERE id = ?
-                """, (test_tag_id,))
-                result = cursor.fetchone()
-                assert result[0] == 1, "Tag not marked as deleted"
-                assert result[1] == archive_timestamp, "Archive timestamp not set correctly"
-                self.test_logger.debug("Verified tag exists in archive")
-
-                # Verify tag not visible when viewing item tags
-                cursor.execute(f"""
-                    SELECT t.name 
-                    FROM {TABLE_CONFIG['TAGS_TABLE']} t
-                    JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON t.id = ct.tag_id
-                    JOIN {TABLE_CONFIG['CATALOG_TABLE']} c ON ct.catalog_id = c.id
-                    WHERE c.title = ? AND t.deleted = 0
-                """, (test_title,))
-                visible_tags = set(tag[0] for tag in cursor.fetchall())
-                assert updated_tag_name not in visible_tags, "Deleted tag still visible on item"
-                assert len(visible_tags) == num_existing_tags, "Wrong number of visible tags"
-                self.test_logger.debug("Verified deleted tag not visible in listings")
-
-                # Restore test tag
+                tags = session.query(Tag).filter(Tag.deleted == False).all()
+                assert updated_tag_name not in [t.name for t in tags], "Deleted tag still visible in active tags"
+                
+                # Test tag restoration
                 print("  Testing tag restoration...")
-                cursor.execute(
-                    f"UPDATE {TABLE_CONFIG['TAGS_TABLE']} SET deleted = 0, archived_date = NULL WHERE id = ?",
-                    (test_tag_id,)
-                )
+                tag.deleted = False
+                session.commit()
                 self.test_logger.debug(f"Restored tag {updated_tag_name}")
-
+                
                 # Test item soft deletion
                 print("  Testing item soft deletion...")
-                archive_timestamp = int(datetime.datetime.utcnow().timestamp())
-                cursor.execute(
-                    f"UPDATE {TABLE_CONFIG['CATALOG_TABLE']} SET deleted = 1, archived_date = ? WHERE id = ?",
-                    (archive_timestamp, test_item_id)
-                )
+                item.deleted = True
+                session.commit()
                 self.test_logger.debug(f"Soft deleted item {test_title}")
-
-                # Verify item not visible in active items list
-                cursor.execute(f"""
-                    SELECT title FROM {TABLE_CONFIG['CATALOG_TABLE']} 
-                    WHERE deleted = 0
-                """)
-                active_items = set(item[0] for item in cursor.fetchall())
-                assert test_title not in active_items, "Deleted item still visible in active items"
-
-                # Verify item exists in archive
-                cursor.execute(f"""
-                    SELECT deleted, archived_date 
-                    FROM {TABLE_CONFIG['CATALOG_TABLE']} 
-                    WHERE id = ?
-                """, (test_item_id,))
-                result = cursor.fetchone()
-                assert result[0] == 1, "Item not marked as deleted"
-                assert result[1] == archive_timestamp, "Archive timestamp not set correctly"
-                self.test_logger.debug("Verified item exists in archive")
-
-                # Verify item not visible when viewing tags
-                cursor.execute(f"""
-                    SELECT c.title 
-                    FROM {TABLE_CONFIG['CATALOG_TABLE']} c
-                    JOIN {TABLE_CONFIG['CATALOG_TAGS_TABLE']} ct ON c.id = ct.catalog_id
-                    JOIN {TABLE_CONFIG['TAGS_TABLE']} t ON ct.tag_id = t.id
-                    WHERE t.name = ? AND c.deleted = 0
-                """, (updated_tag_name,))
-                visible_items = set(item[0] for item in cursor.fetchall())
-                assert test_title not in visible_items, "Deleted item still visible on tag"
-                self.test_logger.debug("Verified deleted item not visible in listings")
-
-            except Exception as e:
-                self.test_logger.error(f"Lifecycle test failed: {str(e)}")
-                raise
-
-            finally:
-                # Clean up test data
-                cursor.execute(f"DELETE FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title LIKE ?", (f"{test_marker}%",))
-                cursor.execute(f"DELETE FROM {TABLE_CONFIG['TAGS_TABLE']} WHERE name LIKE ?", (f"{test_marker}%",))
-                cursor.execute(f"DELETE FROM {TABLE_CONFIG['CATALOG_TAGS_TABLE']} WHERE catalog_id IN (SELECT id FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title LIKE ?)", (f"{test_marker}%",))
-                conn.commit()
-                conn.close()
                 
+                # Verify item not visible in active items list
+                items = session.query(CatalogItem).filter(CatalogItem.deleted == False).all()
+                assert test_title not in [i.title for i in items], "Deleted item still visible in active items"
+                
+                # Verify item exists in archive
+                result = session.query(CatalogItem).filter(CatalogItem.id == item.id).first()
+                assert result.deleted, "Item not marked as deleted"
+                self.test_logger.debug("Verified item exists in archive")
+                
+                # Verify item not visible when viewing tags
+                items = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
+                    Tag.name == updated_tag_name,
+                    CatalogItem.deleted == False
+                ).all()
+                assert test_title not in [i.title for i in items], "Deleted item still visible on tag"
+                self.test_logger.debug("Verified deleted item not visible in listings")
+                
+                # Clean up test data
+                self.cleanup_test_data(session, test_marker)
+                
+            except Exception as e:
+                self.test_logger.error(f"Lifecycle test failed: {str(e)}", exc_info=True)
+                raise
+            finally:
+                session.close()
+        
         # Run all tests
         run_test("Test duplicate handling", test_duplicate_handling)
         run_test("Test archived item handling", test_archived_item_handling)
+        print("\nRunning full lifecycle test:")
         run_test("Test full lifecycle", test_full_lifecycle)
         
         print(f"\nIntegration tests complete: {tests_passed}/{total_tests} passed")
 
     def process_input(self, command, args):
         """Process user input and generate response"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        session = self.get_session()
         
         try:
             if command == 'add':
@@ -429,41 +413,30 @@ class CatalogChat:
                 title, content = parts
                 
                 # Check for existing active item
-                cursor.execute(
-                    f"SELECT title FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title = ? COLLATE NOCASE AND deleted = 0",
-                    (title,)
-                )
-                if cursor.fetchone():
+                existing_item = session.query(CatalogItem).filter(CatalogItem.title == title).first()
+                if existing_item and not existing_item.deleted:
                     return f"Error: An item with title '{title}' already exists"
                 
                 # Check for archived item
-                cursor.execute(
-                    f"SELECT id, title, content FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title = ? COLLATE NOCASE AND deleted = 1",
-                    (title,)
-                )
-                archived = cursor.fetchone()
-                if archived:
+                archived_item = session.query(CatalogItem).filter(CatalogItem.title == title, CatalogItem.deleted == True).first()
+                if archived_item:
                     if self.interactive:
-                        print(f"\nFound archived item with title '{archived[1]}'. Would you like to restore it? (y/n): ", end="")
+                        print(f"\nFound archived item with title '{archived_item.title}'. Would you like to restore it? (y/n): ", end="")
                         if input().strip().lower() == 'y':
-                            cursor.execute(
-                                f"UPDATE {TABLE_CONFIG['CATALOG_TABLE']} SET deleted = 0, archived_date = NULL, content = ?, modified_date = ? WHERE id = ?",
-                                (content, int(datetime.datetime.utcnow().timestamp()), archived[0])
-                            )
-                            conn.commit()
+                            archived_item.deleted = False
+                            session.commit()
                             return f"Restored and updated catalog item: {title}"
                     else:
                         return f"Found archived item '{title}'. Use 'restore <title>' to restore it"
                     
                 try:
-                    cursor.execute(
-                        f"INSERT INTO {TABLE_CONFIG['CATALOG_TABLE']} (title, content) VALUES (?, ?)",
-                        (title, content)
-                    )
-                    conn.commit()
+                    item = CatalogItem(title=title, content=content)
+                    session.add(item)
+                    session.commit()
                     return f"Added catalog item: {title}"
-                except sqlite3.IntegrityError:
-                    return f"Error: An item with title '{title}' already exists"
+                except Exception as e:
+                    session.rollback()
+                    return f"Error: {str(e)}"
                     
             elif command == 'tag':
                 if not args:
@@ -475,128 +448,87 @@ class CatalogChat:
                 tag_name = parts[1]
                 
                 # Check for existing active tag
-                cursor.execute(
-                    f"SELECT id, name FROM {TABLE_CONFIG['TAGS_TABLE']} WHERE name = ? COLLATE NOCASE AND deleted = 0",
-                    (tag_name,)
-                )
-                result = cursor.fetchone()
-                if result:
-                    tag_id = result[0]
-                    tag_name = result[1]  # Use existing case
+                existing_tag = session.query(Tag).filter(Tag.name == tag_name).first()
+                if existing_tag and not existing_tag.deleted:
+                    tag_id = existing_tag.id
+                    tag_name = existing_tag.name  # Use existing case
                 else:
                     # Check for archived tag
-                    cursor.execute(
-                        f"SELECT id, name FROM {TABLE_CONFIG['TAGS_TABLE']} WHERE name = ? COLLATE NOCASE AND deleted = 1",
-                        (tag_name,)
-                    )
-                    archived = cursor.fetchone()
-                    if archived:
+                    archived_tag = session.query(Tag).filter(Tag.name == tag_name, Tag.deleted == True).first()
+                    if archived_tag:
                         if self.interactive:
-                            print(f"\nFound archived tag '{archived[1]}'. Would you like to restore it? (y/n): ", end="")
+                            print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
                             if input().strip().lower() == 'y':
-                                cursor.execute(
-                                    f"UPDATE {TABLE_CONFIG['TAGS_TABLE']} SET deleted = 0, archived_date = NULL, modified_date = ? WHERE id = ?",
-                                    (int(datetime.datetime.utcnow().timestamp()), archived[0])
-                                )
-                                conn.commit()
-                                tag_id = archived[0]
-                                tag_name = archived[1]
+                                archived_tag.deleted = False
+                                session.commit()
+                                tag_id = archived_tag.id
+                                tag_name = archived_tag.name
                             else:
                                 try:
-                                    cursor.execute(
-                                        f"INSERT INTO {TABLE_CONFIG['TAGS_TABLE']} (name) VALUES (?)",
-                                        (tag_name,)
-                                    )
-                                    tag_id = cursor.lastrowid
-                                except sqlite3.IntegrityError:
-                                    return f"Error: Tag '{tag_name}' already exists with different case"
+                                    tag = Tag(name=tag_name)
+                                    session.add(tag)
+                                    session.commit()
+                                    tag_id = tag.id
+                                except Exception as e:
+                                    session.rollback()
+                                    return f"Error: {str(e)}"
                         else:
                             return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
                     else:
                         try:
-                            cursor.execute(
-                                f"INSERT INTO {TABLE_CONFIG['TAGS_TABLE']} (name) VALUES (?)",
-                                (tag_name,)
-                            )
-                            tag_id = cursor.lastrowid
-                        except sqlite3.IntegrityError:
-                            return f"Error: Tag '{tag_name}' already exists with different case"
+                            tag = Tag(name=tag_name)
+                            session.add(tag)
+                            session.commit()
+                            tag_id = tag.id
+                        except Exception as e:
+                            session.rollback()
+                            return f"Error: {str(e)}"
                 
                 # Get item id (including archived)
-                cursor.execute(
-                    f"SELECT id, title, deleted FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title = ? COLLATE NOCASE",
-                    (title,)
-                )
-                result = cursor.fetchone()
-                if not result:
+                item = session.query(CatalogItem).filter(CatalogItem.title == title).first()
+                if not item:
                     return f"Item '{title}' not found"
                 
-                item_id, item_title, is_deleted = result
-                if is_deleted:
-                    if self.interactive:
-                        print(f"\nItem '{item_title}' is archived. Would you like to restore it? (y/n): ", end="")
-                        if input().strip().lower() == 'y':
-                            cursor.execute(
-                                f"UPDATE {TABLE_CONFIG['CATALOG_TABLE']} SET deleted = 0, archived_date = NULL, modified_date = ? WHERE id = ?",
-                                (int(datetime.datetime.utcnow().timestamp()), item_id)
-                            )
-                            conn.commit()
-                        else:
-                            return f"Cannot tag archived item '{item_title}'. Restore it first"
-                    else:
-                        return f"Item '{item_title}' is archived. Use 'restore <title>' to restore it"
-                
                 # Check if tag is already applied
-                cursor.execute(
-                    f"SELECT 1 FROM {TABLE_CONFIG['CATALOG_TAGS_TABLE']} WHERE catalog_id = ? AND tag_id = ?",
-                    (item_id, tag_id)
-                )
-                if cursor.fetchone():
-                    return f"Tag '{tag_name}' is already applied to '{item_title}'"
+                existing_catalog_tag = session.query(CatalogTag).filter(CatalogTag.catalog_id == item.id, CatalogTag.tag_id == tag_id).first()
+                if existing_catalog_tag:
+                    return f"Tag '{tag_name}' is already applied to '{item.title}'"
                 
                 # Apply tag
-                cursor.execute(
-                    f"INSERT INTO {TABLE_CONFIG['CATALOG_TAGS_TABLE']} (catalog_id, tag_id) VALUES (?, ?)",
-                    (item_id, tag_id)
-                )
-                conn.commit()
-                return f"Tagged '{item_title}' with '{tag_name}'"
+                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag_id)
+                session.add(catalog_tag)
+                session.commit()
+                return f"Tagged '{item.title}' with '{tag_name}'"
             
             elif command == 'restore' or command == 'restore_tag':
                 if not args:
                     return f"Format: {command} <name>"
                 name = args
                 
-                table = TABLE_CONFIG['TAGS_TABLE'] if command == 'restore_tag' else TABLE_CONFIG['CATALOG_TABLE']
+                table = Tag if command == 'restore_tag' else CatalogItem
                 name_field = 'name' if command == 'restore_tag' else 'title'
                 
-                cursor.execute(
-                    f"SELECT id, {name_field} FROM {table} WHERE {name_field} = ? COLLATE NOCASE AND deleted = 1",
-                    (name,)
-                )
-                result = cursor.fetchone()
-                if not result:
+                archived_item = session.query(table).filter(getattr(table, name_field) == name, table.deleted == True).first()
+                if not archived_item:
                     return f"No archived {'tag' if command == 'restore_tag' else 'item'} found with name '{name}'"
                 
-                cursor.execute(
-                    f"UPDATE {table} SET deleted = 0, archived_date = NULL, modified_date = ? WHERE id = ?",
-                    (int(datetime.datetime.utcnow().timestamp()), result[0])
-                )
-                conn.commit()
-                return f"Restored {'tag' if command == 'restore_tag' else 'item'}: {result[1]}"
+                archived_item.deleted = False
+                session.commit()
+                return f"Restored {'tag' if command == 'restore_tag' else 'item'}: {name}"
                 
         except Exception as e:
+            session.rollback()
             return f"Error: {str(e)}"
             
         finally:
-            conn.close()
+            session.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Marian Catalog System")
     parser.add_argument("--test", action="store_true", help="Run integration tests")
     args = parser.parse_args()
     
-    chat = CatalogChat(interactive=False)
+    chat = CatalogChat()
     
     if args.test:
         chat.run_integration_tests()

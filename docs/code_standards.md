@@ -1,5 +1,35 @@
 # Code Standards and Best Practices
 
+## Critical Guidelines
+
+1. **Code Removal Policy**
+   - **NEVER** remove functionality or information/documentation without explicit permission
+   - This applies to:
+     - Test cases and test functionality
+     - Documentation and comments
+     - Helper functions and utilities
+     - Logging and debugging code
+     - Error handling
+   - Duplicate important information in documentation rather than removing it
+   - If you think something should be removed, always ask for explicit permission first
+   - Document the reason and get approval before removing any code
+
+2. **Code Addition Policy**
+   - **NEVER** add new functionality without explicit approval
+   - This applies to:
+     - New files or modules
+     - External libraries and dependencies
+     - New features or functionality
+     - Code reformatting or restructuring
+     - Changes to build or deployment processes
+   - Always propose and get approval before:
+     - Adding new dependencies
+     - Creating new files
+     - Reformatting existing code
+     - Adding new features
+     - Changing project structure
+   - Document the reason and expected impact of additions
+
 ## Documentation Standards
 
 1. **Class Documentation**

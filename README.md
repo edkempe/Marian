@@ -1,5 +1,36 @@
 # Marian Project
 
+## Critical Development Guidelines
+
+1. **Code Preservation Policy**
+   - **NEVER** remove functionality or information/documentation without explicit permission
+   - This includes:
+     - Test cases and functionality
+     - Documentation and comments
+     - Helper functions and utilities
+     - Logging and debugging code
+     - Error handling
+   - Duplicate important information rather than removing it
+   - Always get explicit approval before removing any code
+   - This guideline is critical and applies to all aspects of the project
+
+2. **Code Addition Policy**
+   - **NEVER** add new functionality without explicit approval
+   - This includes:
+     - New files or modules
+     - External libraries and dependencies
+     - New features or functionality
+     - Code reformatting or restructuring
+     - Changes to build or deployment processes
+   - Always propose and get approval before adding:
+     - New dependencies
+     - New files
+     - Code reformatting
+     - New features
+     - Project structure changes
+   - Document the reason and impact of proposed additions
+   - This guideline is critical and applies to all aspects of the project
+
 ## Overview
 An AI-powered email analysis and management system that uses advanced language models to process, categorize, and extract insights from emails.
 

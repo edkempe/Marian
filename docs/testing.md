@@ -3,6 +3,38 @@
 ## Overview
 Our testing approach focuses on integration testing with real API calls to validate the actual behavior of the application. Instead of complex mocking setups, we test against the production APIs to ensure our code works as expected in real-world conditions.
 
+## Testing Guidelines and Standards
+
+## Critical Guidelines
+
+1. **Test Preservation Policy**
+   - **NEVER** remove or modify existing tests without explicit permission
+   - This includes:
+     - Test cases and assertions
+     - Test helper functions
+     - Test documentation and comments
+     - Test output formatting
+     - Test metrics and counting
+   - If a test seems redundant or unnecessary, document why and get approval before removing
+   - Prefer duplicating important test cases over removing them
+   - Always maintain backward compatibility in test suites
+
+2. **Test Addition Policy**
+   - **NEVER** add new test functionality without explicit approval
+   - This includes:
+     - New test files or suites
+     - Test frameworks or libraries
+     - Test helper functions
+     - Test output formatting changes
+     - Changes to test running process
+   - Always propose and get approval before:
+     - Adding new test dependencies
+     - Creating new test files
+     - Modifying test output format
+     - Adding new test categories
+     - Changing test infrastructure
+   - Document the purpose and coverage of new tests
+
 ## Test Structure
 
 ### Integration Tests (`tests/test_integration.py`)
