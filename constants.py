@@ -148,7 +148,7 @@ EMAIL_CONFIG: EmailConfig = {
     'BATCH_SIZE': 15,        # Number of emails to process before pausing
     'MAX_RETRIES': 3,        # Maximum number of retry attempts for failed operations
     'RETRY_DELAY': 5,        # Delay in seconds between retry attempts
-    'DAYS_TO_FETCH': 30,     # Number of days of emails to fetch by default
+    'DAYS_TO_FETCH': 7,     # Number of days of emails to fetch by default
     'RATE_LIMIT': {
         'REQUESTS_PER_MINUTE': 45,  # Keep slightly under 50 RPM limit
         'PAUSE_SECONDS': 20         # Pause duration to maintain rate limit

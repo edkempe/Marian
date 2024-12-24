@@ -134,7 +134,6 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         # Build the request
         request = service.users().messages().list(
             userId='me',
-            maxResults=EMAIL_CONFIG['BATCH_SIZE'],
             q=' '.join(query) if query else ''
         )
         
@@ -147,13 +146,11 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
             if 'messages' in response:
                 messages.extend(response['messages'])
             
+            # Get next page of results
             request = service.users().messages().list_next(
                 previous_request=request,
                 previous_response=response
             )
-            
-            if len(messages) >= EMAIL_CONFIG['BATCH_SIZE']:
-                break
         
         return messages
     except Exception as error:

@@ -234,6 +234,18 @@ Content: {email_data.get('content', '')}"""
             logger.error(f"Database error for email {email_id}: {str(e)}")
             raise RuntimeError(f"Database error: {str(e)}")
 
+    def process_unanalyzed_emails(self):
+        """Process all unanalyzed emails from the email store."""
+        # Get unanalyzed emails
+        unanalyzed = self.get_unanalyzed_emails()
+        if not unanalyzed:
+            logger.info("no_unanalyzed_emails_found")
+            return
+        
+        # Process up to 500 emails
+        emails_to_process = unanalyzed[:500]
+        logger.info("processing_batch", count=len(emails_to_process))
+
     def process_emails(self, count: int = EMAIL_CONFIG['COUNT']):
         """Process a batch of unanalyzed emails."""
         try:
