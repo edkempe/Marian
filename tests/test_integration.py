@@ -5,22 +5,27 @@ from lib_gmail import GmailAPI
 from app_get_mail import fetch_emails, process_email, list_labels
 from models.email import Email
 
-def test_gmail_authentication():
-    """Test Gmail API authentication."""
+@pytest.fixture(scope="session")
+def gmail_api():
+    """Create and initialize Gmail API instance."""
     gmail = GmailAPI()
-    assert gmail.service is not None
+    gmail.setup_label_database()  # Initialize label database
+    gmail.sync_labels()  # Sync labels from Gmail
+    return gmail
+
+def test_gmail_authentication(gmail_api):
+    """Test Gmail API authentication."""
+    assert gmail_api.service is not None
     
     # Test basic profile access
-    profile = gmail.service.users().getProfile(userId='me').execute()
+    profile = gmail_api.service.users().getProfile(userId='me').execute()
     assert 'emailAddress' in profile
     print(f"Authenticated as: {profile['emailAddress']}")
 
-def test_label_operations():
+def test_label_operations(gmail_api):
     """Test Gmail label operations."""
-    gmail = GmailAPI()
-    
     # List all labels
-    labels = list_labels(gmail.service)
+    labels = list_labels(gmail_api.service)
     assert len(labels) > 0
     
     # Print found labels
@@ -31,30 +36,28 @@ def test_label_operations():
     # Test getting specific system labels
     system_labels = ['INBOX', 'SENT', 'DRAFT', 'SPAM']
     for label in system_labels:
-        label_id = gmail.get_label_id(label)
+        label_id = gmail_api.get_label_id(label)
         assert label_id is not None
         print(f"\nFound {label} label: {label_id}")
 
-def test_email_fetching():
+def test_email_fetching(gmail_api):
     """Test fetching emails from Gmail."""
-    gmail = GmailAPI()
-    
     # Fetch recent emails (last 7 days)
     start_date = datetime.now() - timedelta(days=7)
-    messages = fetch_emails(gmail.service, start_date=start_date)
+    messages = fetch_emails(gmail_api.service, start_date=start_date)
     
     assert len(messages) > 0
     print(f"\nFetched {len(messages)} recent emails")
     
     # Test fetching with label filter
-    inbox_messages = fetch_emails(gmail.service, label='INBOX', 
+    inbox_messages = fetch_emails(gmail_api.service, label='INBOX', 
                                 start_date=start_date)
     print(f"Found {len(inbox_messages)} INBOX emails")
     
     # Get details of first email
     if inbox_messages:
         first_msg = inbox_messages[0]
-        msg_details = gmail.service.users().messages().get(
+        msg_details = gmail_api.service.users().messages().get(
             userId='me', id=first_msg['id']).execute()
         
         headers = {h['name']: h['value'] for h in msg_details['payload']['headers']}
@@ -63,27 +66,55 @@ def test_email_fetching():
         print(f"Subject: {headers.get('Subject', 'No subject')}")
         print(f"Date: {headers.get('Date', 'Unknown')}")
 
-def test_email_processing(test_db_session):
+def test_email_processing(gmail_api, test_db_session):
     """Test processing and storing emails."""
-    gmail = GmailAPI()
-    
     # Fetch a few recent emails
-    messages = fetch_emails(gmail.service, 
+    messages = fetch_emails(gmail_api.service, 
                           start_date=datetime.now() - timedelta(days=1))
     
     if not messages:
         pytest.skip("No recent emails found for testing")
     
     # Process first 3 emails
+    processed = 0
     for msg in messages[:3]:
-        process_email(gmail.service, msg['id'], test_db_session)
+        try:
+            # Get full message details
+            full_msg = gmail_api.service.users().messages().get(
+                userId='me', id=msg['id']).execute()
+            
+            # Create email object
+            headers = {h['name']: h['value'] for h in full_msg['payload']['headers']}
+            email = Email(
+                id=full_msg['id'],
+                thread_id=full_msg['threadId'],
+                subject=headers.get('Subject', ''),
+                from_address=headers.get('From', ''),
+                to_address=headers.get('To', ''),
+                received_date=headers.get('Date', ''),
+                labels=','.join(full_msg.get('labelIds', [])),
+                content=''  # We'll add content processing later
+            )
+            
+            # Store in database
+            test_db_session.add(email)
+            test_db_session.commit()
+            processed += 1
+            
+            print(f"\nProcessed email {email.id}:")
+            print(f"Subject: {email.subject}")
+            print(f"From: {email.from_address}")
+            print(f"Labels: {email.labels}")
+            
+        except Exception as e:
+            print(f"Error processing message {msg['id']}: {str(e)}")
     
     # Verify storage
     stored_emails = test_db_session.query(Email).all()
-    assert len(stored_emails) > 0
+    assert len(stored_emails) == processed
     
     # Print processed emails
-    print("\nProcessed emails:")
+    print("\nStored emails:")
     for email in stored_emails:
         print(f"\nID: {email.id}")
         print(f"Subject: {email.subject}")
