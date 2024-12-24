@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from lib_gmail import GmailAPI
 from app_get_mail import fetch_emails, process_email, list_labels
 from models.email import Email
+from email.utils import parsedate_to_datetime
 
 @pytest.fixture(scope="session")
 def gmail_api():
@@ -91,7 +92,7 @@ def test_email_processing(gmail_api, test_db_session):
                 subject=headers.get('Subject', ''),
                 from_address=headers.get('From', ''),
                 to_address=headers.get('To', ''),
-                received_date=headers.get('Date', ''),
+                received_date=parsedate_to_datetime(headers.get('Date', '')),
                 labels=','.join(full_msg.get('labelIds', [])),
                 content=''  # We'll add content processing later
             )
