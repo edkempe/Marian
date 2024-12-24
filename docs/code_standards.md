@@ -66,6 +66,60 @@
        """
    ```
 
+## SQLAlchemy Model Standards
+
+1. **Import Standards**
+   ```python
+   # Always use absolute imports for models
+   from models.email import Email  # Good
+   from .email import Email        # Avoid
+   from ..models.email import Email  # Avoid
+   ```
+
+2. **Model Relationships**
+   ```python
+   # Always use fully qualified paths in relationships
+   email = relationship("models.email.Email", backref="analysis")  # Good
+   email = relationship("Email", backref="analysis")              # Avoid
+   ```
+
+3. **Model Organization**
+   ```python
+   class EmailAnalysis(Base):
+       """Clear docstring explaining model purpose and structure."""
+       __tablename__ = 'email_analysis'
+       
+       # Group fields by purpose with clear headers
+       # Identification fields
+       id = Column(Integer, primary_key=True)
+       
+       # Content fields
+       title = Column(String)
+       body = Column(Text)
+       
+       # Metadata fields
+       created_at = Column(DateTime)
+       updated_at = Column(DateTime)
+       
+       # Relationships (always with full paths)
+       email = relationship("models.email.Email", backref="analysis")
+   ```
+
+4. **Type Hints**
+   ```python
+   # Use SQLAlchemy 2.0 type hints for clarity
+   class Email(Base):
+       id: Mapped[int] = Column(Integer, primary_key=True)
+       subject: Mapped[str] = Column(Text)
+       optional_field: Mapped[Optional[str]] = Column(Text, nullable=True)
+   ```
+
+5. **Common Issues and Solutions**
+   - **Multiple Classes Found**: Use fully qualified paths in relationships
+   - **Import Cycles**: Use string references in relationships
+   - **Type Conflicts**: Use explicit SQLAlchemy types and type hints
+   - **Session Management**: Always use context managers for sessions
+
 ## Code Organization
 
 1. **File Structure**

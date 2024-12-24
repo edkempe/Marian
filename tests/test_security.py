@@ -1,17 +1,14 @@
-"""Tests for security utilities."""
+"""Tests for security functionality."""
 import pytest
-from unittest.mock import Mock, patch
-import json
 import os
+import time
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+from jose import jwt
+
 from ..utils.util_security import (
-    encrypt_data,
-    decrypt_data,
-    validate_api_key,
-    check_permissions,
-    verify_password,
-    get_password_hash,
-    create_access_token,
-    verify_token,
+    get_password_hash, verify_password, create_access_token,
+    verify_token, encrypt_data, decrypt_data,
     sanitize_email_content
 )
 

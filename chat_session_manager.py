@@ -23,14 +23,42 @@ def run_command(cmd: List[str]) -> str:
         return ""
 
 def get_python_command() -> str:
-    """Find the available Python command (python3 or python)."""
+    """Find the available Python command (python3 or python).
+    
+    Returns:
+        str: The Python command to use (either 'python3' or 'python')
+        
+    Raises:
+        RuntimeError: If no suitable Python command is found or version requirements not met
+    """
+    min_version = (3, 12, 8)  # Minimum required version
+    version_pattern = re.compile(r'Python (\d+)\.(\d+)\.(\d+)')
+    
     for cmd in ['python3', 'python']:
         try:
-            subprocess.run([cmd, '--version'], capture_output=True, check=True)
-            return cmd
-        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Check both version and actual execution
+            result = subprocess.run([cmd, '--version'], 
+                                 capture_output=True, 
+                                 text=True, 
+                                 check=True)
+            version_str = result.stdout.strip()
+            match = version_pattern.match(version_str)
+            
+            if match:
+                version = tuple(map(int, match.groups()))
+                if version >= min_version:
+                    return cmd
+                print(f"Warning: {cmd} version {'.'.join(map(str, version))} "
+                      f"is below minimum required {'.'.join(map(str, min_version))}")
+            
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Command '{cmd}' not available: {e}")
             continue
-    raise RuntimeError("No Python command (python3 or python) found in PATH")
+            
+    raise RuntimeError(
+        f"No Python {'.'.join(map(str, min_version))} or higher found in PATH. "
+        "Please install Python 3.12.8 or higher and ensure it's in your PATH."
+    )
 
 def get_pip_command() -> str:
     """Find the available pip command (pip3 or pip)."""

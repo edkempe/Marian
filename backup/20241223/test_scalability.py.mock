@@ -1,27 +1,27 @@
-"""Tests for system scalability."""
+"""Tests for scalability utilities."""
 import pytest
-from unittest.mock import Mock, patch
 import time
-from ..utils.util_scalability import (
-    measure_time,
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
+from utils.util_scalability import (
     cache,
     rate_limit,
     circuit_breaker,
-    retry_operation
+    measure_time,
+    retry_operation,
+    redis_client
 )
 
 @pytest.fixture
 def mock_redis():
     """Mock Redis client."""
-    with patch('..utils.util_scalability.redis_client') as mock:
-        # Set up mock for circuit breaker
-        mock.get.side_effect = None  # Reset any previous side effects
-        mock.pipeline.return_value = mock  # Make pipeline return self for chaining
-        mock.execute.return_value = None  # Default execute return value
+    with patch('utils.util_scalability.redis_client') as mock:
+        mock.get.return_value = None
         yield mock
 
 def test_cache_decorator(mock_redis):
-    """Test cache decorator."""
+    """Test cache decorator functionality."""
     mock_redis.get.return_value = None
 
     @cache(ttl=60)
@@ -39,7 +39,7 @@ def test_cache_decorator(mock_redis):
     assert int(result2) == 10  # Compare as integers
 
 def test_rate_limit_decorator(mock_redis):
-    """Test rate limit decorator."""
+    """Test rate limit decorator functionality."""
     mock_redis.pipeline.return_value = mock_redis
     mock_redis.execute.return_value = [100]  # Return count after increment
     mock_redis.get.return_value = "99"  # Just below limit
@@ -57,7 +57,7 @@ def test_rate_limit_decorator(mock_redis):
         limited_operation()
 
 def test_circuit_breaker_decorator(mock_redis):
-    """Test circuit breaker decorator."""
+    """Test circuit breaker decorator functionality."""
     failure_count = 0
     last_failure_time = None
 

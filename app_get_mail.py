@@ -1,312 +1,366 @@
-"""
-Gmail Email Fetcher
-------------------
-This script fetches emails from Gmail and stores them in a SQLite database.
+"""Gmail email fetching and storage module.
 
-Key Features:
-- Fetches emails in batches with configurable time windows
-- Stores emails with full content and metadata
-- Supports incremental fetching (newer/older emails)
-- Handles timezone conversion properly
-- Prevents duplicate storage
-- Displays dates in Mountain Time
+This module provides functionality to:
+1. Fetch emails from Gmail API
+2. Store emails in a local database
+3. Track email labels and their history
 
-Dependencies:
-- google-auth-oauthlib: For Gmail API authentication
+Requirements:
 - google-api-python-client: For Gmail API access
 - python-dateutil: For robust date parsing
 - pytz: For timezone handling
+- sqlalchemy: For database operations
 
 Usage:
 python get_mail.py [--newer] [--older] [--clear] [--label] [--list-labels]
-  --newer: Fetch emails newer than the most recent in database
-  --older: Fetch emails older than the oldest in database
-  --clear: Clear the database before fetching
-  --label: Filter emails by label
-  --list-labels: List all available labels
-
-Notes:
-- Uses lib_gmail.py for Gmail API authentication
-- Uses Unix timestamps for Gmail API queries for reliable date filtering
-- Keeps a 1-minute overlap window when fetching newer emails
-- Stores dates in UTC but displays in Mountain Time
-- Default fetch window is 30 days when starting with empty database
-
-Date: December 2024
 """
 
-import sqlite3
-import base64
-import email
-from datetime import datetime, timedelta
-import json
 import argparse
+import json
+import os
+from datetime import datetime, timedelta
 from pytz import timezone
 import time
 from dateutil import parser
-from lib_gmail import GmailAPI
+from base64 import urlsafe_b64decode
 
-days_to_fetch = 5  # Temporarily set to 5 days to get roughly 50 emails
-maxResults = 50  # Set max results to 50
-MOUNTAIN_TZ = timezone('US/Mountain')
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from models.base import Base
+from models.email import Email
+from models.gmail_label import GmailLabel
+from lib_gmail import GmailAPI
+from database.config import get_email_session, get_analysis_session, init_db
+from constants import DATABASE_CONFIG, EMAIL_CONFIG
+
+# Configuration
 UTC_TZ = timezone('UTC')
 
-def get_gmail_service():
-    """Get an authenticated Gmail service using lib_gmail."""
-    gmail_api = GmailAPI()
-    return gmail_api.service
-
-def init_database():
-    conn = sqlite3.connect('db_email_store.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS emails
-                 (id TEXT PRIMARY KEY,
-                  thread_id TEXT,
-                  subject TEXT,
-                  sender TEXT,
-                  date TEXT,
-                  body TEXT,
-                  labels TEXT,
-                  raw_data TEXT)''')
-    conn.commit()
-    return conn
-
-def clear_database(conn):
-    confirmation = input("Are you sure you want to clear the database? This action cannot be undone. (y/n): ")
-    if confirmation.lower() == 'y':
+def init_database(session: Session = None) -> Session:
+    """Initialize the email database schema."""
+    if session is None:
+        # Use SQLite connection for direct database operations
+        import sqlite3
+        conn = sqlite3.connect(DATABASE_CONFIG['EMAIL_DB_FILE'])
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM emails')
+        
+        # Create emails table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS emails (
+                id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL,
+                subject TEXT DEFAULT 'No Subject',
+                from_address TEXT NOT NULL,
+                to_address TEXT NOT NULL,
+                cc_address TEXT DEFAULT '',
+                bcc_address TEXT DEFAULT '',
+                received_date TIMESTAMP WITH TIME ZONE NOT NULL,
+                content TEXT DEFAULT '',
+                labels TEXT DEFAULT '',
+                has_attachments BOOLEAN NOT NULL DEFAULT 0,
+                full_api_response TEXT DEFAULT '{}'
+            )
+        ''')
         conn.commit()
-        print("Database cleared successfully")
+        return conn
     else:
-        print("Database clearing cancelled")
+        # Use SQLAlchemy session
+        Base.metadata.create_all(session.bind)
+        return session
+
+def init_label_database(session: Session = None) -> Session:
+    """Initialize the label database schema."""
+    if session is None:
+        import sqlite3
+        conn = sqlite3.connect(DATABASE_CONFIG['EMAIL_DB_FILE'])
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gmail_labels (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                message_list_visibility TEXT,
+                label_list_visibility TEXT,
+                updated_date TIMESTAMP WITH TIME ZONE NOT NULL
+            )
+        ''')
+        conn.commit()
+        return conn
+    else:
+        Base.metadata.create_all(session.bind)
+        return session
+
+def get_gmail_service():
+    """Get an authenticated Gmail service."""
+    return GmailAPI().service
+
+def clear_database(session: Session = None):
+    """Clear all data from the email database."""
+    if session is None:
+        session = get_email_session()
+    session.query(Email).delete()
+    session.commit()
 
 def get_label_id(service, label_name):
-    """Get the ID of a label by its name."""
+    """Get the ID of a label by its name.
+    
+    Args:
+        service: Gmail API service instance
+        label_name: Name of the label to find
+        
+    Returns:
+        str: Label ID if found, None otherwise
+    """
+    if not label_name:
+        return None
+        
     try:
         results = service.users().labels().list(userId='me').execute()
         labels = results.get('labels', [])
+        
         for label in labels:
-            if label['name'].lower() == label_name.lower():
+            if label.get('name') == label_name:
                 return label['id']
         return None
-    except Exception as e:
-        print('Error getting label ID: {}'.format(e))
+    except Exception as error:
+        print(f'Failed to get label ID: {error}')
         return None
 
 def fetch_emails(service, start_date=None, end_date=None, label=None):
-    """Fetch emails from Gmail API."""
+    """Fetch emails from Gmail API.
+    
+    Args:
+        service: Gmail API service instance
+        start_date: Optional start date for filtering
+        end_date: Optional end date for filtering
+        label: Optional label to filter by
+    
+    Returns:
+        List of email messages
+    """
     try:
-        # Base query
-        query = ''
-        
-        # Add date filters if provided
+        query = []
         if start_date:
-            timestamp = int(start_date.timestamp())
-            query += 'after:{} '.format(timestamp)
+            query.append(f'after:{start_date.strftime("%Y/%m/%d")}')
         if end_date:
-            timestamp = int(end_date.timestamp())
-            query += 'before:{} '.format(timestamp)
-            
-        # Add label filter if provided
+            query.append(f'before:{end_date.strftime("%Y/%m/%d")}')
+        
+        # Get label ID if label name provided
+        label_id = None
         if label:
             label_id = get_label_id(service, label)
-            if label_id:
-                query += 'label:{} '.format(label_id)
-            else:
-                print('Label not found: {}'.format(label))
+            if not label_id:
+                print(f'Label "{label}" not found')
                 return []
         
-        print('Fetching emails with query: {}'.format(query))
-        messages = []
-        next_page_token = None
+        # Build the request
+        request = service.users().messages().list(
+            userId='me',
+            maxResults=EMAIL_CONFIG['BATCH_SIZE'],
+            q=' '.join(query) if query else ''
+        )
         
-        while True:
-            results = service.users().messages().list(
-                userId='me',
-                q=query.strip(),
-                maxResults=maxResults,
-                pageToken=next_page_token
-            ).execute()
+        if label_id:
+            request['labelIds'] = [label_id]
+        
+        messages = []
+        while request:
+            response = request.execute()
+            if 'messages' in response:
+                messages.extend(response['messages'])
             
-            if 'messages' in results:
-                messages.extend(results['messages'])
-                next_page_token = results.get('nextPageToken')
-                if not next_page_token:
-                    break
-            else:
+            request = service.users().messages().list_next(
+                previous_request=request,
+                previous_response=response
+            )
+            
+            if len(messages) >= EMAIL_CONFIG['BATCH_SIZE']:
                 break
-
+        
         return messages
-    except Exception as e:
-        print('An error occurred while fetching emails: {}'.format(e))
+    except Exception as error:
+        print(f'An error occurred: {error}')
         return []
 
-def process_email(service, msg_id, conn):
+def process_email(service, msg_id, session):
+    """Process a single email message and store it in the database."""
     try:
-        cursor = conn.cursor()
-        cursor.execute('SELECT id FROM emails WHERE id = ?', (msg_id,))
-        if cursor.fetchone():
-            return None
-
-        message = service.users().messages().get(
-            userId='me',
-            id=msg_id,
-            format='full'
-        ).execute()
-
-        headers = message['payload']['headers']
-        subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), '')
-        sender = next((h['value'] for h in headers if h['name'].lower() == 'from'), '')
-        date_str = next((h['value'] for h in headers if h['name'].lower() == 'date'), '')
-
-        try:
-            date_obj = parser.parse(date_str)
-            if not date_obj.tzinfo:
-                date_obj = date_obj.replace(tzinfo=UTC_TZ)
-            date_utc = date_obj.astimezone(UTC_TZ)
-            formatted_date = date_utc.strftime('%Y-%m-%d %H:%M:%S %z')
-        except ValueError:
-            print('Error parsing date for message {}'.format(msg_id))
-            return None
-
-        body = ''
-        if 'parts' in message['payload']:
-            parts = message['payload']['parts']
-            for part in parts:
-                if part['mimeType'] == 'text/plain':
-                    body = base64.urlsafe_b64decode(part['body']['data']).decode()
-                    break
-        else:
-            body = base64.urlsafe_b64decode(message['payload']['body']['data']).decode()
-
-        return {
-            'id': msg_id,
-            'thread_id': message['threadId'],  
-            'subject': subject,
-            'sender': sender,
-            'date': formatted_date,
-            'body': body,
-            'labels': ','.join(message['labelIds']),
-            'raw_data': json.dumps(message)
+        # Get the full message details
+        message = service.users().messages().get(userId='me', id=msg_id).execute()
+        
+        # Extract email data
+        headers = {header['name']: header['value'] for header in message['payload']['headers']}
+        email_data = {
+            'id': message['id'],
+            'thread_id': message['threadId'],
+            'subject': headers.get('Subject', ''),
+            'from_address': headers.get('From', ''),
+            'to_address': headers.get('To', ''),
+            'received_date': headers.get('Date', ''),
+            'content': '',  # TODO: Extract content
+            'labels': str(message.get('labelIds', [])),
+            'raw_json': str(message)
         }
+        
+        if hasattr(session, 'merge'):
+            # SQLAlchemy session
+            email = Email(**email_data)
+            session.merge(email)
+            session.commit()
+        else:
+            # SQLite connection
+            cursor = session.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO emails (
+                    id, thread_id, subject, from_address, to_address,
+                    received_date, content, labels, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                email_data['id'],
+                email_data['thread_id'],
+                email_data['subject'],
+                email_data['from_address'],
+                email_data['to_address'],
+                email_data['received_date'],
+                email_data['content'],
+                email_data['labels'],
+                email_data['raw_json']
+            ))
+            session.commit()
+            
     except Exception as e:
-        print('Error processing message {}: {}'.format(msg_id, e))
-        return None
+        print(f"Error processing message {msg_id}: {str(e)}")
 
-def get_oldest_email_date(conn):
-    cursor = conn.cursor()
-    cursor.execute('SELECT MIN(date) FROM emails')
-    oldest_date = cursor.fetchone()[0]
+def get_oldest_email_date(session):
+    """Get the date of the oldest email in the database."""
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        oldest_email = session.query(Email).order_by(Email.received_date.asc()).first()
+        return parser.parse(oldest_email.received_date) if oldest_email else None
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT received_date FROM emails ORDER BY received_date ASC LIMIT 1')
+        result = cursor.fetchone()
+        return parser.parse(result[0]) if result else None
+
+def get_newest_email_date(session):
+    """Get the date of the newest email in the database."""
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        newest_email = session.query(Email).order_by(Email.received_date.desc()).first()
+        return parser.parse(newest_email.received_date) if newest_email else None
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT received_date FROM emails ORDER BY received_date DESC LIMIT 1')
+        result = cursor.fetchone()
+        return parser.parse(result[0]) if result else None
+
+def count_emails(session):
+    """Get total number of emails in database."""
+    if hasattr(session, 'query'):
+        # SQLAlchemy session
+        return session.query(Email).count()
+    else:
+        # SQLite connection
+        cursor = session.cursor()
+        cursor.execute('SELECT COUNT(*) FROM emails')
+        result = cursor.fetchone()
+        return result[0] if result else 0
+
+def fetch_older_emails(session, service, label=None):
+    """Fetch emails older than the oldest in database."""
+    oldest_date = get_oldest_email_date(session)
     if oldest_date:
-        return parser.parse(oldest_date).replace(tzinfo=UTC_TZ)
-    return None
-
-def get_newest_email_date(conn):
-    cursor = conn.cursor()
-    cursor.execute('SELECT MAX(date) FROM emails')
-    newest_date = cursor.fetchone()[0]
-    if newest_date:
-        return parser.parse(newest_date).replace(tzinfo=UTC_TZ)
-    return None
-
-def fetch_older_emails(conn, service, label=None):
-    oldest_date = get_oldest_email_date(conn)
-    if oldest_date:
-        messages = fetch_emails(service, end_date=oldest_date, label=label)
-        return messages
+        return fetch_emails(service, end_date=oldest_date, label=label)
     return []
 
-def fetch_newer_emails(conn, service, label=None):
-    newest_date = get_newest_email_date(conn)
+def fetch_newer_emails(session, service, label=None):
+    """Fetch emails newer than the newest in database."""
+    newest_date = get_newest_email_date(session)
     if newest_date:
         # Add 1-minute overlap to avoid missing emails
         start_date = newest_date - timedelta(minutes=1)
-        messages = fetch_emails(service, start_date=start_date, label=label)
-        return messages
+        return fetch_emails(service, start_date=start_date, label=label)
     return []
 
-def count_emails(conn):
-    cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM emails')
-    return cursor.fetchone()[0]
-
 def list_labels(service):
-    """List all available Gmail labels."""
+    """List all available Gmail labels.
+    
+    Args:
+        service: Authenticated Gmail API service instance
+        
+    Returns:
+        list: List of label dictionaries with 'id' and 'name' keys
+    """
     try:
         results = service.users().labels().list(userId='me').execute()
-        labels = results.get('labels', [])
-        print("\nAvailable labels:")
-        for label in labels:
-            print("- {} (ID: {})".format(label['name'], label['id']))
-        return labels
-    except Exception as e:
-        print('Error listing labels: {}'.format(e))
+        return results.get('labels', [])
+    except Exception as error:
+        print(f'Failed to list labels: {error}')
         return []
 
 def main():
+    """Main function to fetch emails."""
     parser = argparse.ArgumentParser(description='Fetch emails from Gmail')
-    parser.add_argument('--older', action='store_true', help='Fetch older emails')
-    parser.add_argument('--newer', action='store_true', help='Fetch newer emails')
-    parser.add_argument('--clear', action='store_true', help='Clear the database before fetching')
-    parser.add_argument('--label', type=str, help='Filter emails by label')
-    parser.add_argument('--list-labels', action='store_true', help='List all available labels')
-    
+    parser.add_argument('--newer', action='store_true',
+                      help='Fetch emails newer than most recent in database')
+    parser.add_argument('--older', action='store_true',
+                      help='Fetch emails older than oldest in database')
+    parser.add_argument('--clear', action='store_true',
+                      help='Clear database before fetching')
+    parser.add_argument('--label',
+                      help='Filter emails by label')
+    parser.add_argument('--list-labels', action='store_true',
+                      help='List all available labels')
     args = parser.parse_args()
-
-    print("Initializing database...")
-    conn = init_database()
+    
+    # Get Gmail service
     service = get_gmail_service()
-
-    if args.list_labels:
-        list_labels(service)
+    if not service:
+        print("Failed to get Gmail service")
         return
-
+    
+    # List labels if requested
+    if args.list_labels:
+        labels = list_labels(service)
+        print("\nAvailable labels:")
+        for label in labels:
+            print(f"- {label['name']} ({label['id']})")
+        return
+    
+    # Get database session
+    session = get_email_session()
+    
+    # Initialize database
+    init_database(session)
+    
+    # Clear database if requested
     if args.clear:
-        clear_database(conn)
-
-    total_emails = count_emails(conn)
-    print("Current email count: {}".format(total_emails))
-
-    if args.label:
-        print("Fetching all emails with label: {}".format(args.label))
-        messages = fetch_emails(service, label=args.label)
-    elif total_emails == 0:
-        print("Database is empty. Fetching last {} days of emails.".format(days_to_fetch))
-        end_date = datetime.now(UTC_TZ)
-        start_date = end_date - timedelta(days=days_to_fetch)
-        messages = fetch_emails(service, start_date, end_date)
+        clear_database(session)
+        print("Database cleared")
+    
+    # Fetch emails based on arguments
+    if args.newer:
+        messages = fetch_newer_emails(session, service, args.label)
     elif args.older:
-        messages = fetch_older_emails(conn, service)
-    elif args.newer or not (args.older or args.newer):
-        messages = fetch_newer_emails(conn, service)
-
-    print("Processing {} messages...".format(len(messages) if messages else 0))
-
+        messages = fetch_older_emails(session, service, args.label)
+    else:
+        # Default: fetch last N days of emails
+        end_date = datetime.now(UTC_TZ)
+        start_date = end_date - timedelta(days=EMAIL_CONFIG['DAYS_TO_FETCH'])
+        messages = fetch_emails(service, start_date, end_date, args.label)
+    
+    # Process messages
     for msg in messages:
-        email_data = process_email(service, msg['id'], conn)
-        if email_data:
-            try:
-                conn.execute('''INSERT OR IGNORE INTO emails
-                                (id, thread_id, subject, sender, date, body, labels, raw_data)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                             (email_data['id'], email_data.get('thread_id', ''),  
-                              email_data['subject'], email_data['sender'],
-                              email_data['date'], email_data['body'],
-                              email_data['labels'], email_data['raw_data']))
-                conn.commit()
-
-                # Display in Mountain Time
-                utc_date = datetime.strptime(email_data['date'], '%Y-%m-%d %H:%M:%S %z')
-                display_date = utc_date.astimezone(MOUNTAIN_TZ).strftime('%Y-%m-%d %H:%M:%S %Z')
-                print("Stored email: {} - {}".format(display_date, email_data['subject']))
-                
-            except Exception as e:
-                print("Error storing email: {}".format(e))
-
-    final_count = count_emails(conn)
-    print("Final email count: {}".format(final_count))
-    conn.close()
+        process_email(service, msg['id'], session)
+    
+    # Print summary
+    total_emails = count_emails(session)
+    print(f"\nTotal emails in database: {total_emails}")
+    
+    session.close()
 
 if __name__ == '__main__':
     main()

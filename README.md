@@ -5,29 +5,64 @@ An AI-powered email analysis and management system that uses advanced language m
 
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
-- **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3-Haiku and stores insights
+- **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3 and stores insights
+- **Configuration** (`config/constants.py`): Central configuration for all components
 - **Database**:
   - `db_email_store.db`: Main database for email storage and analysis
-    - `emails`: Raw email data
-    - `email_analysis`: AI analysis results
+  - See [Database Design](docs/database_design.md) for schema details
 
 ## Prerequisites
 1. Python 3.12.8 or higher
 2. Gmail API credentials (`credentials.json`) from Google Cloud Console
-3. Anthropic API key for Claude-3-Haiku
+3. Anthropic API key for Claude-3
 
 ## Setup Instructions
 1. Clone the repository
 2. Create virtual environment: `python3 -m venv venv`
 3. Activate: `source venv/bin/activate`
-4. Install dependencies: `pip install -r requirements.txt`
-5. Set up environment variables:
+4. Install project in development mode:
+   ```bash
+   # This installs the project as an editable package,
+   # making it available in your Python path
+   python3 -m pip install -e .
+   ```
+5. Install dependencies: `pip install -r requirements.txt`
+6. Set up environment variables:
    ```bash
    export ANTHROPIC_API_KEY=your_api_key_here
-   export EMAIL_DB_URL=sqlite:///db_email_store.db      # Optional
-   export ANALYSIS_DB_URL=sqlite:///db_email_analysis.db # Optional
    ```
-6. Place your Gmail API `credentials.json` in the project root
+7. Place your Gmail API `credentials.json` in the project root
+
+## Development Setup
+The project uses setuptools for package management. The `setup.py` file defines:
+- Project metadata
+- Dependencies
+- Package structure
+
+This setup ensures that:
+- All project modules are importable
+- Dependencies are properly tracked
+- Database migrations can find model definitions
+- Tests can import project modules
+
+To make changes to the project structure or dependencies:
+1. Update `setup.py` with new requirements or packages
+2. Reinstall in development mode: `python3 -m pip install -e .`
+
+## Configuration
+The project uses a centralized configuration system in `config/constants.py`. This file contains all configuration settings for:
+
+- API settings (model versions, tokens, temperature)
+- Database configuration (file paths, URLs, table names)
+- Metrics and logging settings
+- Email processing parameters
+
+To modify any settings:
+1. Navigate to `config/constants.py`
+2. Update the relevant configuration section
+3. Changes will be automatically reflected across the codebase
+
+See `config/constants.py` for the full configuration reference.
 
 ## Usage
 1. Fetch emails:
@@ -60,6 +95,19 @@ marian/
 │   └── troubleshooting.md  # Troubleshooting guide
 ├── tests/           # Test files
 └── README.md        # This file
+
+## Documentation
+- [Database Design](docs/database_design.md): Complete database documentation
+- [API Usage](docs/api_usage.md): Guidelines for using external APIs
+- [Development Guide](docs/development.md): Setup and development practices
+
+## Development Standards
+
+- Follow the code standards in `docs/code_standards.md`
+- Pay special attention to SQLAlchemy model standards to avoid common issues:
+  - Use absolute imports for models (`from models.email import Email`)
+  - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)
+  - Follow type hint guidelines for SQLAlchemy 2.0
 
 ## Security and Compliance
 1. **Data Security**
@@ -102,27 +150,11 @@ marian/
    - Never use generic names like `emails.db`
 
 ## Schema Management
-1. **Verification Process**
-   ```python
-   # Example schema verification
-   from sqlalchemy import inspect
-   
-   def verify_schema(engine, model_class):
-       inspector = inspect(engine)
-       table_name = model_class.__tablename__
-       columns = {col.name: col for col in model_class.__table__.columns}
-       db_columns = {col['name']: col for col in inspector.get_columns(table_name)}
-       
-       # Verify columns match
-       missing_in_db = set(columns.keys()) - set(db_columns.keys())
-       if missing_in_db:
-           raise ValueError(f"Columns missing in database: {missing_in_db}")
-   ```
-
-2. **Migration Management**
-   - Track schema changes in migrations
-   - Test migrations in development
-   - Document migration dependencies
+See [Database Design](docs/database_design.md) for complete documentation on:
+- Database schema and design decisions
+- ID handling and validation
+- Migration procedures
+- Data type choices
 
 ## Data Models as Source of Truth
 
@@ -179,6 +211,17 @@ email_fields = {  # DON'T DO THIS
     'date': 'datetime'
 }
 ```
+
+## Testing
+
+We use integration tests that validate functionality against the actual Gmail API. This ensures our code works correctly in real-world conditions. Key test areas include:
+
+- Gmail API authentication
+- Label operations
+- Email fetching and filtering
+- Email processing and storage
+
+For detailed testing information, see [Testing Documentation](docs/testing.md).
 
 ## Known Issues and Solutions
 

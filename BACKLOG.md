@@ -2,6 +2,96 @@
 
 ## High Priority
 
+### Schema Validation and Testing
+**Status**: In Progress
+**Priority**: Highest
+**Description**: Validate and test recent schema changes across the application.
+
+#### Technical Details
+1. Database Schema Testing
+   - Verify new field names in all operations
+   - Test timezone handling
+   - Validate label history schema
+   - Create database migration plan
+   - Test CC/BCC field storage and retrieval
+   - Validate migrations with existing data
+
+2. Component Integration
+   - Update affected components
+   - Test email retrieval with new schema
+   - Verify date/time handling
+   - Update documentation
+   - Test CC/BCC handling in email analysis
+   - Verify CC/BCC display in reports
+
+### Email Processing Prototype
+**Status**: In Progress
+**Priority**: Highest
+**Description**: Implement a working prototype for email retrieval and processing workflow.
+
+#### Technical Details
+1. Email Retrieval
+   - Implement Gmail API connection
+   - Add batch retrieval of messages
+   - Handle rate limiting
+   - Store raw messages in database
+
+2. Email Processing
+   - Parse email content and metadata
+   - Extract key fields (subject, sender, date, body)
+   - Handle different email formats
+   - Process attachments flag
+   - Basic error handling
+
+3. Testing & Validation
+   - Add integration tests
+   - Test with various email formats
+   - Validate data storage
+   - Monitor API usage
+
+#### Success Criteria
+- Can retrieve emails from Gmail
+- Successfully stores in database
+- Handles common email formats
+- Basic error handling in place
+- Reasonable performance with batches
+
+#### Implementation Steps
+1. Complete Gmail API integration
+2. Implement message retrieval
+3. Add database storage
+4. Add basic processing
+5. Add error handling
+6. Test with real data
+
+### Email Processing Improvements
+**Status**: In Progress
+**Priority**: High
+**Description**: Enhance email processing with new fields and validation
+
+#### Technical Details
+1. CC/BCC Implementation
+   - Test with real Gmail messages
+   - Verify storage and retrieval
+   - Handle empty fields correctly
+   - Update processing logic
+   - Add field validation
+   - Test edge cases
+
+2. Email Analysis Enhancement
+   - Add CC/BCC to priority scoring
+   - Include CC/BCC in analysis output
+   - Update report formatting
+   - Add CC/BCC filtering options
+   - Test with various email formats
+
+3. Documentation Updates
+   - Document CC/BCC field usage
+   - Update schema documentation
+   - Add migration guidelines
+   - Update API documentation
+   - Document testing procedures
+
 ### Session Management Testing
 - [ ] Test and refine chat session workflow
   - Test session_manager.py functionality
@@ -32,6 +122,22 @@
   - Key package versions
   - Database status
   - API configurations
+
+### Session Management
+- [ ] Update chat_session_manager.py for new workflow
+  - [ ] Create session summaries in docs/sessions/
+  - [ ] Use standardized file naming (session_YYYYMMDD_HHMM.md)
+  - [ ] Include timezone in timestamps
+  - [ ] Implement session summary template
+  - [ ] Add session file cleanup/archival
+- [ ] Add session summary validation
+  - [ ] Check required sections
+  - [ ] Validate timestamps
+  - [ ] Verify file location
+- [ ] Improve session documentation
+  - [ ] Update workflow documentation
+  - [ ] Add file naming conventions
+  - [ ] Document archival process
 
 ### Setup Script Creation
 **Status**: Planned  
@@ -145,6 +251,138 @@ class DatabaseSessions:
 - More consistent behavior
 - Better code reusability
 
+### Model Improvements
+
+#### Email Analysis Model
+- [ ] Improve type safety and documentation
+  - Add specific type hints for JSON columns
+  - Make nullable status explicit
+  - Document type constraints and validation rules
+  - Priority: Low
+
+- [ ] Standardize date handling
+  - Review action_deadline field type (DateTime vs String from API)
+  - Change Email model date field from TEXT to DateTime(timezone=True)
+  - Create consistent date handling strategy
+  - Priority: Low
+
+- [ ] Future JSON Type Migration
+  - Plan migration of TEXT fields to JSON type
+  - Create data migration script
+  - Add validation for JSON format
+  - Update tests
+  - Priority: Low - after validation improvements
+
+#### Schema Management
+- [ ] Implement model-first approach
+  - Use models as single source of truth
+  - Generate schema migrations from models using Alembic autogenerate
+  - Priority: Medium
+
+### Database
+- [x] Fix ID type mismatch (Completed 2024-12-23)
+  - Changed to TEXT type for email_id and thread_id
+  - Added validation in models and handlers
+  - Updated test data to use realistic Gmail IDs
+
+- [ ] Database Documentation Improvements
+  - Move schema documentation from models to docs/database_design.md
+  - Add ERD diagram
+  - Document validation rules
+  - Add migration guide
+  - Priority: High
+
+- [ ] Add Database Validation Tests
+  - Test ID validation
+  - Test foreign key constraints
+  - Test data type constraints
+  - Priority: Medium
+
+### Database Improvements
+- [ ] Migrate TEXT fields to JSON type
+  - Change analysis fields from TEXT to JSON type
+  - Fields to update:
+    - category
+    - action_type
+    - key_points
+    - people_mentioned
+    - links_found
+    - links_display
+    - full_api_response
+  - Add data migration script
+  - Add validation for JSON format
+  - Update tests
+  - Priority: Low
+
+### Database Cleanup
+- [ ] Legacy Component Cleanup
+  - Remove email_triage table
+  - Archive old analysis database
+  - Update documentation
+  - Priority: Low
+
+- [ ] Batch Processing Implementation
+  - Track batch_id and processing_status
+  - Handle retries and error states
+  - Migrate from email_triage approach
+  - Priority: Medium
+
+- [ ] Schema Optimization
+  - Add indexes for common queries
+  - Consider partitioning by date
+  - Measure and optimize performance
+  - Priority: Low
+
+### Testing Infrastructure
+- [ ] Fix failing tests after schema changes
+  - [ ] Update test database setup
+  - [ ] Fix column name mismatches
+  - [ ] Update mock data and API responses
+- [ ] Improve test data management
+  - [ ] Create reusable test fixtures
+  - [ ] Add database setup helpers
+  - [ ] Improve test isolation
+- [ ] Add integration tests for email processing workflow
+- [ ] Add performance tests for database operations
+
+### Documentation
+- [ ] Document new database schema
+- [ ] Update API documentation
+- [ ] Add migration guide for schema changes
+- [ ] Document test data management
+- [ ] Make documentation DRY
+  - Review all documentation for redundancy
+  - Move common information to central location
+  - Update references to point to central docs
+  - Priority: High
+
+### Code Quality
+- [ ] Improve Gmail API Data Validation
+  - Add GmailMessageValidator for API responses
+  - Add GmailHeaderValidator for message headers
+  - Add type validation for all fields
+  - Add size limits and content validation
+  - Add proper error handling and logging
+  - Update lib_gmail.py to use validators
+  - Add tests for validation
+  - Priority: High
+
 ## Medium Priority
+
+### Documentation Updates
+**Status**: Pending
+**Priority**: Medium
+**Description**: Update documentation to reflect recent schema changes.
+
+#### Areas to Update
+1. API Documentation
+   - Document new field names
+   - Update examples
+   - Add timezone handling guidelines
+
+2. Database Schema
+   - Document new schema
+   - Add migration guidelines
+   - Update field descriptions
 
 ## Low Priority

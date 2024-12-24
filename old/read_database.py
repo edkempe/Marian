@@ -26,7 +26,7 @@ def read_emails(conn, limit=maxResults):
     try:
         cursor = conn.cursor()
         cursor.execute('''
-        SELECT id, subject, sender, date, body, labels, raw_data
+        SELECT id, subject, sender, date, body, labels, full_api_response
         FROM emails
         ORDER BY date DESC
         LIMIT ?''', (limit,))
@@ -39,7 +39,7 @@ def read_emails(conn, limit=maxResults):
                 'date': row[3],
                 'body': row[4],
                 'labels': row[5],
-                'raw_data': row[6]
+                'full_api_response': row[6]  # Complete Gmail API response for future reference
             }
             emails.append(email)
         return emails

@@ -15,111 +15,79 @@ Please review the project documentation and perform the standard checks as outli
    - Core features and functionality
    - Tech stack and dependencies
 
-2. `NEXT_SESSION.md`
+2. `SETUP.md`
+   - Complete setup instructions
+   - Environment configuration
+   - Development workflow
+   - Common issues and solutions
+
+3. `NEXT_SESSION.md`
    - Recent changes and progress
    - Current state of the project
    - Suggested next steps
 
-3. `guidelines.md`
+4. `guidelines.md`
    - Project guidelines and constraints
    - Code style preferences
    - Security requirements
 
-4. `BACKLOG.md`
+5. `BACKLOG.md`
    - Prioritized task list
    - Implementation details
    - Dependencies between tasks
 
 ## Pre-Development Checklist
+1. Review Recent Changes
+   - Check NEXT_SESSION.md for latest updates
+   - Review modified files list
+   - Note any pending tasks or blockers
 
-### 1. Environment Setup
-```bash
-# Activate virtual environment
-source venv/bin/activate
+2. Environment Setup
+   - Activate virtual environment
+   - Install/update dependencies
+   - Check database migrations
+   - Verify test database
 
-# Verify Python version
-python --version
+3. Code Review
+   - Check git status
+   - Review uncommitted changes
+   - Note modified files
+   - Check branch status
 
-# Check installed packages
-pip list
-```
+4. Testing Status
+   - Run test suite
+   - Note any failing tests
+   - Check test coverage
+   - Review test requirements
 
-### 2. Repository Status
-```bash
-# Check git status
-git status
-
-# Pull latest changes
-git pull origin main
-
-# View recent commits
-git log -n 5 --oneline
-```
-
-### 3. Project Structure Review
-```bash
-# View directory structure
-tree -L 2 -I 'venv|__pycache__|*.pyc'
-
-# Check core files
-ls -la *.py
-ls -la models/
-ls -la database/
-```
-
-### 4. Database Status
-```bash
-# Check database files
-ls -la *.db
-
-# Verify database connections
-python -c "from database.config import get_email_session, get_analysis_session; print('Database connections OK')"
-```
-
-### 5. Code Review Checks
-- [ ] Review any open pull requests
-- [ ] Check for pending code reviews
-- [ ] Look for TODO comments in recent changes
-- [ ] Verify test coverage for recent changes
-
-### 6. Documentation Sync
-- [ ] Verify README.md is up to date
-- [ ] Check NEXT_SESSION.md reflects latest changes
-- [ ] Review BACKLOG.md for task priorities
-- [ ] Update documentation if needed
-
-### 7. Development Tools
-- [ ] IDE/Editor configuration
-- [ ] Linter settings
-- [ ] Debugger setup
-- [ ] API keys and credentials
-
-## After Checks
-1. Confirm understanding of current state
-2. Outline implementation plan for chosen task
-3. Create new branch if needed
-4. Start development with clear objectives
-
-## End of Session
-1. Update NEXT_SESSION.md
-2. Commit all changes with clear messages
-3. Push to remote repository
-4. Document any new tasks in BACKLOG.md
+5. Documentation
+   - Check for outdated docs
+   - Review API changes
+   - Note needed updates
+   - Check migration guides
 
 ## Common Commands
 ```bash
-# Activate environment
+# Environment
 source venv/bin/activate
+pip install -r requirements.txt
 
-# Run analysis viewer
-python analysis_viewer.py --timeframe today --detail normal
-
-# Run tests
+# Testing
 python -m pytest
+python -m pytest -v tests/specific_test.py
 
-# Format code
-black .
+# Database
+alembic upgrade head
+alembic history
 
-# Check types
-mypy .
+# Git
+git status
+git branch
+git log --oneline -n 5
 ```
+
+## Troubleshooting
+If you encounter any issues, refer to:
+1. `docs/troubleshooting.md` - Comprehensive troubleshooting guide
+2. `SETUP.md` - Common setup and environment issues
+3. `.env.example` - Required environment variables

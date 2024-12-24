@@ -2,12 +2,11 @@
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Text, Boolean, Float
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.sql import func
 from sqlalchemy.types import TypeDecorator
 from pytz import UTC
 from models.base import Base
-from models.email import Email
 import json
 from pydantic import BaseModel, Field, model_validator
 
@@ -84,42 +83,63 @@ class EmailAnalysisResponse(BaseModel):
 class EmailAnalysis(Base):
     """SQLAlchemy model for storing email analysis data.
     
-    This model stores the analyzed data from emails, including:
+    Maps to the 'email_analysis' table in the database. This model stores analysis data
+    for each email, including:
     - Email identification (email_id, thread_id)
-    - Analysis metadata (date, prompt version)
-    - Content analysis (summary, categories, priority)
-    - Action items and deadlines
-    - Key information (points, people, URLs)
+    - Analysis metadata (dates, prompt version)
+    - Core analysis (summary, category, priority)
+    - Action items (needed, type, deadline)
+    - Extracted data (key points, people, links)
     - Classification (project, topic, sentiment)
-    - Raw API response for debugging
+    - Analysis quality (confidence score)
+    - full_api_response: Complete analysis response
+    
+    Note: This model is the source of truth for the database schema.
+    Any changes should be made here first, then migrated to the database.
     """
     __tablename__ = 'email_analysis'
     __table_args__ = {'extend_existing': True}
 
-    email_id = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
-    thread_id = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails
-    analysis_date = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    prompt_version = Column(Text)
-    summary = Column(Text)
-    category = Column(JSON)  # List of categories
-    priority_score = Column(Integer)
-    priority_reason = Column(Text)
-    action_needed = Column(Boolean)
-    action_type = Column(JSON)  # List of action types
-    action_deadline = Column(DateTime(timezone=True), nullable=True)
-    key_points = Column(JSON)  # List of key points
-    people_mentioned = Column(JSON)  # List of people mentioned
-    links_found = Column(JSON)  # List of links found in the email
-    links_display = Column(JSON)  # List of display text for links
-    project = Column(Text, nullable=True)  # Project name if email is project-related
-    topic = Column(Text, nullable=True)  # Topic classification
-    sentiment = Column(Text, nullable=True)  # Sentiment analysis
-    confidence_score = Column(Float, nullable=True)  # Confidence score of the analysis
-    raw_analysis = Column(JSON)  # Full API response
-    email = relationship("Email", backref="analysis")
+    # Email identification
+    email_id: Mapped[str] = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
+    thread_id: Mapped[str] = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails
+    
+    # Analysis metadata
+    analysis_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    analyzed_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))  # When analysis was performed
+    prompt_version: Mapped[str] = Column(Text)  # Version of the prompt used for analysis
+    
+    # Content analysis
+    summary: Mapped[str] = Column(Text)  # Brief summary of the email
+    category: Mapped[Dict] = Column(JSON)  # List of categories
+    priority_score: Mapped[int] = Column(Integer)  # Priority score (1-5)
+    priority_reason: Mapped[str] = Column(Text)  # Explanation for priority score
+    
+    # Action items
+    action_needed: Mapped[bool] = Column(Boolean)  # Whether action is required
+    action_type: Mapped[List] = Column(JSON)  # List of action types
+    action_deadline: Mapped[Optional[datetime]] = Column(DateTime(timezone=True), nullable=True)  # When action is needed by
+    
+    # Key information
+    key_points: Mapped[List] = Column(JSON)  # List of key points from email
+    people_mentioned: Mapped[List] = Column(JSON)  # List of people mentioned
+    links_found: Mapped[List] = Column(JSON)  # List of links found in the email
+    links_display: Mapped[List] = Column(JSON)  # List of display text for links
+    
+    # Classification
+    project: Mapped[Optional[str]] = Column(Text, nullable=True)  # Project name if email is project-related
+    topic: Mapped[Optional[str]] = Column(Text, nullable=True)  # Topic classification
+    sentiment: Mapped[Optional[str]] = Column(Text, nullable=True)  # Sentiment analysis
+    confidence_score: Mapped[Optional[float]] = Column(Float, nullable=True)  # Confidence score of the analysis
+    
+    # Raw data
+    full_api_response: Mapped[Dict] = Column(JSON)  # Full API response for debugging
+    
+    # Relationships
+    email = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
 
     @classmethod
-    def from_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
+    def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
         return cls(
             email_id=email_id,
@@ -141,5 +161,5 @@ class EmailAnalysis(Base):
             topic=response.topic,
             sentiment=response.sentiment,
             confidence_score=response.confidence_score,
-            raw_analysis=response.model_dump()
+            full_api_response=response.model_dump()
         )
