@@ -45,7 +45,7 @@ TABLE_CONFIG = {
     'TAGS_TABLE': 'tags',
     'CATALOG_TAGS_TABLE': 'catalog_tags',
     'CHAT_HISTORY_TABLE': 'chat_history',
-    'RELATIONSHIPS_TABLE': 'item_relationships',
+    'RELATIONSHIPS_TABLE': 'item_relationships'
 }
 
 SEARCH_CONFIG = {
@@ -71,22 +71,26 @@ RELATIONSHIP_TYPES = [
 CREATE_CATALOG_TABLE = """
 CREATE TABLE IF NOT EXISTS catalog_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
+    title TEXT NOT NULL COLLATE NOCASE,
     description TEXT,
     content TEXT,
-    source TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    metadata JSON
+    deleted INTEGER DEFAULT 0,
+    archived_date INTEGER,  -- UTC Unix timestamp
+    created_date INTEGER DEFAULT (strftime('%s', 'now')),
+    modified_date INTEGER DEFAULT (strftime('%s', 'now')),
+    UNIQUE(title) ON CONFLICT FAIL
 )
 """
 
 CREATE_TAGS_TABLE = """
 CREATE TABLE IF NOT EXISTS tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name TEXT NOT NULL COLLATE NOCASE,
+    deleted INTEGER DEFAULT 0,
+    archived_date INTEGER,  -- UTC Unix timestamp
+    created_date INTEGER DEFAULT (strftime('%s', 'now')),
+    modified_date INTEGER DEFAULT (strftime('%s', 'now')),
+    UNIQUE(name) ON CONFLICT FAIL
 )
 """
 
@@ -106,8 +110,8 @@ CREATE TABLE IF NOT EXISTS chat_history (
     session_id TEXT NOT NULL,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    metadata JSON
+    metadata JSON,
+    created_date INTEGER DEFAULT (strftime('%s', 'now'))
 )
 """
 
@@ -118,7 +122,7 @@ CREATE TABLE IF NOT EXISTS item_relationships (
     target_id INTEGER,
     relationship_type TEXT NOT NULL,
     metadata JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_date INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (source_id) REFERENCES catalog_items (id),
     FOREIGN KEY (target_id) REFERENCES catalog_items (id)
 )
