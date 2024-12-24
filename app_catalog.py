@@ -590,3 +590,48 @@ class CatalogChat:
             
         finally:
             conn.close()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Marian Catalog System")
+    parser.add_argument("--interactive", action="store_true", help="Run in interactive mode")
+    parser.add_argument("--test", action="store_true", help="Run integration tests")
+    args = parser.parse_args()
+    
+    chat = CatalogChat(interactive=args.interactive)
+    
+    if args.test:
+        chat.run_integration_tests()
+    else:
+        while True:
+            try:
+                command = input("\nEnter command (or 'help' for commands, 'exit' to quit): ").strip()
+                if command.lower() == 'exit':
+                    break
+                elif command.lower() == 'help':
+                    print("\nAvailable commands:")
+                    print("  add <title> - <content>  : Add a new catalog item")
+                    print("  tag <title> <tag>        : Add a tag to an item")
+                    print("  list                     : List all items")
+                    print("  list_tags                : List all tags")
+                    print("  search <query>           : Search items")
+                    print("  archive <title>          : Archive an item")
+                    print("  archive_tag <name>       : Archive a tag")
+                    print("  restore <title>          : Restore an archived item")
+                    print("  restore_tag <name>       : Restore an archived tag")
+                    print("  delete <title>           : Permanently delete an item")
+                    print("  delete_tag <name>        : Permanently delete a tag")
+                    print("  exit                     : Exit the program")
+                    continue
+                
+                parts = command.split(maxsplit=1)
+                cmd = parts[0].lower()
+                args = parts[1] if len(parts) > 1 else ""
+                
+                response = chat.process_input(cmd, args)
+                print(response)
+                
+            except KeyboardInterrupt:
+                print("\nExiting...")
+                break
+            except Exception as e:
+                print(f"Error: {str(e)}")
