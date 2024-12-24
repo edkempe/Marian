@@ -212,6 +212,17 @@ email_fields = {  # DON'T DO THIS
 }
 ```
 
+## Testing
+
+We use integration tests that validate functionality against the actual Gmail API. This ensures our code works correctly in real-world conditions. Key test areas include:
+
+- Gmail API authentication
+- Label operations
+- Email fetching and filtering
+- Email processing and storage
+
+For detailed testing information, see [Testing Documentation](docs/testing.md).
+
 ## Known Issues and Solutions
 
 ### Anthropic Client Initialization Error
