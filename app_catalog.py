@@ -458,6 +458,19 @@ class CatalogChat:
                     for tag in tags
                 )
             
+            elif command == 'list':
+                include_archived = args.lower() == 'archived'
+                items = session.query(CatalogItem)
+                if not include_archived:
+                    items = items.filter(CatalogItem.deleted == False)
+                items = items.order_by(CatalogItem.modified_date.desc()).all()
+                if not items:
+                    return "No items found"
+                return "\n".join(
+                    f"{item.title} {'(archived)' if item.deleted else ''}: {item.content[:100]}..."
+                    for item in items
+                )
+            
             elif command == 'add':
                 if not args:
                     return "Please provide title and content for the catalog item"
