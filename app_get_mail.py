@@ -102,17 +102,28 @@ def clear_database(session: Session = None):
     session.commit()
 
 def get_label_id(service, label_name):
-    """Get the ID of a label by its name."""
+    """Get the ID of a label by its name.
+    
+    Args:
+        service: Gmail API service instance
+        label_name: Name of the label to find
+        
+    Returns:
+        str: Label ID if found, None otherwise
+    """
+    if not label_name:
+        return None
+        
     try:
         results = service.users().labels().list(userId='me').execute()
         labels = results.get('labels', [])
         
         for label in labels:
-            if label['name'] == label_name:
+            if label.get('name') == label_name:
                 return label['id']
         return None
     except Exception as error:
-        print(f'An error occurred: {error}')
+        print(f'Failed to get label ID: {error}')
         return None
 
 def fetch_emails(service, start_date=None, end_date=None, label=None):
@@ -275,59 +286,19 @@ def fetch_newer_emails(session, service, label=None):
     return []
 
 def list_labels(service):
-    """List all available Gmail labels and store them in the database with history.
+    """List all available Gmail labels.
     
     Args:
-        service: Authenticated Gmail API service instance.
+        service: Authenticated Gmail API service instance
+        
+    Returns:
+        list: List of label dictionaries with 'id' and 'name' keys
     """
     try:
-        # Get all labels
         results = service.users().labels().list(userId='me').execute()
-        labels = results.get('labels', [])
-        
-        # Connect to label database
-        session = get_email_session()
-        
-        # Initialize database if needed
-        init_label_database(session)
-        
-        # Update label history
-        current_time = datetime.utcnow()
-        
-        # Update label history
-        for label in labels:
-            # Check if label exists
-            existing_label = session.query(GmailLabel).filter_by(label_id=label['id']).first()
-            if existing_label:
-                # Label exists, update last_seen_at
-                existing_label.last_seen_at = current_time
-                session.commit()
-            else:
-                # New label, insert it
-                new_label = GmailLabel(
-                    label_id=label['id'],
-                    name=label['name'],
-                    type=label.get('type', ''),
-                    first_seen_at=current_time,
-                    last_seen_at=current_time
-                )
-                session.add(new_label)
-                session.commit()
-        
-        # Mark labels not seen in this update as deleted
-        session.query(GmailLabel).filter(
-            GmailLabel.last_seen_at < current_time
-        ).update({
-            'is_active': False,
-            'deleted_at': current_time
-        })
-        session.commit()
-        
-        session.close()
-        
-        return labels
-    except Exception as e:
-        print(f"Error listing labels: {str(e)}")
+        return results.get('labels', [])
+    except Exception as error:
+        print(f'Failed to list labels: {error}')
         return []
 
 def main():
