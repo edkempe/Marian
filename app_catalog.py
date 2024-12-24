@@ -49,8 +49,9 @@ class CatalogChat:
         conn.close()
         
     def run_integration_tests(self):
-        """Run a series of integration tests on the database and initialize with useful data"""
-        print("Running integration tests and initializing database...")
+        """Run integration tests for the catalog system"""
+        print("\nRunning integration tests...")
+        
         tests_passed = 0
         total_tests = 0
         
@@ -59,101 +60,91 @@ class CatalogChat:
             total_tests += 1
             try:
                 test_func()
-                print(f"✓ {name}")
                 tests_passed += 1
+                print(f"✓ {name}")
+            except AssertionError as e:
+                print(f"✗ {name}: {str(e)}")
             except Exception as e:
-                print(f"✗ {name}")
-                print(f"  Error: {str(e)}")
-        
-        # Test database connection and schema
-        def test_db_setup():
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = cursor.fetchall()
-            conn.close()
-            assert len(tables) >= 5, "Not all tables were created"
-        
-        # Initialize catalog with core items
-        def init_catalog_items():
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+                print(f"✗ {name}: Unexpected error: {str(e)}")
+
+        def test_duplicate_handling():
+            """Test duplicate handling for items and tags"""
+            # Test duplicate item titles
+            test_title = "Test Duplicate Item"
+            test_content = "Test content"
             
-            # Add core documentation items
-            items = [
-                ("Marian User Guide", "Main documentation for using the Marian system", "Complete guide for using Marian's features and capabilities"),
-                ("Email Analysis Guide", "Documentation for email processing features", "Details about email analysis, classification, and storage"),
-                ("Catalog System Guide", "Guide for the catalog and information management", "Documentation about organizing and retrieving information"),
-            ]
+            # Add initial item
+            response = self.process_input("add", f"{test_title} - {test_content}")
+            assert "Added catalog item:" in response, "Failed to add initial item"
             
-            for title, desc, content in items:
-                cursor.execute(
-                    f"INSERT OR IGNORE INTO {TABLE_CONFIG['CATALOG_TABLE']} (title, description, content) VALUES (?, ?, ?)",
-                    (title, desc, content)
-                )
+            # Try adding duplicate item
+            response = self.process_input("add", f"{test_title} - Different content")
+            assert "Error: An item with title" in response, "Duplicate item check failed"
             
-            conn.commit()
-            conn.close()
+            # Try adding case-variant duplicate
+            response = self.process_input("add", f"{test_title.upper()} - Different content")
+            assert "Error: An item with title" in response, "Case-insensitive duplicate check failed"
             
-        # Initialize tag system
-        def init_tag_system():
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            # Test duplicate tags
+            test_tag = "TestDuplicateTag"
             
-            # Add core organizational tags
-            core_tags = [
-                "documentation",
-                "guide",
-                "email",
-                "catalog",
-                "system",
-                "user",
-                "analysis",
-                "core"
-            ]
+            # Add initial tag
+            response = self.process_input("tag", f"{test_title} {test_tag}")
+            assert f"Tagged '{test_title}' with '{test_tag}'" in response, "Failed to add initial tag"
             
-            for tag in core_tags:
-                cursor.execute(
-                    f"INSERT OR IGNORE INTO {TABLE_CONFIG['TAGS_TABLE']} (name) VALUES (?)",
-                    (tag,)
-                )
+            # Try adding duplicate tag to same item
+            response = self.process_input("tag", f"{test_title} {test_tag}")
+            assert "is already applied to" in response, "Duplicate tag application check failed"
             
-            # Link tags to items
-            cursor.execute(f"SELECT id FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title = ?", ("Marian User Guide",))
-            guide_id = cursor.fetchone()[0]
+            # Try adding case-variant duplicate tag
+            response = self.process_input("tag", f"{test_title} {test_tag.upper()}")
+            assert "Error: Tag" in response or "is already applied to" in response, "Case-insensitive tag check failed"
             
-            cursor.execute(f"SELECT id FROM {TABLE_CONFIG['TAGS_TABLE']} WHERE name IN ('documentation', 'guide', 'user', 'core')")
-            tag_ids = cursor.fetchall()
+            # Test duplicate handling with archived items
+            # Archive the item
+            response = self.process_input("archive", test_title)
+            assert "archived" in response.lower(), "Failed to archive item"
             
-            for tag_id in tag_ids:
-                cursor.execute(
-                    f"INSERT OR IGNORE INTO {TABLE_CONFIG['CATALOG_TAGS_TABLE']} (catalog_id, tag_id) VALUES (?, ?)",
-                    (guide_id, tag_id[0])
-                )
+            # Try adding item with same title
+            response = self.process_input("add", f"{test_title} - New content")
+            assert "Found archived item" in response, "Archived item detection failed"
             
-            conn.commit()
-            conn.close()
-        
-        # Test relationships
-        def test_relationships():
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            # Clean up
+            self.process_input("delete", test_title)
+
+        def test_archived_item_handling():
+            """Test handling of archived items and tags"""
+            test_title = "Test Archive Item"
+            test_content = "Test content"
+            test_tag = "TestArchiveTag"
             
-            # Get our core documentation items
-            cursor.execute(f"SELECT id FROM {TABLE_CONFIG['CATALOG_TABLE']} WHERE title LIKE '%Guide%'")
-            guide_ids = cursor.fetchall()
+            # Add and tag item
+            self.process_input("add", f"{test_title} - {test_content}")
+            self.process_input("tag", f"{test_title} {test_tag}")
             
-            if len(guide_ids) >= 2:
-                # Create relationships between guides
-                cursor.execute(
-                    f"INSERT OR IGNORE INTO {TABLE_CONFIG['RELATIONSHIPS_TABLE']} (source_id, target_id, relationship_type) VALUES (?, ?, ?)",
-                    (guide_ids[0][0], guide_ids[1][0], 'related_to')
-                )
+            # Archive item
+            response = self.process_input("archive", test_title)
+            assert "archived" in response.lower(), "Failed to archive item"
             
-            conn.commit()
-            conn.close()
+            # Try to tag archived item
+            response = self.process_input("tag", f"{test_title} NewTag")
+            assert "is archived" in response, "Should prevent tagging archived items"
             
-        # Test complete lifecycle of catalog items and tags
+            # Archive tag
+            response = self.process_input("archive_tag", test_tag)
+            assert "archived" in response.lower(), "Failed to archive tag"
+            
+            # Try to use archived tag
+            new_title = "Another Test Item"
+            self.process_input("add", f"{new_title} - Some content")
+            response = self.process_input("tag", f"{new_title} {test_tag}")
+            assert "Found archived tag" in response, "Should detect archived tag"
+            
+            # Clean up
+            self.process_input("delete", test_title)
+            self.process_input("delete", new_title)
+            self.process_input("delete_tag", test_tag)
+
         def test_full_lifecycle():
             """Test complete lifecycle of catalog items and tags"""
             print("\nRunning full lifecycle test:")
@@ -415,10 +406,9 @@ class CatalogChat:
                 conn.commit()
                 conn.close()
                 
-        run_test("Database setup", test_db_setup)
-        run_test("Initialize catalog items", init_catalog_items)
-        run_test("Initialize tag system", init_tag_system)
-        run_test("Test relationships", test_relationships)
+        # Run all tests
+        run_test("Test duplicate handling", test_duplicate_handling)
+        run_test("Test archived item handling", test_archived_item_handling)
         run_test("Test full lifecycle", test_full_lifecycle)
         
         print(f"\nIntegration tests complete: {tests_passed}/{total_tests} passed")
