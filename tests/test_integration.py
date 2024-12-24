@@ -2,7 +2,7 @@
 import pytest
 from datetime import datetime, timedelta
 from lib_gmail import GmailAPI
-from app_get_mail import fetch_emails, process_email, list_labels
+from app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
 from models.email import Email
 from email.utils import parsedate_to_datetime
 from constants import DATABASE_CONFIG, EMAIL_CONFIG
@@ -290,3 +290,15 @@ def test_email_counting(gmail_api, test_db_session):
     
     # Verify counts are consistent
     assert recent_count <= total_count
+
+def test_database_session_management():
+    """Test database session management in real application context."""
+    from app_get_mail import get_email_session, init_database
+    
+    # Test session context manager
+    with get_email_session() as session:
+        init_database(session)
+        assert session.bind is not None
+        # Try a simple query
+        result = session.query(Email).first()
+        assert isinstance(result, Email) or result is None

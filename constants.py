@@ -63,6 +63,7 @@ class EmailConfig(TypedDict):
     BATCH_SIZE: int
     MAX_RETRIES: int
     RETRY_DELAY: int
+    DAYS_TO_FETCH: int
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
@@ -141,9 +142,10 @@ LOGGING_CONFIG: LoggingConfig = {
 
 # Email Processing Configuration
 EMAIL_CONFIG: EmailConfig = {
-    'BATCH_SIZE': 5,
-    'MAX_RETRIES': 3,
-    'RETRY_DELAY': 5,  # seconds
+    'BATCH_SIZE': 100,  # Number of emails to process in one batch
+    'MAX_RETRIES': 3,   # Maximum number of retry attempts for failed operations
+    'RETRY_DELAY': 5,   # Delay in seconds between retry attempts
+    'DAYS_TO_FETCH': 30 # Number of days of emails to fetch by default
 }
 
 # Metrics Configuration
