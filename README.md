@@ -96,6 +96,16 @@ marian/
 ├── tests/           # Test files
 └── README.md        # This file
 
+### Core Components
+- Email Processing: Handles email fetching and analysis
+- Catalog System: Manages information organization and retrieval ([CATALOG_BACKLOG.md](CATALOG_BACKLOG.md))
+
+### Documentation
+- `README.md`: Project overview and setup instructions
+- `BACKLOG.md`: Main project backlog
+- `CATALOG_BACKLOG.md`: Catalog system features and tasks
+- `NEXT_SESSION.md`: Current development priorities
+
 ## Documentation
 - [Database Design](docs/database_design.md): Complete database documentation
 - [API Usage](docs/api_usage.md): Guidelines for using external APIs

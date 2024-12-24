@@ -42,7 +42,7 @@
 4. Update documentation
 
 ## Reference Tasks
-See BACKLOG.md for full task list, including:
+See [CATALOG_BACKLOG.md](CATALOG_BACKLOG.md) for full task list, including:
 - Schema validation and testing
 - Email processing improvements
 - Documentation updates
