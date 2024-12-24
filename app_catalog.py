@@ -124,7 +124,8 @@ class CatalogChat:
                     session.add(item2)
                     session.commit()
                     assert False, "Should not allow duplicate titles"
-                except IntegrityError:
+                except ValueError as e:
+                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
                     session.rollback()
                 
                 # Try adding case-variant duplicate
@@ -133,7 +134,8 @@ class CatalogChat:
                     session.add(item3)
                     session.commit()
                     assert False, "Should not allow case-variant duplicates"
-                except IntegrityError:
+                except ValueError as e:
+                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
                     session.rollback()
                 
                 # Test duplicate tags
@@ -149,7 +151,8 @@ class CatalogChat:
                     session.add(tag2)
                     session.commit()
                     assert False, "Should not allow duplicate tags"
-                except IntegrityError:
+                except ValueError as e:
+                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
                     session.rollback()
                 
                 # Try adding case-variant duplicate tag
@@ -158,7 +161,8 @@ class CatalogChat:
                     session.add(tag3)
                     session.commit()
                     assert False, "Should not allow case-variant tag duplicates"
-                except IntegrityError:
+                except ValueError as e:
+                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
                     session.rollback()
                 
                 # Test duplicate handling with archived items
@@ -173,7 +177,8 @@ class CatalogChat:
                     session.add(item4)
                     session.commit()
                     assert False, "Should not allow duplicate titles even with archived items"
-                except IntegrityError:
+                except ValueError as e:
+                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
                     session.rollback()
                 
                 # Clean up
@@ -184,10 +189,11 @@ class CatalogChat:
         
         def test_archived_item_handling():
             """Test handling of archived items and tags"""
-            test_title = "Test Archive Item"
+            test_marker = "ARCHIVED_TEST_" + datetime.datetime.now().isoformat()
+            test_title = f"{test_marker}_item"
             test_content = "Test content"
-            test_tag = "TestArchiveTag"
-            new_item_title = "Another Test Item"
+            test_tag = f"{test_marker}_tag"
+            new_item_title = f"{test_marker}_another_item"
             
             session = self.get_session()
             try:
@@ -214,7 +220,7 @@ class CatalogChat:
                 
                 # Try to tag archived item
                 try:
-                    new_tag = Tag(name="NewTag")
+                    new_tag = Tag(name=f"{test_marker}_new_tag")
                     session.add(new_tag)
                     session.commit()
                     
@@ -250,7 +256,7 @@ class CatalogChat:
                 
             finally:
                 session.close()
-        
+
         def test_full_lifecycle():
             """Test complete lifecycle of catalog items and tags"""
             test_marker = "LIFECYCLE_TEST_" + datetime.datetime.now().isoformat()
@@ -261,13 +267,16 @@ class CatalogChat:
                 # Clean up any leftover test data
                 self.cleanup_test_data(session, test_marker)
                 
-                # 1. Create test tag
-                print("  Creating test tag...")
-                test_tag_name = f"{test_marker}_tag"
-                tag = Tag(name=test_tag_name)
-                session.add(tag)
-                session.commit()
-                self.test_logger.debug(f"Created tag {test_tag_name}")
+                # 1. Create test tags
+                print("  Creating test tags...")
+                test_tags = []
+                for i in range(3):
+                    tag_name = f"{test_marker}_tag_{i}"
+                    tag = Tag(name=tag_name)
+                    session.add(tag)
+                    session.commit()
+                    test_tags.append(tag)
+                    self.test_logger.debug(f"Created tag {tag_name}")
                 
                 # 2. Add test content
                 print("  Adding test content...")
@@ -277,44 +286,33 @@ class CatalogChat:
                 session.commit()
                 self.test_logger.debug(f"Added item {test_title}")
                 
-                # Get random selection of existing tags
-                existing_tags = session.query(Tag).filter(
-                    Tag.name != test_tag_name,
-                    ~Tag.name.like("Test%"),  # Exclude other test tags
-                    Tag.deleted == False
-                ).all()
-                
                 # Apply tags
                 print("  Applying tags...")
-                # Apply test tag
-                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
-                session.add(catalog_tag)
-                session.commit()
-                
-                # Apply existing tags
-                for existing_tag in existing_tags:
-                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=existing_tag.id)
+                for tag in test_tags:
+                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
                     session.add(catalog_tag)
                     session.commit()
                 
-                tag_names = [existing_tag.name for existing_tag in existing_tags]
-                self.test_logger.debug(f"Applied test tag {test_tag_name} and existing tags: {', '.join(tag_names)} to {test_title}")
+                tag_names = [tag.name for tag in test_tags]
+                self.test_logger.debug(f"Applied tags: {', '.join(tag_names)} to {test_title}")
                 
                 # Verify findable by each tag
                 print("  Verifying tag search...")
-                for existing_tag in [tag] + existing_tags:
-                    result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(Tag.name == existing_tag.name).first()
-                    assert result and result.title == test_title, f"Item not found by tag {existing_tag.name}"
+                for tag in test_tags:
+                    result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
+                        Tag.name == tag.name,
+                        CatalogItem.deleted == False
+                    ).first()
+                    assert result and result.title == test_title, f"Item not found by tag {tag.name}"
                 self.test_logger.debug("Verified item findable by all tags")
                 
                 # Query by title and verify all tags present
                 print("  Verifying content query...")
                 tags = session.query(Tag).join(CatalogTag).join(CatalogItem).filter(CatalogItem.title == test_title).all()
-                assert len(tags) == len(existing_tags) + 1, "Wrong number of tags found"
+                assert len(tags) == len(test_tags), "Wrong number of tags found"
                 tag_names = set(tag.name for tag in tags)
-                assert test_tag_name in tag_names, "Test tag not found"
-                for existing_tag in existing_tags:
-                    assert existing_tag.name in tag_names, f"Tag {existing_tag.name} not found"
+                for tag in test_tags:
+                    assert tag.name in tag_names, f"Tag {tag.name} not found"
                 self.test_logger.debug(f"Verified item has all expected tags")
                 
                 # Update content and verify tags remain
@@ -327,10 +325,11 @@ class CatalogChat:
                 
                 # Test tag renaming
                 print("  Testing tag renaming...")
-                updated_tag_name = f"{test_tag_name}_updated"
-                tag.name = updated_tag_name
+                test_tag = test_tags[0]
+                updated_tag_name = f"{test_tag.name}_updated"
+                test_tag.name = updated_tag_name
                 session.commit()
-                self.test_logger.debug(f"Renamed tag from {test_tag_name} to {updated_tag_name}")
+                self.test_logger.debug(f"Renamed tag from {test_tag.name} to {updated_tag_name}")
                 
                 # Verify item findable by new tag name
                 result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(Tag.name == updated_tag_name).first()
@@ -339,12 +338,12 @@ class CatalogChat:
                 
                 # Test tag soft deletion
                 print("  Testing tag soft deletion...")
-                tag.deleted = True
+                test_tag.deleted = True
                 session.commit()
                 self.test_logger.debug(f"Soft deleted tag {updated_tag_name}")
                 
                 # Verify tag exists in archive
-                result = session.query(Tag).filter(Tag.id == tag.id).first()
+                result = session.query(Tag).filter(Tag.id == test_tag.id).first()
                 assert result.deleted, "Tag not marked as deleted"
                 self.test_logger.debug("Verified tag exists in archive")
                 
@@ -354,7 +353,7 @@ class CatalogChat:
                 
                 # Test tag restoration
                 print("  Testing tag restoration...")
-                tag.deleted = False
+                test_tag.deleted = False
                 session.commit()
                 self.test_logger.debug(f"Restored tag {updated_tag_name}")
                 
@@ -389,7 +388,7 @@ class CatalogChat:
                 raise
             finally:
                 session.close()
-        
+
         # Run all tests
         run_test("Test duplicate handling", test_duplicate_handling)
         run_test("Test archived item handling", test_archived_item_handling)
