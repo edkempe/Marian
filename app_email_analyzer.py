@@ -234,7 +234,7 @@ Content: {email_data.get('content', '')}"""
             logger.error(f"Database error for email {email_id}: {str(e)}")
             raise RuntimeError(f"Database error: {str(e)}")
 
-    def process_emails(self, batch_size: int = EMAIL_CONFIG['BATCH_SIZE']):
+    def process_emails(self, count: int = EMAIL_CONFIG['COUNT']):
         """Process a batch of unanalyzed emails."""
         try:
             # Test API connection first
@@ -251,25 +251,31 @@ Content: {email_data.get('content', '')}"""
 
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
+                email_session.execute(text("ATTACH DATABASE 'db_email_analysis.db' AS analysis_db"))
+                
                 unanalyzed = email_session.execute(text("""
                     SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
                            e.labels, e.full_api_response, e.thread_id
                     FROM emails e
                     WHERE NOT EXISTS (
-                        SELECT 1 FROM email_analysis a 
+                        SELECT 1 FROM analysis_db.email_analysis a 
                         WHERE a.email_id = e.id AND a.thread_id = e.thread_id
                     )
-                    LIMIT :batch_size
-                """), {"batch_size": batch_size}).mappings().all()
+                    LIMIT :count
+                """), {"count": count}).mappings().all()
                 
+                if not unanalyzed:
+                    logger.info("no_unanalyzed_emails_found")
+                    return
+                    
                 logger.info("processing_batch", count=len(unanalyzed))
                 
                 # Process each email
                 for i, email_data in enumerate(unanalyzed):
-                    # Rate limit: process 5 emails then wait to avoid hitting API limits
-                    if i > 0 and i % 5 == 0:
+                    # Rate limit: Process batch of emails then pause to avoid hitting API limits
+                    if i > 0 and i % EMAIL_CONFIG['BATCH_SIZE'] == 0:
                         logger.info("rate_limit_pause", processed=i)
-                        time.sleep(60)  # Wait 60 seconds to respect rate limit
+                        time.sleep(EMAIL_CONFIG['RATE_LIMIT']['PAUSE_SECONDS'])
                         
                     try:
                         email_data = dict(email_data)
@@ -408,14 +414,14 @@ def log_validation_error(error_type: str, error_message: str, response_text: str
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description='Email analyzer with configurable batch size')
-    parser.add_argument('--batch_size', type=int, default=EMAIL_CONFIG['BATCH_SIZE'],
-                      help='Number of emails to process in each batch (default: {})'.format(EMAIL_CONFIG['BATCH_SIZE']))
+    parser = argparse.ArgumentParser(description='Email analyzer with configurable email count')
+    parser.add_argument('--count', type=int, default=EMAIL_CONFIG['COUNT'],
+                      help='Number of emails to process (default: {})'.format(EMAIL_CONFIG['COUNT']))
     args = parser.parse_args()
 
     try:
         analyzer = EmailAnalyzer()
-        analyzer.process_emails(batch_size=args.batch_size)
+        analyzer.process_emails(count=args.count)
     except Exception as e:
         logger.error("main_error", error=str(e))
         raise

@@ -60,10 +60,12 @@ class LoggingConfig(TypedDict):
 
 class EmailConfig(TypedDict):
     """Type hints for email processing configuration."""
-    BATCH_SIZE: int
+    COUNT: int
+    BATCH_SIZE: int          # For rate limiting
     MAX_RETRIES: int
     RETRY_DELAY: int
     DAYS_TO_FETCH: int
+    RATE_LIMIT: Dict[str, Union[int, float]]
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
@@ -142,10 +144,15 @@ LOGGING_CONFIG: LoggingConfig = {
 
 # Email Processing Configuration
 EMAIL_CONFIG: EmailConfig = {
-    'BATCH_SIZE': 100,  # Number of emails to process in one batch
-    'MAX_RETRIES': 3,   # Maximum number of retry attempts for failed operations
-    'RETRY_DELAY': 5,   # Delay in seconds between retry attempts
-    'DAYS_TO_FETCH': 30 # Number of days of emails to fetch by default
+    'COUNT': 100,            # Number of emails to process in one run
+    'BATCH_SIZE': 15,        # Number of emails to process before pausing
+    'MAX_RETRIES': 3,        # Maximum number of retry attempts for failed operations
+    'RETRY_DELAY': 5,        # Delay in seconds between retry attempts
+    'DAYS_TO_FETCH': 30,     # Number of days of emails to fetch by default
+    'RATE_LIMIT': {
+        'REQUESTS_PER_MINUTE': 45,  # Keep slightly under 50 RPM limit
+        'PAUSE_SECONDS': 20         # Pause duration to maintain rate limit
+    }
 }
 
 # Metrics Configuration
