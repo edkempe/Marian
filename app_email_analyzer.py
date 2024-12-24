@@ -4,27 +4,24 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Tuple
 import anthropic
 import json
-import re
-from dotenv import load_dotenv
-import os
-from prometheus_client import Counter, start_http_server
-import structlog
 import time
 import argparse
+from dotenv import load_dotenv
 from sqlalchemy import text
-
-from models.email import Email
-from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
+import sqlalchemy.exc
+from structlog import get_logger
+from prometheus_client import start_http_server as start_prometheus_server
 from database.config import get_email_session, get_analysis_session
-from constants import API_CONFIG, EMAIL_CONFIG
+from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
+from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
 
 # Set up structured logging
-logger = structlog.get_logger()
+logger = get_logger()
 
 def start_metrics_server(port: int) -> None:
     """Start Prometheus metrics server."""
     try:
-        start_http_server(port)
+        start_prometheus_server(port)
         logger.info("metrics_server_started", port=port)
     except Exception as e:
         logger.error("metrics_server_error", error=str(e))
@@ -181,41 +178,38 @@ Content: {email_data.get('content', '')}"""
         return full_urls, display_urls
 
     def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
-        """Save the analysis to the database.
-        
-        Args:
-            email_id: Gmail message ID (string)
-            thread_id: Gmail thread ID (string)
-            analysis: EmailAnalysisResponse object
-            raw_json: Raw JSON response from analysis
-            
-        Raises:
-            ValueError: If email_id or thread_id is invalid
-            RuntimeError: If database operation fails
-        """
-        # Validate IDs
-        if not isinstance(email_id, str) or not email_id.strip():
-            raise ValueError("email_id must be a non-empty string")
-        if not isinstance(thread_id, str) or not thread_id.strip():
-            raise ValueError("thread_id must be a non-empty string")
-            
+        """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
-                existing = session.query(EmailAnalysis).filter_by(email_id=email_id).first()
+                # Check if analysis already exists
+                existing = session.query(EmailAnalysis).filter_by(
+                    email_id=email_id, thread_id=thread_id
+                ).first()
+                
+                # Create or update analysis object
                 analysis_obj = existing or EmailAnalysis(email_id=email_id, thread_id=thread_id)
+                
+                # Convert action_deadline to datetime if present
+                if analysis.action_deadline:
+                    try:
+                        action_deadline = datetime.strptime(analysis.action_deadline, '%Y-%m-%d')
+                    except ValueError:
+                        action_deadline = None
+                else:
+                    action_deadline = None
                 
                 # Update fields
                 analysis_obj.summary = analysis.summary[:100]  # Update summary field
-                analysis_obj.category = analysis.category
+                analysis_obj.category = ','.join(analysis.category)
                 analysis_obj.priority_score = analysis.priority_score
                 analysis_obj.priority_reason = analysis.priority_reason
                 analysis_obj.action_needed = analysis.action_needed
-                analysis_obj.action_type = analysis.action_type
-                analysis_obj.action_deadline = analysis.action_deadline
-                analysis_obj.key_points = analysis.key_points
-                analysis_obj.people_mentioned = analysis.people_mentioned
-                analysis_obj.links_found = analysis.links_found
-                analysis_obj.links_display = analysis.links_display
+                analysis_obj.action_type = ','.join(analysis.action_type)
+                analysis_obj.action_deadline = action_deadline
+                analysis_obj.key_points = ','.join(analysis.key_points)
+                analysis_obj.people_mentioned = ','.join(analysis.people_mentioned)
+                analysis_obj.links_found = ','.join(analysis.links_found)
+                analysis_obj.links_display = ','.join(analysis.links_display)
                 analysis_obj.project = analysis.project
                 analysis_obj.topic = analysis.topic
                 analysis_obj.sentiment = analysis.sentiment
@@ -258,7 +252,7 @@ Content: {email_data.get('content', '')}"""
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
                 unanalyzed = email_session.execute(text("""
-                    SELECT e.id, e.subject, e.sender, e.date, e.body,
+                    SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
                            e.labels, e.full_api_response, e.thread_id
                     FROM emails e
                     WHERE NOT EXISTS (
