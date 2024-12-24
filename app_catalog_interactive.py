@@ -9,13 +9,15 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import WordCompleter, NestedCompleter
+from prompt_toolkit.completion import Completer, Completion, WordCompleter, NestedCompleter
 from prompt_toolkit.shortcuts import clear
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
+from prompt_toolkit.history import FileHistory
 
 from app_catalog import CatalogChat
+from models.catalog import CatalogItem, Tag
 
 # Style for syntax highlighting
 style = Style.from_dict({
@@ -33,8 +35,8 @@ MENU_OPTIONS = {
     5: {'name': 'Add catalog item', 'help': 'Add a new item to the catalog'},
     6: {'name': 'Create new tag', 'help': 'Create a new tag'},
     7: {'name': 'Tag item', 'help': 'Apply a tag to an item'},
-    8: {'name': 'Menu mode', 'help': 'Switch to menu-driven interface'},
-    9: {'name': 'Exit', 'help': 'Exit the program'}
+    8: {'name': 'CLI mode', 'help': 'Switch to command-line interface'},
+    9: {'name': 'Chat mode', 'help': 'Have a natural conversation with the catalog'}
 }
 
 # Command definitions for command-line mode
@@ -131,6 +133,35 @@ COMMANDS = {
     }
 }
 
+class CommandCompleter(Completer):
+    """Custom completer that adds spaces after commands."""
+    
+    def __init__(self, commands):
+        self.commands = commands
+    
+    def get_completions(self, document, complete_event):
+        word = document.get_word_before_cursor()
+        
+        for command in self.commands:
+            if command.startswith(word):
+                yield Completion(
+                    command,
+                    start_position=-len(word),
+                    display=command,
+                    display_meta='command',
+                    text=command + ' '  # Add space after command
+                )
+
+class MultiCompleter(Completer):
+    """Completer that combines multiple completers."""
+    
+    def __init__(self, completers):
+        self.completers = completers
+    
+    def get_completions(self, document, complete_event):
+        for completer in self.completers:
+            yield from completer.get_completions(document, complete_event)
+
 class CatalogInteractive:
     """Interactive interface for the Marian Catalog System."""
     
@@ -141,46 +172,85 @@ class CatalogInteractive:
     
     def setup_prompt(self):
         """Set up prompt toolkit session with completions and key bindings."""
-        # Create nested completer for commands and their arguments
-        command_completer = self.create_command_completer()
-        
-        # Create key bindings
+        # Set up key bindings
         kb = KeyBindings()
         
-        @kb.add(Keys.Escape)
+        # Add ESC binding
+        @kb.add('escape')
         def _(event):
             """Handle ESC key."""
-            print("\nExiting...")
             sys.exit(0)
         
-        # Create prompt session
+        # Create completers
+        command_completer = CommandCompleter(COMMANDS.keys())
+        nested_completer = self.create_command_completer()
+        multi_completer = MultiCompleter([command_completer, nested_completer])
+        
+        # Initialize prompt session
         self.session = PromptSession(
-            completer=command_completer,
-            style=style,
+            completer=multi_completer,
             key_bindings=kb,
+            style=style,
+            history=self.load_history(),
             complete_while_typing=True,
-            enable_history_search=True,
-            history=self.load_history()
+            enable_history_search=True
         )
     
-    def create_command_completer(self) -> NestedCompleter:
+    def create_command_completer(self):
         """Create a nested completer for commands and their arguments."""
-        # Filter out alias commands for completion
-        main_commands = {cmd: None for cmd in COMMANDS.keys() 
-                        if cmd not in ('q', '?', 'quit')}
+        session = self.chat.get_session()
         
-        # Add special completions for specific commands
-        main_commands['help'] = WordCompleter(list(COMMANDS.keys()))
-        main_commands['?'] = WordCompleter(list(COMMANDS.keys()))
+        # Get active item titles for completion
+        active_items = session.query(CatalogItem.title).filter(
+            CatalogItem.deleted == False
+        ).all()
+        item_titles = [item[0] for item in active_items]
         
-        # TODO: Add completions for item titles and tag names
-        return NestedCompleter.from_nested_dict(main_commands)
+        # Get all tags for completion
+        tags = session.query(Tag.name).filter(Tag.deleted == False).all()
+        tag_names = [tag[0] for tag in tags]
+        
+        # Create completers for different argument types
+        tag_completer = WordCompleter(tag_names, sentence=True)
+        item_completer = WordCompleter(item_titles, sentence=True)
+        archived_completer = WordCompleter(['archived'], sentence=True)
+        
+        # Build nested completer dictionary
+        completions = {}
+        
+        # Commands with no arguments
+        for cmd in ['exit', 'quit', 'q', 'menu', 'clear']:
+            completions[cmd] = None
+        
+        # Commands with specific completions
+        completions['archive'] = item_completer
+        completions['search'] = None
+        completions['search_by_tag'] = tag_completer
+        completions['list'] = archived_completer
+        completions['list_tags'] = archived_completer
+        completions['list_recent'] = None
+        completions['add'] = None
+        completions['restore'] = None
+        completions['create_tag'] = None
+        completions['help'] = WordCompleter(list(COMMANDS.keys()))
+        completions['?'] = WordCompleter(list(COMMANDS.keys()))
+        
+        # Special handling for tag command (item followed by tag)
+        tag_dict = {}
+        for item in item_titles:
+            tag_dict[item] = tag_completer
+        completions['tag'] = tag_dict
+        
+        # Create a custom completer for commands
+        command_completer = CommandCompleter(completions.keys())
+        
+        # Return a completer that first tries command completion, then nested completion
+        return NestedCompleter.from_nested_dict(completions)
     
     def load_history(self):
         """Load command history from file."""
-        from prompt_toolkit.history import FileHistory
-        histfile = os.path.join(os.path.expanduser("~"), ".marian_history")
-        return FileHistory(histfile)
+        history_file = os.path.expanduser('~/.marian_history')
+        return FileHistory(history_file)
     
     def show_help(self, command: Optional[str] = None):
         """Show help for all commands or a specific command."""
@@ -201,8 +271,12 @@ class CatalogInteractive:
     
     def run_command_mode(self):
         """Run the command-line interface."""
+        print("\nEntering CLI mode. Type 'menu' to return to menu, 'help' or '?' for commands")
         while True:
             try:
+                # Refresh completer before each command to ensure up-to-date completions
+                self.session.completer = self.create_command_completer()
+                
                 # Get command with prompt_toolkit
                 command = self.session.prompt("\n> ")
                 
@@ -213,6 +287,7 @@ class CatalogInteractive:
                 cmd = parts[0].lower()
                 args = parts[1] if len(parts) > 1 else ""
                 
+                # Handle built-in commands first
                 if cmd in ('exit', 'q', 'quit'):
                     sys.exit(0)
                 elif cmd == 'menu':
@@ -223,17 +298,57 @@ class CatalogInteractive:
                 elif cmd in ('help', '?'):
                     self.show_help(args if args else None)
                     continue
-                elif cmd not in COMMANDS:
-                    print(f"Unknown command: {cmd}")
-                    print("Type 'help' or '?' for available commands")
-                    continue
                 
-                response = self.chat.process_input(cmd, args)
-                print(response)
+                # Handle catalog commands
+                try:
+                    response = self.chat.process_input(cmd, args)
+                    print(response)
+                except Exception as e:
+                    if cmd not in COMMANDS:
+                        print(f"Unknown command: {cmd}")
+                        print("Type 'help' or '?' for available commands")
+                    else:
+                        print(f"Error: {str(e)}")
                 
             except KeyboardInterrupt:
                 print("\nUse 'exit', 'quit', or 'q' to quit, 'menu' for menu mode, or press ESC")
                 print("Type 'help' or '?' for available commands")
+            except EOFError:
+                break
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                self.session.prompt("\nPress Enter to continue...")
+    
+    def run_chat_mode(self):
+        """Run the natural language chat interface."""
+        print("\nEntering chat mode. Type 'menu' to return to menu, 'exit' to quit")
+        print("You can have a natural conversation with me about your catalog.")
+        print("For example, try asking:")
+        print("- What items do I have about programming?")
+        print("- Show me recent items about databases")
+        print("- What are my most used tags?")
+        
+        while True:
+            try:
+                # Get user input with prompt_toolkit
+                user_input = self.session.prompt("\nYou: ")
+                
+                if not user_input:
+                    continue
+                
+                if user_input.lower() in ('exit', 'q', 'quit'):
+                    sys.exit(0)
+                elif user_input.lower() == 'menu':
+                    return True  # Return to menu mode
+                elif user_input.lower() == 'clear':
+                    clear()
+                    continue
+                
+                # TODO: Process chat input through Claude
+                print("\nThis feature is coming soon!")
+                
+            except KeyboardInterrupt:
+                print("\nUse 'exit', 'quit', or 'q' to quit, 'menu' for menu mode, or press ESC")
             except EOFError:
                 break
             except Exception as e:
@@ -245,17 +360,12 @@ class CatalogInteractive:
         print("Type Ctrl+C to cancel current operation, ESC to exit")
         print("Type 'help' or '?' for available commands, 'menu' for menu mode")
         
-        while True:
-            try:
-                # Start in command-line mode
-                if self.run_command_mode():
-                    # Switch to menu mode
-                    self.run_menu_mode()
-            except EOFError:
-                break
-            except Exception as e:
-                print(f"Error: {str(e)}")
-                self.session.prompt("\nPress Enter to continue...")
+        try:
+            self.run_command_mode()
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            print("Press Enter to continue...")
+            input()
         
         print("\nGoodbye!")
     
@@ -292,9 +402,10 @@ class CatalogInteractive:
     def show_menu(self):
         """Display the main menu."""
         print("\nMarian Catalog System")
-        print("-------------------")
-        for num, option in MENU_OPTIONS.items():
-            print(f"{num}. {option['name']:<20} : {option['help']}")
+        print("=" * 20)
+        for option_num, option in MENU_OPTIONS.items():
+            print(f"{option_num}. {option['name']}")
+        print("\nPress ESC to exit")
     
     def handle_menu_option(self, option: int) -> bool:
         """Handle a menu selection. Returns True if should exit."""
@@ -359,22 +470,25 @@ class CatalogInteractive:
                 print(response)
             return False
         
-        elif option == 8:  # Return to chat mode
-            return False
+        elif option == 8:  # CLI mode
+            return self.run_command_mode()
         
-        elif option == 9:  # Exit
-            return True
+        elif option == 9:  # Chat mode
+            return self.run_chat_mode()
         
         return False
 
 def main():
     """Run the catalog system in interactive mode."""
     try:
-        interface = CatalogInteractive()
-        interface.run()
+        interactive = CatalogInteractive()
+        interactive.run()
+    except KeyboardInterrupt:
+        print("\nExiting...")
     except Exception as e:
-        print(f"Fatal error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
+        print(f"Fatal error: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

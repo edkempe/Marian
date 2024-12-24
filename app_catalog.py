@@ -397,6 +397,51 @@ class CatalogChat:
         
         print(f"\nIntegration tests complete: {tests_passed}/{total_tests} passed")
 
+    def get_semantic_matches(self, text: str, items: list, threshold: float = 0.7) -> list:
+        """Find semantically similar items using Claude."""
+        if not items:
+            return []
+            
+        try:
+            # Create prompt for semantic similarity check
+            prompt = f"""Compare the following text: "{text}" with these items:
+            {[str(item) for item in items]}
+            
+            Return only the items that are semantically similar (meaning they refer to the same concept or topic), 
+            with a similarity score above {threshold}. Format each match as: "item|score".
+            Only return the matches, nothing else."""
+            
+            response = self.client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=1000,
+                temperature=0,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            # Parse response into matches
+            matches = []
+            for line in response.content[0].text.strip().split('\n'):
+                if line:
+                    item, score = line.split('|')
+                    matches.append((item.strip().strip('"'), float(score)))
+            return matches
+            
+        except Exception as e:
+            self.logger.error(f"Error in semantic matching: {str(e)}")
+            return []
+
+    def check_semantic_duplicates(self, session: Session, title: str, existing_items: list) -> tuple:
+        """Check for semantic duplicates of a title."""
+        matches = self.get_semantic_matches(title, [item.title for item in existing_items])
+        if matches:
+            similar_items = []
+            for match_title, score in matches:
+                item = next((i for i in existing_items if i.title == match_title), None)
+                if item:
+                    similar_items.append((item, score))
+            return True, similar_items
+        return False, []
+
     def process_input(self, command: str, args: str) -> str:
         """Process user input and generate response"""
         session = self.get_session()
@@ -479,7 +524,36 @@ class CatalogChat:
                     return "Format: add <title> - <content>"
                 title, content = parts
                 
-                # Check for existing active item
+                # Get all existing items for semantic check
+                all_items = session.query(CatalogItem).all()
+                
+                # Check for semantic duplicates
+                has_duplicates, similar_items = self.check_semantic_duplicates(session, title, all_items)
+                if has_duplicates:
+                    if self.interactive:
+                        print("\nFound semantically similar items:")
+                        for item, score in similar_items:
+                            status = "(archived)" if item.deleted else "(active)"
+                            print(f"- {item.title} {status} (similarity: {score:.2f})")
+                        print("\nWould you like to:")
+                        print("1. Create new item anyway")
+                        print("2. Cancel")
+                        if item.deleted:
+                            print("3. Restore similar item")
+                        choice = input("Enter choice (1-3): ").strip()
+                        
+                        if choice == "2":
+                            return "Operation cancelled"
+                        elif choice == "3" and item.deleted:
+                            item.deleted = False
+                            session.commit()
+                            return f"Restored similar item: {item.title}"
+                    else:
+                        similar_list = "\n".join(f"- {item.title} ({'archived' if item.deleted else 'active'})" 
+                                               for item, _ in similar_items)
+                        return f"Found semantically similar items:\n{similar_list}\nUse --force to add anyway"
+                
+                # Check for exact title match
                 existing_item = session.query(CatalogItem).filter(
                     CatalogItem.title.ilike(title),
                     CatalogItem.deleted == False
@@ -529,59 +603,78 @@ class CatalogChat:
                 if item.deleted:
                     return f"Item '{title}' is archived. Restore it first."
                 
+                # Get all existing tags for semantic check
+                all_tags = session.query(Tag).all()
+                
+                # Check for semantic duplicates
+                has_duplicates, similar_tags = self.check_semantic_duplicates(session, tag_name, all_tags)
+                if has_duplicates:
+                    if self.interactive:
+                        print("\nFound semantically similar tags:")
+                        for tag, score in similar_tags:
+                            status = "(archived)" if tag.deleted else "(active)"
+                            print(f"- {tag.name} {status} (similarity: {score:.2f})")
+                        print("\nWould you like to:")
+                        print("1. Create new tag anyway")
+                        print("2. Use existing tag")
+                        print("3. Cancel")
+                        choice = input("Enter choice (1-3): ").strip()
+                        
+                        if choice == "2" and similar_tags:
+                            tag = similar_tags[0][0]  # Use the most similar tag
+                            if tag.deleted:
+                                tag.deleted = False
+                                session.commit()
+                            tag_name = tag.name
+                        elif choice == "3":
+                            return "Operation cancelled"
+                    else:
+                        similar_list = "\n".join(f"- {tag.name} ({'archived' if tag.deleted else 'active'})" 
+                                               for tag, _ in similar_tags)
+                        return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
+                
                 # Check for existing active tag
                 existing_tag = session.query(Tag).filter(
                     Tag.name.ilike(tag_name),
                     Tag.deleted == False
                 ).first()
                 if existing_tag:
-                    tag_id = existing_tag.id
-                    tag_name = existing_tag.name  # Use existing case
-                else:
-                    # Check for archived tag
-                    archived_tag = session.query(Tag).filter(
-                        Tag.name.ilike(tag_name),
-                        Tag.deleted == True
-                    ).first()
-                    if archived_tag:
-                        if self.interactive:
-                            print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
-                            if input().strip().lower() == 'y':
-                                archived_tag.deleted = False
-                                session.commit()
-                                tag_id = archived_tag.id
-                                tag_name = archived_tag.name
-                            else:
-                                try:
-                                    tag = Tag(name=tag_name)
-                                    session.add(tag)
-                                    session.commit()
-                                    tag_id = tag.id
-                                except Exception as e:
-                                    session.rollback()
-                                    return f"Error: {str(e)}"
-                        else:
-                            return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
-                    else:
-                        try:
-                            tag = Tag(name=tag_name)
-                            session.add(tag)
+                    return f"Error: Tag '{tag_name}' already exists"
+                
+                # Check for archived tag
+                archived_tag = session.query(Tag).filter(
+                    Tag.name.ilike(tag_name),
+                    Tag.deleted == True
+                ).first()
+                if archived_tag:
+                    if self.interactive:
+                        print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
+                        if input().strip().lower() == 'y':
+                            archived_tag.deleted = False
                             session.commit()
-                            tag_id = tag.id
-                        except Exception as e:
-                            session.rollback()
-                            return f"Error: {str(e)}"
+                            return f"Restored tag: {archived_tag.name}"
+                    return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
+                
+                # Create new tag
+                try:
+                    tag = Tag(name=tag_name)
+                    session.add(tag)
+                    session.commit()
+                    tag_name = tag.name
+                except Exception as e:
+                    session.rollback()
+                    return f"Error creating tag: {str(e)}"
                 
                 # Check if tag is already applied
                 existing_catalog_tag = session.query(CatalogTag).filter(
                     CatalogTag.catalog_id == item.id,
-                    CatalogTag.tag_id == tag_id
+                    CatalogTag.tag_id == tag.id
                 ).first()
                 if existing_catalog_tag:
                     return f"Tag '{tag_name}' is already applied to '{item.title}'"
                 
                 # Apply tag
-                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag_id)
+                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
                 session.add(catalog_tag)
                 session.commit()
                 return f"Tagged '{item.title}' with '{tag_name}'"
@@ -590,6 +683,36 @@ class CatalogChat:
                 if not args:
                     return "Please provide a tag name"
                 tag_name = args.strip()
+                
+                # Get all existing tags for semantic check
+                all_tags = session.query(Tag).all()
+                
+                # Check for semantic duplicates
+                has_duplicates, similar_tags = self.check_semantic_duplicates(session, tag_name, all_tags)
+                if has_duplicates:
+                    if self.interactive:
+                        print("\nFound semantically similar tags:")
+                        for tag, score in similar_tags:
+                            status = "(archived)" if tag.deleted else "(active)"
+                            print(f"- {tag.name} {status} (similarity: {score:.2f})")
+                        print("\nWould you like to:")
+                        print("1. Create new tag anyway")
+                        print("2. Use existing tag")
+                        print("3. Cancel")
+                        choice = input("Enter choice (1-3): ").strip()
+                        
+                        if choice == "2" and similar_tags:
+                            tag = similar_tags[0][0]  # Use the most similar tag
+                            if tag.deleted:
+                                tag.deleted = False
+                                session.commit()
+                            return f"Restored tag: {tag.name}"
+                        elif choice == "3":
+                            return "Operation cancelled"
+                    else:
+                        similar_list = "\n".join(f"- {tag.name} ({'archived' if tag.deleted else 'active'})" 
+                                               for tag, _ in similar_tags)
+                        return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
                 
                 # Check for existing active tag
                 existing_tag = session.query(Tag).filter(
@@ -660,6 +783,23 @@ class CatalogChat:
                 item.deleted = True
                 session.commit()
                 return f"Archived {'tag' if command == 'archive_tag' else 'item'}: {name}"
+
+            elif command == 'archive':
+                if not args:
+                    return "Please provide the title of the item to archive"
+                title = args.strip()
+                
+                item = session.query(CatalogItem).filter(
+                    CatalogItem.title.ilike(title),
+                    CatalogItem.deleted == False
+                ).first()
+                
+                if not item:
+                    return f"No active item found with title '{title}'"
+                
+                item.deleted = True
+                session.commit()
+                return f"Archived item: {title}"
 
             else:
                 return f"Unknown command: {command}"
