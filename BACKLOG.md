@@ -385,4 +385,65 @@ class DatabaseSessions:
    - Add migration guidelines
    - Update field descriptions
 
-## Low Priority
+## Sub-Domains
+
+### Catalog System
+The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat. 
+All tasks and features related to the Catalog system are tracked in [CATALOG_BACKLOG.md](CATALOG_BACKLOG.md).
+
+### Email Processing
+{{ ... }}
+
+### Catalog System Timestamp Migration (Year 2038)
+**Status**: Planned
+**Priority**: High
+**Description**: Address the Year 2038 problem for timestamp storage in catalog system
+
+#### Technical Details
+1. Timestamp Storage Assessment
+   - Evaluate current INTEGER storage on target systems (32-bit vs 64-bit)
+   - Plan migration strategy to 64-bit timestamps if needed
+   - Add tests to verify date handling beyond 2038
+   - Document timestamp handling approach
+
+2. Implementation Plan
+   - Design schema migration strategy
+   - Create database migration scripts
+   - Update application code for new timestamp format
+   - Add conversion utilities for existing data
+
+3. Testing & Validation
+   - Add edge case tests for timestamp handling
+   - Test date operations beyond 2038
+   - Verify data integrity after migration
+   - Performance testing with new format
+
+### Catalog System Performance Optimization
+**Status**: Planned
+**Priority**: Medium
+**Description**: Optimize performance for soft-deleted items and archival operations
+
+#### Technical Details
+1. Query Optimization
+   - Index planning for soft-deleted queries
+   - Evaluate query performance with large datasets
+   - Consider partitioning strategy for archived items
+   - Optimize tag relationship queries
+
+2. Data Management
+   - Implement archival strategy for old soft-deleted items
+   - Add bulk restore functionality
+   - Add date-based cleanup for very old soft-deleted items
+   - Optimize storage for archived data
+
+3. Feature Enhancements
+   - Add date range filtering for archived items
+   - Implement audit log for soft delete/restore operations
+   - Add batch operations for soft delete/restore
+   - Enhance restoration of items with complex tag relationships
+
+4. Documentation
+   - Add timestamp handling guide for developers
+   - Document query patterns for soft-deleted items
+   - Create maintenance guide for archived data
+   - Update schema documentation
