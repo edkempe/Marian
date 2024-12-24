@@ -397,27 +397,88 @@ class CatalogChat:
         
         print(f"\nIntegration tests complete: {tests_passed}/{total_tests} passed")
 
-    def process_input(self, command, args):
+    def process_input(self, command: str, args: str) -> str:
         """Process user input and generate response"""
         session = self.get_session()
         
         try:
-            if command == 'add':
+            if command == 'search':
+                if not args:
+                    return "Please provide search terms"
+                query = args.strip()
+                items = session.query(CatalogItem).filter(
+                    CatalogItem.deleted == False,
+                    (CatalogItem.title.ilike(f"%{query}%") |
+                     CatalogItem.content.ilike(f"%{query}%"))
+                ).all()
+                if not items:
+                    return "No matching items found"
+                return "\n".join(f"{item.title}: {item.content[:100]}..." for item in items)
+            
+            elif command == 'search_by_tag':
+                if not args:
+                    return "Please provide tag name"
+                tag_name = args.strip()
+                items = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
+                    CatalogItem.deleted == False,
+                    Tag.deleted == False,
+                    Tag.name.ilike(f"%{tag_name}%")
+                ).all()
+                if not items:
+                    return "No items found with that tag"
+                return "\n".join(f"{item.title}: {item.content[:100]}..." for item in items)
+            
+            elif command == 'list_recent':
+                try:
+                    days = int(args) if args else 7
+                except ValueError:
+                    days = 7
+                cutoff = int((datetime.datetime.utcnow() - datetime.timedelta(days=days)).timestamp())
+                items = session.query(CatalogItem).filter(
+                    CatalogItem.deleted == False,
+                    CatalogItem.modified_date >= cutoff
+                ).order_by(CatalogItem.modified_date.desc()).all()
+                if not items:
+                    return f"No items modified in the last {days} days"
+                return "\n".join(
+                    f"{item.title} (modified: {datetime.datetime.fromtimestamp(item.modified_date).strftime('%Y-%m-%d %H:%M:%S')})"
+                    for item in items
+                )
+            
+            elif command == 'list_tags':
+                include_archived = args.lower() == 'archived'
+                tags = session.query(Tag)
+                if not include_archived:
+                    tags = tags.filter(Tag.deleted == False)
+                tags = tags.order_by(Tag.name).all()
+                if not tags:
+                    return "No tags found"
+                return "\n".join(
+                    f"{tag.name} {'(archived)' if tag.deleted else ''}"
+                    for tag in tags
+                )
+            
+            elif command == 'add':
                 if not args:
                     return "Please provide title and content for the catalog item"
-                # Split args into title and content
                 parts = args.split(' - ', 1)
                 if len(parts) != 2:
                     return "Format: add <title> - <content>"
                 title, content = parts
                 
                 # Check for existing active item
-                existing_item = session.query(CatalogItem).filter(CatalogItem.title == title).first()
-                if existing_item and not existing_item.deleted:
+                existing_item = session.query(CatalogItem).filter(
+                    CatalogItem.title.ilike(title),
+                    CatalogItem.deleted == False
+                ).first()
+                if existing_item:
                     return f"Error: An item with title '{title}' already exists"
                 
                 # Check for archived item
-                archived_item = session.query(CatalogItem).filter(CatalogItem.title == title, CatalogItem.deleted == True).first()
+                archived_item = session.query(CatalogItem).filter(
+                    CatalogItem.title.ilike(title),
+                    CatalogItem.deleted == True
+                ).first()
                 if archived_item:
                     if self.interactive:
                         print(f"\nFound archived item with title '{archived_item.title}'. Would you like to restore it? (y/n): ", end="")
@@ -427,7 +488,7 @@ class CatalogChat:
                             return f"Restored and updated catalog item: {title}"
                     else:
                         return f"Found archived item '{title}'. Use 'restore <title>' to restore it"
-                    
+                
                 try:
                     item = CatalogItem(title=title, content=content)
                     session.add(item)
@@ -436,7 +497,7 @@ class CatalogChat:
                 except Exception as e:
                     session.rollback()
                     return f"Error: {str(e)}"
-                    
+            
             elif command == 'tag':
                 if not args:
                     return "Format: tag <item_title> <tag_name>"
@@ -446,14 +507,29 @@ class CatalogChat:
                 title = parts[0]
                 tag_name = parts[1]
                 
+                # Get item (including archived)
+                item = session.query(CatalogItem).filter(
+                    CatalogItem.title.ilike(title)
+                ).first()
+                if not item:
+                    return f"Item '{title}' not found"
+                if item.deleted:
+                    return f"Item '{title}' is archived. Restore it first."
+                
                 # Check for existing active tag
-                existing_tag = session.query(Tag).filter(Tag.name == tag_name).first()
-                if existing_tag and not existing_tag.deleted:
+                existing_tag = session.query(Tag).filter(
+                    Tag.name.ilike(tag_name),
+                    Tag.deleted == False
+                ).first()
+                if existing_tag:
                     tag_id = existing_tag.id
                     tag_name = existing_tag.name  # Use existing case
                 else:
                     # Check for archived tag
-                    archived_tag = session.query(Tag).filter(Tag.name == tag_name, Tag.deleted == True).first()
+                    archived_tag = session.query(Tag).filter(
+                        Tag.name.ilike(tag_name),
+                        Tag.deleted == True
+                    ).first()
                     if archived_tag:
                         if self.interactive:
                             print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
@@ -483,13 +559,11 @@ class CatalogChat:
                             session.rollback()
                             return f"Error: {str(e)}"
                 
-                # Get item id (including archived)
-                item = session.query(CatalogItem).filter(CatalogItem.title == title).first()
-                if not item:
-                    return f"Item '{title}' not found"
-                
                 # Check if tag is already applied
-                existing_catalog_tag = session.query(CatalogTag).filter(CatalogTag.catalog_id == item.id, CatalogTag.tag_id == tag_id).first()
+                existing_catalog_tag = session.query(CatalogTag).filter(
+                    CatalogTag.catalog_id == item.id,
+                    CatalogTag.tag_id == tag_id
+                ).first()
                 if existing_catalog_tag:
                     return f"Tag '{tag_name}' is already applied to '{item.title}'"
                 
@@ -499,22 +573,84 @@ class CatalogChat:
                 session.commit()
                 return f"Tagged '{item.title}' with '{tag_name}'"
             
+            elif command == 'create_tag':
+                if not args:
+                    return "Please provide a tag name"
+                tag_name = args.strip()
+                
+                # Check for existing active tag
+                existing_tag = session.query(Tag).filter(
+                    Tag.name.ilike(tag_name),
+                    Tag.deleted == False
+                ).first()
+                if existing_tag:
+                    return f"Error: Tag '{tag_name}' already exists"
+                
+                # Check for archived tag
+                archived_tag = session.query(Tag).filter(
+                    Tag.name.ilike(tag_name),
+                    Tag.deleted == True
+                ).first()
+                if archived_tag:
+                    if self.interactive:
+                        print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
+                        if input().strip().lower() == 'y':
+                            archived_tag.deleted = False
+                            session.commit()
+                            return f"Restored tag: {archived_tag.name}"
+                    return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
+                
+                # Create new tag
+                try:
+                    tag = Tag(name=tag_name)
+                    session.add(tag)
+                    session.commit()
+                    return f"Created new tag: {tag_name}"
+                except Exception as e:
+                    session.rollback()
+                    return f"Error creating tag: {str(e)}"
+
             elif command == 'restore' or command == 'restore_tag':
                 if not args:
                     return f"Format: {command} <name>"
-                name = args
+                name = args.strip()
                 
                 table = Tag if command == 'restore_tag' else CatalogItem
                 name_field = 'name' if command == 'restore_tag' else 'title'
                 
-                archived_item = session.query(table).filter(getattr(table, name_field) == name, table.deleted == True).first()
+                archived_item = session.query(table).filter(
+                    getattr(table, name_field).ilike(name),
+                    table.deleted == True
+                ).first()
                 if not archived_item:
                     return f"No archived {'tag' if command == 'restore_tag' else 'item'} found with name '{name}'"
                 
                 archived_item.deleted = False
                 session.commit()
                 return f"Restored {'tag' if command == 'restore_tag' else 'item'}: {name}"
+
+            elif command == 'archive' or command == 'archive_tag':
+                if not args:
+                    return f"Format: {command} <name>"
+                name = args.strip()
                 
+                table = Tag if command == 'archive_tag' else CatalogItem
+                name_field = 'name' if command == 'archive_tag' else 'title'
+                
+                item = session.query(table).filter(
+                    getattr(table, name_field).ilike(name),
+                    table.deleted == False
+                ).first()
+                if not item:
+                    return f"No active {'tag' if command == 'archive_tag' else 'item'} found with name '{name}'"
+                
+                item.deleted = True
+                session.commit()
+                return f"Archived {'tag' if command == 'archive_tag' else 'item'}: {name}"
+
+            else:
+                return f"Unknown command: {command}"
+            
         except Exception as e:
             session.rollback()
             return f"Error: {str(e)}"
