@@ -166,23 +166,27 @@ class CatalogInteractive:
             if query:
                 response = self.chat.process_input('search', query)
                 print(response)
+            return False
         
         elif option == 2:  # Catalog search by tag
             tag = get_input("\nEnter tag name: ").strip()
             if tag:
                 response = self.chat.process_input('search_by_tag', tag)
                 print(response)
+            return False
         
         elif option == 3:  # List tags
             include_archived = get_input("\nInclude archived tags? (y/n) [n]: ").strip().lower() == 'y'
             response = self.chat.process_input('list_tags', 'archived' if include_archived else '')
             print(response)
+            return False
         
         elif option == 4:  # List recent items
             days = get_input("\nShow items from last N days [7]: ").strip()
             days = int(days) if days.isdigit() else 7
             response = self.chat.process_input('list_recent', str(days))
             print(response)
+            return False
         
         elif option == 5:  # Add catalog item
             title = get_input("\nEnter title: ").strip()
@@ -201,12 +205,14 @@ class CatalogInteractive:
                 if content:
                     response = self.chat.process_input('add', f"{title} - {content}")
                     print(response)
+            return False
         
         elif option == 6:  # Create new tag
             tag_name = get_input("\nEnter new tag name: ").strip()
             if tag_name:
                 response = self.chat.process_input('create_tag', tag_name)
                 print(response)
+            return False
         
         elif option == 7:  # Tag item
             title = get_input("\nEnter item title: ").strip()
@@ -214,10 +220,12 @@ class CatalogInteractive:
             if title and tag:
                 response = self.chat.process_input('tag', f"{title} {tag}")
                 print(response)
+            return False
         
         elif option == 8:  # Chat mode
-            print("\nEntering command-line mode. Type 'menu' to return to menu, 'help' for commands.")
+            print("\nEntering command-line mode. Type 'menu' to return to menu, 'help' or '?' for commands.")
             self.run_command_mode()
+            return False  # Continue to menu after chat mode
         
         elif option == 9:  # Exit
             return True
@@ -236,7 +244,7 @@ class CatalogInteractive:
             print("\nAvailable commands:")
             for cmd, info in COMMANDS.items():
                 print(f"  {info['format']:<25} : {info['help']}")
-            print("\nType 'help <command>' for more details about a specific command")
+            print("\nType 'help <command>' or '? <command>' for more details about a specific command")
     
     def run_command_mode(self):
         """Run the command-line interface."""
@@ -255,12 +263,12 @@ class CatalogInteractive:
                     break
                 elif cmd == 'menu':
                     return
-                elif cmd == 'help':
+                elif cmd in ('help', '?'):
                     self.show_help(args if args else None)
                     continue
                 elif cmd not in COMMANDS:
                     print(f"Unknown command: {cmd}")
-                    print("Type 'help' for available commands")
+                    print("Type 'help' or '?' for available commands")
                     continue
                 
                 response = self.chat.process_input(cmd, args)
@@ -268,6 +276,7 @@ class CatalogInteractive:
                 
             except KeyboardInterrupt:
                 print("\nUse 'exit', 'quit', or 'q' to quit, 'menu' to return to menu, or press ESC")
+                print("Type 'help' or '?' for available commands")
             except EOFError:
                 break
             except Exception as e:
@@ -294,7 +303,8 @@ class CatalogInteractive:
                 if self.handle_menu_option(int(choice)):
                     break
                 
-                get_input("\nPress Enter to continue...")
+                if int(choice) != 8:  # Don't pause after chat mode
+                    get_input("\nPress Enter to continue...")
                 
             except KeyboardInterrupt:
                 print("\nOperation cancelled")
