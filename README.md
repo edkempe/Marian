@@ -37,13 +37,17 @@ An AI-powered email analysis and management system that uses advanced language m
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
 - **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3 and stores insights
+- **Data Models** (`models/`): SQLAlchemy models serving as source of truth for:
+  - Email and thread schema (`email.py`)
+  - Catalog item schema (`catalog.py`)
+  - Analysis schema (`email_analysis.py`)
 - **Configuration**:
   - `constants.py`: Email processing configuration
   - `catalog_constants.py`: Catalog system configuration
   - `librarian_constants.py`: Librarian-specific settings
 - **Database**:
   - `db_email_store.db`: Main database for email storage and analysis
-  - See [Database Design](docs/database_design.md) for schema details
+  - Schema defined by SQLAlchemy models in `models/`
 
 ## Prerequisites
 1. Python 3.12.8 or higher
@@ -127,28 +131,25 @@ If you encounter any issues while running the application, please refer to our c
 - Best practices for development
 
 ## Project Structure
-marian/
-├── app_*.py           # Main application files
-├── util_*.py         # Utility scripts
-│   └── util_email_analysis_db.py  # Email analysis database verification tool
-├── config/           # Configuration files
-├── database/         # Database related code
-├── models/          # SQLAlchemy models
-├── utils/           # Utility functions
-├── docs/            # Documentation
-│   └── troubleshooting.md  # Troubleshooting guide
-├── tests/           # Test files
-└── README.md        # This file
 
-### Core Components
-- Email Processing: Handles email fetching and analysis
-- Catalog System: Manages information organization and retrieval ([CATALOG_BACKLOG.md](CATALOG_BACKLOG.md))
+### Active Content
+- `/docs` - Current documentation only
+  - Design decisions
+  - Guides and standards
+  - Living documentation
 
-### Documentation
-- `README.md`: Project overview and setup instructions
-- `BACKLOG.md`: Main project backlog
-- `CATALOG_BACKLOG.md`: Catalog system features and tasks
-- `NEXT_SESSION.md`: Current development priorities
+### Historical Reference
+- `/archive` - Historical content (see [ARCHIVE_GUIDE.md](ARCHIVE_GUIDE.md))
+  - Past versions
+  - Superseded content
+  - Clear naming convention
+  - Single location for all archives
+
+### Data Protection
+- `/backup` - Disaster recovery only (see [BACKUP_GUIDE.md](BACKUP_GUIDE.md))
+  - Follows 3-2-1 backup strategy
+  - Copies of active files
+  - Not for archival purposes
 
 ## Documentation
 - [Database Design](docs/database_design.md): Complete database documentation

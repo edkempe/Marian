@@ -1,0 +1,77 @@
+{
+  "daily": {
+    "20241224": {
+      "created": "2024-12-24T19:04:00-07:00",
+      "expires": "2024-01-23T19:04:00-07:00",
+      "files": {
+        "librarian_constants.py.bak": {
+          "size": 1890,
+          "hash": "sha256_to_be_calculated",
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241224/librarian_constants.py.bak"
+        }
+      },
+      "status": "active",
+      "verified": true
+    },
+    "20241223": {
+      "created": "2024-12-23T08:51:55-07:00",
+      "expires": "2024-01-22T08:51:55-07:00",
+      "files": {
+        "db/db_email.db": {
+          "size": 24576,
+          "hash": "sha256_to_be_calculated",
+          "has_wal": true,
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241223/db_email.db"
+        },
+        "db/db_email_analysis.db": {
+          "size": 114688,
+          "hash": "sha256_to_be_calculated",
+          "has_wal": true,
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241223/db_email_analysis.db"
+        },
+        "db/email_labels.db": {
+          "size": 45056,
+          "hash": "sha256_to_be_calculated",
+          "has_wal": true,
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241223/email_labels.db"
+        },
+        "db/db_email_store.db": {
+          "size": 61042688,
+          "hash": "sha256_to_be_calculated",
+          "has_wal": true,
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241223/db_email_store.db"
+        },
+        "db/prompts.db": {
+          "size": 65536,
+          "hash": "sha256_to_be_calculated",
+          "has_wal": false,
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/20241223/prompts.db"
+        }
+      },
+      "status": "active",
+      "verified": true
+    }
+  },
+  "pre_change": {},
+  "manual": {
+    "20241221_2141_test_setup": {
+      "created": "2024-12-21T21:41:49-07:00",
+      "creator": "system",
+      "purpose": "Test environment setup",
+      "files": {
+        "test2_email_store.db.bak": {
+          "size": 35966976,
+          "hash": "sha256_to_be_calculated",
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/test2_email_store.db.bak"
+        },
+        "test_email_store.db.bak": {
+          "size": 81920,
+          "hash": "sha256_to_be_calculated",
+          "original_path": "/Users/eddiekempe/CodeProjects/Marian/backup/test_email_store.db.bak"
+        }
+      },
+      "retention": "days_30",
+      "notes": "Initial test database setup"
+    }
+  }
+}

@@ -471,6 +471,163 @@ Consider implementing mypy for type checking:
 
 **Session Reference**: 2024-12-25-10-02
 
+### Implement 3-2-1 Backup Strategy
+**Status**: Planned
+**Priority**: Medium-High
+**Description**: Implement comprehensive 3-2-1 backup strategy for critical data, complementing GitHub code backup.
+
+#### Technical Details
+1. Local Backups (Copy 1)
+   - Implement daily local snapshots
+   - Set up rotation policy
+   - Monitor storage usage
+   - Automate cleanup
+
+2. External Drive Backups (Copy 2)
+   - Define external backup procedure
+   - Implement verification
+   - Document recovery steps
+   - Set up notifications
+
+3. Cloud Backups (Copy 3 - Offsite)
+   - Select cloud provider
+   - Implement secure transfer
+   - Set up encryption
+   - Monitor costs
+
+4. Automation
+   - Create backup scripts
+   - Set up scheduling
+   - Implement monitoring
+   - Add error reporting
+
+5. Documentation
+   - Update BACKUP_GUIDE.md
+   - Create recovery playbook
+   - Document verification steps
+   - Add troubleshooting guide
+
+#### Success Criteria
+- 3 copies of all critical data
+- 2 different storage types
+- 1 offsite copy
+- Automated verification
+- Documented recovery process
+
+#### Dependencies
+- Storage requirements analysis
+- Cloud provider selection
+- Security review
+- Cost assessment
+
+#### Notes
+- GitHub handles code backup
+- Focus on database and config files
+- Consider privacy requirements
+- Monitor storage costs
+
+### Check Backup Storage Requirements (2024-01-05)
+**Status**: Planned
+**Priority**: High
+**Description**: Analyze storage requirements for 30-day backup retention policy.
+
+#### Technical Details
+1. Storage Analysis
+   - Measure current daily backup size
+   - Project 30-day requirements
+   - Include database growth estimates
+   - Account for WAL files
+
+2. Impact Assessment
+   - Calculate total storage needs
+   - Evaluate compression options
+   - Consider cleanup automation
+   - Review retention policy
+
+3. Recommendations
+   - Storage capacity planning
+   - Compression strategy
+   - Cleanup automation
+   - Policy adjustments if needed
+
+#### Success Criteria
+- Clear storage requirements
+- Compression recommendations
+- Automated cleanup plan
+- Sustainable retention policy
+
+#### Dependencies
+- 30 days of backup data
+- Database growth metrics
+- Storage monitoring tools
+
+#### Notes
+- Check Jan 5, 2024
+- Consider both local and offsite storage
+- Include all database files (*.db, *.db-wal, *.db-shm)
+- Factor in pre-change backups
+
+### Catalog System
+The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat. 
+All tasks and features related to the Catalog system are tracked in [CATALOG_BACKLOG.md](CATALOG_BACKLOG.md).
+
+### Email Processing
+{{ ... }}
+
+### Catalog System Timestamp Migration (Year 2038)
+**Status**: Planned
+**Priority**: High
+**Description**: Address the Year 2038 problem for timestamp storage in catalog system
+
+#### Technical Details
+1. Timestamp Storage Assessment
+   - Evaluate current INTEGER storage on target systems (32-bit vs 64-bit)
+   - Plan migration strategy to 64-bit timestamps if needed
+   - Add tests to verify date handling beyond 2038
+   - Document timestamp handling approach
+
+2. Implementation Plan
+   - Design schema migration strategy
+   - Create database migration scripts
+   - Update application code for new timestamp format
+   - Add conversion utilities for existing data
+
+3. Testing & Validation
+   - Add edge case tests for timestamp handling
+   - Test date operations beyond 2038
+   - Verify data integrity after migration
+   - Performance testing with new format
+
+### Catalog System Performance Optimization
+**Status**: Planned
+**Priority**: Medium
+**Description**: Optimize performance for soft-deleted items and archival operations
+
+#### Technical Details
+1. Query Optimization
+   - Index planning for soft-deleted queries
+   - Evaluate query performance with large datasets
+   - Consider partitioning strategy for archived items
+   - Optimize tag relationship queries
+
+2. Data Management
+   - Implement archival strategy for old soft-deleted items
+   - Add bulk restore functionality
+   - Add date-based cleanup for very old soft-deleted items
+   - Optimize storage for archived data
+
+3. Feature Enhancements
+   - Add date range filtering for archived items
+   - Implement audit log for soft delete/restore operations
+   - Add batch operations for soft delete/restore
+   - Enhance restoration of items with complex tag relationships
+
+4. Documentation
+   - Add timestamp handling guide for developers
+   - Document query patterns for soft-deleted items
+   - Create maintenance guide for archived data
+   - Update schema documentation
+
 ### Catalog System Fixes
 **Status**: Planned
 **Priority**: High
@@ -590,65 +747,43 @@ Benefits:
   - Context: Continue documentation cleanup effort
   - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
 
-## Sub-Domains
-
-### Catalog System
-The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat. 
-All tasks and features related to the Catalog system are tracked in [CATALOG_BACKLOG.md](CATALOG_BACKLOG.md).
-
-### Email Processing
-{{ ... }}
-
-### Catalog System Timestamp Migration (Year 2038)
+### Documentation Consolidation
 **Status**: Planned
-**Priority**: High
-**Description**: Address the Year 2038 problem for timestamp storage in catalog system
+**Priority**: Highest
+**Description**: Resolve overlap between PROJECT_PLAN.md and README.md to ensure single source of truth.
 
 #### Technical Details
-1. Timestamp Storage Assessment
-   - Evaluate current INTEGER storage on target systems (32-bit vs 64-bit)
-   - Plan migration strategy to 64-bit timestamps if needed
-   - Add tests to verify date handling beyond 2038
-   - Document timestamp handling approach
+1. Content Analysis
+   - Compare content between files
+   - Identify overlapping sections
+   - Map information architecture
+   - Document current inconsistencies
 
-2. Implementation Plan
-   - Design schema migration strategy
-   - Create database migration scripts
-   - Update application code for new timestamp format
-   - Add conversion utilities for existing data
+2. Define Clear Purposes
+   - README.md: Project overview, setup, structure
+   - PROJECT_PLAN.md: Development roadmap, decisions
+   - Remove duplicate information
+   - Update cross-references
 
-3. Testing & Validation
-   - Add edge case tests for timestamp handling
-   - Test date operations beyond 2038
-   - Verify data integrity after migration
-   - Performance testing with new format
+3. Implementation
+   - Restructure both documents
+   - Move content to appropriate file
+   - Update all references
+   - Archive old versions
 
-### Catalog System Performance Optimization
-**Status**: Planned
-**Priority**: Medium
-**Description**: Optimize performance for soft-deleted items and archival operations
+4. Validation
+   - Review changes with team
+   - Test all document links
+   - Update related documentation
+   - Verify no information loss
 
-#### Technical Details
-1. Query Optimization
-   - Index planning for soft-deleted queries
-   - Evaluate query performance with large datasets
-   - Consider partitioning strategy for archived items
-   - Optimize tag relationship queries
+#### Success Criteria
+- Clear separation of concerns
+- No duplicate information
+- All links working
+- Team understands where to find what
 
-2. Data Management
-   - Implement archival strategy for old soft-deleted items
-   - Add bulk restore functionality
-   - Add date-based cleanup for very old soft-deleted items
-   - Optimize storage for archived data
-
-3. Feature Enhancements
-   - Add date range filtering for archived items
-   - Implement audit log for soft delete/restore operations
-   - Add batch operations for soft delete/restore
-   - Enhance restoration of items with complex tag relationships
-
-4. Documentation
-   - Add timestamp handling guide for developers
-   - Document query patterns for soft-deleted items
-   - Create maintenance guide for archived data
-   - Update schema documentation
+#### Dependencies
+- Current documentation cleanup
+- Archive process implementation
+- Documentation principles review
