@@ -77,3 +77,7 @@ check_unanalyzed.sql
 backup/
 *.bak
 *.old
+
+# Backup metadata (contains sensitive information)
+backup_metadata.json
+backup/**/backup_metadata.json

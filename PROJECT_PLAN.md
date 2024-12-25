@@ -3,7 +3,7 @@
 ## Core Development Principles
 
 ### Data Model as Single Source of Truth
-The SQLAlchemy models in `models/` serve as the authoritative source of truth for all development (see [ADR001](docs/decisions/ADR001_SQLAlchemy_Models_as_Source_of_Truth.md)):
+The SQLAlchemy models in `models/` serve as the authoritative source of truth for all development (see [ADR001](archive/ARCHIVED_20241225_1105_ADR001_SQLAlchemy_Models.md)):
 
 #### Source of Truth Hierarchy
 1. **SQLAlchemy Models**: Primary source for schema
@@ -131,6 +131,9 @@ docs/
 - Quick start guide
 
 #### Guides
+- Backup and archive management
+  - BACKUP_GUIDE.md: Backup standards and processes
+  - ARCHIVE_GUIDE.md: Archive policies and organization
 - Librarian functionality and usage
 - Workflow processes and best practices
 - Comprehensive troubleshooting guide
@@ -141,7 +144,7 @@ docs/
 
 #### Architecture
 - System design decisions and rationale
-- Database schema and evolution
+- Data model implementation (SQLAlchemy models)
 - Component interactions
 - Security considerations
 
