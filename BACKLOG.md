@@ -958,3 +958,19 @@ Benefits:
 
 ### Email Processing
 {{ ... }}
+
+### Documentation
+- [ ] **Standardize Session File Naming**
+  - Current inconsistent formats:
+    - `session_YYYYMMDD_HHMM.md`
+    - `YYYY-MM-DD-HH-MM.md`
+    - `YYYYMMDD_HHMM.md`
+  - Standardize on format: `session_YYYYMMDD_HHMM.md`
+  - Rename existing files to match standard
+  - Update SESSION_TEMPLATE.md to document naming convention
+  - Impact: Improves organization and searchability
+  - Dependencies: None
+  - Estimated time: 30 minutes
+
+### Email Processing
+{{ ... }}
