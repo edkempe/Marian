@@ -163,6 +163,43 @@ marian/
   - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)
   - Follow type hint guidelines for SQLAlchemy 2.0
 
+## File Management
+
+### Archival Process
+When archiving files (e.g., deprecated code, old configurations):
+
+1. Create a date-based backup directory if it doesn't exist:
+   ```bash
+   mkdir -p backup/YYYYMMDD
+   ```
+
+2. Copy the file to the backup directory with appropriate extension:
+   - `.bak` for general backups
+   - `.mock` for test files
+   - Original extension for database files
+   ```bash
+   cp file.py backup/YYYYMMDD/file.py.bak
+   ```
+
+3. Remove the original file using git:
+   ```bash
+   git rm file.py
+   ```
+
+4. Commit both the backup and removal:
+   ```bash
+   git commit -m "chore: archive file.py
+
+   - Moved to backup/YYYYMMDD/file.py.bak
+   - [Reason for archival]"
+   ```
+
+This process ensures:
+- No code is permanently lost
+- Changes are properly tracked
+- Backups are organized by date
+- Files can be restored if needed
+
 ## Security and Compliance
 1. **Data Security**
    - Store API keys in environment variables
@@ -192,16 +229,6 @@ marian/
    - Track database performance
    - Implement proper caching
    - Use connection pooling
-
-## File Naming Conventions
-1. **Application Files**
-   - Main apps: `app_*.py` (e.g., `app_email_analyzer.py`)
-   - Models: `model_*.py` (e.g., `model_email.py`)
-   - Tests: `test_*.py` (e.g., `test_email_analyzer.py`)
-
-2. **Database Files**
-   - Main database: `db_email_store.db`
-   - Never use generic names like `emails.db`
 
 ## Schema Management
 See [Database Design](docs/database_design.md) for complete documentation on:
@@ -375,3 +402,13 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
    - Test edge cases
    - Mock external APIs
    - Use consistent test data
+
+## File Naming Conventions
+1. **Application Files**
+   - Main apps: `app_*.py` (e.g., `app_email_analyzer.py`)
+   - Models: `model_*.py` (e.g., `model_email.py`)
+   - Tests: `test_*.py` (e.g., `test_email_analyzer.py`)
+
+2. **Database Files**
+   - Main database: `db_email_store.db`
+   - Never use generic names like `emails.db`
