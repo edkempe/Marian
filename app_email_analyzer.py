@@ -2,7 +2,9 @@
 import os
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Tuple
-import anthropic
+import logging
+import os
+from shared_lib.anthropic_lib import parse_claude_response
 import json
 import time
 import argparse
@@ -16,7 +18,6 @@ import sqlalchemy.exc
 from structlog import get_logger
 from prometheus_client import start_http_server as start_prometheus_server
 from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
-from lib_anthropic import parse_claude_response
 
 # Set up structured logging
 logger = get_logger()

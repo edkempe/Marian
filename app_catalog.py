@@ -13,7 +13,8 @@ from marian_lib.anthropic_helper import get_anthropic_client
 from catalog_constants import CATALOG_CONFIG
 from typing import List
 import sys
-from lib_anthropic import parse_claude_response
+import logging
+from shared_lib.anthropic_lib import parse_claude_response
 
 class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
