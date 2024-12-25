@@ -1,12 +1,13 @@
 """Integration tests for email analysis functionality."""
 import pytest
+from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from db_session import get_email_session, get_analysis_session
 from app_email_analyzer import EmailAnalyzer
-from lib_gmail import GmailAPI
+from shared_lib.gmail import GmailAPI
 from app_get_mail import fetch_emails
 from constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
 

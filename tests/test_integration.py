@@ -1,7 +1,7 @@
 """Integration tests for Gmail API functionality."""
 import pytest
-from datetime import datetime, timedelta
-from lib_gmail import GmailAPI
+from unittest.mock import Mock, patch
+from shared_lib.gmail import GmailAPI
 from app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
 from models.email import Email
 from email.utils import parsedate_to_datetime
