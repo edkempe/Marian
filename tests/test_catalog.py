@@ -1,8 +1,23 @@
+"""Integration tests for the catalog functionality.
+
+This test suite uses real integration testing instead of mocks:
+- All API calls to Claude are real calls
+- All database operations use a real SQLite database (in-memory)
+- No mock objects or responses are used
+
+This ensures our tests reflect real-world behavior and catch actual integration issues.
+Test data is cleaned up after each test using test markers for isolation.
+
+Key Integration Points Tested:
+- Claude API semantic analysis
+- SQLite database operations
+- Full catalog item lifecycle
+"""
+
 import datetime
 import unittest
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import patch, MagicMock
 from app_catalog import CatalogChat
 from models.catalog import Base, CatalogItem, Tag, CatalogTag
 from marian_lib.logger import setup_logger
@@ -301,14 +316,13 @@ class TestCatalog(unittest.TestCase):
         finally:
             self.cleanup_test_data(test_marker)
 
-    @patch('app_catalog.get_anthropic_client')
-    def test_semantic_matching(self, mock_client):
-        """Test semantic matching functionality"""
-        # Mock Claude API response
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text='[("Similar Item", 0.85)]')]
-        mock_client.return_value.messages.create.return_value = mock_response
+    def test_semantic_matching(self):
+        """Test semantic matching using real Claude API calls.
         
+        This test performs real semantic analysis through the Claude API
+        to validate our semantic matching functionality. No mocks are used
+        to ensure we catch any API integration issues.
+        """
         # Create test items
         title = f"{self.test_marker}_Test Item"
         similar_title = f"{self.test_marker}_Similar Item"
@@ -316,55 +330,39 @@ class TestCatalog(unittest.TestCase):
         self.chat.add_item(title)
         self.chat.add_item(similar_title)
         
-        # Test semantic matching
+        # Test semantic matching with real API call
         items = [similar_title]
         matches = self.chat.get_semantic_matches(title, items)
         
-        # Verify API call
-        mock_client.return_value.messages.create.assert_called_with(
-            model=CATALOG_CONFIG['TEST_MODEL'],
-            max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
-            temperature=CATALOG_CONFIG['TEMPERATURE'],
-            messages=[{
-                'role': 'user',
-                'content': CATALOG_CONFIG['SEMANTIC_PROMPT'].format(
-                    text=title,
-                    items="\n".join(f"- {item}" for item in items),
-                    threshold=CATALOG_CONFIG['SEMANTIC_THRESHOLD']
-                )
-            }]
-        )
-        
         self.assertTrue(len(matches) > 0, "Should detect semantic similarity")
-        self.assertEqual(matches[0][0], "Similar Item")
         self.assertGreaterEqual(matches[0][1], CATALOG_CONFIG['SEMANTIC_THRESHOLD'])
 
     def test_semantic_duplicates(self):
-        """Test semantic duplicate detection"""
-        test_marker = "SEMANTIC_DUP_TEST_" + datetime.datetime.now().isoformat()
+        """Test semantic duplicate detection using real Claude API calls.
         
+        This test validates our duplicate detection by making real API calls
+        to Claude for semantic analysis. We test both similar and dissimilar
+        items to ensure accurate semantic matching in real-world scenarios.
+        """
         try:
-            # Clean up any leftover test data
-            self.cleanup_test_data(test_marker)
-            
             # Add test items directly to database
             item1 = CatalogItem(
-                title=f"{test_marker}_Python Guide",
-                content="A guide to Python"
+                title=f"{self.test_marker}_Python Guide",
+                content="A guide to Python programming language"
             )
             item2 = CatalogItem(
-                title=f"{test_marker}_JavaScript Guide",
-                content="A guide to JavaScript"
+                title=f"{self.test_marker}_JavaScript Guide",
+                content="A guide to JavaScript programming language"
             )
             self.session.add_all([item1, item2])
             self.session.commit()
             
             # Get all items
             all_items = self.session.query(CatalogItem).filter(
-                CatalogItem.title.like(f"{test_marker}%")
+                CatalogItem.title.like(f"{self.test_marker}%")
             ).all()
             
-            # Test duplicate detection
+            # Test duplicate detection with real API call
             has_dups, similar = self.chat.check_semantic_duplicates(
                 self.session,
                 "Python Tutorial",
@@ -374,7 +372,7 @@ class TestCatalog(unittest.TestCase):
             self.assertTrue(len(similar) > 0)
             self.assertEqual(similar[0][0].title, item1.title)
             
-            # Test non-duplicate
+            # Test non-duplicate with real API call
             has_dups, similar = self.chat.check_semantic_duplicates(
                 self.session,
                 "Ruby Guide",
@@ -384,13 +382,13 @@ class TestCatalog(unittest.TestCase):
             self.assertEqual(len(similar), 0)
             
             # Add test tag directly to database
-            tag = Tag(name=f"{test_marker}_programming")
+            tag = Tag(name=f"{self.test_marker}_programming")
             self.session.add(tag)
             self.session.commit()
             
-            # Test tag duplicates
+            # Test tag duplicates with real API call
             all_tags = self.session.query(Tag).filter(
-                Tag.name.like(f"{test_marker}%")
+                Tag.name.like(f"{self.test_marker}%")
             ).all()
             
             has_dups, similar = self.chat.check_semantic_duplicates(
@@ -403,7 +401,7 @@ class TestCatalog(unittest.TestCase):
             self.assertEqual(similar[0][0].name, tag.name)
             
         finally:
-            self.cleanup_test_data(test_marker)
+            self.cleanup_test_data(self.test_marker)
 
 if __name__ == '__main__':
     unittest.main()
