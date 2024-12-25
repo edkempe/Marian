@@ -321,39 +321,98 @@ class CatalogInteractive:
     
     def run_chat_mode(self):
         """Run the natural language chat interface."""
-        print("\nEntering chat mode. Type 'menu' to return to menu, 'exit' to quit")
-        print("You can have a natural conversation with me about your catalog.")
-        print("For example, try asking:")
-        print("- What items do I have about programming?")
-        print("- Show me recent items about databases")
-        print("- What are my most used tags?")
+        print("\nEntering chat mode. Type 'exit' to return to menu.")
+        print("You can now have a natural conversation with the catalog system.")
+        print("Examples:")
+        print("- Show me all items about machine learning")
+        print("- Find documents tagged with 'python' from last week")
+        print("- Add a new item about data structures")
         
         while True:
             try:
-                # Get user input with prompt_toolkit
-                user_input = self.session.prompt("\nYou: ")
+                user_input = self.session.prompt('You: ', style=style)
                 
-                if not user_input:
+                if user_input.lower() in ['exit', 'quit', 'back']:
+                    break
+                    
+                if not user_input.strip():
                     continue
                 
-                if user_input.lower() in ('exit', 'q', 'quit'):
-                    sys.exit(0)
-                elif user_input.lower() == 'menu':
-                    return True  # Return to menu mode
-                elif user_input.lower() == 'clear':
-                    clear()
-                    continue
+                # Process the natural language query
+                analysis = self.chat.process_natural_language_query(user_input)
                 
-                # TODO: Process chat input through Claude
-                print("\nThis feature is coming soon!")
+                if analysis['intent'] == 'search':
+                    # Perform semantic search
+                    items = self.chat.semantic_search(user_input)
+                    if items:
+                        print("\nFound these relevant items:")
+                        for i, item in enumerate(items, 1):
+                            print(f"\n{i}. {item.title}")
+                            print(f"   {item.content[:200]}...")
+                            if item.tags:
+                                tags = [tag.name for tag in item.tags]
+                                print(f"   Tags: {', '.join(tags)}")
+                    else:
+                        print("\nNo matching items found.")
+                        
+                elif analysis['intent'] == 'add':
+                    # Extract title and content from entities
+                    title = analysis['entities'].get('title', '')
+                    content = analysis['entities'].get('content', '')
+                    tags = analysis['entities'].get('tags', [])
+                    
+                    if title and content:
+                        # Confirm with user
+                        print("\nI'll help you add this item:")
+                        print(f"Title: {title}")
+                        print(f"Content: {content}")
+                        if tags:
+                            print(f"Tags: {', '.join(tags)}")
+                        
+                        confirm = self.session.prompt(
+                            '\nLook good? (yes/no): ',
+                            style=style
+                        ).lower()
+                        
+                        if confirm.startswith('y'):
+                            # Add the item
+                            self.chat.execute_command(f"add {title} - {content}")
+                            # Add tags if present
+                            for tag in tags:
+                                self.chat.execute_command(f"tag {title} {tag}")
+                            print("\nItem added successfully!")
+                    else:
+                        print("\nI couldn't extract a clear title and content. Please try again with more details.")
+                
+                elif analysis['intent'] == 'list':
+                    # List items with any filters
+                    filters = []
+                    if 'date' in analysis['filters']:
+                        date_filter = analysis['filters']['date']
+                        if date_filter.get('start'):
+                            filters.append(f"after:{date_filter['start']}")
+                        if date_filter.get('end'):
+                            filters.append(f"before:{date_filter['end']}")
+                    
+                    if 'tags' in analysis['filters']:
+                        for tag in analysis['filters']['tags']:
+                            filters.append(f"tag:{tag}")
+                    
+                    filter_str = ' '.join(filters) if filters else ''
+                    result = self.chat.execute_command(f"list {filter_str}")
+                    print(f"\n{result}")
+                
+                else:
+                    print("\nI'm not sure what you want to do. Try rephrasing your request.")
                 
             except KeyboardInterrupt:
-                print("\nUse 'exit', 'quit', or 'q' to quit, 'menu' for menu mode, or press ESC")
+                continue
             except EOFError:
                 break
             except Exception as e:
-                print(f"Error: {str(e)}")
-    
+                print(f"\nError: {str(e)}")
+                continue
+
     def run(self):
         """Run the interactive interface."""
         print("\nWelcome to the Marian Catalog System")
