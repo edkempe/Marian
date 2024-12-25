@@ -34,6 +34,31 @@
 ## Overview
 An AI-powered email analysis and management system that uses advanced language models to process, categorize, and extract insights from emails.
 
+## Project Documentation
+
+### Core Documentation
+- `README.md` - Project overview and quick start (this file)
+- `PROJECT_PLAN.md` - Development principles and roadmap
+- `BACKLOG.md` - Unified project backlog across all workstreams
+  - Email Processing
+  - Catalog/Librarian
+  - Program Management
+
+### Process Guides
+- `docs/LIBRARIAN_GUIDE.md` - Core catalog operations and principles
+- `docs/AI_SESSION_GUIDE.md` - AI interaction guidelines
+- `docs/BACKUP_GUIDE.md` - Backup procedures and standards
+- `docs/ARCHIVE_GUIDE.md` - Archive policies and procedures
+- `docs/SETUP_GUIDE.md` - Environment setup and configuration
+
+### Development Standards
+- `docs/CODE_STANDARDS.md` - Coding style and practices
+- `docs/TESTING_GUIDE.md` - Testing framework and guidelines
+- `docs/CHAT_START.md` - Development session startup procedures
+- `docs/CHAT_CLOSE.md` - Development session closing procedures
+
+Each document is focused and self-contained, following our "Necessary and Sufficient" principle. For development workflow, start with `docs/CHAT_START.md` and refer to `docs/CHAT_CLOSE.md` for proper session completion.
+
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
 - **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3 and stores insights
@@ -139,14 +164,14 @@ If you encounter any issues while running the application, please refer to our c
   - Living documentation
 
 ### Historical Reference
-- `/archive` - Historical content (see [ARCHIVE_GUIDE.md](ARCHIVE_GUIDE.md))
+- `/archive` - Historical content (see [ARCHIVE_GUIDE.md](docs/ARCHIVE_GUIDE.md))
   - Past versions
   - Superseded content
   - Clear naming convention
   - Single location for all archives
 
 ### Data Protection
-- `/backup` - Disaster recovery only (see [BACKUP_GUIDE.md](BACKUP_GUIDE.md))
+- `/backup` - Disaster recovery only (see [BACKUP_GUIDE.md](docs/BACKUP_GUIDE.md))
   - Follows 3-2-1 backup strategy
   - Copies of active files
   - Not for archival purposes
@@ -158,7 +183,7 @@ If you encounter any issues while running the application, please refer to our c
 
 ## Development Standards
 
-- Follow the code standards in `docs/code_standards.md`
+- Follow the code standards in `docs/CODE_STANDARDS.md`
 - Pay special attention to SQLAlchemy model standards to avoid common issues:
   - Use absolute imports for models (`from models.email import Email`)
   - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)

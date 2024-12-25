@@ -38,18 +38,35 @@ Our primary development principle is to maintain only what is necessary and suff
 - Prefer flatter organization structures over deep hierarchies
 - Consolidate related information rather than fragmenting across files
 - Remove anything that doesn't directly serve the project's goals
+- Minimize navigation complexity by keeping related items together
 
-#### Examples
-1. **DRY (Don't Repeat Yourself)**: Code duplication creates maintenance burden and increases bug surface area. Examples:
-   - Consolidate duplicate email analysis logic into shared utilities
-   - Create reusable query builders for common database operations
-   - Use shared templates for report generation
-   - Maintain single source of truth for constants and configuration
+This principle ensures:
+1. Easier information discovery
+2. Reduced cognitive load
+3. Better maintainability
+4. Clear organization
+5. Efficient workflows
 
-2. **Flat Structure**: Avoid deep hierarchies that complicate imports and hide code. Examples:
-   - Keep database session management in root `db_session.py`
-   - Consolidate constants into `config/constants.py`
-   - Place utilities at root level when frequently used
+Examples of applying this principle:
+1. **Documentation**: Keep all core documentation in root directory
+2. **Backlog Management**: Single BACKLOG.md file instead of multiple workstream files
+3. **Configuration**: Centralized constants.py for all settings
+4. **Code Organization**: Flat module structure where possible
+
+### Incremental Development
+The project follows a strict "one small step at a time" approach:
+- Make small, focused changes
+- Test and verify each change before proceeding
+- Document changes as they are made
+- Avoid combining multiple changes in one step
+- Get confirmation before proceeding to next step
+
+This principle ensures:
+1. Changes are easily reviewable
+2. Problems are caught early
+3. Documentation stays current
+4. Project history remains clear
+5. Easier rollback if needed
 
 ## Branch Overview
 Marian is a branch of the Jexi AI personal assistant project, focused on catalog management and information organization. As Jexi's librarian, Marian aims to:
@@ -100,76 +117,111 @@ marian/
 
 ### New Documentation Structure
 ```
-docs/
-├── getting-started/
-│   ├── installation.md      # From SETUP.md
-│   └── prerequisites.md
-├── guides/
-│   ├── librarian-guide.md   # From LIBRARIAN_GUIDE.md
-│   ├── workflow.md          # From SESSION_WORKFLOW.md
-│   └── troubleshooting.md   # Common issues and solutions
-├── architecture/
-│   ├── design-decisions.md  # From MARIAN_DESIGN_AND_DECISIONS.md
-│   └── database-schema.md
-├── development/
-│   ├── guidelines.md
-│   ├── backlog.md          # Merged from BACKLOG.md and CATALOG_BACKLOG.md
-│   ├── code_standards.md   # Coding style and practices
-│   └── testing.md         # Testing guidelines and patterns
-└── sessions/
-    ├── README.md           # Session management guide
-    ├── active/            # Current session notes
-    └── archive/           # Past session summaries
+/
+├── README.md                     # Project overview and quick start
+├── LIBRARIAN_GUIDE.md           # Core catalog operations
+├── AI_SESSION_GUIDE.md          # AI interaction guidelines
+├── SETUP_GUIDE.md               # Environment setup
+├── BACKUP_GUIDE.md              # Backup procedures
+├── ARCHIVE_GUIDE.md             # Archive standards
+├── CODE_STANDARDS.md            # Development standards
+├── TESTING_GUIDE.md             # Testing procedures
+└── DATABASE_SCHEMA.md           # Data model reference
 ```
 
 ### Documentation Content Organization
 
-#### Getting Started
-- Installation prerequisites and steps
-- Environment setup
-- Initial configuration
-- Quick start guide
+#### Core Documentation
+- Project overview and quick start (README.md)
+  - Installation prerequisites
+  - Basic configuration
+  - Documentation index
+  - Component overview
+- Development roadmap (PROJECT_PLAN.md)
+  - Project principles
+  - Architecture decisions
+  - Development standards
+- Unified project backlog (BACKLOG.md)
+  - Single source of truth for all workstreams
+  - Current sprint items
+  - Prioritized by workstream
+  - Clear dependency tracking
+  - Completed items history
 
-#### Guides
-- Backup and archive management
-  - BACKUP_GUIDE.md: Backup standards and processes
-  - ARCHIVE_GUIDE.md: Archive policies and organization
-- Librarian functionality and usage
-- Workflow processes and best practices
-- Comprehensive troubleshooting guide
-  - Common issues and solutions
-  - Debugging procedures
-  - Environment-specific problems
-  - Known limitations
+#### Process Guides
+Located in `/docs`:
+- Librarian functionality (LIBRARIAN_GUIDE.md)
+  - Core catalog operations
+  - Usage guidelines
+  - Best practices
+- AI session management (AI_SESSION_GUIDE.md)
+  - Session protocols
+  - AI interaction guidelines
+  - Error handling
+- Environment setup (SETUP_GUIDE.md)
+  - Installation steps
+  - Configuration guide
+  - Troubleshooting
+- Backup procedures (BACKUP_GUIDE.md)
+  - Backup strategies
+  - Recovery procedures
+  - Verification steps
+- Archive standards (ARCHIVE_GUIDE.md)
+  - Archival policies
+  - File organization
+  - Retention guidelines
 
-#### Architecture
-- System design decisions and rationale
-- Data model implementation (SQLAlchemy models)
-- Component interactions
-- Security considerations
-
-#### Development
-- Project guidelines and constraints
-- Coding standards and style guide
+#### Development Standards
+Located in `/docs`:
+- Code standards (CODE_STANDARDS.md)
   - Python style guidelines
   - Documentation requirements
   - Code review checklist
   - PR templates
-- Testing framework and practices
+- Testing procedures (TESTING_GUIDE.md)
   - Test organization
   - Coverage requirements
   - Test patterns
   - Integration test guidelines
-- Backlog management
-  - Task prioritization
-  - Implementation details
-  - Dependencies tracking
+- Database schema (DATABASE_SCHEMA.md)
+  - Data model implementation
+  - Component interactions
+  - Security considerations
+- Session workflow (CHAT_START.md, CHAT_CLOSE.md)
+  - Starting a session
+  - Development guidelines
+  - Closing procedures
+  - Progress tracking
+  - Real-time documentation
+  - Task management
 
-#### Sessions
-- Standardized session management
-- Real-time documentation
-- Progress tracking
+#### Session Documentation
+Located in `/docs/sessions`:
+- One file per development session
+- Standardized naming: YYYYMMDD_HHMM.md
+- Tracks decisions and progress
 - Historical record keeping
+  - Session logs
+  - Decision records
+  - Change history
+
+### Documentation Standards
+1. **File Naming**
+   - Use UPPERCASE for root-level guides
+   - Clear, descriptive names
+   - Consistent suffixes (_GUIDE.md, _STANDARDS.md)
+
+2. **Content Structure**
+   - Clear table of contents
+   - Consistent heading hierarchy
+   - Cross-references to related docs
+   - Code examples where relevant
+
+3. **Maintenance**
+   - Regular reviews
+   - Keep content current
+   - Archive outdated content
+   - Track documentation changes
 
 ## 3. Code Organization
 
@@ -430,6 +482,37 @@ docs/development/
 - Security monitoring
 - Backup verification
 
+## Project Management
+
+#### Workstream Organization
+The project is organized into three main workstreams:
+1. **Email Processing**: Email retrieval, analysis, and storage
+2. **Catalog/Librarian**: Information organization and retrieval
+3. **Program Management**: Standards, processes, and coordination across workstreams
+
+#### Program Management Focus
+- Development standards and best practices
+- Documentation organization and quality
+- Cross-workstream coordination
+- Process improvement and standardization
+- Quality assurance practices
+- Technical debt management
+- Development workflow optimization
+
+#### Backlog Management
+- Single unified backlog in BACKLOG.md
+- Organized by workstream for clarity
+- Maintains clear priorities across workstreams
+- Tracks dependencies between components
+- Preserves historical record of completed items
+
+This approach:
+- Reduces navigation complexity
+- Maintains single source of truth
+- Provides clear project overview
+- Simplifies priority management
+- Facilitates cross-workstream coordination
+
 ## 13. Organizational Principles
 
 ### Core Development Guidelines
@@ -530,27 +613,16 @@ src/catalog/
 
 ### Documentation Organization
 ```
-docs/
-├── getting-started/
-│   ├── installation.md      # From SETUP.md
-│   └── prerequisites.md
-├── guides/
-│   ├── librarian-guide.md   # From LIBRARIAN_GUIDE.md
-│   └── workflow.md          # From SESSION_WORKFLOW.md
-├── architecture/
-│   ├── design-decisions.md  # From MARIAN_DESIGN_AND_DECISIONS.md
-│   └── database-schema.md
-├── development/
-│   ├── guidelines.md
-│   └── backlog.md          # Merged from BACKLOG.md and CATALOG_BACKLOG.md
-└── sessions/               # Session logs and history only
-    ├── active/            # Current session notes
-    └── archive/           # Past session summaries
-
-# Root-level critical documentation
-- AI_SESSION_GUIDE.md      # Primary guide for AI interactions
-- README.md                # Project overview
-- PROJECT_PLAN.md          # This document
+/
+├── README.md                     # Project overview and quick start
+├── LIBRARIAN_GUIDE.md           # Core catalog operations
+├── AI_SESSION_GUIDE.md          # AI interaction guidelines
+├── SETUP_GUIDE.md               # Environment setup
+├── BACKUP_GUIDE.md              # Backup procedures
+├── ARCHIVE_GUIDE.md             # Archive standards
+├── CODE_STANDARDS.md            # Development standards
+├── TESTING_GUIDE.md             # Testing procedures
+└── DATABASE_SCHEMA.md           # Data model reference
 ```
 
 ### Documentation Priorities
