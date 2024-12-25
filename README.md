@@ -157,6 +157,14 @@ If you encounter any issues while running the application, please refer to our c
 
 ## Project Structure
 
+### Core Components
+- `/models` - SQLAlchemy models and database schemas
+- `/utils` - Shared utility functions and helpers
+- `/tests` - Test suite and test data
+- `/docs` - Project documentation and guides
+- `/scripts` - Shell scripts for deployment, testing, and maintenance
+- `/infrastructure` - Infrastructure as code (CloudFormation)
+
 ### Active Content
 - `/docs` - Current documentation only
   - Design decisions

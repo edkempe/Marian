@@ -110,6 +110,10 @@ marian/
 │   ├── architecture/
 │   ├── development/
 │   └── sessions/        # Session management
+├── scripts/              # Automation and deployment
+│   ├── deployment/      # Deployment scripts
+│   ├── testing/         # Testing scripts
+│   └── maintenance/     # Database maintenance
 └── tests/               # Test files organized by module
 ```
 
