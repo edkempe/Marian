@@ -68,10 +68,16 @@ def get_analysis_session() -> Generator:
     finally:
         session.close()
 
-def init_db():
-    """Initialize database tables."""
+def init_db() -> None:
+    """Initialize all database tables.
+    
+    Creates all tables defined in the SQLAlchemy models if they don't exist.
+    This is safe to run multiple times as it will not recreate existing tables.
+    """
+    # Create all tables
     Base.metadata.create_all(email_engine)
     Base.metadata.create_all(analysis_engine)
 
 if __name__ == "__main__":
     init_db()
+    print("Database tables created successfully!")
