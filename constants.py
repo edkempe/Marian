@@ -10,6 +10,7 @@ Configuration Sections:
     - LOGGING_CONFIG: Log file settings and formats
     - EMAIL_CONFIG: Email processing parameters
     - METRICS_CONFIG: Prometheus metrics settings
+    - CATALOG_CONFIG: Catalog configuration settings
 
 Usage:
     from constants import API_CONFIG, DATABASE_CONFIG
@@ -66,6 +67,19 @@ class EmailConfig(TypedDict):
     RETRY_DELAY: int
     DAYS_TO_FETCH: int
     RATE_LIMIT: Dict[str, Union[int, float]]
+
+class CatalogConfig(TypedDict):
+    """Type hints for catalog configuration."""
+    CATALOG_DB_FILE: str
+    CATALOG_DB_URL: str
+    CHAT_LOG_FILE: str
+    SEMANTIC_MODEL: str
+    TEST_MODEL: str
+    MAX_TOKENS: int
+    TEMPERATURE: float
+    SEMANTIC_THRESHOLD: float
+    SEMANTIC_PROMPT: str
+    ERROR_MESSAGES: Dict[str, str]
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
@@ -152,6 +166,56 @@ EMAIL_CONFIG: EmailConfig = {
     'RATE_LIMIT': {
         'REQUESTS_PER_MINUTE': 45,  # Keep slightly under 50 RPM limit
         'PAUSE_SECONDS': 20         # Pause duration to maintain rate limit
+    }
+}
+
+# Catalog Configuration
+CATALOG_CONFIG: CatalogConfig = {
+    # Database Settings
+    'CATALOG_DB_FILE': 'db_catalog.db',
+    'CATALOG_DB_URL': 'sqlite:///db_catalog.db',
+    'CHAT_LOG_FILE': 'chat_logs.jsonl',
+    
+    # API Settings
+    'SEMANTIC_MODEL': 'claude-3-opus-20240229',  # Model for production use
+    'TEST_MODEL': 'claude-3-haiku-20240307',     # Faster model for testing
+    'MAX_TOKENS': 1000,
+    'TEMPERATURE': 0.0,  # Zero temperature for consistent, deterministic outputs
+    'SEMANTIC_THRESHOLD': 0.7,  # Threshold for semantic similarity matches
+    
+    # Semantic Analysis Prompt
+    'SEMANTIC_PROMPT': '''Please analyze the semantic similarity between the following text and each item in the list. Consider not just word overlap but meaning and context.
+
+For each item, determine if it is semantically similar to the text, considering:
+1. Core meaning and intent
+2. Subject matter and domain
+3. Level of specificity
+4. Context and usage
+
+Return only items that are truly semantically similar (sharing the same core meaning/topic), not just superficially similar.
+
+Text to compare: {text}
+
+Items to check:
+{items}
+
+For each item that is semantically similar (sharing the same core topic/meaning), return it and its similarity score (0-1) in this format:
+[("item text", similarity_score), ...]
+
+Only include items with similarity >= {threshold}. Return an empty list if no items are similar enough.
+
+Example responses:
+- For "Python Tutorial" and ["Python Guide", "Snake Care"]:
+  [("Python Guide", 0.85)]  # High similarity in programming context
+- For "Python Snake" and ["Python Guide"]:
+  []  # Different contexts (animal vs programming)''',
+    
+    # Error Messages
+    'ERROR_MESSAGES': {
+        'semantic_error': 'Error in semantic analysis: {error}',
+        'database_error': 'Error accessing database: {error}',
+        'validation_error': 'Error validating input: {error}',
+        'archive_error': 'Error archiving item: {error}'
     }
 }
 
