@@ -3,14 +3,10 @@ from sqlalchemy import create_engine
 from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from database.config import EMAIL_DB_URL, ANALYSIS_DB_URL
+from db_session import email_engine, analysis_engine
 
 def init_databases():
     """Initialize all database tables."""
-    # Create engines
-    email_engine = create_engine(EMAIL_DB_URL)
-    analysis_engine = create_engine(ANALYSIS_DB_URL)
-
     # Create all tables
     Base.metadata.create_all(email_engine)
     Base.metadata.create_all(analysis_engine)
