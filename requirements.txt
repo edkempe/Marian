@@ -9,7 +9,6 @@ pytz==2024.1
 # Data processing and visualization
 pandas==2.1.4
 plotly==5.18.0
-textblob==0.17.1
 jinja2==3.1.2
 
 # Environment and utilities
@@ -34,12 +33,6 @@ python-multipart==0.0.9  # For handling form data securely
 
 # Scalability and Performance
 aiohttp==3.9.1           # Async HTTP client/server
-redis==5.0.1             # For caching and rate limiting
 SQLAlchemy-Utils==0.41.1 # Database utilities
 tenacity==8.2.3          # Retrying operations
 uvicorn==0.27.0.post1    # ASGI server
-gunicorn==21.2.0         # WSGI HTTP Server
-
-# Testing and development
-black==24.3.0
-flake8==7.0.0
