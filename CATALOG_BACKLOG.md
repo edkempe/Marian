@@ -48,7 +48,7 @@ Create an intelligent catalog system within Marian that enables interactive info
 
 1. **Phase 1: Foundation** (Current)
    - [x] Set up project structure
-   - [ ] Design database schema
+   - [x] Design database schema
    - [ ] Implement basic chat interface
    - [ ] Create logging system
    - [ ] Add basic CRUD operations
