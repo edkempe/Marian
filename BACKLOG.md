@@ -942,3 +942,17 @@ Benefits:
 - [ ] Review other documentation files for duplicate sections
   - Context: Continue documentation cleanup effort
   - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
+
+## Critical Tasks
+
+### Testing Framework
+- [ ] **CRITICAL: Remove Mock Email Processor and Test Emulators**
+  - Current mock emulators in `utils/util_test_data.py` bypass real email processing
+  - Replace with actual email processing using test fixtures
+  - Update version tracking tests to use real components
+  - Impact: Improves test reliability and coverage
+  - Dependencies: None
+  - Estimated time: 1-2 days
+
+### Email Processing
+{{ ... }}
