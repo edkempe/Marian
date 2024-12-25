@@ -7,7 +7,7 @@ and case-insensitive constraints.
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy import Integer, String, Text, Boolean, ForeignKey, JSON, CheckConstraint, Index, text, event
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from sqlalchemy.sql import func
 from models.base import Base
 
@@ -107,6 +107,22 @@ class CatalogTag(Base):
     
     catalog_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
     tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
+    
+    def __init__(self, catalog_id, tag_id):
+        """Initialize a catalog tag association."""
+        self.catalog_id = catalog_id
+        self.tag_id = tag_id
+        
+        # Validate association
+        session = Session.object_session(self)
+        if session:
+            catalog_item = session.query(CatalogItem).filter_by(id=catalog_id).first()
+            tag = session.query(Tag).filter_by(id=tag_id).first()
+            
+            if catalog_item and catalog_item.deleted:
+                raise ValueError("Cannot tag an archived item")
+            if tag and tag.deleted:
+                raise ValueError("Cannot use an archived tag")
     
     def __repr__(self) -> str:
         return f"<CatalogTag(catalog_id={self.catalog_id}, tag_id={self.tag_id})>"
