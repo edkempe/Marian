@@ -438,3 +438,10 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 2. **Database Files**
    - Main database: `db_email_store.db`
    - Never use generic names like `emails.db`
+
+## Documentation
+- Project overview and quick start (README.md)
+- Development roadmap (PROJECT_PLAN.md)
+- Design decisions and architecture (docs/DESIGN_DECISIONS.md)
+- Session workflow guide (docs/SESSION_WORKFLOW.md)
+- Project guidelines (docs/GUIDELINES.md)
