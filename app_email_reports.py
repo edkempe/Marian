@@ -13,7 +13,7 @@ import argparse
 import sqlite3
 from sqlalchemy import func, desc
 from constants import DATABASE_CONFIG, EMAIL_CONFIG
-from shared_lib.gmail import GmailAPI
+from shared_lib.gmail_lib import GmailAPI
 
 class EmailAnalytics:
     """Analytics for email and analysis data."""
@@ -878,7 +878,7 @@ class EmailAnalytics:
 
 def sync_gmail_labels():
     """Sync Gmail labels with local database."""
-    from shared_lib.gmail import GmailAPI
+    from shared_lib.gmail_lib import GmailAPI
     
     # Initialize Gmail API and sync labels
     gmail = GmailAPI()

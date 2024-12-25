@@ -31,7 +31,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from models.base import Base
 from models.email import Email
 from models.gmail_label import GmailLabel
-from shared_lib.gmail import GmailAPI
+from shared_lib.gmail_lib import GmailAPI
 from db_session import get_email_session, get_analysis_session, init_db
 from constants import DATABASE_CONFIG, EMAIL_CONFIG, ANALYSIS_TYPES, CATALOG_TYPES
 
