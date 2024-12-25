@@ -8,8 +8,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from utils.logger import setup_logger
-from utils.anthropic import get_anthropic_client
+from marian_lib.logger import setup_logger
+from marian_lib.anthropic_helper import get_anthropic_client
 from catalog_constants import CATALOG_CONFIG
 
 class CatalogChat:
