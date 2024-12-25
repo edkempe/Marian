@@ -385,6 +385,23 @@ class DatabaseSessions:
    - Add migration guidelines
    - Update field descriptions
 
+### Documentation Improvements
+**Status**: In Progress
+**Priority**: Medium
+**Added**: 2024-12-24
+**Session**: 2024-12-24-22-42
+
+#### Tasks
+- [ ] Review Data Storage and Schema section for potential consolidation
+  - Context: Follow-up from documentation cleanup
+  - Consider merging implementation details with storage considerations
+- [ ] Add implementation examples for key features
+  - Context: Make documentation more practical
+  - Include code snippets for common operations
+- [ ] Review other documentation files for duplicate sections
+  - Context: Continue documentation cleanup effort
+  - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
+
 ## Sub-Domains
 
 ### Catalog System
