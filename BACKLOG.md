@@ -946,11 +946,13 @@ Benefits:
 ## Critical Tasks
 
 ### Testing Framework
-- [ ] **CRITICAL: Remove Mock Email Processor and Test Emulators**
-  - Current mock emulators in `utils/util_test_data.py` bypass real email processing
-  - Replace with actual email processing using test fixtures
-  - Update version tracking tests to use real components
-  - Impact: Improves test reliability and coverage
+- [ ] **CRITICAL: Remove Mock Email Processor and Simplify Testing**
+  - Remove `utils/util_test_data.py` entirely
+  - Replace mock `EmailProcessor` with real email processing in test mode
+  - Use Gmail API test mode instead of hardcoded test emails
+  - Simplify test setup by removing unnecessary abstractions
+  - Remove test data generation functions in favor of direct API calls
+  - Impact: More reliable tests that match production behavior
   - Dependencies: None
   - Estimated time: 1-2 days
 
