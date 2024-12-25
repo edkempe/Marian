@@ -15,8 +15,8 @@ from catalog_constants import CATALOG_CONFIG
 class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
     
-    def __init__(self, db_path=CATALOG_CONFIG['database']['file'], mode='cli', 
-                 chat_log=CATALOG_CONFIG['logging']['chat_log']):
+    def __init__(self, db_path=CATALOG_CONFIG['DB_FILE'], mode='cli', 
+                 chat_log=CATALOG_CONFIG['CHAT_LOG']):
         """Initialize the catalog chat interface"""
         self.mode = mode
         self.db_path = db_path
