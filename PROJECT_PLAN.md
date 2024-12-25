@@ -84,38 +84,60 @@ This restructuring plan aims to:
 5. Ensure comprehensive and accessible documentation
 6. Preserve all existing functionality while improving organization
 
-## 1. Project Structure Overview
+## Project Organization
 
+#### Code Structure
 ```
-marian/
-├── src/                    # Source code
-│   ├── core/              # Core shared libraries
-│   │   ├── anthropic.py
-│   │   ├── database.py
-│   └── libs/              # Domain-specific shared libraries
-│   │   ├── analysis/
-│   │   ├── chat/
-│   │   └── storage/
-│   ├── catalog/           # Catalog-specific modules
-│   └── chat/              # Chat-specific modules
-├── data/                  # All data storage
-│   ├── db/               # Database files
-│   │   ├── primary/      # Main database files
-│   │   └── backup/       # Database backups
-│   ├── migrations/       # Database migrations
-│   └── schema/          # Database schema definitions
-├── docs/                 # Documentation
-│   ├── getting-started/
-│   ├── guides/
-│   ├── architecture/
-│   ├── development/
+project/
+├── docs/                # Documentation
+│   ├── architecture/    # Design decisions and ADRs
+│   ├── development/     # Development guides
 │   └── sessions/        # Session management
-├── scripts/              # Automation and deployment
-│   ├── deployment/      # Deployment scripts
-│   ├── testing/         # Testing scripts
-│   └── maintenance/     # Database maintenance
+├── models/              # Database models
+│   ├── email.py        # Email data models
+│   ├── analysis.py     # Analysis results
+│   └── catalog.py      # Catalog entries
+├── utils/              # Shared utilities
+│   ├── database.py     # Database helpers
+│   ├── security.py     # Security functions
+│   └── testing.py      # Test utilities
+├── scripts/             # Automation and deployment
+│   ├── deploy.sh        # Main deployment script
+│   ├── deploy-test.sh   # Test deployment script
+│   ├── layer-test.sh    # Lambda layer testing
+│   ├── temp.sh          # Temporary utilities
+│   └── util_backup_database.sh  # Database backup
+├── infrastructure/      # AWS resources
+│   └── cloudformation/  # CloudFormation templates
 └── tests/               # Test files organized by module
 ```
+
+The project follows a modular structure with clear separation of concerns:
+- Core functionality in root directory
+- Shared utilities in `/utils`
+- Database models in `/models`
+- Infrastructure as code in `/infrastructure`
+- Documentation in `/docs`
+- Scripts in `/scripts`
+- Tests in `/tests`
+
+### Development Standards
+1. **File Naming**
+   - Use UPPERCASE for root-level guides
+   - Clear, descriptive names
+   - Consistent suffixes (_GUIDE.md, _STANDARDS.md)
+
+2. **Content Structure**
+   - Clear table of contents
+   - Consistent heading hierarchy
+   - Cross-references to related docs
+   - Code examples where relevant
+
+3. **Maintenance**
+   - Regular reviews
+   - Keep content current
+   - Archive outdated content
+   - Track documentation changes
 
 ## 2. Documentation Reorganization
 

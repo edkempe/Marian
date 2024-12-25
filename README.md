@@ -31,33 +31,29 @@
    - Document the reason and impact of proposed additions
    - This guideline is critical and applies to all aspects of the project
 
-## Overview
-An AI-powered email analysis and management system that uses advanced language models to process, categorize, and extract insights from emails.
+## Project Overview
 
-## Project Documentation
+Marian is an AI-powered email analysis and cataloging system that helps organize and understand email content at scale.
 
-### Core Documentation
-- `README.md` - Project overview and quick start (this file)
-- `PROJECT_PLAN.md` - Development principles and roadmap
-- `BACKLOG.md` - Unified project backlog across all workstreams
-  - Email Processing
-  - Catalog/Librarian
-  - Program Management
+### Key Features
+- Automated email analysis and categorization
+- Smart priority scoring
+- Catalog generation and management
+- Integration with Gmail API
+- Extensible analysis framework
 
-### Process Guides
-- `docs/LIBRARIAN_GUIDE.md` - Core catalog operations and principles
-- `docs/AI_SESSION_GUIDE.md` - AI interaction guidelines
-- `docs/BACKUP_GUIDE.md` - Backup procedures and standards
-- `docs/ARCHIVE_GUIDE.md` - Archive policies and procedures
-- `docs/SETUP_GUIDE.md` - Environment setup and configuration
+### Quick Links
+- [Project Plan](PROJECT_PLAN.md) - Detailed development roadmap and project structure
+- [Documentation](docs/) - Guides and technical documentation
+- [Infrastructure](infrastructure/) - AWS deployment templates
 
-### Development Standards
-- `docs/CODE_STANDARDS.md` - Coding style and practices
-- `docs/TESTING_GUIDE.md` - Testing framework and guidelines
-- `docs/CHAT_START.md` - Development session startup procedures
-- `docs/CHAT_CLOSE.md` - Development session closing procedures
+### Getting Started
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Configure environment variables (see [Setup Guide](docs/SETUP_GUIDE.md))
+4. Run tests: `python -m pytest tests/`
 
-Each document is focused and self-contained, following our "Necessary and Sufficient" principle. For development workflow, start with `docs/CHAT_START.md` and refer to `docs/CHAT_CLOSE.md` for proper session completion.
+For detailed setup instructions and development guidelines, see the [Setup Guide](docs/SETUP_GUIDE.md).
 
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
