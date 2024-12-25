@@ -217,10 +217,65 @@ class DatabaseSessions:
 3. Run both systems in parallel during transition
 4. Remove old system once migration is complete
 
+### Database Code Consolidation
+**Status**: In Progress
+**Priority**: High
+**Description**: Complete the consolidation of database-related code and update imports.
+
+#### Technical Details
+1. Update Remaining Import References
+   - app_get_mail.py
+   - app_email_analyzer.py
+   - analysis_viewer.py
+   - utils/util_db_init.py
+   - utils/util_schema_verify.py
+   - utils/util_test_data.py
+   - tests/test_email_analysis.py
+   - app_email_reports.py
+
+2. Archive Old Files
+   - Create backup/20241225 directory
+   - Move utils/database.py to backup
+   - Move database/config.py to backup
+   - Remove empty directories if applicable
+
+3. Test Database Functionality
+   - Verify all database operations still work
+   - Run the test suite
+   - Test database initialization
+   - Test session management
+
+**Session Reference**: 2024-12-25-09-34
+
+### Constants Consolidation
+**Status**: Planned
+**Priority**: High
+**Description**: Consolidate all constants files into a single source of truth.
+
+#### Technical Details
+1. Review and Compare Constants
+   - config/constants.py
+   - constants.py
+   - catalog_constants.py
+   - Any other constant definitions
+
+2. Plan Consolidation
+   - Identify overlapping constants
+   - Create unified constant structure
+   - Document any branch-specific constants
+
+3. Implement Changes
+   - Create consolidated constants file
+   - Update all imports
+   - Archive old constant files
+   - Test all functionality
+
+**Session Reference**: 2024-12-25-09-34
+
 ### Code DRY (Don't Repeat Yourself) Review
 **Status**: Planned  
 **Priority**: High  
-**Description**: Review and refactor code to eliminate duplication and improve maintainability.
+**Description**: Review and refactor code to eliminate duplication and improve maintainability, following our necessary and sufficient principle.
 
 #### Areas to Review
 1. Email Analysis Logic
@@ -366,6 +421,58 @@ class DatabaseSessions:
   - Update lib_gmail.py to use validators
   - Add tests for validation
   - Priority: High
+
+### Catalog System Fixes
+**Status**: Planned
+**Priority**: High
+**Description**: Fix critical issues identified in catalog system testing.
+
+#### Technical Details
+1. Anthropic API Integration
+   - Debug NoneType error in API response handling
+   - Implement proper error handling for API calls
+   - Add retry logic for failed API calls
+   - Add logging for API interactions
+
+2. Archived Item Handling
+   - Review and fix exception handling logic
+   - Implement proper validation for archived items
+   - Add test cases for edge cases
+   - Update documentation
+
+3. Semantic Matching
+   - Debug semantic similarity detection
+   - Improve matching algorithm
+   - Add test cases with varied content
+   - Document matching criteria
+
+**Session Reference**: 2024-12-25-08-46
+
+### Project Structure Simplification
+**Status**: Planned
+**Priority**: High
+**Description**: Implement "necessary and sufficient" principle across project structure.
+
+#### Technical Details
+1. Documentation Consolidation
+   - Review all documentation files for overlap
+   - Identify core information that must be preserved
+   - Create plan for consolidating into fewer files
+   - Ensure no context or important information is lost
+
+2. Directory Structure Flattening
+   - Audit current directory structure
+   - Identify opportunities to reduce hierarchy
+   - Plan migration to flatter structure
+   - Update all affected file paths
+
+3. Jexi Branch Organization
+   - Document branch relationship (Marian as Jexi branch)
+   - Establish clear boundaries between branches
+   - Define shared vs. branch-specific components
+   - Create guidelines for when to branch vs. share code
+
+**Session Reference**: 2024-12-25-08-57
 
 ## Medium Priority
 

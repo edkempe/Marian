@@ -1,21 +1,39 @@
-# Marian Project Restructuring Plan
+# Marian: Jexi's Catalog Management Branch
 
-## Project Objectives
+## Core Development Principles
 
-Marian is an AI-powered email analysis and management system that aims to:
-1. Process and analyze email communications using advanced language models
-2. Extract meaningful insights and patterns from email content
-3. Organize information through an intelligent catalog system
-4. Enable natural language interaction for information retrieval
-5. Maintain high standards of data privacy and security
+### Necessary and Sufficient
+Our primary development principle is to maintain only what is necessary and sufficient:
+- Every file, folder, and document must justify its existence
+- Prefer flatter organization structures over deep hierarchies
+- Consolidate related information rather than fragmenting across files
+- Remove anything that doesn't directly serve the project's goals
+
+#### Examples
+1. **DRY (Don't Repeat Yourself)**: Code duplication creates maintenance burden and increases bug surface area. Examples:
+   - Consolidate duplicate email analysis logic into shared utilities
+   - Create reusable query builders for common database operations
+   - Use shared templates for report generation
+   - Maintain single source of truth for constants and configuration
+
+2. **Flat Structure**: Avoid deep hierarchies that complicate imports and hide code. Examples:
+   - Keep database session management in root `db_session.py`
+   - Consolidate constants into `config/constants.py`
+   - Place utilities at root level when frequently used
+
+## Branch Overview
+Marian is a branch of the Jexi AI personal assistant project, focused on catalog management and information organization. As Jexi's librarian, Marian aims to:
+1. Organize information through an intelligent catalog system
+2. Enable natural language interaction for information retrieval
+3. Maintain high standards of data privacy and security
 
 ## Project Plan Objectives
 
 This restructuring plan aims to:
-1. Create a maintainable and scalable project structure
-2. Promote code reuse and prevent duplication
+1. Create a maintainable and scalable branch structure
+2. Promote code reuse and prevent duplication with other Jexi branches
 3. Establish clear guidelines for contributors and AI assistants
-4. Maintain clear separation between domains while enabling integration
+4. Maintain clear separation between branches while enabling integration
 5. Ensure comprehensive and accessible documentation
 6. Preserve all existing functionality while improving organization
 
@@ -26,13 +44,11 @@ marian/
 ├── src/                    # Source code
 │   ├── core/              # Core shared libraries
 │   │   ├── anthropic.py
-│   │   ├── gmail.py
-│   │   └── database.py
-│   ├── libs/              # Domain-specific shared libraries
+│   │   ├── database.py
+│   └── libs/              # Domain-specific shared libraries
 │   │   ├── analysis/
 │   │   ├── chat/
 │   │   └── storage/
-│   ├── email/             # Email-specific modules
 │   ├── catalog/           # Catalog-specific modules
 │   └── chat/              # Chat-specific modules
 ├── data/                  # All data storage
@@ -151,8 +167,6 @@ DATA_DIR = Path(__file__).parent.parent / 'data'
 DB_DIR = DATA_DIR / 'db' / 'primary'
 
 DATABASE_PATHS = {
-    'email_store': DB_DIR / 'email_store.db',
-    'email_analysis': DB_DIR / 'email_analysis.db',
     'catalog': DB_DIR / 'catalog.db',
     'prompts': DB_DIR / 'prompts.db'
 }
@@ -412,8 +426,7 @@ docs/development/
    src/
    ├── core/              # Fundamental shared libraries
    │   ├── anthropic.py   # External service clients
-   │   ├── gmail.py       # Core API integrations
-   │   └── database.py    # Database utilities
+   │   ├── database.py    # Database utilities
    └── libs/              # Domain-specific shared code
        ├── analysis/      # Analysis utilities
        ├── chat/          # Chat functionality
@@ -473,14 +486,6 @@ docs/development/
    - Document decisions
 
 ### Domain Organization
-
-#### Email Domain
-```
-src/email/
-├── core/           # Email-specific core functionality
-├── analysis/       # Analysis components
-└── reporting/      # Report generation
-```
 
 #### Catalog Domain
 ```
