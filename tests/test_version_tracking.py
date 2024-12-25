@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tests for version tracking functionality."""
 import pytest
-from unittest.mock import Mock, patch
-from ..utils.util_test_data import EmailProcessor, load_test_fixtures
+import os
+from ..shared_lib.broken_test_util import EmailProcessor, load_test_fixtures
 import logging
 
 logging.basicConfig(
