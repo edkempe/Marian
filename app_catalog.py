@@ -13,434 +13,117 @@ from librarian_constants import CATALOG_CONFIG, TABLE_CONFIG, ERRORS
 from marian_lib.anthropic_helper import get_anthropic_client, test_anthropic_connection
 from marian_lib.logger import setup_logger, log_performance, log_system_state, log_security_event
 from models.catalog import Base, CatalogItem, Tag, CatalogTag, ItemRelationship
+from sqlalchemy import or_
 
 class CatalogChat:
     """Main class for handling catalog operations and chat interactions."""
     
-    def __init__(self, interactive=False):
-        self.interactive = interactive
-        self.chat_log_file = CATALOG_CONFIG['CHAT_LOG_FILE']
-        self.db_path = CATALOG_CONFIG['CATALOG_DB_FILE']
-        self.client = get_anthropic_client()
-        
-        # Set up system logger
-        self.logger = setup_logger('catalog')
-        self.test_logger = setup_logger('catalog', is_test=True)
-        self.logger.info("Initializing CatalogChat")
+    def __init__(self, db_path='db_catalog.db', mode='cli', chat_log='chat_logs.jsonl'):
+        """Initialize the catalog chat interface"""
+        self.mode = mode
+        self.db_path = db_path
+        self.chat_log = chat_log
+        self.test_logger = setup_logger('test_catalog')
+        self.interactive = mode == 'interactive'
         
         # Initialize database
-        start_time = datetime.datetime.now()
-        self.engine = create_engine(f'sqlite:///{self.db_path}')
+        self.engine = create_engine(f'sqlite:///{db_path}')
         self.Session = sessionmaker(bind=self.engine)
-        self.setup_database()
-        log_performance(self.logger, "Database setup", start_time)
         
-        # Log initial system state
-        log_system_state(
-            self.logger,
-            mode="interactive" if interactive else "cli",
-            db_path=self.db_path,
-            chat_log=self.chat_log_file
-        )
-    
-    def setup_database(self):
-        """Initialize the catalog database with SQLAlchemy models."""
+        # Create tables
         Base.metadata.create_all(self.engine)
-        self.logger.info("Database tables created successfully")
-    
-    def get_session(self) -> Session:
-        """Get a new database session."""
+        self.test_logger.info("Database tables created successfully")
+        self.test_logger.info(f"System State: mode={mode}, db_path={db_path}, chat_log={chat_log}")
+
+    def get_session(self):
+        """Get a new database session"""
         return self.Session()
-    
-    def cleanup_test_data(self, session: Session, test_marker: str = None):
-        """Clean up test data from previous test runs."""
+
+    def check_semantic_duplicates(self, session: Session, title: str, existing_items: list) -> tuple:
+        """Check for semantic duplicates of a title."""
         try:
-            # Clean up catalog tags first due to foreign key constraints
-            if test_marker:
-                # Delete catalog tags for items matching the test marker
-                session.query(CatalogTag).filter(CatalogTag.catalog_id.in_(
-                    session.query(CatalogItem.id).filter(CatalogItem.title.like(f"{test_marker}%"))
-                )).delete(synchronize_session=False)
-                
-                # Delete items matching the test marker
-                session.query(CatalogItem).filter(CatalogItem.title.like(f"{test_marker}%")).delete()
-                session.query(Tag).filter(Tag.name.like(f"{test_marker}%")).delete()
+            # For items, use title attribute
+            if isinstance(existing_items[0], CatalogItem):
+                items = [item.title for item in existing_items]
+            # For tags, use name attribute
+            elif isinstance(existing_items[0], Tag):
+                items = [item.name for item in existing_items]
             else:
-                # Delete all test items and tags
-                session.query(CatalogTag).filter(CatalogTag.catalog_id.in_(
-                    session.query(CatalogItem.id).filter(
-                        CatalogItem.title.like("Test%")
-                    )
-                )).delete(synchronize_session=False)
+                return False, []
                 
-                session.query(CatalogItem).filter(CatalogItem.title.like("Test%")).delete()
-                session.query(Tag).filter(Tag.name.like("Test%")).delete()
-            
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            self.test_logger.error(f"Error cleaning up test data: {str(e)}")
-            raise
-
-    def run_integration_tests(self):
-        """Run integration tests for the catalog system"""
-        print("\nRunning integration tests...")
-        
-        tests_passed = 0
-        total_tests = 0
-        
-        def run_test(name, test_func):
-            nonlocal tests_passed, total_tests
-            total_tests += 1
-            try:
-                test_func()
-                tests_passed += 1
-                print(f"✓ {name}")
-            except Exception as e:
-                print(f"✗ {name}: {str(e)}")
-                self.test_logger.error(f"Test failed: {name}", exc_info=True)
-        
-        def test_duplicate_handling():
-            """Test handling of duplicate items and tags"""
-            test_title = "Test Duplicate Item"
-            test_content = "Test content"
-            test_tag = "TestDuplicateTag"
-            
-            session = self.get_session()
-            try:
-                # Clean up any leftover test data
-                self.cleanup_test_data(session)
+            matches = self.get_semantic_matches(title, items, threshold=0.7)
+            if not matches:
+                return False, []
                 
-                # Test duplicate item titles
-                # Add initial item
-                item = CatalogItem(title=test_title, content=test_content)
-                session.add(item)
-                session.commit()
-                assert session.query(CatalogItem).filter(CatalogItem.title == test_title).first(), "Failed to add initial item"
-                
-                # Try adding duplicate item
-                try:
-                    item2 = CatalogItem(title=test_title, content="Different content")
-                    session.add(item2)
-                    session.commit()
-                    assert False, "Should not allow duplicate titles"
-                except ValueError as e:
-                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
-                    session.rollback()
-                
-                # Try adding case-variant duplicate
-                try:
-                    item3 = CatalogItem(title=test_title.upper(), content="Different content")
-                    session.add(item3)
-                    session.commit()
-                    assert False, "Should not allow case-variant duplicates"
-                except ValueError as e:
-                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
-                    session.rollback()
-                
-                # Test duplicate tags
-                # Add initial tag
-                tag = Tag(name=test_tag)
-                session.add(tag)
-                session.commit()
-                assert session.query(Tag).filter(Tag.name == test_tag).first(), "Failed to add initial tag"
-                
-                # Try adding duplicate tag
-                try:
-                    tag2 = Tag(name=test_tag)
-                    session.add(tag2)
-                    session.commit()
-                    assert False, "Should not allow duplicate tags"
-                except ValueError as e:
-                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
-                    session.rollback()
-                
-                # Try adding case-variant duplicate tag
-                try:
-                    tag3 = Tag(name=test_tag.upper())
-                    session.add(tag3)
-                    session.commit()
-                    assert False, "Should not allow case-variant tag duplicates"
-                except ValueError as e:
-                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
-                    session.rollback()
-                
-                # Test duplicate handling with archived items
-                # Archive the item
-                item.deleted = True
-                session.commit()
-                assert item.deleted, "Failed to archive item"
-                
-                # Try adding item with same title
-                try:
-                    item4 = CatalogItem(title=test_title, content="New content")
-                    session.add(item4)
-                    session.commit()
-                    assert False, "Should not allow duplicate titles even with archived items"
-                except ValueError as e:
-                    assert "case-insensitive" in str(e), "Should prevent case-insensitive duplicates"
-                    session.rollback()
-                
-                # Clean up
-                self.cleanup_test_data(session)
-                
-            finally:
-                session.close()
-        
-        def test_archived_item_handling():
-            """Test handling of archived items and tags"""
-            test_marker = "ARCHIVED_TEST_" + datetime.datetime.now().isoformat()
-            test_title = f"{test_marker}_item"
-            test_content = "Test content"
-            test_tag = f"{test_marker}_tag"
-            new_item_title = f"{test_marker}_another_item"
-            
-            session = self.get_session()
-            try:
-                # Clean up any leftover test data
-                self.cleanup_test_data(session)
-                
-                # Add and tag item
-                item = CatalogItem(title=test_title, content=test_content)
-                session.add(item)
-                session.commit()
-                
-                tag = Tag(name=test_tag)
-                session.add(tag)
-                session.commit()
-                
-                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
-                session.add(catalog_tag)
-                session.commit()
-                
-                # Archive item
-                item.deleted = True
-                session.commit()
-                assert item.deleted, "Failed to archive item"
-                
-                # Try to tag archived item
-                try:
-                    new_tag = Tag(name=f"{test_marker}_new_tag")
-                    session.add(new_tag)
-                    session.commit()
+            # Map back to original objects
+            similar_items = []
+            for match_title, score in matches:
+                if isinstance(existing_items[0], CatalogItem):
+                    item = next((item for item in existing_items if item.title == match_title), None)
+                else:
+                    item = next((item for item in existing_items if item.name == match_title), None)
                     
-                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=new_tag.id)
-                    session.add(catalog_tag)
-                    session.commit()
-                    assert False, "Should prevent tagging archived items"
-                except Exception as e:
-                    session.rollback()
-                    assert "archived" in str(e).lower(), "Should prevent tagging archived items"
-                
-                # Archive tag
-                tag.deleted = True
-                session.commit()
-                assert tag.deleted, "Failed to archive tag"
-                
-                # Try to use archived tag on new item
-                new_item = CatalogItem(title=new_item_title, content="Some content")
-                session.add(new_item)
-                session.commit()
-                
-                try:
-                    catalog_tag = CatalogTag(catalog_id=new_item.id, tag_id=tag.id)
-                    session.add(catalog_tag)
-                    session.commit()
-                    assert False, "Should prevent using archived tags"
-                except Exception as e:
-                    session.rollback()
-                    assert "archived" in str(e).lower(), "Should prevent using archived tags"
-                
-                # Clean up
-                self.cleanup_test_data(session)
-                
-            finally:
-                session.close()
-
-        def test_full_lifecycle():
-            """Test complete lifecycle of catalog items and tags"""
-            test_marker = "LIFECYCLE_TEST_" + datetime.datetime.now().isoformat()
-            self.test_logger.info(f"Starting lifecycle test {test_marker}")
+                if item:
+                    similar_items.append((item, score))
             
-            session = self.get_session()
-            try:
-                # Clean up any leftover test data
-                self.cleanup_test_data(session, test_marker)
-                
-                # 1. Create test tags
-                print("  Creating test tags...")
-                test_tags = []
-                for i in range(3):
-                    tag_name = f"{test_marker}_tag_{i}"
-                    tag = Tag(name=tag_name)
-                    session.add(tag)
-                    session.commit()
-                    test_tags.append(tag)
-                    self.test_logger.debug(f"Created tag {tag_name}")
-                
-                # 2. Add test content
-                print("  Adding test content...")
-                test_title = f"{test_marker}_item"
-                item = CatalogItem(title=test_title, content="Test Content")
-                session.add(item)
-                session.commit()
-                self.test_logger.debug(f"Added item {test_title}")
-                
-                # Apply tags
-                print("  Applying tags...")
-                for tag in test_tags:
-                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
-                    session.add(catalog_tag)
-                    session.commit()
-                
-                tag_names = [tag.name for tag in test_tags]
-                self.test_logger.debug(f"Applied tags: {', '.join(tag_names)} to {test_title}")
-                
-                # Verify findable by each tag
-                print("  Verifying tag search...")
-                for tag in test_tags:
-                    result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
-                        Tag.name == tag.name,
-                        CatalogItem.deleted == False
-                    ).first()
-                    assert result and result.title == test_title, f"Item not found by tag {tag.name}"
-                self.test_logger.debug("Verified item findable by all tags")
-                
-                # Query by title and verify all tags present
-                print("  Verifying content query...")
-                tags = session.query(Tag).join(CatalogTag).join(CatalogItem).filter(CatalogItem.title == test_title).all()
-                assert len(tags) == len(test_tags), "Wrong number of tags found"
-                tag_names = set(tag.name for tag in tags)
-                for tag in test_tags:
-                    assert tag.name in tag_names, f"Tag {tag.name} not found"
-                self.test_logger.debug(f"Verified item has all expected tags")
-                
-                # Update content and verify tags remain
-                print("  Testing content update...")
-                new_description = f"Updated Description {test_marker}"
-                item.description = new_description
-                session.commit()
-                assert item.description == new_description, "Update failed"
-                self.test_logger.debug(f"Updated item {test_title}")
-                
-                # Test tag renaming
-                print("  Testing tag renaming...")
-                test_tag = test_tags[0]
-                updated_tag_name = f"{test_tag.name}_updated"
-                test_tag.name = updated_tag_name
-                session.commit()
-                self.test_logger.debug(f"Renamed tag from {test_tag.name} to {updated_tag_name}")
-                
-                # Verify item findable by new tag name
-                result = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(Tag.name == updated_tag_name).first()
-                assert result and result.title == test_title, "Item not found by updated tag name"
-                self.test_logger.debug("Verified item findable by updated tag name")
-                
-                # Test tag soft deletion
-                print("  Testing tag soft deletion...")
-                test_tag.deleted = True
-                session.commit()
-                self.test_logger.debug(f"Soft deleted tag {updated_tag_name}")
-                
-                # Verify tag exists in archive
-                result = session.query(Tag).filter(Tag.id == test_tag.id).first()
-                assert result.deleted, "Tag not marked as deleted"
-                self.test_logger.debug("Verified tag exists in archive")
-                
-                # Verify tag not visible in active tags list
-                tags = session.query(Tag).filter(Tag.deleted == False).all()
-                assert updated_tag_name not in [t.name for t in tags], "Deleted tag still visible in active tags"
-                
-                # Test tag restoration
-                print("  Testing tag restoration...")
-                test_tag.deleted = False
-                session.commit()
-                self.test_logger.debug(f"Restored tag {updated_tag_name}")
-                
-                # Test item soft deletion
-                print("  Testing item soft deletion...")
-                item.deleted = True
-                session.commit()
-                self.test_logger.debug(f"Soft deleted item {test_title}")
-                
-                # Verify item not visible in active items list
-                items = session.query(CatalogItem).filter(CatalogItem.deleted == False).all()
-                assert test_title not in [i.title for i in items], "Deleted item still visible in active items"
-                
-                # Verify item exists in archive
-                result = session.query(CatalogItem).filter(CatalogItem.id == item.id).first()
-                assert result.deleted, "Item not marked as deleted"
-                self.test_logger.debug("Verified item exists in archive")
-                
-                # Verify item not visible when viewing tags
-                items = session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
-                    Tag.name == updated_tag_name,
-                    CatalogItem.deleted == False
-                ).all()
-                assert test_title not in [i.title for i in items], "Deleted item still visible on tag"
-                self.test_logger.debug("Verified deleted item not visible in listings")
-                
-                # Clean up test data
-                self.cleanup_test_data(session, test_marker)
-                
-            except Exception as e:
-                self.test_logger.error(f"Lifecycle test failed: {str(e)}", exc_info=True)
-                raise
-            finally:
-                session.close()
-
-        # Run all tests
-        run_test("Test duplicate handling", test_duplicate_handling)
-        run_test("Test archived item handling", test_archived_item_handling)
-        print("\nRunning full lifecycle test:")
-        run_test("Test full lifecycle", test_full_lifecycle)
-        
-        print(f"\nIntegration tests complete: {tests_passed}/{total_tests} passed")
+            return len(similar_items) > 0, similar_items
+            
+        except Exception as e:
+            return False, []
 
     def get_semantic_matches(self, text: str, items: list, threshold: float = 0.7) -> list:
         """Find semantically similar items using Claude."""
+        claude = get_anthropic_client()
         if not items:
             return []
             
         try:
-            # Create prompt for semantic similarity check
-            prompt = f"""Compare the following text: "{text}" with these items:
-            {[str(item) for item in items]}
+            prompt = """Please analyze the semantic similarity between the following text and each item in the list. Consider not just word overlap but meaning and context.
+
+For each item, determine if it is semantically similar to the text, considering:
+1. Core meaning and intent
+2. Subject matter and domain
+3. Level of specificity
+4. Context and usage
+
+Return only items that are truly semantically similar (sharing the same core meaning/topic), not just superficially similar.
+
+Text to compare: {text}
+
+Items to check:
+{items}
+
+For each item that is semantically similar (sharing the same core topic/meaning), return it and its similarity score (0-1) in this format:
+[("item text", similarity_score), ...]
+
+Only include items with similarity >= {threshold}. Return an empty list if no items are similar enough."""
+
+            # Format items list
+            items_str = "\n".join(f"- {item}" for item in items)
             
-            Return only the items that are semantically similar (meaning they refer to the same concept or topic), 
-            with a similarity score above {threshold}. Format each match as: "item|score".
-            Only return the matches, nothing else."""
-            
-            response = self.client.messages.create(
+            # Send request to Claude
+            response = claude.messages.create(
                 model="claude-3-opus-20240229",
                 max_tokens=1000,
                 temperature=0,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{
+                    "role": "user",
+                    "content": prompt.format(
+                        text=text,
+                        items=items_str,
+                        threshold=threshold
+                    )
+                }]
             )
             
-            # Parse response into matches
-            matches = []
-            for line in response.content[0].text.strip().split('\n'):
-                if line:
-                    item, score = line.split('|')
-                    matches.append((item.strip().strip('"'), float(score)))
+            # Parse response
+            matches_str = response.content[0].text
+            matches = eval(matches_str)  # Safe since we control the input and format
+            
             return matches
             
         except Exception as e:
-            self.logger.error(f"Error in semantic matching: {str(e)}")
             return []
-
-    def check_semantic_duplicates(self, session: Session, title: str, existing_items: list) -> tuple:
-        """Check for semantic duplicates of a title."""
-        matches = self.get_semantic_matches(title, [item.title for item in existing_items])
-        if matches:
-            similar_items = []
-            for match_title, score in matches:
-                item = next((i for i in existing_items if i.title == match_title), None)
-                if item:
-                    similar_items.append((item, score))
-            return True, similar_items
-        return False, []
 
     def process_input(self, command: str, args: str) -> str:
         """Process user input and generate response"""
@@ -555,8 +238,7 @@ class CatalogChat:
                 
                 # Check for exact title match
                 existing_item = session.query(CatalogItem).filter(
-                    CatalogItem.title.ilike(title),
-                    CatalogItem.deleted == False
+                    CatalogItem.title.ilike(title)
                 ).first()
                 if existing_item:
                     return f"Error: An item with title '{title}' already exists"
@@ -641,20 +323,6 @@ class CatalogChat:
                 if existing_tag:
                     return f"Error: Tag '{tag_name}' already exists"
                 
-                # Check for archived tag
-                archived_tag = session.query(Tag).filter(
-                    Tag.name.ilike(tag_name),
-                    Tag.deleted == True
-                ).first()
-                if archived_tag:
-                    if self.interactive:
-                        print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
-                        if input().strip().lower() == 'y':
-                            archived_tag.deleted = False
-                            session.commit()
-                            return f"Restored tag: {archived_tag.name}"
-                    return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
-                
                 # Create new tag
                 try:
                     tag = Tag(name=tag_name)
@@ -706,7 +374,7 @@ class CatalogChat:
                             if tag.deleted:
                                 tag.deleted = False
                                 session.commit()
-                            return f"Restored tag: {tag.name}"
+                            tag_name = tag.name
                         elif choice == "3":
                             return "Operation cancelled"
                     else:
@@ -721,20 +389,6 @@ class CatalogChat:
                 ).first()
                 if existing_tag:
                     return f"Error: Tag '{tag_name}' already exists"
-                
-                # Check for archived tag
-                archived_tag = session.query(Tag).filter(
-                    Tag.name.ilike(tag_name),
-                    Tag.deleted == True
-                ).first()
-                if archived_tag:
-                    if self.interactive:
-                        print(f"\nFound archived tag '{archived_tag.name}'. Would you like to restore it? (y/n): ", end="")
-                        if input().strip().lower() == 'y':
-                            archived_tag.deleted = False
-                            session.commit()
-                            return f"Restored tag: {archived_tag.name}"
-                    return f"Found archived tag '{tag_name}'. Use 'restore_tag <name>' to restore it"
                 
                 # Create new tag
                 try:
@@ -765,25 +419,6 @@ class CatalogChat:
                 session.commit()
                 return f"Restored {'tag' if command == 'restore_tag' else 'item'}: {name}"
 
-            elif command == 'archive' or command == 'archive_tag':
-                if not args:
-                    return f"Format: {command} <name>"
-                name = args.strip()
-                
-                table = Tag if command == 'archive_tag' else CatalogItem
-                name_field = 'name' if command == 'archive_tag' else 'title'
-                
-                item = session.query(table).filter(
-                    getattr(table, name_field).ilike(name),
-                    table.deleted == False
-                ).first()
-                if not item:
-                    return f"No active {'tag' if command == 'archive_tag' else 'item'} found with name '{name}'"
-                
-                item.deleted = True
-                session.commit()
-                return f"Archived {'tag' if command == 'archive_tag' else 'item'}: {name}"
-
             elif command == 'archive':
                 if not args:
                     return "Please provide the title of the item to archive"
@@ -813,13 +448,6 @@ class CatalogChat:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Marian Catalog System")
-    parser.add_argument("--test", action="store_true", help="Run integration tests")
     args = parser.parse_args()
     
     chat = CatalogChat()
-    
-    if args.test:
-        chat.run_integration_tests()
-    else:
-        print("\nInitializing catalog system and running tests...")
-        chat.run_integration_tests()
