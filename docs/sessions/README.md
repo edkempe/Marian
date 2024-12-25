@@ -1,80 +1,53 @@
 # Session Management Guide
 
+## Session Documentation Standards
+
+### Naming Convention
+- Format: `session_YYYYMMDD_HHMM.md`
+- Example: `session_20241225_1009.md`
+
+### Required Structure
+- Use the standard template from `SESSION_TEMPLATE.md`
+- All sessions must include:
+  1. Session Overview (date, time, focus)
+  2. Clear, measurable goals
+  3. Chronological progress log
+  4. Issues and blockers section
+  5. Next steps for future sessions
+
+### Best Practices
+1. **Real-time Updates**
+   - Update progress log as actions are taken
+   - Document issues as they are discovered
+   - Record decisions when they are made
+
+2. **Clarity and Context**
+   - Link to relevant documentation
+   - Reference specific file changes
+   - Include error messages and outcomes
+
+3. **Future-proofing**
+   - Document assumptions made
+   - Note any temporary workarounds
+   - Link to related backlog items
+
 ## Starting a Session
-
-### Quick Start Template
-```markdown
-Hi! Let's continue working on Marian. Here's what I'd like to focus on today:
-
-[Task description]
-
-Guidelines to follow:
-1. [Any specific guidelines for this session]
-2. [Any specific constraints or requirements]
-```
-
-### Pre-Session Checklist
-- [ ] Review NEXT_SESSION.md for context
-- [ ] Check environment and dependencies
-- [ ] Review relevant documentation
-- [ ] Verify database state
+1. Copy `SESSION_TEMPLATE.md` with correct naming
+2. Fill in session overview and initial goals
+3. Review previous session notes and backlog
+4. Update progress log as work begins
 
 ## During the Session
-
-### Session Notes Template
-Create a new file: `sessions/YYYY-MM-DD-HH-MM.md`
-```markdown
-# Session Notes: YYYY-MM-DD HH:MM
-
-## Objectives
-- [List main objectives]
-
-## Progress
-- [Real-time updates]
-
-## Decisions Made
-- [Document key decisions]
-```
+- Keep progress log updated in chronological order
+- Document all significant actions and findings
+- Link to any new or modified files
+- Record blockers and issues immediately
 
 ## Closing a Session
-
-### Quick Close Template
-```markdown
-Let's wrap up this session. Please:
-
-1. Summarize the changes made
-2. Document any pending items
-3. Update NEXT_SESSION.md
-```
-
-### Close-out Checklist
-- [ ] Commit all changes
-- [ ] Update documentation
-- [ ] Record issues in BACKLOG.md
-- [ ] Create session summary
-
-### Session Summary Template
-```markdown
-## Session Summary
-
-### Completed Tasks
-- [List completed items]
-
-### Code Changes
-- Modified files:
-  - [file]: [description]
-- New files:
-  - [file]: [purpose]
-
-### Environment Updates
-- [ ] Dependencies added/updated
-- [ ] Configuration changes
-- [ ] Database changes
-
-### Next Steps
-- [Priority items for next session]
-- [Known issues to address]
-```
+1. Ensure all sections are completed
+2. Update backlog with new items
+3. Document next steps clearly
+4. Link to any created documentation
 
 ## Session Directory Structure
 ```

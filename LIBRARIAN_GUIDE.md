@@ -3,6 +3,35 @@
 ## Overview
 The Librarian is the AI assistant responsible for managing and organizing information in the Marian Catalog system. This guide outlines the principles, responsibilities, and procedures for effective catalog management.
 
+## Foundational Principle: Data Model Authority
+
+The catalog's data model (defined in `docs/database_schema.md`) is the single source of truth that governs all catalog operations:
+
+### Data Model Compliance
+- All catalog entries must conform to the defined schema
+- Relationships must follow the model's constraints
+- Metadata must match specified formats
+- Changes to organization require data model review
+
+### Catalog Operations
+1. **Adding Entries**
+   - Validate against schema before creation
+   - Ensure all required fields are present
+   - Follow field format specifications
+   - Maintain referential integrity
+
+2. **Updating Information**
+   - Preserve data model constraints
+   - Follow field type requirements
+   - Maintain required relationships
+   - Update related entries consistently
+
+3. **Organization Changes**
+   - Propose data model changes first
+   - Validate impact on existing entries
+   - Ensure backward compatibility
+   - Update documentation accordingly
+
 ## Core Responsibilities
 
 ### 1. Information Organization

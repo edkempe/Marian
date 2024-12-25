@@ -1,5 +1,42 @@
 # Database Design Decisions
 
+## Source of Truth
+
+### Decision
+Use SQLAlchemy models as the authoritative source for database schema, with a clear hierarchy:
+1. SQLAlchemy models (`models/`) for schema definition
+2. `constants.py` for configuration values
+3. Alembic migrations for schema history
+
+### Context
+Analysis of the codebase shows heavy reliance on SQLAlchemy features:
+```python
+# Type checking and validation
+id: Mapped[str] = Column(Text, primary_key=True)
+thread_id: Mapped[str] = Column(Text, nullable=False)
+
+# Automatic relationship handling
+tags: Mapped[List["Tag"]] = relationship(
+    "Tag",
+    secondary="catalog_tags",
+    back_populates="items"
+)
+```
+
+### Consequences
+
+#### Advantages
+1. Type safety at runtime
+2. Automated relationship management
+3. Integration with test infrastructure
+4. Single source of truth in code
+5. Migration tracking through alembic
+
+#### Disadvantages
+1. Learning curve for SQLAlchemy
+2. Additional abstraction layer
+3. Need to maintain migrations
+
 ## Email and Thread IDs
 
 ### Decision

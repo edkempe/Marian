@@ -2,6 +2,36 @@
 
 ## Core Development Principles
 
+### Data Model as Single Source of Truth
+The SQLAlchemy models in `models/` serve as the authoritative source of truth for all development (see [ADR001](docs/decisions/ADR001_SQLAlchemy_Models_as_Source_of_Truth.md)):
+
+#### Source of Truth Hierarchy
+1. **SQLAlchemy Models**: Primary source for schema
+   - `models/email.py`: Email and thread schema
+   - `models/catalog.py`: Catalog item schema
+   - `models/email_analysis.py`: Analysis schema
+   
+2. **Configuration**: Source for runtime values
+   - `constants.py`: Global configuration
+   - `catalog_constants.py`: Catalog-specific settings
+
+3. **Migrations**: Schema history
+   - Alembic migration scripts
+   - Generated from model changes
+   - Track schema evolution
+
+All development must:
+- Align with SQLAlchemy models
+- Use constants.py for configuration
+- Track schema changes via migrations
+- Keep documentation in sync with models
+
+This principle ensures:
+1. Type-safe data handling
+2. Consistent schema across codebase
+3. Tracked schema evolution
+4. Maintainable relationships
+
 ### Necessary and Sufficient
 Our primary development principle is to maintain only what is necessary and sufficient:
 - Every file, folder, and document must justify its existence
