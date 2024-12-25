@@ -14,6 +14,7 @@ from prometheus_client import start_http_server as start_prometheus_server
 from database.config import get_email_session, get_analysis_session
 from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
+from lib_anthropic import parse_claude_response
 
 # Set up structured logging
 logger = get_logger()
@@ -52,26 +53,12 @@ class EmailAnalyzer:
     This analyzer uses the Claude-3-Haiku model exclusively for consistent performance and cost efficiency.
     Do not change to other models without thorough testing and approval.
     
-    Known Issues:
-    1. Claude API Response Formatting:
-       - The API may prefix responses with text like "Here is the JSON response:"
-       - This causes json.loads() to fail with "Expecting value: line 1 column 2 (char 1)"
-       - Solution: Use _extract_json() to clean the response
-       
-    2. JSON Validation:
-       - Sometimes the API response may be missing required fields
-       - Always validate the JSON structure before processing
-       - Use empty strings/arrays instead of null values
-       
     Model Requirements:
     - Always use claude-3-haiku-20240307
     - Keep max_tokens_to_sample at 1000 for consistent response sizes
     - Use temperature=0 for deterministic outputs
     
-    Example API Response Issues:
-    1. "Here is the JSON response: {...}"
-    2. "{...} Hope this helps!"
-    3. "I've analyzed the email. Here's the JSON: {...}"
+    Note: For known issues and solutions, see docs/troubleshooting.md
     """
 
     def __init__(self, metrics_port: int = 8000):
@@ -131,8 +118,9 @@ Content: {email_data.get('content', '')}"""
                         "content": content
                     }]
                 )
-                # Parse API response
-                analysis_data = json.loads(response.content[0].text)
+                
+                # Extract and parse JSON from response
+                analysis_data = parse_claude_response(response.content[0].text)
                 
                 # Create and return EmailAnalysis object
                 return EmailAnalysis.from_api_response(
@@ -340,7 +328,7 @@ Content: {email_request.truncated_body}"""
                         # Extract and validate the analysis
                         try:
                             analysis_json = response.content[0].text
-                            analysis = json.loads(analysis_json)
+                            analysis = parse_claude_response(analysis_json)
                             
                             # Ensure links_display is present
                             if 'links_found' in analysis and 'links_display' not in analysis:

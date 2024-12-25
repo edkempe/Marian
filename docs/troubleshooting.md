@@ -2,6 +2,37 @@
 
 ## Common Issues and Solutions
 
+### Claude API Integration
+- **Issue**: Claude API responses contain leading/trailing text around JSON
+  ```
+  Example responses:
+  1. "Here is the JSON response: {...}"
+  2. "{...} Hope this helps!"
+  3. "I've analyzed the email. Here's the JSON: {...}"
+  ```
+- **Solution**: Use `lib_anthropic.parse_claude_response()` to handle these cases
+- **Location**: See `lib_anthropic.py` for implementation details
+- **Prevention**: Always use the library functions for Claude API response handling
+
+### Model Requirements and Settings
+- **Issue**: Inconsistent results from different Claude models or settings
+- **Solution**: Standardize on these settings:
+  ```python
+  model = "claude-3-haiku-20240307"
+  max_tokens = 1000  # For consistent response sizes
+  temperature = 0    # For deterministic outputs
+  ```
+- **Location**: See `constants.py` for configuration
+- **Prevention**: Do not change model or settings without thorough testing
+
+### JSON Validation
+- **Issue**: Missing required fields in Claude API responses
+- **Solution**: 
+  - Use `lib_anthropic.parse_claude_response()` which includes validation
+  - Handle missing fields with empty strings/arrays instead of null values
+- **Location**: See `lib_anthropic.py` and model definitions
+- **Prevention**: Always validate JSON before processing
+
 ### Database Initialization
 - **Issue**: "no such table: email_analysis" error when running the analyzer
 - **Solution**: Initialize the database tables first by running:

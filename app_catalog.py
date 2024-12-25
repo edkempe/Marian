@@ -11,6 +11,9 @@ from models.catalog import CatalogItem, Tag, CatalogTag
 from marian_lib.logger import setup_logger
 from marian_lib.anthropic_helper import get_anthropic_client
 from catalog_constants import CATALOG_CONFIG
+from typing import List
+import sys
+from lib_anthropic import parse_claude_response
 
 class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
@@ -38,7 +41,7 @@ class CatalogChat:
         """Get a new database session"""
         return self.Session()
 
-    def check_semantic_duplicates(self, session: sessionmaker, title: str, existing_items: list) -> tuple:
+    def check_semantic_duplicates(self, session, title: str, existing_items: list) -> tuple:
         """Check for semantic duplicates of a title."""
         try:
             # For items, use title attribute
@@ -50,62 +53,237 @@ class CatalogChat:
             if not matches:
                 return False, []
                 
-            return True, matches
+            # Get the actual CatalogItem objects for the matches
+            similar_items = []
+            for match_title, score in matches:
+                item = next((i for i in existing_items if i.title == match_title), None)
+                if item:
+                    similar_items.append((item, score))
+            
+            return bool(similar_items), similar_items
             
         except Exception as e:
-            error_msg = CATALOG_CONFIG['error_messages']['semantic_error'].format(error=str(e))
+            error_msg = CATALOG_CONFIG['ERROR_MESSAGES']['semantic_error'].format(error=str(e))
             self.test_logger.error(error_msg)
             return False, []
 
-    def get_semantic_matches(self, text: str, items: list, threshold: float = CATALOG_CONFIG['semantic']['threshold']) -> list:
-        """Find semantically similar items using Claude."""
-        if not items:
-            return []
+    def get_semantic_matches(self, text: str, items: list, threshold: float = None) -> list:
+        """Get semantically similar items using Claude AI.
+        
+        Args:
+            text: Text to compare
+            items: List of items to check
+            threshold: Minimum similarity threshold (0-1)
+            
+        Returns:
+            list: List of items above the threshold
+        """
+        if not threshold:
+            threshold = CATALOG_CONFIG['semantic']['threshold']
             
         try:
-            # Format items list
-            items_str = "\n".join(f"- {item}" for item in items)
+            if not items:
+                return []
+                
+            # Prepare messages for Claude
+            user_prompt = (
+                f"Compare this text: {text}\n\n"
+                f"With these items:\n"
+                + "\n".join(f"{i+1}. {item}" for i, item in enumerate(items))
+                + "\n\nRespond ONLY with a JSON array of similarity scores (0-1) for each item, where 1 means identical and 0 means completely different."
+                + "\nExample response: [0.8, 0.2, 0.5]"
+                + "\nDo not include any other text in your response."
+            )
             
-            # Send request to Claude
+            # Get semantic analysis from Claude
             response = self.client.messages.create(
                 model=CATALOG_CONFIG['semantic']['model'] if self.mode != 'test' else CATALOG_CONFIG['test']['model'],
-                max_tokens=CATALOG_CONFIG['semantic']['max_tokens'],
-                temperature=CATALOG_CONFIG['semantic']['temperature'],
+                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+                temperature=CATALOG_CONFIG['TEMPERATURE'],
+                system=CATALOG_CONFIG['SEMANTIC_PROMPT'],
                 messages=[{
                     "role": "user",
-                    "content": CATALOG_CONFIG['semantic']['prompt'].format(
-                        text=text,
-                        items=items_str,
-                        threshold=threshold
-                    )
+                    "content": user_prompt
                 }]
             )
             
-            # Parse response
-            matches_str = response.content[0].text.strip()
+            # Parse response to get similarity scores
+            matches = []
             try:
-                matches = eval(matches_str)  # Safe since we control the input and format
-                if not isinstance(matches, list):
-                    return []
-                return matches
-            except:
-                # If parsing fails, try to extract tuples from the text
+                # Extract JSON from response content
+                content = response.content[0].text if isinstance(response.content, list) else response.content
+                
+                # Try to find JSON array in the response
                 import re
-                pattern = r'\("([^"]+)",\s*(0\.\d+)\)'
-                matches = re.findall(pattern, matches_str)
-                return [(m[0], float(m[1])) for m in matches]
+                
+                # First try exact match for just a JSON array
+                content = content.strip()
+                if content.startswith('[') and content.endswith(']'):
+                    try:
+                        scores = json.loads(content)
+                        if isinstance(scores, list):
+                            for item, score in zip(items, scores):
+                                if score >= threshold:
+                                    matches.append((item, score))
+                            return matches
+                    except json.JSONDecodeError:
+                        pass
+                
+                # If that fails, try to find any JSON array in the text
+                json_match = re.search(r'\[([\d\., ]+)\]', content)
+                if json_match:
+                    try:
+                        scores = json.loads(f"[{json_match.group(1)}]")
+                        if isinstance(scores, list):
+                            for item, score in zip(items, scores):
+                                if score >= threshold:
+                                    matches.append((item, score))
+                            return matches
+                    except json.JSONDecodeError:
+                        pass
+                
+                # If still no valid JSON, try to extract numbers directly
+                numbers = re.findall(r'0\.\d+', content)
+                if numbers and len(numbers) == len(items):
+                    scores = [float(n) for n in numbers]
+                    for item, score in zip(items, scores):
+                        if score >= threshold:
+                            matches.append((item, score))
+                    return matches
+                
+                self.test_logger.error("No valid scores found in response")
+                return []
+                    
+            except Exception as e:
+                self.test_logger.error(f"Failed to parse Claude response: {e}")
+                return []
+                
+            return matches
             
         except Exception as e:
-            error_msg = CATALOG_CONFIG['error_messages']['semantic_error'].format(error=str(e))
+            error_msg = CATALOG_CONFIG['ERROR_MESSAGES']['semantic_error'].format(error=str(e))
             self.test_logger.error(error_msg)
             return []
+
+    def add_item(self, title: str, content: str = "", description: str = "", tags: List[str] = None) -> CatalogItem:
+        """Add a new item to the catalog.
+        
+        Args:
+            title: Title of the item
+            content: Content of the item
+            description: Description of the item
+            tags: List of tag names to apply
+            
+        Returns:
+            CatalogItem: The newly created catalog item
+            
+        Raises:
+            ValueError: If item with similar title exists or validation fails
+        """
+        session = self.get_session()
+        try:
+            # Check for semantic duplicates
+            existing_items = session.query(CatalogItem).filter(
+                CatalogItem.deleted == False
+            ).all()
+            has_dups, similar = self.check_semantic_duplicates(session, title, existing_items)
+            
+            if has_dups:
+                raise ValueError(
+                    CATALOG_CONFIG['ERROR_MESSAGES']['duplicate_error'].format(
+                        title=similar[0][0].title
+                    )
+                )
+            
+            # Create new item
+            item = CatalogItem(
+                title=title,
+                content=content,
+                description=description,
+                status='draft'
+            )
+            session.add(item)
+            
+            # Add tags if provided
+            if tags:
+                for tag_name in tags:
+                    # Get or create tag
+                    tag = session.query(Tag).filter(
+                        Tag.name.ilike(tag_name),
+                        Tag.deleted == False
+                    ).first()
+                    
+                    if not tag:
+                        tag = Tag(name=tag_name)
+                        session.add(tag)
+                    
+                    # Create association
+                    catalog_tag = CatalogTag(catalog_id=item.id, tag_id=tag.id)
+                    session.add(catalog_tag)
+            
+            session.commit()
+            return item
+            
+        except Exception as e:
+            session.rollback()
+            if "case-insensitive" in str(e):
+                raise ValueError(
+                    CATALOG_CONFIG['ERROR_MESSAGES']['duplicate_error'].format(
+                        title=title
+                    )
+                )
+            raise
+        finally:
+            session.close()
+
+    def archive_item(self, session, title: str) -> None:
+        """Archive a catalog item.
+        
+        Args:
+            session: Database session
+            title: Title of item to archive
+            
+        Raises:
+            ValueError: If item is already archived or not found
+        """
+        # Get the item
+        item = session.query(CatalogItem).filter(
+            CatalogItem.title == title,
+            CatalogItem.deleted == False
+        ).first()
+        
+        if not item:
+            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['archive_error'].format(
+                error=f"Item not found: {title}"
+            ))
+        
+        # Check if already archived
+        if item.status == 'archived':
+            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['archive_error'].format(
+                error=f"Item is already archived: {title}"
+            ))
+        
+        # Archive the item
+        item.status = 'archived'
+        item.archived_date = int(datetime.utcnow().timestamp())
+        session.commit()
 
     def process_input(self, command: str, args: str) -> str:
         """Process user input and generate response"""
         session = self.get_session()
-        
         try:
-            if command == 'search':
+            if command == 'archive':
+                if not args:
+                    return "Please provide item title to archive"
+                title = args.strip()
+                
+                try:
+                    self.archive_item(session, title)
+                    return f"Archived item: {title}"
+                except ValueError as e:
+                    raise  # Re-raise to be caught by test
+                
+            elif command == 'search':
                 if not args:
                     return "Please provide search terms"
                 query = args.strip()
@@ -207,8 +385,8 @@ class CatalogChat:
                             session.commit()
                             return f"Restored similar item: {item.title}"
                     else:
-                        similar_list = "\n".join(f"- {item.title} ({'archived' if item.deleted else 'active'})" 
-                                               for item, _ in similar_items)
+                        similar_list = "\n".join(f"- {item[0].title} ({'archived' if item[0].deleted else 'active'})" 
+                                               for item in similar_items)
                         return f"Found semantically similar items:\n{similar_list}\nUse --force to add anyway"
                 
                 # Check for exact title match
@@ -286,8 +464,8 @@ class CatalogChat:
                         elif choice == "3":
                             return "Operation cancelled"
                     else:
-                        similar_list = "\n".join(f"- {tag.name} ({'archived' if tag.deleted else 'active'})" 
-                                               for tag, _ in similar_tags)
+                        similar_list = "\n".join(f"- {tag[0].name} ({'archived' if tag[0].deleted else 'active'})" 
+                                               for tag in similar_tags)
                         return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
                 
                 # Check for existing active tag
@@ -353,8 +531,8 @@ class CatalogChat:
                         elif choice == "3":
                             return "Operation cancelled"
                     else:
-                        similar_list = "\n".join(f"- {tag.name} ({'archived' if tag.deleted else 'active'})" 
-                                               for tag, _ in similar_tags)
+                        similar_list = "\n".join(f"- {tag[0].name} ({'archived' if tag[0].deleted else 'active'})" 
+                                               for tag in similar_tags)
                         return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
                 
                 # Check for existing active tag
@@ -394,22 +572,14 @@ class CatalogChat:
                 session.commit()
                 return f"Restored {'tag' if command == 'restore_tag' else 'item'}: {name}"
 
-            elif command == 'archive':
+            elif command == 'semantic_search':
                 if not args:
-                    return "Please provide the title of the item to archive"
-                title = args.strip()
-                
-                item = session.query(CatalogItem).filter(
-                    CatalogItem.title.ilike(title),
-                    CatalogItem.deleted == False
-                ).first()
-                
-                if not item:
-                    return f"No active item found with title '{title}'"
-                
-                item.deleted = True
-                session.commit()
-                return f"Archived item: {title}"
+                    return "Please provide a search query"
+                query = args.strip()
+                items = self.semantic_search(query)
+                if not items:
+                    return "No matching items found"
+                return "\n".join(f"{item.title}: {item.content[:100]}..." for item in items)
 
             else:
                 return f"Unknown command: {command}"
@@ -421,8 +591,231 @@ class CatalogChat:
         finally:
             session.close()
 
+    def process_natural_language_query(self, query: str) -> dict:
+        """Process a natural language query using Claude AI.
+        
+        Args:
+            query: The natural language query from the user
+            
+        Returns:
+            dict: Processed query with extracted intents and entities
+        """
+        system_prompt = CATALOG_CONFIG['PROMPTS']['QUERY_ANALYSIS']
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": query}
+        ]
+        
+        try:
+            response = self.client.messages.create(
+                model=CATALOG_CONFIG['SEMANTIC_MODEL'],
+                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+                temperature=CATALOG_CONFIG['TEMPERATURE'],
+                messages=messages
+            )
+            
+            # Parse the structured response
+            analysis = json.loads(response.content)
+            return {
+                'intent': analysis.get('intent'),
+                'entities': analysis.get('entities', {}),
+                'filters': analysis.get('filters', {}),
+                'search_terms': analysis.get('search_terms', [])
+            }
+        except Exception as e:
+            self.test_logger.error(f"Error processing query with Claude: {str(e)}")
+            return {
+                'intent': 'unknown',
+                'entities': {},
+                'filters': {},
+                'search_terms': []
+            }
+
+    def semantic_search(self, query: str) -> List[CatalogItem]:
+        """Perform semantic search using Claude AI.
+        
+        Args:
+            query: Natural language search query
+            
+        Returns:
+            List[CatalogItem]: Matching catalog items
+        """
+        try:
+            # Process the query
+            analysis = self.process_natural_language_query(query)
+            
+            session = self.get_session()
+            items = []
+            
+            # Use extracted search terms and filters
+            if analysis['search_terms']:
+                base_query = session.query(CatalogItem)
+                
+                # Apply semantic filtering
+                for term in analysis['search_terms']:
+                    base_query = base_query.filter(
+                        CatalogItem.title.ilike(f'%{term}%') |
+                        CatalogItem.content.ilike(f'%{term}%') |
+                        CatalogItem.description.ilike(f'%{term}%')
+                    )
+                
+                # Apply entity-based filters
+                if 'date' in analysis['filters']:
+                    date_filter = analysis['filters']['date']
+                    if date_filter.get('start'):
+                        base_query = base_query.filter(
+                            CatalogItem.created_date >= int(datetime.strptime(
+                                date_filter['start'], '%Y-%m-%d'
+                            ).timestamp())
+                        )
+                    if date_filter.get('end'):
+                        base_query = base_query.filter(
+                            CatalogItem.created_date <= int(datetime.strptime(
+                                date_filter['end'], '%Y-%m-%d'
+                            ).timestamp())
+                        )
+                
+                # Filter out deleted items and respect status
+                base_query = base_query.filter(
+                    CatalogItem.deleted == False,
+                    CatalogItem.status != 'archived'
+                )
+                
+                if 'status' in analysis['filters']:
+                    status = analysis['filters']['status']
+                    if status in CATALOG_CONFIG['VALID_STATUSES']:
+                        base_query = base_query.filter(CatalogItem.status == status)
+                
+                if 'tags' in analysis['filters']:
+                    for tag in analysis['filters']['tags']:
+                        base_query = base_query.join(CatalogTag).join(Tag).filter(
+                            Tag.name.ilike(f'%{tag}%'),
+                            Tag.deleted == False
+                        )
+                
+                # Apply metadata filters if present
+                if 'metadata' in analysis['filters']:
+                    metadata_filters = analysis['filters']['metadata']
+                    for key, value in metadata_filters.items():
+                        base_query = base_query.filter(
+                            CatalogItem.item_metadata[key].astext == str(value)
+                        )
+                
+                items = base_query.all()
+                
+                # Sort by relevance if needed
+                if items and len(items) > 1:
+                    items = self.rank_results_by_relevance(items, query)
+            
+            session.close()
+            return items
+            
+        except Exception as e:
+            self.test_logger.error(f"Error in semantic search: {str(e)}")
+            return []
+
+    def rank_results_by_relevance(self, items: list, query: str) -> list:
+        """Rank search results by relevance using Claude AI.
+        
+        Args:
+            items: List of catalog items to rank
+            query: Original search query
+            
+        Returns:
+            list: Ranked list of items
+        """
+        try:
+            # Prepare items for ranking
+            item_texts = [f"Title: {item.title}\nContent: {item.content}" for item in items]
+            
+            # Get relevance scores using Claude
+            system_prompt = CATALOG_CONFIG['PROMPTS']['RELEVANCE_RANKING']
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Query: {query}\nItems: {json.dumps(item_texts)}"}
+            ]
+            
+            response = self.client.messages.create(
+                model=CATALOG_CONFIG['SEMANTIC_MODEL'],
+                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+                temperature=0.0,  # Use deterministic output for ranking
+                messages=messages
+            )
+            
+            # Parse relevance scores
+            scores = json.loads(response.content)
+            
+            # Sort items by relevance score
+            ranked_items = sorted(
+                zip(items, scores),
+                key=lambda x: x[1],
+                reverse=True
+            )
+            
+            return [item for item, _ in ranked_items]
+            
+        except Exception as e:
+            self.test_logger.error(f"Error ranking results: {str(e)}")
+            return items
+
+    def process_input(self, user_input: str) -> dict:
+        """Process user input and return response."""
+        session = self.get_session()
+        try:
+            response = self.client.messages.create(
+                model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
+                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+                temperature=CATALOG_CONFIG['TEMPERATURE'],
+                messages=[{
+                    "role": "user", 
+                    "content": user_input
+                }]
+            )
+
+            # Parse Claude response
+            error_context = {
+                'error_type': "catalog_chat",
+                'user_input': user_input
+            }
+            result = parse_claude_response(response.content[0].text, error_context)
+            if not result:
+                return {
+                    'error': "Failed to parse response from Claude",
+                    'raw_response': response.content[0].text
+                }
+            
+            return result
+        except Exception as e:
+            session.rollback()
+            return f"Error: {str(e)}"
+        finally:
+            session.close()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Marian Catalog System")
+    parser.add_argument("--no-tests", action="store_true", help="Skip running integration tests")
     args = parser.parse_args()
     
-    chat = CatalogChat()
+    if not args.no_tests:
+        # Run integration tests
+        import unittest
+        from tests.test_catalog import TestCatalog
+        
+        # Create test suite
+        suite = unittest.TestLoader().loadTestsFromTestCase(TestCatalog)
+        
+        # Run tests
+        test_logger = setup_logger('test_catalog')
+        test_logger.info("Running integration tests...")
+        
+        runner = unittest.TextTestRunner(verbosity=2)
+        result = runner.run(suite)
+        
+        if not result.wasSuccessful():
+            sys.exit(1)
+    else:
+        # Normal app initialization
+        chat = CatalogChat()
+        test_logger = setup_logger('test_catalog')
+        test_logger.info("Database tables created successfully")
+        test_logger.info(f"System State: mode=cli, db_path={chat.db_path}, chat_log={chat.chat_log}")
