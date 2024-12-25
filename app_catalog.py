@@ -4,27 +4,26 @@ import datetime
 import json
 import os
 import argparse
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-from anthropic import Anthropic
-
-from librarian_constants import CATALOG_CONFIG, TABLE_CONFIG, ERRORS
-from marian_lib.anthropic_helper import get_anthropic_client, test_anthropic_connection
-from marian_lib.logger import setup_logger, log_performance, log_system_state, log_security_event
-from models.catalog import Base, CatalogItem, Tag, CatalogTag, ItemRelationship
-from sqlalchemy import or_
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models.base import Base
+from models.catalog import CatalogItem, Tag, CatalogTag
+from utils.logger import setup_logger
+from utils.anthropic import get_anthropic_client
+from catalog_constants import CATALOG_CONFIG
 
 class CatalogChat:
-    """Main class for handling catalog operations and chat interactions."""
+    """Interface for managing catalog items and tags with semantic search."""
     
-    def __init__(self, db_path='db_catalog.db', mode='cli', chat_log='chat_logs.jsonl'):
+    def __init__(self, db_path=CATALOG_CONFIG['database']['file'], mode='cli', 
+                 chat_log=CATALOG_CONFIG['logging']['chat_log']):
         """Initialize the catalog chat interface"""
         self.mode = mode
         self.db_path = db_path
         self.chat_log = chat_log
         self.test_logger = setup_logger('test_catalog')
         self.interactive = mode == 'interactive'
+        self.client = get_anthropic_client()
         
         # Initialize database
         self.engine = create_engine(f'sqlite:///{db_path}')
@@ -39,76 +38,42 @@ class CatalogChat:
         """Get a new database session"""
         return self.Session()
 
-    def check_semantic_duplicates(self, session: Session, title: str, existing_items: list) -> tuple:
+    def check_semantic_duplicates(self, session: sessionmaker, title: str, existing_items: list) -> tuple:
         """Check for semantic duplicates of a title."""
         try:
             # For items, use title attribute
-            if isinstance(existing_items[0], CatalogItem):
-                items = [item.title for item in existing_items]
-            # For tags, use name attribute
-            elif isinstance(existing_items[0], Tag):
-                items = [item.name for item in existing_items]
-            else:
+            items = [item.title for item in existing_items]
+            if not items:
                 return False, []
                 
-            matches = self.get_semantic_matches(title, items, threshold=0.7)
+            matches = self.get_semantic_matches(title, items, threshold=CATALOG_CONFIG['semantic']['threshold'])
             if not matches:
                 return False, []
                 
-            # Map back to original objects
-            similar_items = []
-            for match_title, score in matches:
-                if isinstance(existing_items[0], CatalogItem):
-                    item = next((item for item in existing_items if item.title == match_title), None)
-                else:
-                    item = next((item for item in existing_items if item.name == match_title), None)
-                    
-                if item:
-                    similar_items.append((item, score))
-            
-            return len(similar_items) > 0, similar_items
+            return True, matches
             
         except Exception as e:
+            error_msg = CATALOG_CONFIG['error_messages']['semantic_error'].format(error=str(e))
+            self.test_logger.error(error_msg)
             return False, []
 
-    def get_semantic_matches(self, text: str, items: list, threshold: float = 0.7) -> list:
+    def get_semantic_matches(self, text: str, items: list, threshold: float = CATALOG_CONFIG['semantic']['threshold']) -> list:
         """Find semantically similar items using Claude."""
-        claude = get_anthropic_client()
         if not items:
             return []
             
         try:
-            prompt = """Please analyze the semantic similarity between the following text and each item in the list. Consider not just word overlap but meaning and context.
-
-For each item, determine if it is semantically similar to the text, considering:
-1. Core meaning and intent
-2. Subject matter and domain
-3. Level of specificity
-4. Context and usage
-
-Return only items that are truly semantically similar (sharing the same core meaning/topic), not just superficially similar.
-
-Text to compare: {text}
-
-Items to check:
-{items}
-
-For each item that is semantically similar (sharing the same core topic/meaning), return it and its similarity score (0-1) in this format:
-[("item text", similarity_score), ...]
-
-Only include items with similarity >= {threshold}. Return an empty list if no items are similar enough."""
-
             # Format items list
             items_str = "\n".join(f"- {item}" for item in items)
             
             # Send request to Claude
-            response = claude.messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=1000,
-                temperature=0,
+            response = self.client.messages.create(
+                model=CATALOG_CONFIG['semantic']['model'] if self.mode != 'test' else CATALOG_CONFIG['test']['model'],
+                max_tokens=CATALOG_CONFIG['semantic']['max_tokens'],
+                temperature=CATALOG_CONFIG['semantic']['temperature'],
                 messages=[{
                     "role": "user",
-                    "content": prompt.format(
+                    "content": CATALOG_CONFIG['semantic']['prompt'].format(
                         text=text,
                         items=items_str,
                         threshold=threshold
@@ -117,12 +82,22 @@ Only include items with similarity >= {threshold}. Return an empty list if no it
             )
             
             # Parse response
-            matches_str = response.content[0].text
-            matches = eval(matches_str)  # Safe since we control the input and format
-            
-            return matches
+            matches_str = response.content[0].text.strip()
+            try:
+                matches = eval(matches_str)  # Safe since we control the input and format
+                if not isinstance(matches, list):
+                    return []
+                return matches
+            except:
+                # If parsing fails, try to extract tuples from the text
+                import re
+                pattern = r'\("([^"]+)",\s*(0\.\d+)\)'
+                matches = re.findall(pattern, matches_str)
+                return [(m[0], float(m[1])) for m in matches]
             
         except Exception as e:
+            error_msg = CATALOG_CONFIG['error_messages']['semantic_error'].format(error=str(e))
+            self.test_logger.error(error_msg)
             return []
 
     def process_input(self, command: str, args: str) -> str:

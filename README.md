@@ -37,7 +37,10 @@ An AI-powered email analysis and management system that uses advanced language m
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
 - **Email Analyzer** (`app_email_analyzer.py`): Analyzes emails using Claude-3 and stores insights
-- **Configuration** (`config/constants.py`): Central configuration for all components
+- **Configuration**:
+  - `constants.py`: Email processing configuration
+  - `catalog_constants.py`: Catalog system configuration
+  - `librarian_constants.py`: Librarian-specific settings
 - **Database**:
   - `db_email_store.db`: Main database for email storage and analysis
   - See [Database Design](docs/database_design.md) for schema details
@@ -81,19 +84,29 @@ To make changes to the project structure or dependencies:
 2. Reinstall in development mode: `python3 -m pip install -e .`
 
 ## Configuration
-The project uses a centralized configuration system in `config/constants.py`. This file contains all configuration settings for:
+The project uses a modular configuration system with separate constants files for each major component:
 
-- API settings (model versions, tokens, temperature)
-- Database configuration (file paths, URLs, table names)
-- Metrics and logging settings
-- Email processing parameters
+- `constants.py`: Email processing configuration
+  - API settings for email analysis
+  - Email database configuration
+  - Email processing parameters
+  - Logging and metrics settings
 
-To modify any settings:
-1. Navigate to `config/constants.py`
-2. Update the relevant configuration section
-3. Changes will be automatically reflected across the codebase
+- `catalog_constants.py`: Catalog system configuration
+  - Database settings for catalog
+  - Semantic analysis parameters
+  - API settings for semantic matching
+  - Error message templates
 
-See `config/constants.py` for the full configuration reference.
+- `librarian_constants.py`: Librarian-specific settings
+
+Each component's constants are isolated to prevent confusion and maintain clear boundaries between different parts of the system. To modify settings:
+
+1. Identify the relevant constants file for your component
+2. Update the appropriate configuration section
+3. Changes will be automatically reflected in that component
+
+See the individual constants files for detailed configuration references.
 
 ## Usage
 1. Fetch emails:

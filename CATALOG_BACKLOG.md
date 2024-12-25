@@ -83,6 +83,14 @@ Create an intelligent catalog system within Marian that enables interactive info
 
 ## Technical Requirements
 
+### Configuration
+- [x] Separate catalog constants from main project
+- [x] Define semantic analysis parameters
+- [x] Configure database settings
+- [x] Set up error message templates
+- [ ] Add configuration validation
+- [ ] Support environment overrides
+
 ### Database
 - Use existing SQLite infrastructure
 - Add new tables for catalog items
