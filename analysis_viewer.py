@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Utility for viewing and validating email analyses with configurable options."""
 
-from database.config import get_analysis_session, get_email_session
-from models.email_analysis import EmailAnalysis
+from sqlalchemy import select
 from models.email import Email
+from models.email_analysis import EmailAnalysis
+from db_session import get_analysis_session, get_email_session
 from datetime import datetime, timedelta
 import pytz
 import argparse

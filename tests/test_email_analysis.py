@@ -1,10 +1,11 @@
 """Integration tests for email analysis functionality."""
 import pytest
 from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import Session
 from models.email import Email
-from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
+from models.email_analysis import EmailAnalysis
+from db_session import get_email_session, get_analysis_session
 from app_email_analyzer import EmailAnalyzer
-from database.config import get_email_session, get_analysis_session
 from lib_gmail import GmailAPI
 from app_get_mail import fetch_emails
 from constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
@@ -79,7 +80,7 @@ def test_email_analysis(email_analyzer, test_emails):
     })
     
     assert analysis is not None
-    assert isinstance(analysis, EmailAnalysisResponse)
+    assert isinstance(analysis, EmailAnalysis)
     assert analysis.summary
     assert isinstance(analysis.category, list)
     assert isinstance(analysis.priority_score, int)
@@ -112,7 +113,7 @@ def test_batch_analysis(email_analyzer, test_emails):
             analyses.append(analysis)
     
     assert len(analyses) == len(test_emails)
-    assert all(isinstance(a, EmailAnalysisResponse) for a in analyses)
+    assert all(isinstance(a, EmailAnalysis) for a in analyses)
     
     # Print analysis results
     for i, (email, analysis) in enumerate(zip(test_emails, analyses)):

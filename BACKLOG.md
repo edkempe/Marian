@@ -1,10 +1,30 @@
 # Marian Development Backlog
 
+## Workstreams Overview
+### Email Processing
+**Status**: Active
+**Focus**: Email retrieval, analysis, and storage
+**Current Priority**: Schema validation and testing
+**Objective**: Build robust email processing infrastructure for information extraction and analysis
+
+### Catalog/Librarian
+**Status**: Active
+**Focus**: Information organization and retrieval
+**Current Priority**: Interactive chat system development
+**Objective**: Create an intelligent catalog system that enables interactive information management through natural language conversations, helping organize, retrieve, and maintain a knowledge base of resources and information while leveraging the email processing infrastructure
+
+### Program Management
+**Status**: Active
+**Focus**: Standards, processes, and coordination
+**Current Priority**: Documentation restructuring
+**Objective**: Establish and maintain development standards, documentation, and processes that promote quality, maintainability, and cross-workstream coordination
+
 ## High Priority
 
 ### Schema Validation and Testing
 **Status**: In Progress
 **Priority**: Highest
+**Workstream**: Email Processing
 **Description**: Validate and test recent schema changes across the application.
 
 #### Technical Details
@@ -27,6 +47,7 @@
 ### Email Processing Prototype
 **Status**: In Progress
 **Priority**: Highest
+**Workstream**: Email Processing
 **Description**: Implement a working prototype for email retrieval and processing workflow.
 
 #### Technical Details
@@ -67,6 +88,7 @@
 ### Email Processing Improvements
 **Status**: In Progress
 **Priority**: High
+**Workstream**: Email Processing
 **Description**: Enhance email processing with new fields and validation
 
 #### Technical Details
@@ -142,6 +164,7 @@
 ### Setup Script Creation
 **Status**: Planned  
 **Priority**: High  
+**Workstream**: Program Management
 **Description**: Create a comprehensive setup script to automate environment, credentials, and database initialization.
 
 #### Technical Details
@@ -173,6 +196,7 @@
 ### Database Session Management Refactor
 **Status**: Planned  
 **Priority**: High  
+**Workstream**: Program Management
 **Description**: Implement a scalable database session management system to handle multiple databases efficiently.
 
 #### Technical Details
@@ -220,6 +244,7 @@ class DatabaseSessions:
 ### Database Code Consolidation
 **Status**: In Progress
 **Priority**: High
+**Workstream**: Program Management
 **Description**: Complete the consolidation of database-related code and update imports.
 
 #### Technical Details
@@ -250,6 +275,7 @@ class DatabaseSessions:
 ### Constants Consolidation
 **Status**: Planned
 **Priority**: High
+**Workstream**: Program Management
 **Description**: Consolidate all constants files into a single source of truth.
 
 #### Technical Details
@@ -275,6 +301,7 @@ class DatabaseSessions:
 ### Code DRY (Don't Repeat Yourself) Review
 **Status**: Planned  
 **Priority**: High  
+**Workstream**: Program Management
 **Description**: Review and refactor code to eliminate duplication and improve maintainability, following our necessary and sufficient principle.
 
 #### Areas to Review
@@ -425,6 +452,7 @@ class DatabaseSessions:
 ### Code Quality Improvements
 **Status**: Planned
 **Priority**: Medium
+**Workstream**: Program Management
 **Description**: Evaluate and implement code quality tools
 
 #### Code Quality Tool Options
@@ -474,6 +502,7 @@ Consider implementing mypy for type checking:
 ### Implement 3-2-1 Backup Strategy
 **Status**: Planned
 **Priority**: Medium-High
+**Workstream**: Program Management
 **Description**: Implement comprehensive 3-2-1 backup strategy for critical data, complementing GitHub code backup.
 
 #### Technical Details
@@ -529,6 +558,7 @@ Consider implementing mypy for type checking:
 ### Check Backup Storage Requirements (2024-01-05)
 **Status**: Planned
 **Priority**: High
+**Workstream**: Program Management
 **Description**: Analyze storage requirements for 30-day backup retention policy.
 
 #### Technical Details
@@ -574,9 +604,169 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 ### Email Processing
 {{ ... }}
 
+### Catalog System Core Components
+**Status**: In Progress
+**Priority**: High
+**Workstream**: Catalog/Librarian
+**Description**: Implement core catalog system functionality
+
+#### Technical Details
+1. Interactive Chat System
+- [x] Basic chat loop structure
+- [ ] Claude AI integration for natural language processing
+- [ ] Command parsing and routing
+- [ ] Interactive and CLI modes
+- [ ] Chat history logging
+- [ ] Context management between chat sessions
+
+2. Database Infrastructure
+- [ ] Catalog table for storing information items
+- [ ] Tags system for categorization
+- [ ] Relationships between items
+- [ ] Version history tracking
+- [ ] Search indexing
+- [ ] Integration with email database
+
+3. Information Management
+- [ ] Add new items to catalog
+- [ ] Update existing items
+- [ ] Delete items (with soft delete option)
+- [ ] Tag management
+- [ ] Bulk operations
+- [ ] Import/export functionality
+
+4. Search and Retrieval
+- [ ] Full-text search
+- [ ] Tag-based filtering
+- [ ] Semantic search using embeddings
+- [ ] Related items discovery
+- [ ] Search result ranking
+- [ ] Query suggestions
+
+5. Integration Features
+- [ ] Email-to-catalog conversion
+- [ ] Link with email analysis results
+- [ ] Extract entities from emails
+- [ ] Connect related information across sources
+- [ ] Export to various formats
+
+#### Success Criteria
+- All core components implemented and tested
+- Integration with email system working
+- Search functionality performing well
+- User-friendly interaction model
+- Proper error handling and logging
+
+#### Dependencies
+- Email system integration points
+- Database schema finalization
+- AI model selection and integration
+- Search infrastructure setup
+
+### Catalog Implementation Phases
+**Status**: In Progress
+**Priority**: High
+**Workstream**: Catalog/Librarian
+**Description**: Phased implementation plan for catalog system
+
+#### Phase 1: Foundation (Current)
+- [x] Set up project structure
+- [x] Design database schema
+- [ ] Implement basic chat interface
+- [ ] Create logging system
+- [ ] Add basic CRUD operations
+
+#### Phase 2: Core Features
+- [ ] Implement tag system
+- [ ] Add search functionality
+- [ ] Create item relationships
+- [ ] Develop CLI commands
+- [ ] Add bulk operations
+
+#### Phase 3: AI Integration
+- [ ] Integrate Claude for chat
+- [ ] Add semantic search
+- [ ] Implement auto-tagging
+- [ ] Add context awareness
+- [ ] Create smart suggestions
+
+#### Phase 4: Email Integration
+- [ ] Link with email database
+- [ ] Convert emails to catalog items
+- [ ] Extract entities from emails
+- [ ] Create relationship mapping
+- [ ] Implement cross-referencing
+
+#### Phase 5: Advanced Features
+- [ ] Add version history
+- [ ] Implement export formats
+- [ ] Create visualization tools
+- [ ] Add batch processing
+- [ ] Implement advanced search
+
+#### Technical Requirements
+
+1. Configuration
+- [x] Separate catalog constants from main project
+- [x] Define semantic analysis parameters
+- [x] Configure database settings
+- [x] Set up error message templates
+- [ ] Add configuration validation
+- [ ] Support environment overrides
+
+2. Database
+- Use existing SQLite infrastructure
+- Add new tables for catalog items
+- Maintain referential integrity
+- Support full-text search
+- Handle concurrent access
+
+3. API Design
+- RESTful interface for CLI
+- Websocket for interactive chat
+- Structured response format
+- Error handling
+- Rate limiting
+
+4. Security
+- Input validation
+- Data sanitization
+- Access control
+- Secure storage
+- Audit logging
+
+5. Testing Strategy
+- Unit tests for core functions
+- Integration tests for database
+- End-to-end chat tests
+- Performance benchmarks
+- Security testing
+
+6. Documentation
+- API documentation
+- User guides
+- Development setup
+- Configuration
+- Best practices
+
+#### Future Enhancements
+- Web interface
+- Mobile app integration
+- Real-time collaboration
+- Machine learning models
+- External API integrations
+
+#### Dependencies
+- Existing email processing system
+- Claude API
+- SQLite database
+- Python standard library
+- Testing framework
+
 ### Catalog System Timestamp Migration (Year 2038)
 **Status**: Planned
 **Priority**: High
+**Workstream**: Catalog/Librarian
 **Description**: Address the Year 2038 problem for timestamp storage in catalog system
 
 #### Technical Details
@@ -601,6 +791,7 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 ### Catalog System Performance Optimization
 **Status**: Planned
 **Priority**: Medium
+**Workstream**: Catalog/Librarian
 **Description**: Optimize performance for soft-deleted items and archival operations
 
 #### Technical Details
@@ -631,6 +822,7 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 ### Catalog System Fixes
 **Status**: Planned
 **Priority**: High
+**Workstream**: Catalog/Librarian
 **Description**: Fix critical issues identified in catalog system testing.
 
 #### Technical Details
@@ -657,6 +849,7 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 ### Project Structure Simplification
 **Status**: Planned
 **Priority**: High
+**Workstream**: Program Management
 **Description**: Implement "necessary and sufficient" principle across project structure.
 
 #### Technical Details
@@ -685,6 +878,7 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 ### Process Improvements
 **Status**: Planned
 **Priority**: Medium
+**Workstream**: Program Management
 **Description**: Improve development workflow processes
 
 #### Session Types Classification
@@ -717,6 +911,7 @@ Benefits:
 ### Documentation Updates
 **Status**: Pending
 **Priority**: Medium
+**Workstream**: Program Management
 **Description**: Update documentation to reflect recent schema changes.
 
 #### Areas to Update
@@ -733,6 +928,7 @@ Benefits:
 ### Documentation Improvements
 **Status**: In Progress
 **Priority**: Medium
+**Workstream**: Program Management
 **Added**: 2024-12-24
 **Session**: 2024-12-24-22-42
 
@@ -746,44 +942,3 @@ Benefits:
 - [ ] Review other documentation files for duplicate sections
   - Context: Continue documentation cleanup effort
   - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
-
-### Documentation Consolidation
-**Status**: Planned
-**Priority**: Highest
-**Description**: Resolve overlap between PROJECT_PLAN.md and README.md to ensure single source of truth.
-
-#### Technical Details
-1. Content Analysis
-   - Compare content between files
-   - Identify overlapping sections
-   - Map information architecture
-   - Document current inconsistencies
-
-2. Define Clear Purposes
-   - README.md: Project overview, setup, structure
-   - PROJECT_PLAN.md: Development roadmap, decisions
-   - Remove duplicate information
-   - Update cross-references
-
-3. Implementation
-   - Restructure both documents
-   - Move content to appropriate file
-   - Update all references
-   - Archive old versions
-
-4. Validation
-   - Review changes with team
-   - Test all document links
-   - Update related documentation
-   - Verify no information loss
-
-#### Success Criteria
-- Clear separation of concerns
-- No duplicate information
-- All links working
-- Team understands where to find what
-
-#### Dependencies
-- Current documentation cleanup
-- Archive process implementation
-- Documentation principles review

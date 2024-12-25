@@ -18,7 +18,7 @@ python get_mail.py [--newer] [--older] [--clear] [--label] [--list-labels]
 import argparse
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from pytz import timezone
 import time
 from dateutil import parser
@@ -30,8 +30,8 @@ from models.base import Base
 from models.email import Email
 from models.gmail_label import GmailLabel
 from lib_gmail import GmailAPI
-from database.config import get_email_session, get_analysis_session, init_db
-from constants import DATABASE_CONFIG, EMAIL_CONFIG
+from db_session import get_email_session, get_analysis_session, init_db
+from constants import DATABASE_CONFIG, EMAIL_CONFIG, ANALYSIS_TYPES, CATALOG_TYPES
 
 # Configuration
 UTC_TZ = timezone('UTC')
@@ -232,7 +232,7 @@ def fetch_newer_emails(session, service, label=None):
     newest_date = get_newest_email_date(session)
     if newest_date:
         # Add 1-minute overlap to avoid missing emails
-        start_date = newest_date - timedelta(minutes=1)
+        start_date = newest_date - timezone.timedelta(minutes=1)
         return fetch_emails(service, start_date=start_date, label=label)
     return []
 
@@ -299,7 +299,7 @@ def main():
         else:
             # Default: fetch last N days of emails
             end_date = datetime.now(UTC_TZ)
-            start_date = end_date - timedelta(days=EMAIL_CONFIG['DAYS_TO_FETCH'])
+            start_date = end_date - timezone.timedelta(days=EMAIL_CONFIG['DAYS_TO_FETCH'])
             messages = fetch_emails(service, start_date, end_date, args.label)
         
         # Process messages

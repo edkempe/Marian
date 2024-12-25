@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Database initialization utilities."""
 import os
+from sqlalchemy import text
 from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from database.config import email_engine, analysis_engine
+from db_session import email_engine, analysis_engine
 
 def init_db():
     """Initialize the databases."""

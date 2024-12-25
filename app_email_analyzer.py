@@ -8,11 +8,13 @@ import time
 import argparse
 from dotenv import load_dotenv
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+from models.email import Email
+from models.email_analysis import EmailAnalysis
+from db_session import get_email_session, get_analysis_session
 import sqlalchemy.exc
 from structlog import get_logger
 from prometheus_client import start_http_server as start_prometheus_server
-from database.config import get_email_session, get_analysis_session
-from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
 from lib_anthropic import parse_claude_response
 

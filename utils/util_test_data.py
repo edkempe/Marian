@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta, timezone
 import os
-from database.config import get_email_session
+from sqlalchemy.orm import Session
 from models.email import Email
+from db_session import get_email_session
 
 test_emails = [
     {

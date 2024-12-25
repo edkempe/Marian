@@ -2,13 +2,14 @@
 """Schema verification script for email analyzer."""
 import inspect
 from typing import Type, Dict, Any
-from sqlalchemy import inspect as sql_inspect
+from sqlalchemy import text, inspect as sql_inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeMeta
 
-from database.config import email_engine, analysis_engine
+from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
+from db_session import email_engine, analysis_engine
 from .logging_config import setup_logging
 
 # Set up logger
