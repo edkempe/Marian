@@ -42,29 +42,75 @@ class CatalogChat:
         return self.Session()
 
     def check_semantic_duplicates(self, session, title: str, existing_items: list) -> tuple:
-        """Check for semantic duplicates of a title."""
-        try:
-            # For items, use title attribute
-            items = [item.title for item in existing_items]
-            if not items:
-                return False, []
-                
-            matches = self.get_semantic_matches(title, items, threshold=CATALOG_CONFIG['semantic']['threshold'])
-            if not matches:
-                return False, []
-                
-            # Get the actual CatalogItem objects for the matches
-            similar_items = []
-            for match_title, score in matches:
-                item = next((i for i in existing_items if i.title == match_title), None)
-                if item:
-                    similar_items.append((item, score))
+        """Check for semantic duplicates of a title.
+        
+        Uses Claude AI to detect semantic duplicates by comparing titles and content.
+        Considers synonyms, related terms, and similar subject matter.
+        
+        Args:
+            session: Database session
+            title: Title to check
+            existing_items: List of items to check against
             
-            return bool(similar_items), similar_items
+        Returns:
+            tuple: (bool has_duplicates, list similar_items)
+            
+        Note: Similarity threshold and other settings are defined in catalog_constants.py
+        """
+        if not existing_items:
+            return False, []
+            
+        # Prepare catalog-specific prompt for semantic comparison
+        prompt = {
+            "role": "user",
+            "content": f"""Analyze these catalog items for semantic similarity:
+            
+New Item Title: "{title}"
+
+Existing Catalog Items:
+{chr(10).join(f'- Title: {item.title}\n  Content: {item.content[:200]}...' for item in existing_items)}
+
+Determine if any existing items are semantically similar to the new title by considering:
+1. Similar topics or concepts in the catalog context
+2. Related terms or synonyms commonly used in knowledge management
+3. Overlapping subject matter that might cause catalog redundancy
+
+Return your analysis as a JSON object with:
+- has_duplicates: true if semantically similar items exist
+- similar_items: list of indices (0-based) of similar items, ordered by relevance
+- reasoning: explanation of why items are considered similar in the catalog context
+
+Example:
+{{
+    "has_duplicates": true,
+    "similar_items": [2, 0],
+    "reasoning": "Items 2 and 0 cover the same knowledge domain with different terminology"
+}}"""
+        }
+        
+        try:
+            # Get response from Claude
+            response = self.client.messages.create(
+                model=CATALOG_CONFIG['semantic']['model'],
+                max_tokens=CATALOG_CONFIG['semantic']['max_tokens'],
+                temperature=CATALOG_CONFIG['semantic']['temperature'],
+                messages=[prompt]
+            )
+            
+            # Parse response using shared library
+            result = parse_claude_response(response.content[0].text)
+            
+            # Extract similar items using indices
+            similar_items = []
+            if result.get("has_duplicates") and result.get("similar_items"):
+                for idx in result["similar_items"]:
+                    if 0 <= idx < len(existing_items):
+                        similar_items.append((existing_items[idx], result.get("reasoning", "")))
+            
+            return result.get("has_duplicates", False), similar_items
             
         except Exception as e:
-            error_msg = CATALOG_CONFIG['ERROR_MESSAGES']['semantic_error'].format(error=str(e))
-            self.test_logger.error(error_msg)
+            self.test_logger.error(f"Error in semantic duplicate detection: {str(e)}")
             return False, []
 
     def get_semantic_matches(self, text: str, items: list, threshold: float = None) -> list:
@@ -267,6 +313,40 @@ class CatalogChat:
         item.status = 'archived'
         item.archived_date = int(datetime.utcnow().timestamp())
         session.commit()
+
+    def add_catalog_tag(self, session, catalog_id: int, tag_id: int) -> CatalogTag:
+        """Add a tag to a catalog item.
+        
+        Args:
+            session: Database session
+            catalog_id: ID of catalog item
+            tag_id: ID of tag to add
+            
+        Returns:
+            CatalogTag: The newly created catalog tag
+            
+        Raises:
+            ValueError: If item or tag is archived
+        """
+        # Check if item is archived
+        item = session.query(CatalogItem).filter(CatalogItem.id == catalog_id).first()
+        if not item:
+            raise ValueError("Item not found")
+        if item.deleted:
+            raise ValueError("Cannot tag archived item")
+            
+        # Check if tag is archived
+        tag = session.query(Tag).filter(Tag.id == tag_id).first()
+        if not tag:
+            raise ValueError("Tag not found")
+        if tag.deleted:
+            raise ValueError("Cannot use archived tag")
+            
+        # Add the tag
+        catalog_tag = CatalogTag(catalog_id=catalog_id, tag_id=tag_id)
+        session.add(catalog_tag)
+        session.commit()
+        return catalog_tag
 
     def process_input(self, command: str, args: str) -> str:
         """Process user input and generate response"""

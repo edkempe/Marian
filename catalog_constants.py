@@ -98,7 +98,16 @@ CATALOG_CONFIG: CatalogConfig = {
         'threshold': 0.85,
         'min_score': 0.5,
         'max_results': 10,
-        'model': 'claude-3-opus-20240229'
+        'model': 'claude-3-haiku-20240307',  # Use Haiku for faster catalog operations
+        'max_tokens': 1000,  # Sufficient for catalog comparisons
+        'temperature': 0,    # Deterministic results for consistency
+        'similarity_types': [
+            'exact match',
+            'synonym',
+            'broader term',
+            'narrower term',
+            'related concept'
+        ]
     },
     'SEMANTIC_PROMPT': 'You are a helpful assistant analyzing catalog items.',
     

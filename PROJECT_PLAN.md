@@ -493,12 +493,43 @@ src/catalog/
 ### Documentation Organization
 ```
 docs/
-├── architecture/           # Architectural decisions and patterns
-├── development/           # Development guidelines and standards
-│   └── reuse_guide.md    # Detailed reuse guidelines
-├── domains/              # Domain-specific documentation
-└── shared/              # Shared component documentation
+├── getting-started/
+│   ├── installation.md      # From SETUP.md
+│   └── prerequisites.md
+├── guides/
+│   ├── librarian-guide.md   # From LIBRARIAN_GUIDE.md
+│   └── workflow.md          # From SESSION_WORKFLOW.md
+├── architecture/
+│   ├── design-decisions.md  # From MARIAN_DESIGN_AND_DECISIONS.md
+│   └── database-schema.md
+├── development/
+│   ├── guidelines.md
+│   └── backlog.md          # Merged from BACKLOG.md and CATALOG_BACKLOG.md
+└── sessions/               # Session logs and history only
+    ├── active/            # Current session notes
+    └── archive/           # Past session summaries
+
+# Root-level critical documentation
+- AI_SESSION_GUIDE.md      # Primary guide for AI interactions
+- README.md                # Project overview
+- PROJECT_PLAN.md          # This document
 ```
+
+### Documentation Priorities
+1. **Root Level**
+   - Critical process documents
+   - Main entry points
+   - AI interaction guidelines
+
+2. **Docs Directory**
+   - Detailed documentation
+   - Technical guides
+   - Historical records
+
+3. **Session Management**
+   - AI_SESSION_GUIDE.md as primary reference
+   - Session logs in docs/sessions/
+   - Clear templates and procedures
 
 ### Reuse Checklist
 
