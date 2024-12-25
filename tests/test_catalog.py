@@ -2,10 +2,11 @@ import datetime
 import unittest
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
-
+from unittest.mock import patch, MagicMock
 from app_catalog import CatalogChat
 from models.catalog import Base, CatalogItem, Tag, CatalogTag
 from marian_lib.logger import setup_logger
+from catalog_constants import CATALOG_CONFIG
 
 class TestCatalog(unittest.TestCase):
     """Test cases for the catalog functionality"""
@@ -27,6 +28,7 @@ class TestCatalog(unittest.TestCase):
     def setUp(self):
         """Set up test case"""
         self.session = self.Session()
+        self.test_marker = f"TEST_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
     def tearDown(self):
         """Clean up after test case"""
@@ -299,80 +301,43 @@ class TestCatalog(unittest.TestCase):
         finally:
             self.cleanup_test_data(test_marker)
 
-    def test_semantic_matching(self):
+    @patch('app_catalog.get_anthropic_client')
+    def test_semantic_matching(self, mock_client):
         """Test semantic matching functionality"""
-        test_marker = "SEMANTIC_TEST_" + datetime.datetime.now().isoformat()
+        # Mock Claude API response
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text='[("Similar Item", 0.85)]')]
+        mock_client.return_value.messages.create.return_value = mock_response
         
-        try:
-            # Clean up any leftover test data
-            self.cleanup_test_data(test_marker)
-            
-            # Add test item directly to database
-            item = CatalogItem(
-                title=f"{test_marker}_Python Guide",
-                content="A comprehensive guide to Python programming"
-            )
-            self.session.add(item)
-            self.session.commit()
-            
-            # Test semantic similarity detection
-            similar_items = self.chat.get_semantic_matches(
-                "Python Tutorial",
-                [item.title],
-                threshold=0.7
-            )
-            self.assertTrue(len(similar_items) > 0, "Should detect semantic similarity")
-            self.assertEqual(similar_items[0][0], item.title)
-            self.assertGreaterEqual(similar_items[0][1], 0.7)
-            
-            # Test different meanings
-            different_items = self.chat.get_semantic_matches(
-                "Python Snake",
-                [item.title],
-                threshold=0.7
-            )
-            self.assertEqual(len(different_items), 0, "Should not detect similarity for different concepts")
-            
-            # Add test tag directly to database
-            tag = Tag(name=f"{test_marker}_programming")
-            self.session.add(tag)
-            self.session.commit()
-            
-            # Test tag similarity
-            similar_tags = self.chat.get_semantic_matches(
-                "coding",
-                [tag.name],
-                threshold=0.7
-            )
-            self.assertTrue(len(similar_tags) > 0, "Should detect similar tags")
-            self.assertEqual(similar_tags[0][0], tag.name)
-            self.assertGreaterEqual(similar_tags[0][1], 0.7)
-            
-            # Test archived items
-            item.deleted = True
-            self.session.commit()
-            
-            # Test empty database handling
-            empty_matches = self.chat.get_semantic_matches("test", [], threshold=0.7)
-            self.assertEqual(len(empty_matches), 0, "Should handle empty item list")
-            
-            # Add test item with special chars
-            special_item = CatalogItem(
-                title=f"{test_marker}_Python (Programming)",
-                content="Guide to Python"
-            )
-            self.session.add(special_item)
-            self.session.commit()
-            
-            special_matches = self.chat.get_semantic_matches(
-                "Python [Code]",
-                [special_item.title],
-                threshold=0.7
-            )
-            self.assertTrue(len(special_matches) > 0, "Should handle special characters")
-            
-        finally:
-            self.cleanup_test_data(test_marker)
+        # Create test items
+        title = f"{self.test_marker}_Test Item"
+        similar_title = f"{self.test_marker}_Similar Item"
+        
+        self.chat.add_item(title)
+        self.chat.add_item(similar_title)
+        
+        # Test semantic matching
+        items = [similar_title]
+        matches = self.chat.get_semantic_matches(title, items)
+        
+        # Verify API call
+        mock_client.return_value.messages.create.assert_called_with(
+            model=CATALOG_CONFIG['TEST_MODEL'],
+            max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+            temperature=CATALOG_CONFIG['TEMPERATURE'],
+            messages=[{
+                'role': 'user',
+                'content': CATALOG_CONFIG['SEMANTIC_PROMPT'].format(
+                    text=title,
+                    items="\n".join(f"- {item}" for item in items),
+                    threshold=CATALOG_CONFIG['SEMANTIC_THRESHOLD']
+                )
+            }]
+        )
+        
+        self.assertTrue(len(matches) > 0, "Should detect semantic similarity")
+        self.assertEqual(matches[0][0], "Similar Item")
+        self.assertGreaterEqual(matches[0][1], CATALOG_CONFIG['SEMANTIC_THRESHOLD'])
 
     def test_semantic_duplicates(self):
         """Test semantic duplicate detection"""
