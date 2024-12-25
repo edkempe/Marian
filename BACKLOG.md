@@ -947,12 +947,20 @@ Benefits:
 
 ### Testing Framework
 - [ ] **CRITICAL: Remove Mock Email Processor and Simplify Testing**
-  - Remove `utils/util_test_data.py` entirely
-  - Replace mock `EmailProcessor` with real email processing in test mode
-  - Use Gmail API test mode instead of hardcoded test emails
-  - Simplify test setup by removing unnecessary abstractions
-  - Remove test data generation functions in favor of direct API calls
-  - Impact: More reliable tests that match production behavior
+  - Current Usage:
+    - `utils/util_test_data.py` contains mock data and processor
+    - Used only in `tests/test_version_tracking.py`
+    - Provides `EmailProcessor`, `load_test_fixtures`, `generate_test_data`
+  - Required Changes:
+    - Remove `utils/util_test_data.py` entirely
+    - Update `test_version_tracking.py` to use Gmail API test mode
+    - Replace mock `EmailProcessor` with real email processing
+    - Remove test data generation in favor of real test emails
+  - Benefits:
+    - More reliable tests that match production behavior
+    - Simpler test setup and maintenance
+    - Better test coverage of actual functionality
+  - Impact: Improves test reliability and maintainability
   - Dependencies: None
   - Estimated time: 1-2 days
 
