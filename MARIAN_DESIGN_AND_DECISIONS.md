@@ -1,4 +1,117 @@
-# Architectural Decisions
+# Marian Design and Decisions
+
+## Decision Record Template
+```markdown
+### [Title] (YYYY-MM-DD)
+**Decision**: [Brief description of the decision]
+
+#### Context
+- [Background information]
+- [Current state]
+- [Problem being solved]
+
+#### Decision Factors
+1. **[Factor 1]**
+   - [Details]
+   - [Impact]
+
+2. **[Factor 2]**
+   - [Details]
+   - [Impact]
+
+#### Impact
+- [Expected outcomes]
+- [Changes required]
+- [Benefits]
+
+#### Related Documents
+- [Document links]
+- [Related decisions]
+```
+
+## Documentation Organization Decisions
+
+### Project Plan Document Structure (2024-12-24)
+**Decision**: Keep organizational guidelines, principles, and implementation details consolidated in PROJECT_PLAN.md rather than splitting into separate documents.
+
+#### Context
+- Considered splitting PROJECT_PLAN.md content into separate documents:
+  - Code reuse guidelines to `docs/development/reuse_guide.md`
+  - Contributor guidelines to `docs/development/contributor_guide.md`
+  - Domain organization to `docs/architecture/domain_organization.md`
+  - Maintenance guidelines to `docs/development/maintenance.md`
+
+#### Decision Factors
+1. **AI Context and Comprehension**
+   - AI models work better with consolidated, directly accessible information
+   - Single document provides complete context for decision-making
+   - Easier for AI to find and follow guidelines
+   - Reduces risk of missing information
+
+2. **Single Source of Truth**
+   - Comprehensive reference in one location
+   - Clear authority for organizational decisions
+   - Reduced risk of inconsistency
+   - Easier to maintain and update
+
+3. **Implementation Clarity**
+   - Guidelines directly connected to implementation details
+   - Clear connection between principles and practice
+   - Easier to enforce consistency
+   - Better support for code reuse
+
+#### Impact
+- Better AI assistance in maintaining project structure
+- More consistent implementation of guidelines
+- Easier onboarding for new contributors
+- More reliable code reuse
+
+#### Related Documents
+- PROJECT_PLAN.md
+- docs/development/*
+- docs/architecture/*
+
+### AI Session Management Location (2024-12-24)
+**Decision**: Create root-level AI_SESSION_GUIDE.md for primary AI interaction documentation, separate from session logs.
+
+#### Context
+- Previously had session management spread across multiple files:
+  - CHAT_START.md
+  - CHAT_CLOSE.md
+  - SESSION_WORKFLOW.md
+  - docs/sessions/README.md
+
+#### Decision Factors
+1. **Visibility**
+   - AI assistants need immediate access to interaction guidelines
+   - Root-level placement ensures high visibility
+   - Clear separation between guidelines and logs
+
+2. **Usability**
+   - Single source of truth for AI interaction
+   - Easy to find and reference
+   - Comprehensive but focused content
+
+3. **Maintainability**
+   - Clear separation of concerns
+   - Session logs separate from guidelines
+   - Easier to update and maintain
+
+#### Impact
+- More consistent AI interactions
+- Clearer session management
+- Better organization of session history
+- Improved documentation findability
+
+#### Implementation
+- Created root-level AI_SESSION_GUIDE.md for primary AI interaction documentation
+
+#### Related Documents
+- AI_SESSION_GUIDE.md
+- docs/sessions/* (for logs only)
+
+### Task Management Simplification (2024-12-24)
+**Decision**: Remove NEXT_SESSION.md and enhance BACKLOG.md to handle immediate priorities.
 
 ## Catalog System Design Decisions
 
@@ -84,126 +197,6 @@
    - Transaction-based operations
    - Proper cleanup in tests
    - Consistent state management
-
-## Catalog System Design
-
-### 1. Soft Delete Implementation (2024-12-24)
-- **Decision**: Implemented soft delete for both catalog items and tags
-- **Context**: Need to preserve historical data while allowing items/tags to be "deleted"
-- **Implementation**:
-  - Added `deleted` (INTEGER) flag to both tables
-  - Added `archived_date` (INTEGER) for tracking when items were soft deleted
-  - Items marked as deleted are filtered out of active queries
-  - Relationships and tags are preserved but hidden when parent item is deleted
-- **Consequences**:
-  - Can restore deleted items with full history
-  - Slightly more complex queries to filter deleted items
-  - Additional storage space used for deleted items
-
-### 2. Timestamp Storage (2024-12-24)
-- **Decision**: Store all timestamps as INTEGER Unix timestamps
-- **Context**: SQLite lacks native date/timestamp type
-- **Implementation**:
-  - Using INTEGER type for all date fields
-  - Storing UTC Unix timestamps (seconds since epoch)
-  - Default values use `strftime('%s', 'now')`
-  - Python code uses `datetime.utcnow().timestamp()`
-- **Advantages**:
-  - Efficient storage and comparison
-  - No timezone ambiguity (all UTC)
-  - Easy sorting
-  - Simple arithmetic operations on dates
-- **Known Issues**:
-  - Year 2038 problem for 32-bit systems (tracked in TODO.md)
-  - Need to convert for human-readable display
-
-### 3. Database Schema Design
-- **Decision**: Maintain original table names for consistency
-- **Tables**:
-  - `catalog_items`: Main catalog entries
-  - `tags`: Tag definitions
-  - `catalog_tags`: Many-to-many relationships
-  - `relationships`: Item relationships
-  - `chat_history`: Interaction logs
-- **Fields Added**:
-  - `deleted` (INTEGER)
-  - `archived_date` (INTEGER)
-  - `created_date` (INTEGER)
-  - `modified_date` (INTEGER)
-
-### 4. Testing Strategy
-- **Decision**: Comprehensive lifecycle testing
-- **Test Coverage**:
-  1. Tag creation and application
-  2. Tag renaming
-  3. Soft deletion of tags
-  4. Tag restoration
-  5. Multiple tag removal
-  6. Item soft deletion
-  7. Item restoration
-  8. Archive date verification
-  9. Visibility checks for deleted items/tags
-  10. Cleanup and verification
-
-### 5. Duplicate Handling (2024-12-24)
-
-#### Item Duplicates
-1. Case-Insensitive Matching
-   - **Decision**: Enforce case-insensitive uniqueness for titles
-   - **Implementation**:
-     - Using SQLite COLLATE NOCASE
-     - Database-level UNIQUE constraints
-   - **Consequences**:
-     - Prevents confusion with similar titles
-     - Slight performance impact on large datasets
-
-2. Archived Items
-   - **Decision**: Check archived items before allowing duplicates
-   - **Implementation**:
-     - Query includes deleted=1 items
-     - Prompt for restoration if found
-   - **Consequences**:
-     - Better data consistency
-     - More complex item creation logic
-
-#### Tag Duplicates
-1. Case-Insensitive Tags
-   - **Decision**: Enforce case-insensitive uniqueness for tag names
-   - **Implementation**:
-     - UNIQUE constraint with COLLATE NOCASE
-     - Preserve case of first occurrence
-   - **Consequences**:
-     - Consistent tag naming
-     - No duplicate tags with different cases
-
-2. Archived Tags
-   - **Decision**: Allow restoration of archived tags
-   - **Implementation**:
-     - Check for archived tags during creation
-     - Offer restoration workflow
-   - **Consequences**:
-     - Better tag reuse
-     - More complex tag creation logic
-
-### 6. Interface Design
-1. Operation Modes
-   - **Decision**: Separate test and interactive modes
-   - **Implementation**:
-     - Default test mode in main script
-     - Separate interactive script
-   - **Consequences**:
-     - Cleaner separation of concerns
-     - Better user experience for each mode
-
-2. Error Handling
-   - **Decision**: Comprehensive error messages and suggestions
-   - **Implementation**:
-     - Specific error types
-     - Restoration suggestions
-     - Clear user guidance
-   - **Consequences**:
-     - Better user experience
-     - More maintainable error handling
 
 ## Future Considerations
 1. Migration strategy for timestamp fields if/when changing from 32-bit
