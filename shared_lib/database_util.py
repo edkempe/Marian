@@ -3,9 +3,9 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-# Use environment variables for database URLs
-EMAIL_DB_URL = os.getenv('EMAIL_DB_URL', 'sqlite:///db_email_store.db')
-ANALYSIS_DB_URL = os.getenv('ANALYSIS_DB_URL', 'sqlite:///db_email_analysis.db')
+# Database URLs
+EMAIL_DB_URL = os.getenv('EMAIL_DB_URL', 'sqlite:///data/db_email_store.db')
+ANALYSIS_DB_URL = os.getenv('ANALYSIS_DB_URL', 'sqlite:///data/db_email_analysis.db')
 
 # Create engines
 email_engine = create_engine(EMAIL_DB_URL)

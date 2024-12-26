@@ -64,12 +64,12 @@ class EmailConfig(TypedDict):
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
     # Database Files
-    'EMAIL_DB_FILE': 'db_email_store.db',
-    'ANALYSIS_DB_FILE': 'db_email_analysis.db',
+    'EMAIL_DB_FILE': 'data/db_email_store.db',
+    'ANALYSIS_DB_FILE': 'data/db_email_analysis.db',
     
     # Database URLs (SQLite)
-    'EMAIL_DB_URL': 'sqlite:///db_email_store.db',
-    'ANALYSIS_DB_URL': 'sqlite:///db_email_analysis.db',
+    'EMAIL_DB_URL': 'sqlite:///data/db_email_store.db',
+    'ANALYSIS_DB_URL': 'sqlite:///data/db_email_analysis.db',
     
     # Table Names
     'EMAIL_TABLE': 'emails',

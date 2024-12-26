@@ -943,6 +943,35 @@ Benefits:
   - Context: Continue documentation cleanup effort
   - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
 
+### Code Organization and Technical Debt
+**Status**: In Progress
+**Priority**: Medium
+**Workstream**: Program Management
+**Description**: Address technical debt and improve code organization.
+
+#### Technical Details
+1. Review and Organize Prototype Files
+- **Status**: Not Started
+- **Priority**: Medium
+- **Description**: Review prototype files to determine which are still needed for future development and which are obsolete.
+- **Files to Review**:
+  - `proto_gmail_operations.py`: Gmail API operations prototypes
+  - `proto_google_keep.py`: Google Keep integration prototype
+  - `proto_inspect_prompts.py`: Prompt inspection utilities
+  - `proto_prompt_manager.py`: Prompt management system prototype
+  - `proto_read_gmail.py`: Gmail reading functionality prototype
+- **Action Items**:
+  - [ ] Review each file's functionality and current usage
+  - [ ] Identify which features have already been implemented in production code
+  - [ ] Document which prototypes are still needed for future features
+  - [ ] Create tasks for implementing needed features
+  - [ ] Archive obsolete prototypes
+- **Dependencies**: None
+- **Notes**: 
+  - Keep files that will be useful for upcoming features
+  - Document any valuable patterns or approaches before archiving files
+  - Consider moving active prototypes to a dedicated prototypes/ directory
+
 ## Critical Tasks
 
 ### Testing Framework

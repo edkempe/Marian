@@ -15,13 +15,21 @@ Key Integration Points Tested:
 """
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+import os
+import sys
 from datetime import datetime
+import json
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from models.catalog import CatalogItem, Tag, CatalogTag
+from models.base import Base
+from constants import CATALOG_CONFIG
 from shared_lib.logging_util import setup_logger
-from sqlalchemy import create_engine, or_
-from sqlalchemy.orm import sessionmaker
 from app_catalog import CatalogChat
-from models.catalog import Base, CatalogItem, Tag, CatalogTag
-from catalog_constants import CATALOG_CONFIG
 
 class TestCatalog:
     """Test cases for the catalog functionality"""

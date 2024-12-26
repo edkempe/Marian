@@ -11,7 +11,7 @@ Usage:
 
 Environment Variables:
     ANALYSIS_DB_URL: URL for the email analysis database
-                    Default: sqlite:///db_email_analysis.db
+                    Default: sqlite:///data/db_email_analysis.db
 """
 
 from sqlalchemy import create_engine, text, Engine, Connection, Row
@@ -50,7 +50,7 @@ def check_database() -> None:
     """
     try:
         # Use the same database URL as the main application
-        analysis_db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///db_email_analysis.db')
+        analysis_db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///data/db_email_analysis.db')
         logger.info(f"Connecting to database at: {analysis_db_url}")
         
         engine = create_engine(analysis_db_url)

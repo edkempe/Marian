@@ -5,7 +5,8 @@ from tabulate import tabulate
 import pandas as pd
 
 def inspect_prompts_db():
-    conn = sqlite3.connect('prompts.db')
+    """Inspect the prompts database."""
+    conn = sqlite3.connect('data/prompts.db')
     conn.row_factory = sqlite3.Row
     
     # Get all prompts

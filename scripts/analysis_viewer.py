@@ -4,7 +4,7 @@
 from sqlalchemy import select
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from db_session import get_analysis_session, get_email_session
+from shared_lib.database_session_util import get_analysis_session, get_email_session
 from datetime import datetime, timedelta
 import pytz
 import argparse

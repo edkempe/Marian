@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 class PromptManager:
-    def __init__(self, db_path: str = "prompts.db"):
+    def __init__(self, db_path: str = "data/prompts.db"):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row

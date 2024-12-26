@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from catalog_constants import CATALOG_CONFIG
+from constants import CATALOG_CONFIG
 from typing import List
 import sys
 import logging

@@ -10,8 +10,8 @@ from constants import DATABASE_CONFIG
 
 def generate_html_report():
     # Connect to the databases
-    analysis_db_path = 'db_email_analysis.db'
-    email_db_path = 'db_email_store.db'
+    analysis_db_path = 'data/db_email_analysis.db'
+    email_db_path = 'data/db_email_store.db'
     
     if not os.path.exists(analysis_db_path) or not os.path.exists(email_db_path):
         print(f"Database files not found!")
@@ -38,8 +38,8 @@ def generate_html_report():
         
         # Execute query against analysis database
         cursor = analysis_conn.cursor()
-        cursor.execute("ATTACH DATABASE 'db_email_store.db' AS db_email_store")
-        cursor.execute("ATTACH DATABASE 'db_email_analysis.db' AS db_email_analysis")
+        cursor.execute("ATTACH DATABASE 'data/db_email_store.db' AS db_email_store")
+        cursor.execute("ATTACH DATABASE 'data/db_email_analysis.db' AS db_email_analysis")
         cursor.execute(query)
         rows = cursor.fetchall()
         
@@ -120,16 +120,16 @@ def generate_html_report():
         """
         
         # Write to file
-        with open('email_analysis_report.html', 'w') as f:
+        with open('reports/email_analysis_report.html', 'w') as f:
             f.write(html)
         
-        print("Report generated: email_analysis_report.html")
+        print("Report generated: reports/email_analysis_report.html")
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
     finally:
         analysis_conn.close()
 
-def generate_sent_emails_report(output_file='sent_emails_report.html'):
+def generate_sent_emails_report(output_file='reports/sent_emails_report.html'):
     """Generate a report of emails sent by eddiekempe@gmail.com."""
     # Connect to databases
     email_store = create_engine(f'sqlite:///{DATABASE_CONFIG["EMAIL_DB_FILE"]}')

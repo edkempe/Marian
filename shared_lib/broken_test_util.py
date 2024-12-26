@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import os
 from sqlalchemy.orm import Session
 from models.email import Email
-from db_session import get_email_session
+from shared_lib.database_session_util import get_email_session
 
 test_emails = [
     {

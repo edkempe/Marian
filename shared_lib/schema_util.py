@@ -9,7 +9,7 @@ from sqlalchemy.orm import DeclarativeMeta
 from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from db_session import email_engine, analysis_engine
+from shared_lib.database_session_util import email_engine, analysis_engine
 from .logging_config import setup_logging
 
 # Set up logger

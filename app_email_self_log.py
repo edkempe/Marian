@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from db_session import get_email_session, get_analysis_session
+from shared_lib.database_session_util import get_email_session, get_analysis_session
 from app_email_analyzer import EmailAnalyzer
 from app_get_mail import GmailAPI
 import pandas as pd

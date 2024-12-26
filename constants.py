@@ -1,31 +1,22 @@
-"""Central configuration file for Marian project constants.
+"""Global constants for the Marian project.
 
-This module serves as the single source of truth for all configuration settings
-used throughout the Marian project. All components should import their settings
-from here rather than defining their own values.
+This module contains all configuration settings and constants used throughout the
+Marian project. Settings are organized by component to maintain clarity.
 
 Configuration Sections:
-    - API_CONFIG: Settings for Claude API (model, tokens, temperature)
-    - DATABASE_CONFIG: Database paths, URLs, and table names
-    - LOGGING_CONFIG: Log file settings and formats
-    - EMAIL_CONFIG: Email processing parameters
-    - METRICS_CONFIG: Prometheus metrics settings
-    - CATALOG_CONFIG: Catalog configuration settings
-
-Usage:
-    from constants import API_CONFIG, DATABASE_CONFIG
-    
-    model = API_CONFIG['ANTHROPIC_MODEL']
-    db_path = DATABASE_CONFIG['EMAIL_DB_FILE']
-
-Note:
-    When adding new configuration options:
-    1. Add them to the appropriate section
-    2. Include clear comments explaining their purpose
-    3. Update this docstring if adding a new section
+    - DATABASE: Database paths and connection settings
+    - API: API settings for external services
+    - SEMANTIC: Settings for semantic matching and analysis
+    - SEARCH: Search and pagination settings
+    - TABLES: Database table names
+    - RELATIONSHIPS: Valid relationship types
+    - LOGGING: Log file settings and formats
+    - ERROR_MESSAGES: Standard error message templates
+    - CATALOG: Catalog-specific settings
 """
 
-from typing import Dict, List, Union, TypedDict
+from typing import Dict, List, Union, TypedDict, Any
+import os
 
 class APIConfig(TypedDict):
     """Type hints for API configuration."""
@@ -70,26 +61,28 @@ class EmailConfig(TypedDict):
 
 class CatalogConfig(TypedDict):
     """Type hints for catalog configuration."""
-    CATALOG_DB_FILE: str
-    CATALOG_DB_URL: str
-    CHAT_LOG_FILE: str
-    SEMANTIC_MODEL: str
-    TEST_MODEL: str
+    DB_FILE: str
+    DB_URL: str
+    CHAT_LOG: str
+    ANTHROPIC_MODEL: str
     MAX_TOKENS: int
     TEMPERATURE: float
     SEMANTIC_THRESHOLD: float
-    SEMANTIC_PROMPT: str
+    SIMILARITY_THRESHOLD: float
+    RESULTS_PER_PAGE: int
+    RELATIONSHIP_TYPES: List[str]
+    TABLES: Dict[str, str]
     ERROR_MESSAGES: Dict[str, str]
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
     # Database Files
-    'EMAIL_DB_FILE': 'db_email_store.db',
-    'ANALYSIS_DB_FILE': 'db_email_analysis.db',
+    'EMAIL_DB_FILE': 'data/db_email_store.db',
+    'ANALYSIS_DB_FILE': 'data/db_email_analysis.db',
     
     # Database URLs (SQLite)
-    'EMAIL_DB_URL': 'sqlite:///db_email_store.db',
-    'ANALYSIS_DB_URL': 'sqlite:///db_email_analysis.db',
+    'EMAIL_DB_URL': 'sqlite:///data/db_email_store.db',
+    'ANALYSIS_DB_URL': 'sqlite:///data/db_email_analysis.db',
     
     # Table Names
     'EMAIL_TABLE': 'emails',
@@ -172,50 +165,46 @@ EMAIL_CONFIG: EmailConfig = {
 # Catalog Configuration
 CATALOG_CONFIG: CatalogConfig = {
     # Database Settings
-    'CATALOG_DB_FILE': 'db_catalog.db',
-    'CATALOG_DB_URL': 'sqlite:///db_catalog.db',
-    'CHAT_LOG_FILE': 'chat_logs.jsonl',
+    'DB_FILE': 'data/db_catalog.db',
+    'DB_URL': 'sqlite:///data/db_catalog.db',
+    'CHAT_LOG': 'chat_logs.jsonl',
     
     # API Settings
-    'SEMANTIC_MODEL': 'claude-3-opus-20240229',  # Model for production use
-    'TEST_MODEL': 'claude-3-haiku-20240307',     # Faster model for testing
+    'ANTHROPIC_MODEL': 'claude-2',
     'MAX_TOKENS': 1000,
-    'TEMPERATURE': 0.0,  # Zero temperature for consistent, deterministic outputs
-    'SEMANTIC_THRESHOLD': 0.7,  # Threshold for semantic similarity matches
+    'TEMPERATURE': 0.7,
     
-    # Semantic Analysis Prompt
-    'SEMANTIC_PROMPT': '''Please analyze the semantic similarity between the following text and each item in the list. Consider not just word overlap but meaning and context.
-
-For each item, determine if it is semantically similar to the text, considering:
-1. Core meaning and intent
-2. Subject matter and domain
-3. Level of specificity
-4. Context and usage
-
-Return only items that are truly semantically similar (sharing the same core meaning/topic), not just superficially similar.
-
-Text to compare: {text}
-
-Items to check:
-{items}
-
-For each item that is semantically similar (sharing the same core topic/meaning), return it and its similarity score (0-1) in this format:
-[("item text", similarity_score), ...]
-
-Only include items with similarity >= {threshold}. Return an empty list if no items are similar enough.
-
-Example responses:
-- For "Python Tutorial" and ["Python Guide", "Snake Care"]:
-  [("Python Guide", 0.85)]  # High similarity in programming context
-- For "Python Snake" and ["Python Guide"]:
-  []  # Different contexts (animal vs programming)''',
+    # Semantic Settings
+    'SEMANTIC_THRESHOLD': 0.85,
+    'SIMILARITY_THRESHOLD': 0.75,
+    'RESULTS_PER_PAGE': 10,
+    
+    # Valid Relationship Types
+    'RELATIONSHIP_TYPES': [
+        'contains',
+        'references',
+        'implements',
+        'extends',
+        'uses',
+        'related_to'
+    ],
+    
+    # Table Names
+    'TABLES': {
+        'ITEMS': 'catalog_items',
+        'RELATIONSHIPS': 'catalog_relationships',
+        'TAGS': 'catalog_tags',
+        'ITEM_TAGS': 'catalog_item_tags',
+        'CHAT_HISTORY': 'chat_history'
+    },
     
     # Error Messages
     'ERROR_MESSAGES': {
         'semantic_error': 'Error in semantic analysis: {error}',
         'database_error': 'Error accessing database: {error}',
-        'validation_error': 'Error validating input: {error}',
-        'archive_error': 'Error archiving item: {error}'
+        'duplicate_error': 'Item with similar title already exists: {title}',
+        'tag_error': 'Error managing tags: {error}',
+        'relationship_error': 'Error managing relationships: {error}'
     }
 }
 

@@ -34,7 +34,7 @@ SCOPES = [
 ]
 TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
-DEFAULT_LABEL_DB = 'email_labels.db'
+DEFAULT_LABEL_DB = 'data/email_labels.db'
 UTC_TZ = timezone('UTC')
 
 logger = logging.getLogger(__name__)
