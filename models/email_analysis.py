@@ -29,16 +29,14 @@ class ContextModel(BaseModel):
 class EmailAnalysisResponse(BaseModel):
     """Pydantic model for API response validation."""
     summary: str = Field(..., min_length=1, description="Brief summary of the email")
-    category: List[str]
+    category: List[str] = Field(default_factory=list)
     priority_score: int = Field(..., ge=1, le=5, description="Priority score from 1-5")
     priority_reason: str = Field(..., min_length=1, max_length=500)
     action_needed: bool = Field(default=False)
-    action_type: List[str] = Field(default_factory=list)
-    action_deadline: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$|^$')
-    key_points: List[str]
-    people_mentioned: List[str]
-    links_found: List[str]  # Full URLs
-    links_display: List[str]  # Truncated URLs for display
+    action_type: List[str] = Field(default_factory=list)  
+    action_deadline: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$|^$|^ASAP$')
+    key_points: List[str] = Field(default_factory=list)
+    people_mentioned: List[str] = Field(default_factory=list)
     project: str = Field(default="")
     topic: str = Field(default="")
     sentiment: str = Field(..., pattern="^(positive|negative|neutral)$")
@@ -54,29 +52,17 @@ class EmailAnalysisResponse(BaseModel):
         - Validates URLs are strings
         """
         if not isinstance(data, dict):
-            return data
+            return {}
         
+        # Remove links fields if present - they're handled by EmailAnalyzer now
         if 'links_found' in data:
-            # Ensure links_found is a list
-            if not isinstance(data['links_found'], list):
-                data['links_found'] = []
+            del data['links_found']
+        if 'links_display' in data:
+            del data['links_display']
             
-            # Convert all URLs to strings and store full versions
-            data['links_found'] = [str(url).strip() for url in data['links_found']]
-            
-            # Create truncated versions for display
-            data['links_display'] = []
-            for url in data['links_found']:
-                if len(url) > 100:
-                    # Keep the first 97 chars and add ...
-                    truncated = url[:97] + '...'
-                    data['links_display'].append(truncated)
-                else:
-                    data['links_display'].append(url)
-        else:
-            # Initialize empty lists if no links found
-            data['links_found'] = []
-            data['links_display'] = []
+        # Ensure action_type is never None
+        if 'action_type' not in data or data['action_type'] is None:
+            data['action_type'] = []
             
         return data
 
@@ -111,20 +97,20 @@ class EmailAnalysis(Base):
     
     # Content analysis
     summary: Mapped[str] = Column(Text)  # Brief summary of the email
-    category: Mapped[Dict] = Column(JSON)  # List of categories
+    category: Mapped[str] = Column(Text)  # List of categories as comma-separated string
     priority_score: Mapped[int] = Column(Integer)  # Priority score (1-5)
     priority_reason: Mapped[str] = Column(Text)  # Explanation for priority score
     
     # Action items
     action_needed: Mapped[bool] = Column(Boolean)  # Whether action is required
-    action_type: Mapped[List] = Column(JSON)  # List of action types
-    action_deadline: Mapped[Optional[datetime]] = Column(DateTime(timezone=True), nullable=True)  # When action is needed by
+    action_type: Mapped[str] = Column(Text)  # List of action types as comma-separated string
+    action_deadline: Mapped[Optional[str]] = Column(Text, nullable=True)  # When action is needed by
     
     # Key information
-    key_points: Mapped[List] = Column(JSON)  # List of key points from email
-    people_mentioned: Mapped[List] = Column(JSON)  # List of people mentioned
-    links_found: Mapped[List] = Column(JSON)  # List of links found in the email
-    links_display: Mapped[List] = Column(JSON)  # List of display text for links
+    key_points: Mapped[str] = Column(Text)  # List of key points as comma-separated string
+    people_mentioned: Mapped[str] = Column(Text)  # List of people as comma-separated string
+    links_found: Mapped[str] = Column(Text)  # List of links as comma-separated string
+    links_display: Mapped[str] = Column(Text)  # List of display text as comma-separated string
     
     # Classification
     project: Mapped[Optional[str]] = Column(Text, nullable=True)  # Project name if email is project-related
@@ -139,7 +125,8 @@ class EmailAnalysis(Base):
     email = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
 
     @classmethod
-    def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse) -> 'EmailAnalysis':
+    def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse, 
+                         links_found: List[str] = None, links_display: List[str] = None) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
         return cls(
             email_id=email_id,
@@ -147,16 +134,16 @@ class EmailAnalysis(Base):
             analysis_date=datetime.now(UTC),
             prompt_version="1.0",  # TODO: Make this configurable
             summary=response.summary,
-            category=response.category,
+            category=','.join(response.category),
             priority_score=response.priority_score,
             priority_reason=response.priority_reason,
             action_needed=response.action_needed,
-            action_type=response.action_type,
-            action_deadline=response.action_deadline,
-            key_points=response.key_points,
-            people_mentioned=response.people_mentioned,
-            links_found=response.links_found,
-            links_display=response.links_display,
+            action_type=','.join(response.action_type) if response.action_type else '',
+            action_deadline=response.action_deadline or '',  # Store deadline as string
+            key_points=','.join(response.key_points),
+            people_mentioned=','.join(response.people_mentioned),
+            links_found=','.join(links_found or []),  # Use provided URLs or empty list
+            links_display=','.join(links_display or []),  # Use provided display URLs or empty list
             project=response.project,
             topic=response.topic,
             sentiment=response.sentiment,
