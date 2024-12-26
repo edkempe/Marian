@@ -2,22 +2,22 @@
 
 ## Core Principles
 
-### Data Model Authority
-The data model (defined in `docs/database_schema.md`) is the single source of truth for all development:
-1. **Before Making Changes**
-   - Verify changes align with data model
-   - Propose data model changes first if needed
-   - Ensure tests validate against model
+### AI Session Guide Authority
+The AI Session Guide (defined in `docs/AI_SESSION_GUIDE.md`) is the single source of truth for all AI interaction:
+1. **Before Starting a Session**
+   - Verify understanding aligns with AI Session Guide
+   - Propose changes to AI Session Guide first if needed
+   - Ensure AI behavior validates against guide
 
-2. **During Implementation**
-   - Follow schema definitions exactly
-   - Maintain data integrity constraints
-   - Document any model implications
+2. **During a Session**
+   - Follow guide definitions exactly
+   - Maintain AI integrity constraints
+   - Document any guide implications
 
-3. **After Changes**
-   - Verify model compliance
+3. **After a Session**
+   - Verify guide compliance
    - Update related documentation
-   - Add model validation tests
+   - Add guide validation tests
 
 ## Quick Start
 
