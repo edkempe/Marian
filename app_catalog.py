@@ -3,13 +3,12 @@
 import datetime
 import json
 import os
-import argparse
+from shared_lib.logging_util import setup_logger
+from shared_lib.anthropic_client_lib import get_anthropic_client
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from marian_lib.logger import setup_logger
-from marian_lib.anthropic_helper import get_anthropic_client
 from catalog_constants import CATALOG_CONFIG
 from typing import List
 import sys

@@ -14,20 +14,20 @@ Key Integration Points Tested:
 - Full catalog item lifecycle
 """
 
-import datetime
-import unittest
+import pytest
+from datetime import datetime
+from shared_lib.logging_util import setup_logger
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from app_catalog import CatalogChat
 from models.catalog import Base, CatalogItem, Tag, CatalogTag
-from marian_lib.logger import setup_logger
 from catalog_constants import CATALOG_CONFIG
 
-class TestCatalog(unittest.TestCase):
+class TestCatalog:
     """Test cases for the catalog functionality"""
     
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         """Set up test environment"""
         # Use in-memory SQLite for testing
         cls.engine = create_engine('sqlite:///:memory:')
@@ -40,12 +40,12 @@ class TestCatalog(unittest.TestCase):
         # Initialize CatalogChat
         cls.chat = CatalogChat(db_path=':memory:', mode='test')
     
-    def setUp(self):
+    def setup_method(self):
         """Set up test case"""
         self.session = self.Session()
-        self.test_marker = f"TEST_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.test_marker = f"TEST_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
-    def tearDown(self):
+    def teardown_method(self):
         """Clean up after test case"""
         self.session.close()
     
@@ -77,7 +77,7 @@ class TestCatalog(unittest.TestCase):
 
     def test_duplicate_handling(self):
         """Test handling of duplicate items and tags"""
-        test_marker = "DUP_TEST_" + datetime.datetime.now().isoformat()
+        test_marker = "DUP_TEST_" + datetime.now().isoformat()
         test_title = f"{test_marker}_item"
         test_content = "Test content"
         test_tag = f"{test_marker}_tag"
@@ -91,25 +91,22 @@ class TestCatalog(unittest.TestCase):
             item = CatalogItem(title=test_title, content=test_content)
             self.session.add(item)
             self.session.commit()
-            self.assertTrue(
-                self.session.query(CatalogItem).filter(CatalogItem.title == test_title).first(),
-                "Failed to add initial item"
-            )
+            assert self.session.query(CatalogItem).filter(CatalogItem.title == test_title).first()
             
             # Try adding duplicate item
-            with self.assertRaises(ValueError) as cm:
+            with pytest.raises(ValueError) as cm:
                 item2 = CatalogItem(title=test_title, content="Different content")
                 self.session.add(item2)
                 self.session.commit()
-            self.assertIn("case-insensitive", str(cm.exception))
+            assert "case-insensitive" in str(cm.value)
             self.session.rollback()
             
             # Try adding case-variant duplicate
-            with self.assertRaises(ValueError) as cm:
+            with pytest.raises(ValueError) as cm:
                 item3 = CatalogItem(title=test_title.upper(), content="Different content")
                 self.session.add(item3)
                 self.session.commit()
-            self.assertIn("case-insensitive", str(cm.exception))
+            assert "case-insensitive" in str(cm.value)
             self.session.rollback()
             
             # Test duplicate tags
@@ -117,25 +114,22 @@ class TestCatalog(unittest.TestCase):
             tag = Tag(name=test_tag)
             self.session.add(tag)
             self.session.commit()
-            self.assertTrue(
-                self.session.query(Tag).filter(Tag.name == test_tag).first(),
-                "Failed to add initial tag"
-            )
+            assert self.session.query(Tag).filter(Tag.name == test_tag).first()
             
             # Try adding duplicate tag
-            with self.assertRaises(ValueError) as cm:
+            with pytest.raises(ValueError) as cm:
                 tag2 = Tag(name=test_tag)
                 self.session.add(tag2)
                 self.session.commit()
-            self.assertIn("case-insensitive", str(cm.exception))
+            assert "case-insensitive" in str(cm.value)
             self.session.rollback()
             
             # Try adding case-variant duplicate tag
-            with self.assertRaises(ValueError) as cm:
+            with pytest.raises(ValueError) as cm:
                 tag3 = Tag(name=test_tag.upper())
                 self.session.add(tag3)
                 self.session.commit()
-            self.assertIn("case-insensitive", str(cm.exception))
+            assert "case-insensitive" in str(cm.value)
             self.session.rollback()
             
         finally:
@@ -143,7 +137,7 @@ class TestCatalog(unittest.TestCase):
 
     def test_archived_item_handling(self):
         """Test handling of archived items and tags"""
-        test_marker = "ARCHIVED_TEST_" + datetime.datetime.now().isoformat()
+        test_marker = "ARCHIVED_TEST_" + datetime.now().isoformat()
         test_title = f"{test_marker}_item"
         test_content = "Test content"
         test_tag = f"{test_marker}_tag"
@@ -170,10 +164,10 @@ class TestCatalog(unittest.TestCase):
             # Archive item
             item.deleted = True
             self.session.commit()
-            self.assertTrue(item.deleted, "Failed to archive item")
+            assert item.deleted
             
             # Try to tag archived item
-            with self.assertRaises(Exception) as cm:
+            with pytest.raises(Exception) as cm:
                 new_tag = Tag(name=f"{test_marker}_new_tag")
                 self.session.add(new_tag)
                 self.session.commit()
@@ -181,24 +175,24 @@ class TestCatalog(unittest.TestCase):
                 catalog_tag = CatalogTag(catalog_id=item.id, tag_id=new_tag.id)
                 self.session.add(catalog_tag)
                 self.session.commit()
-            self.assertIn("archived", str(cm.exception).lower())
+            assert "archived" in str(cm.value).lower()
             self.session.rollback()
             
             # Archive tag
             tag.deleted = True
             self.session.commit()
-            self.assertTrue(tag.deleted, "Failed to archive tag")
+            assert tag.deleted
             
             # Try to use archived tag on new item
             new_item = CatalogItem(title=new_item_title, content="Some content")
             self.session.add(new_item)
             self.session.commit()
             
-            with self.assertRaises(Exception) as cm:
+            with pytest.raises(Exception) as cm:
                 catalog_tag = CatalogTag(catalog_id=new_item.id, tag_id=tag.id)
                 self.session.add(catalog_tag)
                 self.session.commit()
-            self.assertIn("archived", str(cm.exception).lower())
+            assert "archived" in str(cm.value).lower()
             self.session.rollback()
             
         finally:
@@ -206,7 +200,7 @@ class TestCatalog(unittest.TestCase):
 
     def test_full_lifecycle(self):
         """Test complete lifecycle of catalog items and tags"""
-        test_marker = "LIFECYCLE_TEST_" + datetime.datetime.now().isoformat()
+        test_marker = "LIFECYCLE_TEST_" + datetime.now().isoformat()
         self.test_logger.info(f"Starting lifecycle test {test_marker}")
         
         try:
@@ -236,10 +230,7 @@ class TestCatalog(unittest.TestCase):
                     self.session.commit()
                     
                     # Verify the tag was actually added
-                    self.assertTrue(
-                        self.session.query(CatalogTag).filter_by(catalog_id=item.id, tag_id=tag.id).first(),
-                        f"Failed to add tag {tag.name}"
-                    )
+                    assert self.session.query(CatalogTag).filter_by(catalog_id=item.id, tag_id=tag.id).first()
             
             # Verify findable by each tag
             for tag in test_tags:
@@ -248,23 +239,23 @@ class TestCatalog(unittest.TestCase):
                     CatalogItem.deleted == False
                 ).first()
                 
-                self.assertTrue(result and result.title == test_title, f"Item not found by tag {tag.name}")
-            
+                assert result and result.title == test_title
+                
             # Query by title and verify all tags present
             tags = self.session.query(Tag).join(CatalogTag).join(CatalogItem).filter(
                 CatalogItem.title == test_title
             ).all()
-            self.assertEqual(len(tags), len(test_tags), "Wrong number of tags found")
+            assert len(tags) == len(test_tags)
             
             tag_names = set(tag.name for tag in tags)
             for tag in test_tags:
-                self.assertIn(tag.name, tag_names, f"Tag {tag.name} not found")
-            
+                assert tag.name in tag_names
+                
             # Update content and verify tags remain
             new_description = f"Updated Description {test_marker}"
             item.description = new_description
             self.session.commit()
-            self.assertEqual(item.description, new_description, "Update failed")
+            assert item.description == new_description
             
             # Test tag renaming
             test_tag = test_tags[0]
@@ -276,7 +267,7 @@ class TestCatalog(unittest.TestCase):
             result = self.session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
                 Tag.name == updated_tag_name
             ).first()
-            self.assertTrue(result and result.title == test_title, "Item not found by updated tag name")
+            assert result and result.title == test_title
             
             # Test tag soft deletion
             test_tag.deleted = True
@@ -284,11 +275,11 @@ class TestCatalog(unittest.TestCase):
             
             # Verify tag exists in archive
             result = self.session.query(Tag).filter(Tag.id == test_tag.id).first()
-            self.assertTrue(result.deleted, "Tag not marked as deleted")
+            assert result.deleted
             
             # Verify tag not visible in active tags list
             tags = self.session.query(Tag).filter(Tag.deleted == False).all()
-            self.assertNotIn(updated_tag_name, [t.name for t in tags], "Deleted tag still visible in active tags")
+            assert updated_tag_name not in [t.name for t in tags]
             
             # Test tag restoration
             test_tag.deleted = False
@@ -300,18 +291,18 @@ class TestCatalog(unittest.TestCase):
             
             # Verify item not visible in active items list
             items = self.session.query(CatalogItem).filter(CatalogItem.deleted == False).all()
-            self.assertNotIn(test_title, [i.title for i in items], "Deleted item still visible in active items")
+            assert test_title not in [i.title for i in items]
             
             # Verify item exists in archive
             result = self.session.query(CatalogItem).filter(CatalogItem.id == item.id).first()
-            self.assertTrue(result.deleted, "Item not marked as deleted")
+            assert result.deleted
             
             # Verify item not visible when viewing tags
             items = self.session.query(CatalogItem).join(CatalogTag).join(Tag).filter(
                 Tag.name == updated_tag_name,
                 CatalogItem.deleted == False
             ).all()
-            self.assertNotIn(test_title, [i.title for i in items], "Deleted item still visible on tag")
+            assert test_title not in [i.title for i in items]
             
         finally:
             self.cleanup_test_data(test_marker)
@@ -334,8 +325,8 @@ class TestCatalog(unittest.TestCase):
         items = [similar_title]
         matches = self.chat.get_semantic_matches(title, items)
         
-        self.assertTrue(len(matches) > 0, "Should detect semantic similarity")
-        self.assertGreaterEqual(matches[0][1], CATALOG_CONFIG['SEMANTIC_THRESHOLD'])
+        assert len(matches) > 0
+        assert matches[0][1] >= CATALOG_CONFIG['SEMANTIC_THRESHOLD']
 
     def test_semantic_duplicates(self):
         """Test semantic duplicate detection using real Claude API calls.
@@ -368,9 +359,9 @@ class TestCatalog(unittest.TestCase):
                 "Python Tutorial",
                 all_items
             )
-            self.assertTrue(has_dups, "Should detect similar item")
-            self.assertTrue(len(similar) > 0)
-            self.assertEqual(similar[0][0].title, item1.title)
+            assert has_dups
+            assert len(similar) > 0
+            assert similar[0][0].title == item1.title
             
             # Test non-duplicate with real API call
             has_dups, similar = self.chat.check_semantic_duplicates(
@@ -378,8 +369,8 @@ class TestCatalog(unittest.TestCase):
                 "Ruby Guide",
                 all_items
             )
-            self.assertFalse(has_dups, "Should not detect similarity")
-            self.assertEqual(len(similar), 0)
+            assert not has_dups
+            assert len(similar) == 0
             
             # Add test tag directly to database
             tag = Tag(name=f"{self.test_marker}_programming")
@@ -396,12 +387,12 @@ class TestCatalog(unittest.TestCase):
                 "coding",
                 all_tags
             )
-            self.assertTrue(has_dups, "Should detect similar tag")
-            self.assertTrue(len(similar) > 0)
-            self.assertEqual(similar[0][0].name, tag.name)
+            assert has_dups
+            assert len(similar) > 0
+            assert similar[0][0].name == tag.name
             
         finally:
             self.cleanup_test_data(self.test_marker)
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main()
