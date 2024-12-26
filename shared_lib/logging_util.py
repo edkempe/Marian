@@ -16,30 +16,50 @@ from prometheus_client import Counter, Histogram, start_http_server
 
 from constants import LOGGING_CONFIG
 
+# Track if metrics have been registered
+_metrics_registered = False
+
 # Prometheus metrics
-EMAIL_ANALYSIS_COUNTER = Counter(
-    'email_analysis_total',
-    'Total number of email analyses performed',
-    ['status']
-)
+EMAIL_ANALYSIS_COUNTER = None
+API_ERROR_COUNTER = None
+VALIDATION_ERROR_COUNTER = None
+ANALYSIS_DURATION = None
 
-API_ERROR_COUNTER = Counter(
-    'api_error_total',
-    'Total number of API errors',
-    ['type']
-)
+def register_metrics():
+    """Register Prometheus metrics if not already registered."""
+    global EMAIL_ANALYSIS_COUNTER, API_ERROR_COUNTER, VALIDATION_ERROR_COUNTER, ANALYSIS_DURATION, _metrics_registered
+    
+    if _metrics_registered:
+        return
+        
+    EMAIL_ANALYSIS_COUNTER = Counter(
+        'email_analysis_total',
+        'Total number of email analyses performed',
+        ['status']
+    )
+    
+    API_ERROR_COUNTER = Counter(
+        'api_error_total',
+        'Total number of API errors',
+        ['type']
+    )
+    
+    VALIDATION_ERROR_COUNTER = Counter(
+        'validation_error_total',
+        'Total number of validation errors',
+        ['field']
+    )
+    
+    ANALYSIS_DURATION = Histogram(
+        'email_analysis_duration_seconds',
+        'Time taken to analyze emails',
+        ['operation']
+    )
+    
+    _metrics_registered = True
 
-VALIDATION_ERROR_COUNTER = Counter(
-    'validation_error_total',
-    'Total number of validation errors',
-    ['field']
-)
-
-ANALYSIS_DURATION = Histogram(
-    'email_analysis_duration_seconds',
-    'Time taken to analyze emails',
-    ['operation']
-)
+# Register metrics on module import
+register_metrics()
 
 # Configure structured logging
 structlog.configure(

@@ -3,23 +3,31 @@
 ## Git Operations
 
 ### Committing Changes
-- Use `git commit -am "message"` for modified files to combine add and commit in one step
-- Only use separate `git add` when new files need to be tracked
-- Follow conventional commit format:
-  ```
-  type: brief description
+1. **Always combine staging and commit in one step**
+   - Use `git commit -am "type: description"` for modified files
+   - Only use separate `git add` for new (untracked) files
+   - Never stage files without immediately committing them
 
-  - Detailed change 1
-  - Detailed change 2
-  ```
-  where type is one of:
-  - feat: new feature
-  - fix: bug fix
-  - docs: documentation changes
-  - style: formatting, missing semi colons, etc
-  - refactor: code restructuring
-  - test: adding tests
-  - chore: maintenance tasks
+2. **Follow conventional commit format**
+   ```
+   type: brief description
+
+   - Detailed change 1
+   - Detailed change 2
+   ```
+   Types:
+   - feat: new feature
+   - fix: bug fix
+   - docs: documentation changes
+   - style: formatting
+   - refactor: code restructuring
+   - test: adding tests
+   - chore: maintenance tasks
+
+3. **Keep commits focused**
+   - One logical change per commit
+   - Include all related changes (code, tests, docs)
+   - Make sure commit message fully describes the change
 
 ## Code Changes
 - Always explain changes before making them

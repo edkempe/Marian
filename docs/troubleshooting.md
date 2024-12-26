@@ -73,6 +73,24 @@
    - Include error type and original response in logs
    - Handle database errors gracefully
 
+## Testing Issues
+
+### Test Execution Appears to Stall
+
+**Issue**: During test execution, particularly with Gmail API integration tests, there may be long periods without output, making it unclear if tests are stalled or just processing.
+
+**Details**:
+- Tests like `test_email_processing` and `test_email_date_queries` can take 30-60 seconds
+- Progress logging statements may not appear in pytest output
+- No visual indication of progress during API calls
+
+**Solutions**:
+1. Wait at least 60 seconds before assuming a test has stalled
+2. Run tests with `-v` flag for more verbose output
+3. If tests consistently take longer than 60 seconds, they may need investigation
+
+**Note**: This is a known limitation with pytest output buffering. Even with print statements in the test code, output may not be displayed until the test completes.
+
 ## Monitoring and Debugging
 - Use the `util_email_analysis_db.py` script to verify database contents:
   ```bash

@@ -205,33 +205,67 @@ Content: {email_data.get('content', '')}"""
                 )
                 
                 if existing:
-                    # Update existing object
+                    # Update existing analysis
                     for key, value in analysis_obj.__dict__.items():
-                        if not key.startswith('_'):
+                        if key != '_sa_instance_state':  # Skip SQLAlchemy internal state
                             setattr(existing, key, value)
+                    session.merge(existing)
                 else:
-                    # Add new object
+                    # Add new analysis
                     session.add(analysis_obj)
                 
                 session.commit()
+                logger.info(
+                    "analysis_saved",
+                    email_id=email_id,
+                    action="updated" if existing else "created"
+                )
                 
         except Exception as e:
-            logger.error(API_CONFIG['ERROR_MESSAGES']["database_error"].format(error=str(e)),
-                        error_type="database",
-                        error=str(e))
-            session.rollback()
+            logger.error(
+                "Failed to save analysis",
+                error=str(e),
+                email_id=email_id,
+                thread_id=thread_id
+            )
+            raise
 
     def process_unanalyzed_emails(self):
         """Process all unanalyzed emails from the email store."""
-        # Get unanalyzed emails
-        unanalyzed = self.get_unanalyzed_emails()
-        if not unanalyzed:
-            logger.info("no_unanalyzed_emails_found")
-            return
-        
-        # Process up to 500 emails
-        emails_to_process = unanalyzed[:500]
-        logger.info("processing_batch", count=len(emails_to_process))
+        try:
+            with get_email_session() as email_session:
+                # Get unanalyzed emails
+                email_session.execute(text("ATTACH DATABASE 'data/db_email_analysis.db' AS analysis_db"))
+                
+                unanalyzed = email_session.execute(text("""
+                    SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
+                           e.labels, e.full_api_response, e.thread_id
+                    FROM emails e
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM analysis_db.email_analysis a 
+                        WHERE a.email_id = e.id AND a.thread_id = e.thread_id
+                    )
+                """)).mappings().all()
+                
+                if not unanalyzed:
+                    logger.info("no_unanalyzed_emails_found")
+                    return
+                
+                # Process up to 500 emails at a time
+                for i in range(0, len(unanalyzed), 500):
+                    batch = unanalyzed[i:i+500]
+                    logger.info("processing_batch", start=i, count=len(batch))
+                    
+                    # Process the batch
+                    self.process_emails(count=len(batch))
+                    
+                    # Rate limit between large batches
+                    if i + 500 < len(unanalyzed):
+                        time.sleep(EMAIL_CONFIG['RATE_LIMIT']['PAUSE_SECONDS'])
+                        
+        except Exception as e:
+            logger.error("process_unanalyzed_error", error=str(e))
+            raise
 
     def process_emails(self, count: int = EMAIL_CONFIG['COUNT']):
         """Process a batch of unanalyzed emails."""
@@ -318,13 +352,32 @@ Content: {email_request.truncated_body}"""
                                 # Extract URLs from email content
                                 links_found, links_display = self._extract_urls(email_data.get('content', ''))
                                 
-                                # Parse response and add URLs
-                                parsed_response = parse_claude_response(response.content[0].text)
-                                if parsed_response:
-                                    parsed_response['links_found'] = links_found
-                                    parsed_response['links_display'] = links_display
+                                # Parse response and validate
+                                analysis_data = parse_claude_response(response.content[0].text)
+                                if not analysis_data:
+                                    logger.error(
+                                        "Failed to parse API response",
+                                        email_id=email_request.id,
+                                        response=response.content[0].text
+                                    )
+                                    continue
                                 
-                                logger.info("api_response", response=response.content[0].text)
+                                # Create EmailAnalysisResponse
+                                analysis_response = EmailAnalysisResponse(**analysis_data)
+                                
+                                # Save analysis with URLs
+                                self.save_analysis(
+                                    email_id=email_data.get('id', ''),
+                                    thread_id=email_data.get('thread_id', email_data.get('id', '')),
+                                    analysis=analysis_response,
+                                    raw_json=email_data.get('content', '')  # For URL extraction
+                                )
+                                
+                                logger.info(
+                                    "email_analyzed",
+                                    email_id=email_request.id,
+                                    subject=email_request.subject
+                                )
                                 break  # Success, exit retry loop
                             except Exception as api_error:
                                 if retry < max_retries - 1:
@@ -334,45 +387,6 @@ Content: {email_request.truncated_body}"""
                                 else:
                                     raise api_error
 
-                        # Extract and validate the analysis
-                        try:
-                            analysis_json = response.content[0].text
-                            analysis = parsed_response
-                            
-                            # Ensure links_display is present
-                            if 'links_found' in analysis and 'links_display' not in analysis:
-                                analysis['links_display'] = [
-                                    url[:100] + '...' if len(url) > 100 else url
-                                    for url in analysis['links_found']
-                                ]
-                            
-                            # Set default empty string for project if it's None
-                            if analysis.get('project') is None:
-                                analysis['project'] = ""
-                            
-                            analysis_response = EmailAnalysisResponse.model_validate(analysis)
-                            
-                            # Create EmailAnalysis instance with thread_id
-                            email_analysis = EmailAnalysis.from_api_response(
-                                email_id=email_data.get('id', ''),
-                                thread_id=email_data.get('thread_id', email_data.get('id', '')),  # Fallback to email_id if thread_id not present
-                                response=analysis_response
-                            )
-                            
-                            # Save analysis with thread_id
-                            self.save_analysis(
-                                email_id=email_data.get('id', ''),
-                                thread_id=email_data.get('thread_id', email_data.get('id', '')),  # Fallback to email_id if thread_id not present
-                                analysis=email_analysis,
-                                raw_json=analysis_json
-                            )
-                        except json.JSONDecodeError as e:
-                            log_api_error('json_decode', str(e))
-                            continue
-                        except Exception as e:
-                            log_api_error('validation', str(e))
-                            continue
-                            
                     except Exception as e:
                         logger.error("process_email_error", error=str(e))
                         continue

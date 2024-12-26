@@ -106,7 +106,7 @@ def get_label_id(service, label_name):
         print(f'Failed to get label ID: {error}')
         return None
 
-def fetch_emails(service, start_date=None, end_date=None, label=None):
+def fetch_emails(service, start_date=None, end_date=None, label=None, max_results=None):
     """Fetch emails from Gmail API.
     
     Args:
@@ -114,6 +114,7 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         start_date: Optional start date for filtering
         end_date: Optional end date for filtering
         label: Optional label to filter by
+        max_results: Maximum number of results to return
     
     Returns:
         List of email messages
@@ -136,7 +137,8 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
         # Build the request
         request = service.users().messages().list(
             userId='me',
-            q=' '.join(query) if query else ''
+            q=' '.join(query) if query else '',
+            maxResults=min(max_results, 500) if max_results else 500  # Default to 500 max
         )
         
         if label_id:
@@ -147,6 +149,11 @@ def fetch_emails(service, start_date=None, end_date=None, label=None):
             response = request.execute()
             if 'messages' in response:
                 messages.extend(response['messages'])
+                
+                # Stop if we've reached max_results
+                if max_results and len(messages) >= max_results:
+                    messages = messages[:max_results]
+                    break
             
             # Get next page of results
             request = service.users().messages().list_next(
@@ -267,6 +274,8 @@ def main():
                       help='Filter emails by label')
     parser.add_argument('--list-labels', action='store_true',
                       help='List all available labels')
+    parser.add_argument('--max-results', type=int,
+                      help='Maximum number of results to return')
     args = parser.parse_args()
     
     # Get Gmail service
@@ -302,7 +311,7 @@ def main():
             # Default: fetch last N days of emails
             end_date = datetime.now(UTC_TZ)
             start_date = end_date - timedelta(days=EMAIL_CONFIG['DAYS_TO_FETCH'])
-            messages = fetch_emails(service, start_date, end_date, args.label)
+            messages = fetch_emails(service, start_date, end_date, args.label, args.max_results)
         
         # Process messages
         for msg in messages:

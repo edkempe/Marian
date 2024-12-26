@@ -1,7 +1,9 @@
 # Marian Setup Guide
 
 ## Prerequisites
-- Python 3.8 or higher
+- Python 3.12.8 or higher
+- Gmail API credentials (`credentials.json`) from Google Cloud Console
+- Anthropic API key for Claude-3
 - pip (Python package installer)
 - git
 
@@ -34,16 +36,71 @@ pip install -r requirements.txt
 ```
 
 ### 4. Environment Configuration
-The project uses a .env file for configuration. If you don't have one:
-```bash
-# Copy example environment file (if you don't have a .env file)
-cp .env.example .env
+The project uses both environment variables and a modular configuration system:
 
-# Edit .env with your settings:
-# - ANTHROPIC_API_KEY
-# - Database paths
-# - Gmail API credentials
-# - Other configurations
+#### Environment File Setup
+1. Copy the example environment file:
+```bash
+cp docs/examples/.env.example .env
+```
+
+2. Edit `.env` with your settings:
+- ANTHROPIC_API_KEY
+- Database paths
+- Gmail API credentials paths
+- Logging configuration
+- Analysis settings
+
+See `docs/examples/.env.example` for all available options and descriptions.
+
+#### Environment Variables
+Required environment variables must be set before running the application:
+```bash
+# API Keys
+export ANTHROPIC_API_KEY=your_api_key_here
+
+# Database Paths (if different from defaults in .env)
+export DB_EMAIL_PATH=path/to/email.db
+export DB_ANALYSIS_PATH=path/to/analysis.db
+export DB_LABEL_HISTORY_PATH=path/to/labels.db
+
+# Gmail API Paths (if different from defaults)
+export GMAIL_CREDENTIALS_PATH=path/to/credentials.json
+export GMAIL_TOKEN_PATH=path/to/token.pickle
+
+# Logging
+export LOG_LEVEL=INFO
+export LOG_FILE=path/to/log/file
+```
+
+#### Core Configuration Files
+- `constants.py`: Email processing configuration
+  - API settings for email analysis
+  - Email database configuration
+  - Email processing parameters
+  - Logging and metrics settings
+
+- `catalog_constants.py`: Catalog system configuration
+  - Database settings for catalog
+  - Semantic analysis parameters
+  - API settings for semantic matching
+
+- `librarian_constants.py`: Librarian-specific settings
+
+#### Gmail API Setup
+1. Place your Gmail API credentials:
+```bash
+cp path/to/your/credentials.json config/credentials.json
+```
+
+2. First-time authentication:
+```bash
+python app_get_mail.py --auth-only
+```
+
+3. Verify token creation:
+```bash
+ls -l config/token.pickle  # Should exist after authentication
 ```
 
 ### 5. Database Initialization
@@ -59,7 +116,25 @@ pip install pre-commit
 pre-commit install
 ```
 
-### 7. Test Setup
+### 7. Test Environment Setup
+#### Gmail API Authentication
+- Valid Gmail credentials required in `config/credentials.json`
+- Valid token required in `config/token.pickle`
+- Run `python app_get_mail.py` first to authenticate
+- Token must be refreshed when expired
+- Tests will stall if authentication is needed
+
+#### Database Setup
+- Email database must be initialized
+- Label database must be synced
+- Run `python app_get_mail.py --sync-labels` to initialize
+
+#### Test Data Requirements
+- Gmail account must have some emails
+- Tests use real emails from the last 7 days
+- Limited to small batches to prevent timeouts
+
+### 8. Test Setup
 ```bash
 # Create test databases
 python -m pytest --setup-only
@@ -85,6 +160,16 @@ python -c "from database.config import get_email_session, get_analysis_session; 
 ```bash
 python -m pytest
 ```
+
+## Troubleshooting Common Setup Issues
+If you encounter issues during setup:
+1. Check Python version compatibility
+2. Verify all environment variables are set
+3. Ensure credentials files are in correct locations
+4. Validate database initialization
+5. Check API access and permissions
+
+For detailed troubleshooting steps, see `docs/troubleshooting.md`.
 
 ## Common Issues and Solutions
 

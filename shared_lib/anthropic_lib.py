@@ -74,30 +74,68 @@ def extract_json(text: str) -> Tuple[str, Optional[str]]:
     1. "Here is the JSON response: {...}"
     2. "{...} Hope this helps!"
     3. "I've analyzed the email. Here's the JSON: {...}"
+    4. "Here's the array: [...]"
     """
     # Clean the text first
     cleaned_text = clean_json_text(text)
     
-    # Find anything that looks like a JSON object/array
-    json_pattern = r'\{(?:[^{}]|(?R))*\}|\[(?:[^\[\]]|(?R))*\]'
-    matches = list(re.finditer(json_pattern, cleaned_text))
-    
-    if not matches:
-        return "", "No JSON object/array found in response"
-    
-    # Try each match until we find valid JSON
-    errors = []
-    for match in matches:
-        try:
-            # Verify it's valid JSON by parsing it
-            json_str = match.group()
-            json.loads(json_str)  # Test if it's valid JSON
-            return json_str, None
-        except json.JSONDecodeError as e:
-            errors.append(f"Invalid JSON: {str(e)}")
-            continue
+    # Try to find JSON object or array
+    try:
+        # Find the first { or [
+        obj_start = cleaned_text.find('{')
+        arr_start = cleaned_text.find('[')
+        
+        # Determine which comes first (if any)
+        if obj_start == -1 and arr_start == -1:
+            return "", "No JSON object or array found in response"
             
-    return "", f"Failed to parse JSON: {'; '.join(errors)}"
+        # If both exist, use the first one
+        if obj_start != -1 and arr_start != -1:
+            start = min(obj_start, arr_start)
+            is_array = arr_start == start
+        else:
+            start = obj_start if obj_start != -1 else arr_start
+            is_array = arr_start == start
+            
+        # Track nested braces/brackets to find the matching closing one
+        depth = 0
+        in_string = False
+        escape_next = False
+        open_char = '[' if is_array else '{'
+        close_char = ']' if is_array else '}'
+        
+        for i, char in enumerate(cleaned_text[start:], start):
+            if escape_next:
+                escape_next = False
+                continue
+                
+            if char == '\\':
+                escape_next = True
+                continue
+                
+            if char == '"' and not escape_next:
+                in_string = not in_string
+                continue
+                
+            if not in_string:
+                if char == open_char:
+                    depth += 1
+                elif char == close_char:
+                    depth -= 1
+                    if depth == 0:
+                        # Found the matching closing character
+                        json_str = cleaned_text[start:i+1]
+                        try:
+                            # Verify it's valid JSON
+                            json.loads(json_str)
+                            return json_str, None
+                        except json.JSONDecodeError as e:
+                            return "", f"Invalid JSON: {str(e)}"
+        
+        return "", f"No closing {close_char} found for JSON {'array' if is_array else 'object'}"
+        
+    except Exception as e:
+        return "", f"Error extracting JSON: {str(e)}"
 
 def parse_claude_response(response_text: str, error_context: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
     """Parse a Claude API response that may contain JSON with leading/trailing text.

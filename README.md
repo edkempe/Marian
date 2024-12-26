@@ -1,5 +1,11 @@
 # Marian Project
 
+## Important Process Documents
+**REQUIRED**: Review and follow these process documents at the start and end of EVERY development session:
+- [Chat Session Start Guide](docs/CHAT_START.md) - Must be followed at the start of each session
+- [Chat Session Close Guide](docs/CHAT_CLOSE.md) - Must be followed at the end of each session
+These documents contain critical procedures for maintaining project quality and consistency.
+
 ## Critical Development Guidelines
 
 1. **Code Preservation Policy**
@@ -30,6 +36,43 @@
      - Project structure changes
    - Document the reason and impact of proposed additions
    - This guideline is critical and applies to all aspects of the project
+
+3. **Testing Policy**
+   - **NO MOCK TESTING** - All tests must use real integrations
+   - Tests interact with actual APIs, databases, and services
+   - Any changes to use mocks require explicit permission
+   - Test data volumes are limited to prevent timeouts
+   - Tests must be reliable and not dependent on mock behavior
+   - This policy ensures tests validate real-world behavior
+
+4. **Change Management Policy**
+   - Keep detailed session logs of all development work
+   - Make changes small and incremental
+   - Ensure diffs are readable for review and approval
+   - Document reasoning behind each change
+   - Break large changes into smaller, reviewable chunks
+   - This policy ensures changes can be properly reviewed and tracked
+
+## Test Setup Requirements
+
+Before running tests:
+
+1. **Gmail API Authentication**
+   - Valid Gmail credentials required in `config/credentials.json`
+   - Valid token required in `config/token.pickle`
+   - Run `python app_get_mail.py` first to authenticate
+   - Token must be refreshed when expired
+   - Tests will stall if authentication is needed
+
+2. **Database Setup**
+   - Email database must be initialized
+   - Label database must be synced
+   - Run `python app_get_mail.py --sync-labels` to initialize
+
+3. **Test Data Requirements**
+   - Gmail account must have some emails
+   - Tests use real emails from the last 7 days
+   - Limited to small batches to prevent timeouts
 
 ## Project Overview
 

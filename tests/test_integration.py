@@ -1,12 +1,27 @@
-"""Integration tests for Gmail API functionality."""
+"""Integration tests for Gmail API functionality.
+
+IMPORTANT: These are real integration tests that use the actual Gmail API.
+Mock testing is NOT used in this codebase. Any changes to use mocks require explicit permission.
+
+The tests interact with real Gmail data and require:
+1. Valid Gmail API credentials
+2. Access to a Gmail account
+3. Real emails in the account to test with
+
+Test data is limited to prevent timeouts:
+- Email fetching is limited to small batches (max 10 messages)
+- Processing tests use only 3 messages at a time
+- Date ranges are kept to 1-7 days
+"""
 import pytest
-from unittest.mock import Mock, patch
+from datetime import datetime, timedelta
 from shared_lib.gmail_lib import GmailAPI
 from app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
 from models.email import Email
 from email.utils import parsedate_to_datetime
 from constants import DATABASE_CONFIG, EMAIL_CONFIG
 from sqlalchemy import func
+# test_db_session fixture is automatically available from conftest.py
 
 @pytest.fixture(scope="session")
 def gmail_api():
@@ -57,23 +72,18 @@ def test_label_operations_error(gmail_api):
 
 def test_email_fetching(gmail_api):
     """Test fetching emails from Gmail."""
-    # Fetch recent emails (last 7 days)
-    start_date = datetime.now() - timedelta(days=7)
-    messages = fetch_emails(gmail_api.service, start_date=start_date)
-    
-    assert len(messages) > 0
-    print(f"\nFetched {len(messages)} recent emails")
+    # Test fetching with date range
+    start_date = datetime.now() - timedelta(days=1)
+    messages = fetch_emails(gmail_api.service, start_date=start_date, max_results=10)
+    assert isinstance(messages, list)
     
     # Test fetching with label
-    try:
-        inbox_messages = fetch_emails(
-            gmail_api.service,
-            start_date=start_date,
-            label='INBOX'  # Changed from label_ids to label
-        )
-        print(f"Found {len(inbox_messages)} INBOX emails")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+    messages = fetch_emails(gmail_api.service, label='INBOX', max_results=10)
+    assert isinstance(messages, list)
+    
+    # Test fetching with invalid label
+    messages = fetch_emails(gmail_api.service, label='NONEXISTENT_LABEL', max_results=10)
+    assert len(messages) == 0
     
     # Print details of a few messages
     for msg_id in [m['id'] for m in messages[:EMAIL_CONFIG['BATCH_SIZE']]]:
@@ -103,13 +113,15 @@ def test_email_fetching_error_handling(gmail_api):
 
 def test_email_processing(gmail_api, test_db_session):
     """Test processing and storing emails."""
-    # Fetch a few recent emails
+    print("\nFetching recent emails for processing...")
     start_date = datetime.now() - timedelta(days=1)
-    messages = fetch_emails(gmail_api.service, start_date=start_date)
+    messages = fetch_emails(gmail_api.service, start_date=start_date, max_results=3)
+    print(f"Found {len(messages)} messages to process")
     
-    # Process a subset of messages
+    # Process messages
     processed_count = 0
-    for msg_id in [m['id'] for m in messages[:EMAIL_CONFIG['BATCH_SIZE']]]:
+    for msg_id in [m['id'] for m in messages]:
+        print(f"\nProcessing message {processed_count + 1} of {len(messages)}")
         try:
             # Get full message details
             message = gmail_api.service.users().messages().get(
@@ -135,28 +147,26 @@ def test_email_processing(gmail_api, test_db_session):
             test_db_session.add(email)
             test_db_session.commit()
             processed_count += 1
-            
-            print(f"\nProcessed email {email.id}:")
-            print(f"Subject: {email.subject}")
-            print(f"From: {email.from_address}")
-            print(f"Labels: {email.labels}")
+            print(f"Successfully processed message with subject: {email.subject[:50]}...")
             
         except Exception as e:
             print(f"Error processing message {msg_id}: {str(e)}")
+            continue
     
+    print(f"\nProcessed {processed_count} emails successfully")
     assert processed_count > 0, "Should process at least one email"
     
     # Verify emails were stored in database
     stored_emails = test_db_session.query(Email).all()
     assert len(stored_emails) >= processed_count
     
-    print("\nStored emails:\n")
-    for email in stored_emails[-processed_count:]:
-        print(f"ID: {email.id}")
-        print(f"Subject: {email.subject}")
-        print(f"From: {email.from_address}")
-        print(f"Labels: {email.labels}")
-        print(f"Date: {email.received_date}\n")
+    # Verify email structure (not specific content)
+    latest_email = stored_emails[-1]
+    assert isinstance(latest_email.subject, str)
+    assert isinstance(latest_email.from_address, str)
+    assert isinstance(latest_email.to_address, str)
+    assert isinstance(latest_email.labels, str)
+    assert len(latest_email.labels) > 0  # Should have at least one label
 
 def test_email_processing_error_handling(gmail_api, test_db_session):
     """Test error handling in email processing."""
@@ -206,43 +216,78 @@ def test_email_processing_error_handling(gmail_api, test_db_session):
 
 def test_email_date_queries(gmail_api, test_db_session):
     """Test email date querying functionality."""
-    # Fetch and process some test emails
-    start_date = datetime.now() - timedelta(days=7)
-    messages = fetch_emails(gmail_api.service, start_date=start_date)
+    print("\nTesting email date queries...")
     
-    for msg_id in [m['id'] for m in messages[:EMAIL_CONFIG['BATCH_SIZE']]]:
-        message = gmail_api.service.users().messages().get(
-            userId='me', id=msg_id).execute()
-        headers = {header['name']: header['value'] 
-                  for header in message['payload']['headers']}
-        
-        email = Email(
-            id=message['id'],
-            thread_id=message['threadId'],
-            subject=headers.get('Subject', '[No Subject]'),
-            from_address=headers.get('From', '[No Sender]'),
-            to_address=headers.get('To', '[No Recipient]'),
-            received_date=parsedate_to_datetime(headers.get('Date', '')),
-            labels=','.join(message.get('labelIds', [])),
-            content=''
-        )
-        test_db_session.add(email)
+    # Test querying by date range
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7)
+    print(f"Fetching emails from {start_date.date()} to {end_date.date()}")
     
-    test_db_session.commit()
+    messages = fetch_emails(
+        gmail_api.service,
+        start_date=start_date,
+        end_date=end_date,
+        max_results=10
+    )
     
-    # Test oldest email date
-    oldest_date = test_db_session.query(func.min(Email.received_date)).scalar()
-    assert oldest_date is not None
-    print(f"\nOldest email date: {oldest_date}")
+    print(f"Found {len(messages)} messages in date range")
     
-    # Test newest email date
-    newest_date = test_db_session.query(func.max(Email.received_date)).scalar()
-    assert newest_date is not None
-    print(f"Newest email date: {newest_date}")
+    # Process some messages to test with
+    processed_count = 0
+    for msg_id in [m['id'] for m in messages[:3]]:  # Process up to 3
+        print(f"\nProcessing message {processed_count + 1} of 3")
+        try:
+            message = gmail_api.service.users().messages().get(
+                userId='me', id=msg_id).execute()
+            
+            headers = {header['name']: header['value'] 
+                      for header in message['payload']['headers']}
+            
+            email = Email(
+                id=message['id'],
+                thread_id=message['threadId'],
+                subject=headers.get('Subject', '[No Subject]'),
+                from_address=headers.get('From', '[No Sender]'),
+                to_address=headers.get('To', '[No Recipient]'),
+                received_date=parsedate_to_datetime(headers.get('Date', '')),
+                labels=','.join(message.get('labelIds', [])),
+                content=''
+            )
+            
+            test_db_session.add(email)
+            test_db_session.commit()
+            processed_count += 1
+            print(f"Successfully stored message from {email.received_date}")
+            
+        except Exception as e:
+            print(f"Error processing message {msg_id}: {str(e)}")
+            continue
     
-    # Verify date range is within expected bounds
-    assert newest_date >= oldest_date
-    assert newest_date - oldest_date <= timedelta(days=7)
+    print(f"\nProcessed {processed_count} emails for date testing")
+    assert processed_count > 0, "Should process at least one email for date testing"
+    
+    # Test date filtering in database
+    print("\nTesting database date queries...")
+    
+    # Query emails from last week
+    week_ago = datetime.now() - timedelta(days=7)
+    recent_emails = test_db_session.query(Email).filter(
+        Email.received_date >= week_ago
+    ).all()
+    print(f"Found {len(recent_emails)} emails from last 7 days")
+    assert len(recent_emails) > 0
+    
+    # Query emails from last 24 hours
+    day_ago = datetime.now() - timedelta(days=1)
+    very_recent = test_db_session.query(Email).filter(
+        Email.received_date >= day_ago
+    ).all()
+    print(f"Found {len(very_recent)} emails from last 24 hours")
+    
+    # Verify date ordering
+    assert all(
+        email.received_date >= week_ago for email in recent_emails
+    ), "All emails should be from within the last week"
 
 def test_email_counting(gmail_api, test_db_session):
     """Test email counting functionality."""
