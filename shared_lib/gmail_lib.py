@@ -32,8 +32,8 @@ SCOPES = [
     'https://www.googleapis.com/auth/gmail.compose',
     'https://www.googleapis.com/auth/gmail.labels'
 ]
-TOKEN_FILE = 'token.pickle'
-CREDENTIALS_FILE = 'credentials.json'
+TOKEN_FILE = 'config/token.pickle'
+CREDENTIALS_FILE = 'config/credentials.json'
 DEFAULT_LABEL_DB = 'data/email_labels.db'
 UTC_TZ = timezone('UTC')
 

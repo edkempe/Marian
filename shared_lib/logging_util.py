@@ -86,38 +86,34 @@ def setup_logging(name: str, log_dir: str = 'logs', is_test: bool = False) -> lo
     Returns:
         Configured logger instance
     """
+    # Create logger
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-
+    logger.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
+    
     # Create logs directory if it doesn't exist
-    Path(log_dir).mkdir(exist_ok=True)
-
-    # File handler with rotation
-    log_file = os.path.join(log_dir, f"{name}.log")
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Create rotating file handler
+    log_file = os.path.join(log_dir, LOGGING_CONFIG['LOG_FILE'])
     file_handler = logging.handlers.RotatingFileHandler(
-        log_file, 
-        maxBytes=LOGGING_CONFIG['max_bytes'],
-        backupCount=LOGGING_CONFIG['backup_count']
+        log_file,
+        maxBytes=LOGGING_CONFIG['MAX_BYTES'],
+        backupCount=LOGGING_CONFIG['BACKUP_COUNT']
     )
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
     
-    # Console handler
+    # Create console handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
     
-    # Add test filter if needed
-    if is_test:
-        test_filter = TestFilter(is_test=True)
-        file_handler.addFilter(test_filter)
-        console_handler.addFilter(test_filter)
+    # Create formatter
+    formatter = logging.Formatter(LOGGING_CONFIG['LOG_FORMAT'])
     
-    # Formatters
-    file_formatter = TestFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    console_formatter = TestFormatter('%(levelname)s: %(message)s')
+    # Add formatter to handlers
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
     
-    file_handler.setFormatter(file_formatter)
-    console_handler.setFormatter(console_formatter)
-    
+    # Add handlers to logger
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     

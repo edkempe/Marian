@@ -73,6 +73,7 @@ class CatalogConfig(TypedDict):
     RELATIONSHIP_TYPES: List[str]
     TABLES: Dict[str, str]
     ERROR_MESSAGES: Dict[str, str]
+    ENABLE_SEMANTIC: bool  # New field for semantic checking toggle
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
@@ -205,7 +206,8 @@ CATALOG_CONFIG: CatalogConfig = {
         'duplicate_error': 'Item with similar title already exists: {title}',
         'tag_error': 'Error managing tags: {error}',
         'relationship_error': 'Error managing relationships: {error}'
-    }
+    },
+    'ENABLE_SEMANTIC': True  # New field for semantic checking toggle
 }
 
 # Metrics Configuration

@@ -3,7 +3,8 @@
 import datetime
 import json
 import os
-from shared_lib.logging_util import setup_logger
+import argparse
+from shared_lib.logging_util import setup_logging
 from shared_lib.anthropic_client_lib import get_anthropic_client
 from shared_lib.chat_log_util import ChatLogger
 from sqlalchemy import create_engine
@@ -20,14 +21,17 @@ class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
     
     def __init__(self, db_path=CATALOG_CONFIG['DB_FILE'], mode='cli', 
-                 chat_log=CATALOG_CONFIG['CHAT_LOG']):
+                 chat_log=CATALOG_CONFIG['CHAT_LOG'], enable_semantic=None):
         """Initialize the catalog chat interface"""
         self.mode = mode
         self.db_path = db_path
         self.chat_log = chat_log
-        self.test_logger = setup_logger('test_catalog')
+        self.test_logger = setup_logging('test_catalog')
         self.interactive = mode == 'interactive'
         self.client = get_anthropic_client()
+        
+        # Set semantic checking based on parameter or config
+        self.enable_semantic = enable_semantic if enable_semantic is not None else CATALOG_CONFIG['ENABLE_SEMANTIC']
         
         # Initialize chat logger
         try:
@@ -51,7 +55,7 @@ class CatalogChat:
 
     def check_semantic_duplicates(self, session, title: str, existing_items: list) -> tuple:
         """Check for semantic duplicates of a title.
-        
+
         Uses Claude AI to detect semantic duplicates by comparing titles and content.
         Considers synonyms, related terms, and similar subject matter.
         
@@ -65,6 +69,9 @@ class CatalogChat:
             
         Note: Similarity threshold and other settings are defined in catalog_constants.py
         """
+        if not self.enable_semantic:
+            return False, []
+
         if not existing_items:
             return False, []
             
@@ -125,13 +132,16 @@ Example:
         """Get semantically similar items using Claude AI.
         
         Args:
-            text: Text to compare
+            text: Text to compare against
             items: List of items to check
-            threshold: Minimum similarity threshold (0-1)
+            threshold: Optional similarity threshold (0-1)
             
         Returns:
-            list: List of items above the threshold
+            List of matching items
         """
+        if not self.enable_semantic:
+            return []
+
         if not threshold:
             threshold = CATALOG_CONFIG['semantic']['threshold']
             
@@ -914,6 +924,7 @@ Example:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Marian Catalog System")
     parser.add_argument("--no-tests", action="store_true", help="Skip running integration tests")
+    parser.add_argument("--no-semantic", action="store_true", help="Disable semantic checking for duplicates and search")
     args = parser.parse_args()
     
     if not args.no_tests:
@@ -925,7 +936,7 @@ if __name__ == "__main__":
         suite = unittest.TestLoader().loadTestsFromTestCase(TestCatalog)
         
         # Run tests
-        test_logger = setup_logger('test_catalog')
+        test_logger = setup_logging('test_catalog')
         test_logger.info("Running integration tests...")
         
         runner = unittest.TextTestRunner(verbosity=2)
@@ -935,7 +946,7 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         # Normal app initialization
-        chat = CatalogChat()
-        test_logger = setup_logger('test_catalog')
+        chat = CatalogChat(enable_semantic=not args.no_semantic)
+        test_logger = setup_logging('test_catalog')
         test_logger.info("Database tables created successfully")
-        test_logger.info(f"System State: mode=cli, db_path={chat.db_path}, chat_log={chat.chat_log}")
+        test_logger.info(f"System State: mode=cli, db_path={chat.db_path}, chat_log={chat.chat_log}, semantic_enabled={chat.enable_semantic}")

@@ -16,9 +16,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from shared_lib.logging_util import setup_logger
+from shared_lib.logging_util import setup_logging
 
-logger = setup_logger('chat_logger')
+logger = setup_logging('chat_logger')
 
 class ChatLogger:
     """Handles reliable logging of chat interactions."""

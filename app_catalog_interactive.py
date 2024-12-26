@@ -165,9 +165,9 @@ class MultiCompleter(Completer):
 class CatalogInteractive:
     """Interactive interface for the Marian Catalog System."""
     
-    def __init__(self):
+    def __init__(self, enable_semantic=True):
         """Initialize the interactive interface."""
-        self.chat = CatalogChat(interactive=True)
+        self.chat = CatalogChat(mode='interactive', enable_semantic=enable_semantic)
         self.setup_prompt()
     
     def setup_prompt(self):
@@ -539,15 +539,18 @@ class CatalogInteractive:
 
 def main():
     """Run the catalog system in interactive mode."""
+    parser = argparse.ArgumentParser(description="Interactive Marian Catalog System")
+    parser.add_argument("--no-semantic", action="store_true", help="Disable semantic checking for duplicates and search")
+    args = parser.parse_args()
+
     try:
-        interactive = CatalogInteractive()
-        interactive.run()
+        app = CatalogInteractive(enable_semantic=not args.no_semantic)
+        app.run()
     except KeyboardInterrupt:
         print("\nExiting...")
     except Exception as e:
-        print(f"Fatal error: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
