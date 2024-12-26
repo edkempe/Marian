@@ -12,12 +12,14 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from models.email import Email
-from models.email_analysis import EmailAnalysis
+from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from shared_lib.database_session_util import get_email_session, get_analysis_session
 import sqlalchemy.exc
 from structlog import get_logger
 from prometheus_client import start_http_server as start_prometheus_server
 from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
+import anthropic  # <--- Added missing anthropic import
+import re
 
 # Set up structured logging
 logger = get_logger()
@@ -103,6 +105,9 @@ class EmailAnalyzer:
             EmailAnalysis object if successful, None if failed
         """
         try:
+            # Extract URLs from content
+            full_urls, display_urls = self._extract_urls(email_data.get('content', ''))
+            
             # Format email data for analysis
             content = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
                 email_content=f"""Subject: {email_data.get('subject', '')}
@@ -124,12 +129,22 @@ Content: {email_data.get('content', '')}"""
                 
                 # Extract and parse JSON from response
                 analysis_data = parse_claude_response(response.content[0].text)
+                if analysis_data is None:
+                    logger.error(
+                        API_CONFIG['ERROR_MESSAGES']["api_error"].format(error="Failed to parse API response"),
+                        error_type="parsing",
+                        response=response.content[0].text if response and hasattr(response, 'content') else None
+                    )
+                    return None
                 
-                # Create and return EmailAnalysis object
+                # Create EmailAnalysis object with extracted URLs
+                analysis_response = EmailAnalysisResponse(**analysis_data)
                 return EmailAnalysis.from_api_response(
                     email_id=email_data['id'],
                     thread_id=email_data.get('thread_id', ''),
-                    response=EmailAnalysisResponse(**analysis_data)
+                    response=analysis_response,
+                    links_found=full_urls,
+                    links_display=display_urls
                 )
             except Exception as e:
                 error_context = {
@@ -172,58 +187,39 @@ Content: {email_data.get('content', '')}"""
         """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
-                # Check if analysis already exists
+                # Extract URLs from content
+                full_urls, display_urls = self._extract_urls(raw_json)
+                
+                # Create or update analysis object
                 existing = session.query(EmailAnalysis).filter_by(
                     email_id=email_id, thread_id=thread_id
                 ).first()
                 
-                # Create or update analysis object
-                analysis_obj = existing or EmailAnalysis(email_id=email_id, thread_id=thread_id)
+                # Create new analysis object with URLs
+                analysis_obj = EmailAnalysis.from_api_response(
+                    email_id=email_id,
+                    thread_id=thread_id,
+                    response=analysis,
+                    links_found=full_urls,
+                    links_display=display_urls
+                )
                 
-                # Convert action_deadline to datetime if present
-                if analysis.action_deadline:
-                    try:
-                        action_deadline = datetime.strptime(analysis.action_deadline, '%Y-%m-%d')
-                    except ValueError:
-                        action_deadline = None
+                if existing:
+                    # Update existing object
+                    for key, value in analysis_obj.__dict__.items():
+                        if not key.startswith('_'):
+                            setattr(existing, key, value)
                 else:
-                    action_deadline = None
-                
-                # Update fields
-                analysis_obj.summary = analysis.summary[:100]  # Update summary field
-                analysis_obj.category = ','.join(analysis.category)
-                analysis_obj.priority_score = analysis.priority_score
-                analysis_obj.priority_reason = analysis.priority_reason
-                analysis_obj.action_needed = analysis.action_needed
-                analysis_obj.action_type = ','.join(analysis.action_type)
-                analysis_obj.action_deadline = action_deadline
-                analysis_obj.key_points = ','.join(analysis.key_points)
-                analysis_obj.people_mentioned = ','.join(analysis.people_mentioned)
-                analysis_obj.links_found = ','.join(analysis.links_found)
-                analysis_obj.links_display = ','.join(analysis.links_display)
-                analysis_obj.project = analysis.project
-                analysis_obj.topic = analysis.topic
-                analysis_obj.sentiment = analysis.sentiment
-                analysis_obj.confidence_score = analysis.confidence_score
-                analysis_obj.analysis_date = datetime.now(timezone.utc)
-                
-                try:
-                    analysis_obj.raw_analysis = json.loads(raw_json)
-                except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON for email {email_id}: {str(e)}")
-                    analysis_obj.raw_analysis = {}
-                analysis_obj.full_api_response = raw_json
-
-                if not existing:
+                    # Add new object
                     session.add(analysis_obj)
+                
                 session.commit()
                 
-        except sqlalchemy.exc.IntegrityError as e:
-            logger.error(f"Database integrity error for email {email_id}: {str(e)}")
-            raise RuntimeError(f"Database integrity error: {str(e)}")
         except Exception as e:
-            logger.error(f"Database error for email {email_id}: {str(e)}")
-            raise RuntimeError(f"Database error: {str(e)}")
+            logger.error(API_CONFIG['ERROR_MESSAGES']["database_error"].format(error=str(e)),
+                        error_type="database",
+                        error=str(e))
+            session.rollback()
 
     def process_unanalyzed_emails(self):
         """Process all unanalyzed emails from the email store."""
@@ -254,7 +250,7 @@ Content: {email_data.get('content', '')}"""
 
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
-                email_session.execute(text("ATTACH DATABASE 'db_email_analysis.db' AS analysis_db"))
+                email_session.execute(text("ATTACH DATABASE 'data/db_email_analysis.db' AS analysis_db"))
                 
                 unanalyzed = email_session.execute(text("""
                     SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
@@ -319,6 +315,16 @@ Content: {email_request.truncated_body}"""
                                         "content": prompt
                                     }]
                                 )
+                                # Extract URLs from email content
+                                links_found, links_display = self._extract_urls(email_data.get('content', ''))
+                                
+                                # Parse response and add URLs
+                                parsed_response = parse_claude_response(response.content[0].text)
+                                if parsed_response:
+                                    parsed_response['links_found'] = links_found
+                                    parsed_response['links_display'] = links_display
+                                
+                                logger.info("api_response", response=response.content[0].text)
                                 break  # Success, exit retry loop
                             except Exception as api_error:
                                 if retry < max_retries - 1:
@@ -331,7 +337,7 @@ Content: {email_request.truncated_body}"""
                         # Extract and validate the analysis
                         try:
                             analysis_json = response.content[0].text
-                            analysis = parse_claude_response(analysis_json)
+                            analysis = parsed_response
                             
                             # Ensure links_display is present
                             if 'links_found' in analysis and 'links_display' not in analysis:

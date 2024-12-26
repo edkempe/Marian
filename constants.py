@@ -105,10 +105,9 @@ API_CONFIG: APIConfig = {
 4. Action needed (boolean, with type and deadline if true)
 5. Key points (list)
 6. People mentioned (list)
-7. Links found (list)
-8. Project/topic classification (use empty strings if none found)
-9. Sentiment (positive/negative/neutral)
-10. Confidence score (0-1)
+7. Project/topic classification (use empty strings if none found)
+8. Sentiment (positive/negative/neutral)
+9. Confidence score (0-1)
 
 Email:
 {email_content}
@@ -124,8 +123,6 @@ Respond with ONLY a JSON object containing these fields:
     "action_deadline": "YYYY-MM-DD",
     "key_points": ["string"],
     "people_mentioned": ["string"],
-    "links_found": ["string"],
-    "links_display": ["string"],
     "project": "string",
     "topic": "string",
     "sentiment": "string",
