@@ -5,6 +5,9 @@
 ### Committing Changes
 1. **Always combine staging and commit in one step**
    - Use `git commit -am "type: description"` for modified files
+     - `-a` stages all modified tracked files
+     - `-m` specifies the commit message
+     - `-am` combines both flags to stage and commit in one command
    - Only use separate `git add` for new (untracked) files
    - Never stage files without immediately committing them
 
