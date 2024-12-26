@@ -5,6 +5,7 @@ import json
 import os
 from shared_lib.logging_util import setup_logger
 from shared_lib.anthropic_client_lib import get_anthropic_client
+from shared_lib.chat_log_util import ChatLogger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
@@ -27,6 +28,13 @@ class CatalogChat:
         self.test_logger = setup_logger('test_catalog')
         self.interactive = mode == 'interactive'
         self.client = get_anthropic_client()
+        
+        # Initialize chat logger
+        try:
+            self.chat_logger = ChatLogger(os.path.join('data', chat_log))
+        except Exception as e:
+            self.test_logger.error(f"Failed to initialize chat logger: {str(e)}")
+            raise RuntimeError("Chat logging is required but unavailable")
         
         # Initialize database
         self.engine = create_engine(f'sqlite:///{db_path}')
@@ -858,6 +866,24 @@ Example:
                 'user_input': user_input
             }
             result = parse_claude_response(response.content[0].text, error_context)
+            
+            # Log the interaction
+            self.chat_logger.log_interaction(
+                user_input=user_input,
+                system_response=result or response.content[0].text,
+                model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
+                status="success" if result else "error",
+                error_details=None if result else "Failed to parse response",
+                metadata={
+                    "mode": self.mode,
+                    "interactive": self.interactive,
+                    "tokens": len(response.content[0].text.split())
+                }
+            )
+            
+            # Rotate logs if needed
+            self.chat_logger.rotate_logs()
+            
             if not result:
                 return {
                     'error': "Failed to parse response from Claude",
@@ -865,9 +891,23 @@ Example:
                 }
             
             return result
+            
         except Exception as e:
+            # Log the error
+            error_msg = str(e)
+            try:
+                self.chat_logger.log_interaction(
+                    user_input=user_input,
+                    system_response=error_msg,
+                    model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
+                    status="error",
+                    error_details=error_msg
+                )
+            except Exception as log_error:
+                self.test_logger.error(f"Failed to log chat error: {str(log_error)}")
+            
             session.rollback()
-            return f"Error: {str(e)}"
+            return f"Error: {error_msg}"
         finally:
             session.close()
 

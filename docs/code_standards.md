@@ -184,6 +184,55 @@
    - Constants at class level
    - Clear separation between sections
 
+## Chat Interaction Logging
+
+### Critical Requirements
+
+Chat interaction logging is a **critical system requirement**. All interactions between users and the AI must be reliably captured and preserved. This is non-negotiable for:
+
+1. **Accountability**: Every interaction must be traceable and reviewable
+2. **Training Data**: Interactions form the basis for future system improvements
+3. **Debugging**: Chat logs are essential for identifying and fixing issues
+4. **Compliance**: Maintaining a complete interaction history for audit purposes
+
+### Implementation Standards
+
+1. **Dual Logging System**:
+   - System events, errors: Standard logging via `logging_util.py`
+   - Chat interactions: Structured JSONL format in `data/chat_logs.jsonl`
+
+2. **JSONL Format Requirements**:
+   ```json
+   {
+     "timestamp": "ISO-8601 UTC",
+     "session_id": "unique-session-id",
+     "user_input": "raw user input",
+     "system_response": "raw system response",
+     "model": "model identifier",
+     "status": "success|error",
+     "error_details": "if applicable",
+     "metadata": {}
+   }
+   ```
+
+3. **Reliability Requirements**:
+   - Atomic writes to prevent corruption
+   - Immediate flush after each interaction
+   - Automatic rotation of log files
+   - Regular backups of chat logs
+
+4. **Error Handling**:
+   - Failed logs must trigger immediate alerts
+   - Fallback logging mechanisms must be in place
+   - No chat interaction should proceed without logging
+
+### Monitoring and Maintenance
+
+1. Regular log file health checks
+2. Automated backup verification
+3. Log rotation and cleanup policies
+4. Storage capacity monitoring
+
 ## Best Practices
 
 1. **API Handling**

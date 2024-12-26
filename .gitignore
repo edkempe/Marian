@@ -45,7 +45,6 @@ function.zip
 samconfig.toml
 
 # Local development
-*.log
 .env.local
 .env.development.local
 .env.test.local
@@ -82,7 +81,27 @@ backup/
 backup_metadata.json
 backup/**/backup_metadata.json
 
-# SQLite
+# SQLite files
+*.db
+*.db-journal
 *.db-shm
 *.db-wal
-*.db-journal
+
+# Chat logs
+data/chat_logs.jsonl
+*.jsonl
+
+# Reports
+reports/*.html
+reports/
+
+# Logs
+logs/*.log
+logs/
+
+# Local development
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

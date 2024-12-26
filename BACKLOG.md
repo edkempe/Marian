@@ -873,6 +873,55 @@ All tasks and features related to the Catalog system are tracked in [CATALOG_BAC
 
 **Session Reference**: 2024-12-25-08-57
 
+## Prototypes Status and Plans
+
+### Active Prototypes
+- [ ] proto_gmail_operations.py
+  - Status: Active, needed for future features
+  - Contains: Email creation, sending, draft management
+  - Next steps: Integrate into main app when email sending is needed
+  - Priority: Medium
+
+- [ ] proto_google_keep.py
+  - Status: Active, for future integration
+  - Contains: Google Keep API authentication and basic operations
+  - Next steps: Use as foundation for Keep integration
+  - Priority: Low
+
+- [ ] proto_inspect_prompts.py
+  - Status: Active, needs update
+  - Contains: Prompt performance monitoring and inspection
+  - Next steps: Update to work with new storage system
+  - Priority: Medium
+  - See monitoring section for detailed plans
+
+### Future Features from Prototypes
+- [ ] Prompt Version Management (from proto_prompt_manager.py)
+  - Version history tracking with active/inactive states
+  - Script/purpose/task organization
+  - Performance metrics tracking
+  - JSON schema validation for prompts
+  - Priority: Medium
+  - Dependencies: Updated storage system
+
+- [ ] Gmail Operations Integration
+  - Move operations from proto_gmail_operations.py to main app
+  - Features to add:
+    - Email composition and sending
+    - Draft management
+    - Rich text email support
+  - Priority: Medium
+  - Dependencies: None
+
+- [ ] Google Keep Integration
+  - Use proto_google_keep.py as foundation
+  - Features to add:
+    - Note creation and management
+    - Label synchronization
+    - Content search
+  - Priority: Low
+  - Dependencies: None
+
 ## Medium Priority
 
 ### Process Improvements
@@ -974,6 +1023,44 @@ Benefits:
 
 ## Critical Tasks
 
+### Chat Log Retention System [HIGH PRIORITY]
+**Due: 2024-01-08**
+The chat logs are a critical system component that require careful management:
+
+1. Storage Requirements Analysis:
+   - [ ] Analyze chat log growth rate over 2 weeks
+   - [ ] Calculate average log entry size
+   - [ ] Project storage needs for 1 year
+   - [ ] Define retention period requirements
+
+2. Retention Policy Implementation:
+   - [ ] Design tiered storage system:
+     - Hot storage: Recent logs (last 30 days)
+     - Warm storage: Medium-term logs (last 90 days)
+     - Cold storage: Archive (older than 90 days)
+   - [ ] Implement automatic archival system
+   - [ ] Add compression for archived logs
+   - [ ] Create cleanup policy for old archives
+
+3. Monitoring and Alerts:
+   - [ ] Add storage usage monitoring
+   - [ ] Implement early warning system for storage limits
+   - [ ] Create dashboard for log statistics
+   - [ ] Set up alerts for failed archival operations
+
+4. Backup Integration:
+   - [ ] Include chat logs in regular backup schedule
+   - [ ] Verify backup integrity
+   - [ ] Test restoration procedures
+   - [ ] Document recovery process
+
+### Immediate Actions
+- [ ] **URGENT: Review chat log storage on 2024-01-08**
+  - Check storage usage
+  - Analyze growth rate
+  - Assess immediate storage needs
+  - Report findings in session log
+
 ### Testing Framework
 - [ ] **CRITICAL: Remove Mock Email Processor and Simplify Testing**
   - Current Usage:
@@ -1029,3 +1116,19 @@ Benefits:
   - Impact: Prevents data loss and enables recovery
   - Dependencies: None
   - Estimated time: 1 day
+
+### Monitoring and Debugging
+- [ ] Add logging for email processing failures
+- [ ] Create dashboard for system health metrics
+- [ ] Add monitoring for API rate limits
+- [ ] Update proto_inspect_prompts.py to work with new prompt storage system
+  - Currently uses SQLite but should be updated to current storage
+  - Keep existing functionality:
+    - Tabulated overview of all prompts
+    - Version history tracking
+    - Usage statistics (times used, confidence, response times)
+    - Failure rate monitoring
+  - Add new features:
+    - Export/import of prompt configurations
+    - Performance comparison between prompt versions
+    - Integration with logging system
