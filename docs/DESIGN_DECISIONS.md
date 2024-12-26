@@ -113,6 +113,145 @@
 ### Task Management Simplification (2024-12-24)
 **Decision**: Remove NEXT_SESSION.md and enhance BACKLOG.md to handle immediate priorities.
 
+## Database Design Decisions
+
+### SQLAlchemy Models as Schema Source of Truth (2024-12-24)
+**Decision**: Use SQLAlchemy models as the authoritative source for database schema definition.
+
+#### Context
+- Multiple potential sources for schema definition
+- Need for type safety and validation
+- Heavy reliance on SQLAlchemy features
+- Complex relationships between models
+
+#### Decision Factors
+1. **Type Safety and Validation**
+   - Runtime type checking through SQLAlchemy
+   - Automated relationship management
+   - Clear schema definition in code
+   ```python
+   # Example of type checking and validation
+   id: Mapped[str] = Column(Text, primary_key=True)
+   thread_id: Mapped[str] = Column(Text, nullable=False)
+   ```
+
+2. **Integration and Maintenance**
+   - Integration with test infrastructure
+   - Migration tracking through alembic
+   - Single source of truth in code
+   - Clear schema history
+
+3. **Trade-offs**
+   - Learning curve for SQLAlchemy
+   - Additional abstraction layer
+   - Need to maintain migrations
+
+#### Impact
+- Improved type safety at runtime
+- Better relationship management
+- Easier testing and validation
+- Clear schema evolution history
+
+#### Related Documents
+- models/*.py
+- constants.py
+- alembic/versions/*
+
+### Email and Thread ID Types (2024-12-24)
+**Decision**: Use TEXT type for message and thread IDs to preserve Gmail's original string identifiers.
+
+#### Context
+- Gmail API returns string IDs
+- Considered INTEGER vs TEXT for primary keys
+- Need for direct correspondence with Gmail API
+
+#### Decision Factors
+1. **API Integration**
+   - Direct mapping to Gmail's API
+   - No ID translation needed
+   - Simpler data import/export
+   - Easier debugging
+
+2. **Performance Considerations**
+   - Larger storage for indexes
+   - Slower joins (string vs integer)
+   - Larger memory footprint
+   - Impact on foreign key relationships
+
+3. **Implementation Impact**
+   - All IDs stored as TEXT
+   - Input validation for non-empty strings
+   - Error handling for string formats
+   - Foreign key relationship handling
+
+#### Impact
+- Simplified Gmail API integration
+- Eliminated ID mismatch errors
+- Slightly increased storage needs
+- Minor performance impact on joins
+
+#### Related Documents
+- models/email.py
+- models/email_analysis.py
+- app_get_mail.py
+
+### Database Schema Design (2024-12-24)
+**Decision**: Implement a normalized schema with separate tables for emails, analysis, and metadata.
+
+#### Context
+- Need to store raw email data
+- Analysis results storage
+- Relationship tracking
+- Performance requirements
+
+#### Decision Factors
+1. **Email Storage (emails table)**
+   ```sql
+   CREATE TABLE emails (
+     id TEXT PRIMARY KEY,
+     thread_id TEXT NOT NULL,
+     subject TEXT DEFAULT 'No Subject',
+     sender TEXT NOT NULL,
+     date TEXT NOT NULL,
+     body TEXT DEFAULT '',
+     labels TEXT DEFAULT '',
+     has_attachments BOOLEAN DEFAULT 0,
+     full_api_response TEXT DEFAULT '{}'
+   )
+   ```
+
+2. **Analysis Storage (email_analysis table)**
+   ```sql
+   CREATE TABLE email_analysis (
+     email_id TEXT PRIMARY KEY REFERENCES emails(id),
+     thread_id TEXT NOT NULL,
+     analysis_date DATETIME NOT NULL,
+     analyzed_date DATETIME NOT NULL,
+     links_found JSON NOT NULL,
+     links_display JSON NOT NULL,
+     project TEXT,
+     topic TEXT,
+     sentiment TEXT
+   )
+   ```
+
+3. **Data Management**
+   - Normalized structure
+   - Clear relationships
+   - Efficient querying
+   - Data integrity
+
+#### Impact
+- Clean separation of concerns
+- Efficient data storage
+- Clear data relationships
+- Easy maintenance and updates
+
+#### Related Documents
+- models/*.py
+- app_email_analyzer.py
+- app_get_mail.py
+
 ## Catalog System Design Decisions
 
 ### Data Storage and Schema
