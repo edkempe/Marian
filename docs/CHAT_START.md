@@ -2,7 +2,7 @@
 
 ## CRITICAL: Review and Understand Project Guidelines
 Before starting any development work, you MUST:
-1. Review and understand ALL project guidelines in `guidelines.md`
+1. Review and understand ALL project guidelines in `docs/GUIDELINES.md`
 2. Acknowledge and commit to following these standards
 3. Ensure all work adheres to these guidelines throughout the session
 
@@ -16,7 +16,7 @@ Please review the project documentation and perform the standard checks as outli
 ```
 
 ## Key Documents to Review
-1. `guidelines.md` (REQUIRED FIRST)
+1. `docs/GUIDELINES.md` (REQUIRED FIRST)
    - Project guidelines and constraints
    - Code style preferences
    - Security requirements
@@ -28,25 +28,20 @@ Please review the project documentation and perform the standard checks as outli
    - Core features and functionality
    - Tech stack and dependencies
 
-3. `SETUP.md`
+3. `SETUP_GUIDE.md`
    - Complete setup instructions
    - Environment configuration
    - Development workflow
    - Common issues and solutions
 
-4. `NEXT_SESSION.md`
-   - Recent changes and progress
-   - Current state of the project
-   - Suggested next steps
-
-5. `BACKLOG.md`
+4. `docs/BACKLOG.md`
    - Prioritized task list
    - Implementation details
    - Dependencies between tasks
 
 ## Pre-Development Checklist
 1. **Verify Development Environment**
-   - Ensure all prerequisites are met (see [SETUP.md](SETUP.md))
+   - Ensure all prerequisites are met (see [SETUP_GUIDE.md](SETUP_GUIDE.md))
    - Verify environment is properly configured
    - Check all required credentials are in place
    - Test environment is ready for development
@@ -57,8 +52,8 @@ Please review the project documentation and perform the standard checks as outli
    - Start running log with timestamps
    - Track all significant actions and decisions
 
-3. **Review Recent Changes**
-   - Check NEXT_SESSION.md for latest updates
+3. **Review Current State**
+   - Check git status for any pending changes
    - Review modified files list
    - Note any pending tasks or blockers
 
@@ -103,5 +98,5 @@ git log --oneline -n 5
 ## Troubleshooting
 If you encounter any issues, refer to:
 1. `docs/troubleshooting.md` - Comprehensive troubleshooting guide
-2. `SETUP.md` - Common setup and environment issues
+2. `SETUP_GUIDE.md` - Common setup and environment issues
 3. `.env.example` - Required environment variables

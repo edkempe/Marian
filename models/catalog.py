@@ -7,7 +7,7 @@ and case-insensitive constraints.
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy import Integer, String, Text, Boolean, ForeignKey, JSON, CheckConstraint, Index, text, event
-from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session, validates, object_session
 from sqlalchemy.sql import func
 from models.base import Base
 
@@ -108,21 +108,39 @@ class CatalogTag(Base):
     catalog_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
     tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
     
-    def __init__(self, catalog_id, tag_id):
-        """Initialize a catalog tag association."""
+    def __init__(self, catalog_id: int, tag_id: int):
         self.catalog_id = catalog_id
         self.tag_id = tag_id
         
-        # Validate association
-        session = Session.object_session(self)
+    @validates('catalog_id', 'tag_id')
+    def validate_ids(self, key, value):
+        """Validate that neither item nor tag is archived"""
+        session = object_session(self)
         if session:
-            catalog_item = session.query(CatalogItem).filter_by(id=catalog_id).first()
-            tag = session.query(Tag).filter_by(id=tag_id).first()
+            if key == 'catalog_id':
+                item = session.query(CatalogItem).filter_by(id=value).first()
+                if item and item.deleted:
+                    raise ValueError("Cannot tag an archived item")
+            elif key == 'tag_id':
+                tag = session.query(Tag).filter_by(id=value).first()
+                if tag and tag.deleted:
+                    raise ValueError("Cannot use an archived tag")
+        return value
+
+    @classmethod
+    def create(cls, session: Session, catalog_id: int, tag_id: int) -> 'CatalogTag':
+        """Create a new catalog tag with validation"""
+        item = session.query(CatalogItem).filter_by(id=catalog_id).first()
+        tag = session.query(Tag).filter_by(id=tag_id).first()
+        
+        if item and item.deleted:
+            raise ValueError("Cannot tag an archived item")
+        if tag and tag.deleted:
+            raise ValueError("Cannot use an archived tag")
             
-            if catalog_item and catalog_item.deleted:
-                raise ValueError("Cannot tag an archived item")
-            if tag and tag.deleted:
-                raise ValueError("Cannot use an archived tag")
+        catalog_tag = cls(catalog_id=catalog_id, tag_id=tag_id)
+        session.add(catalog_tag)
+        return catalog_tag
     
     def __repr__(self) -> str:
         return f"<CatalogTag(catalog_id={self.catalog_id}, tag_id={self.tag_id})>"

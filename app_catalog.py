@@ -11,16 +11,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from constants import CATALOG_CONFIG
+from constants import CATALOG_CONFIG, API_CONFIG
 from typing import List
 import sys
 import logging
 from shared_lib.anthropic_lib import parse_claude_response
+import re
 
 class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
     
-    def __init__(self, db_path=CATALOG_CONFIG['DB_FILE'], mode='cli', 
+    def __init__(self, db_path=CATALOG_CONFIG['DB_PATH'], mode='cli', 
                  chat_log=CATALOG_CONFIG['CHAT_LOG'], enable_semantic=None):
         """Initialize the catalog chat interface"""
         self.mode = mode
@@ -54,182 +55,179 @@ class CatalogChat:
         return self.Session()
 
     def check_semantic_duplicates(self, session, title: str, existing_items: list) -> tuple:
-        """Check for semantic duplicates of a title.
-
-        Uses Claude AI to detect semantic duplicates by comparing titles and content.
-        Considers synonyms, related terms, and similar subject matter.
+        """Check if there are semantic duplicates of a title in the catalog.
         
         Args:
             session: Database session
-            title: Title to check
+            title: Title to check for duplicates
             existing_items: List of items to check against
             
         Returns:
-            tuple: (bool has_duplicates, list similar_items)
-            
-        Note: Similarity threshold and other settings are defined in catalog_constants.py
+            Tuple of:
+            - has_duplicates: True if any strong matches found
+            - duplicates: List of items above MATCH_THRESHOLD
+            - potential_matches: List of items between POTENTIAL_MATCH_THRESHOLD and MATCH_THRESHOLD
         """
-        if not self.enable_semantic:
-            return False, []
-
-        if not existing_items:
-            return False, []
-            
-        # Prepare catalog-specific prompt for semantic comparison
-        prompt = {
-            "role": "user",
-            "content": f"""Analyze these catalog items for semantic similarity:
-            
-New Item Title: "{title}"
-
-Existing Catalog Items:
-{chr(10).join(f'- Title: {item.title}\n  Content: {item.content[:200]}...' for item in existing_items)}
-
-Determine if any existing items are semantically similar to the new title by considering:
-1. Similar topics or concepts in the catalog context
-2. Related terms or synonyms commonly used in knowledge management
-3. Overlapping subject matter that might cause catalog redundancy
-
-Return your analysis as a JSON object with:
-- has_duplicates: true if semantically similar items exist
-- similar_items: list of indices (0-based) of similar items, ordered by relevance
-- reasoning: explanation of why items are considered similar in the catalog context
-
-Example:
-{{
-    "has_duplicates": true,
-    "similar_items": [2, 0],
-    "reasoning": "Items 2 and 0 cover the same knowledge domain with different terminology"
-}}"""
-        }
-        
         try:
-            # Get response from Claude
-            response = self.client.messages.create(
-                model=CATALOG_CONFIG['semantic']['model'],
-                max_tokens=CATALOG_CONFIG['semantic']['max_tokens'],
-                temperature=CATALOG_CONFIG['semantic']['temperature'],
-                messages=[prompt]
-            )
+            # Get semantic matches using the lower threshold
+            matches = self.get_semantic_matches(title, existing_items, threshold=CATALOG_CONFIG['POTENTIAL_MATCH_THRESHOLD'])
             
-            # Parse response using shared library
-            result = parse_claude_response(response.content[0].text)
+            # Split matches into duplicates and potential matches
+            duplicates = []
+            potential_matches = []
             
-            # Extract similar items using indices
-            similar_items = []
-            if result.get("has_duplicates") and result.get("similar_items"):
-                for idx in result["similar_items"]:
-                    if 0 <= idx < len(existing_items):
-                        similar_items.append((existing_items[idx], result.get("reasoning", "")))
+            for item, score, reason in matches:
+                if score >= CATALOG_CONFIG['MATCH_THRESHOLD']:
+                    duplicates.append((item, score, reason))
+                else:
+                    potential_matches.append((item, score, reason))
             
-            return result.get("has_duplicates", False), similar_items
+            return bool(duplicates), duplicates, potential_matches
             
         except Exception as e:
             self.test_logger.error(f"Error in semantic duplicate detection: {str(e)}")
-            return False, []
+            return False, [], []
 
     def get_semantic_matches(self, text: str, items: list, threshold: float = None) -> list:
         """Get semantically similar items using Claude AI.
         
         Args:
             text: Text to compare against
-            items: List of items to check
+            items: List of items to check (can be strings, CatalogItems, or Tags)
             threshold: Optional similarity threshold (0-1)
             
         Returns:
-            List of matching items
+            List of tuples (item, score, reasoning)
         """
         if not self.enable_semantic:
             return []
-
-        if not threshold:
-            threshold = CATALOG_CONFIG['semantic']['threshold']
             
         try:
-            if not items:
+            # Handle empty queries
+            text = text.strip()
+            if not text:
                 return []
-                
-            # Prepare messages for Claude
-            user_prompt = (
-                f"Compare this text: {text}\n\n"
-                f"With these items:\n"
-                + "\n".join(f"{i+1}. {item}" for i, item in enumerate(items))
-                + "\n\nRespond ONLY with a JSON array of similarity scores (0-1) for each item, where 1 means identical and 0 means completely different."
-                + "\nExample response: [0.8, 0.2, 0.5]"
-                + "\nDo not include any other text in your response."
-            )
-            
-            # Get semantic analysis from Claude
-            response = self.client.messages.create(
-                model=CATALOG_CONFIG['semantic']['model'] if self.mode != 'test' else CATALOG_CONFIG['test']['model'],
-                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
-                temperature=CATALOG_CONFIG['TEMPERATURE'],
-                system=CATALOG_CONFIG['SEMANTIC_PROMPT'],
-                messages=[{
-                    "role": "user",
-                    "content": user_prompt
-                }]
-            )
-            
-            # Parse response to get similarity scores
-            matches = []
+
+            # Adjust threshold based on text length
+            if threshold is None:
+                if len(text.split()) <= 3:  # Short text like tags
+                    threshold = CATALOG_CONFIG['TAG_MATCH_THRESHOLD']
+                else:
+                    threshold = CATALOG_CONFIG['POTENTIAL_MATCH_THRESHOLD']
+
+            # Convert items to title strings if needed
+            item_texts = []
+            for item in items:
+                if isinstance(item, str):
+                    item_texts.append(item)
+                else:
+                    item_texts.append(item.title)
+
+            # Construct prompt with length-aware instructions
+            is_short = len(text.split()) <= 3
+            prompt = f"""You are a semantic search expert that prioritizes advanced, comprehensive content over basic tutorials. When comparing items, you always ensure that more advanced guides receive higher scores than beginner-level content covering the same topic.
+
+Compare this query semantically against the items and return matches.
+
+Query: "{text}"
+
+Items:
+{json.dumps(item_texts, indent=2)}
+
+Instructions:
+1. {"For short queries, prioritize abbreviations and key terms." if is_short else "Focus on conceptual similarity and meaning. Consider synonyms, related concepts, and different ways of expressing the same idea."}
+2. For programming topics:
+   - Match related programming concepts (e.g. 'class' relates to 'OOP', 'object-oriented')
+   - Consider common variations in terminology
+   - Match both specific and general terms appropriately
+   - When matching tutorials/guides:
+     * Score advanced/specific content (e.g. OOP, design patterns) higher than beginner/general content
+     * For queries about specific concepts, prefer comprehensive guides over basic tutorials
+     * For class-related queries, prioritize OOP guides over basic class tutorials
+3. For workflow and best practices:
+   - Match both positive patterns (what to do) and negative patterns (what to avoid)
+   - Consider common problem scenarios and their solutions
+   - Match workflow-related terms across different contexts
+4. Return matches in this format:
+{{
+    "matches": [
+        {{
+            "index": <index in items list>,
+            "score": <0.0-1.0>,
+            "reasoning": "<explanation of semantic match>"
+        }}
+    ]
+}}
+
+Scoring guidelines:
+- Score 0.95-1.0: Advanced/comprehensive guides
+  * OOP guides for class-related queries
+  * Design pattern documentation
+  * In-depth technical references
+- Score 0.8-0.95: Strong matches for basic content
+  * Beginner tutorials
+  * General guides
+  * Basic concept explanations
+- Score 0.6-0.8: Moderate relationship
+  * Partial topic coverage
+  * Related but not directly matching content
+- Below 0.6: Weak or tangential relationship
+
+Example: For a query about "python class tutorial":
+- "Python OOP Guide" should score 0.95-1.0 as it provides comprehensive coverage
+- "Python Beginner's Class" should score 0.8-0.95 as it's more basic"""
+
+            # Get response from Claude
             try:
-                # Extract JSON from response content
-                content = response.content[0].text if isinstance(response.content, list) else response.content
+                response = self.client.messages.create(
+                    model=API_CONFIG['MODEL'] if self.mode != 'test' else API_CONFIG['TEST_MODEL'],
+                    max_tokens=API_CONFIG['MAX_TOKENS'],
+                    temperature=0.2,
+                    system=prompt,
+                    messages=[{"role": "user", "content": "Find semantic matches"}]
+                )
                 
-                # Try to find JSON array in the response
-                import re
+                # Parse response
+                content = response.content[0].text
+                self.test_logger.debug(f"Raw API response: {content}")
                 
-                # First try exact match for just a JSON array
-                content = content.strip()
-                if content.startswith('[') and content.endswith(']'):
-                    try:
-                        scores = json.loads(content)
-                        if isinstance(scores, list):
-                            for item, score in zip(items, scores):
-                                if score >= threshold:
-                                    matches.append((item, score))
-                            return matches
-                    except json.JSONDecodeError:
-                        pass
-                
-                # If that fails, try to find any JSON array in the text
-                json_match = re.search(r'\[([\d\., ]+)\]', content)
-                if json_match:
-                    try:
-                        scores = json.loads(f"[{json_match.group(1)}]")
-                        if isinstance(scores, list):
-                            for item, score in zip(items, scores):
-                                if score >= threshold:
-                                    matches.append((item, score))
-                            return matches
-                    except json.JSONDecodeError:
-                        pass
-                
-                # If still no valid JSON, try to extract numbers directly
-                numbers = re.findall(r'0\.\d+', content)
-                if numbers and len(numbers) == len(items):
-                    scores = [float(n) for n in numbers]
-                    for item, score in zip(items, scores):
-                        if score >= threshold:
-                            matches.append((item, score))
-                    return matches
-                
-                self.test_logger.error("No valid scores found in response")
-                return []
+                # Extract JSON object from response
+                json_match = re.search(r'\{[\s\S]*\}', content)
+                if not json_match:
+                    self.test_logger.error("No JSON found in response")
+                    return []
                     
-            except Exception as e:
-                self.test_logger.error(f"Failed to parse Claude response: {e}")
-                return []
+                json_str = json_match.group()
+                self.test_logger.debug(f"Extracted JSON: {json_str}")
                 
-            return matches
+                result = json.loads(json_str)
+                matches = []
+                
+                if "matches" in result and isinstance(result["matches"], list):
+                    for match in result["matches"]:
+                        idx = match.get("index", -1)
+                        score = match.get("score", 0)
+                        reasoning = match.get("reasoning", "")
+                        
+                        if 0 <= idx < len(items) and score >= threshold:
+                            matches.append((items[idx], score, reasoning))
+                            self.test_logger.debug(f"Added match: item[{idx}] (score: {score})")
+                
+                return sorted(matches, key=lambda x: x[1], reverse=True)
+                
+            except json.JSONDecodeError as e:
+                self.test_logger.error(f"JSON decode error: {str(e)}")
+                self.test_logger.error(f"Failed JSON: {json_str}")
+                return []
+            except Exception as e:
+                self.test_logger.error(f"Semantic matching error: {str(e)}")
+                return []
             
         except Exception as e:
-            error_msg = CATALOG_CONFIG['ERROR_MESSAGES']['semantic_error'].format(error=str(e))
-            self.test_logger.error(error_msg)
+            self.test_logger.error(f"Error in semantic matching: {str(e)}")
             return []
 
-    def add_item(self, title: str, content: str = "", description: str = "", tags: List[str] = None) -> CatalogItem:
+    def add_item(self, title: str, content: str = "", description: str = "", tags: List[str] = None, force: bool = False) -> CatalogItem:
         """Add a new item to the catalog.
         
         Args:
@@ -237,6 +235,7 @@ Example:
             content: Content of the item
             description: Description of the item
             tags: List of tag names to apply
+            force: If True, bypass semantic duplicate checks
             
         Returns:
             CatalogItem: The newly created catalog item
@@ -250,14 +249,29 @@ Example:
             existing_items = session.query(CatalogItem).filter(
                 CatalogItem.deleted == False
             ).all()
-            has_dups, similar = self.check_semantic_duplicates(session, title, existing_items)
             
-            if has_dups:
-                raise ValueError(
-                    CATALOG_CONFIG['ERROR_MESSAGES']['duplicate_error'].format(
-                        title=similar[0][0].title
+            if not force:
+                has_dups, duplicates, potential_matches = self.check_semantic_duplicates(session, title, existing_items)
+                
+                if has_dups:
+                    raise ValueError(
+                        CATALOG_CONFIG['ERROR_MESSAGES']['DUPLICATE_ERROR'].format(
+                            title=duplicates[0][0].title
+                        )
                     )
-                )
+                
+                if potential_matches:
+                    # Format potential matches for display
+                    match_info = "\n".join([
+                        f"- {item.title} (similarity: {score:.2f}): {reason}"
+                        for item, score, reason in potential_matches
+                    ])
+                    
+                    raise ValueError(
+                        CATALOG_CONFIG['ERROR_MESSAGES']['POTENTIAL_MATCH_WARNING'].format(
+                            matches=match_info
+                        )
+                    )
             
             # Create new item
             item = CatalogItem(
@@ -292,7 +306,7 @@ Example:
             session.rollback()
             if "case-insensitive" in str(e):
                 raise ValueError(
-                    CATALOG_CONFIG['ERROR_MESSAGES']['duplicate_error'].format(
+                    CATALOG_CONFIG['ERROR_MESSAGES']['DUPLICATE_ERROR'].format(
                         title=title
                     )
                 )
@@ -317,13 +331,13 @@ Example:
         ).first()
         
         if not item:
-            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['archive_error'].format(
+            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['ARCHIVE_ERROR'].format(
                 error=f"Item not found: {title}"
             ))
         
         # Check if already archived
         if item.status == 'archived':
-            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['archive_error'].format(
+            raise ValueError(CATALOG_CONFIG['ERROR_MESSAGES']['ARCHIVE_ERROR'].format(
                 error=f"Item is already archived: {title}"
             ))
         
@@ -462,11 +476,11 @@ Example:
                 all_items = session.query(CatalogItem).all()
                 
                 # Check for semantic duplicates
-                has_duplicates, similar_items = self.check_semantic_duplicates(session, title, all_items)
+                has_duplicates, duplicates, potential_matches = self.check_semantic_duplicates(session, title, all_items)
                 if has_duplicates:
                     if self.interactive:
                         print("\nFound semantically similar items:")
-                        for item, score in similar_items:
+                        for item, score in duplicates:
                             status = "(archived)" if item.deleted else "(active)"
                             print(f"- {item.title} {status} (similarity: {score:.2f})")
                         print("\nWould you like to:")
@@ -484,8 +498,28 @@ Example:
                             return f"Restored similar item: {item.title}"
                     else:
                         similar_list = "\n".join(f"- {item[0].title} ({'archived' if item[0].deleted else 'active'})" 
-                                               for item in similar_items)
+                                               for item in duplicates)
                         return f"Found semantically similar items:\n{similar_list}\nUse --force to add anyway"
+                
+                if potential_matches:
+                    # Format potential matches for display
+                    match_info = "\n".join([
+                        f"- {item.title} (similarity: {score:.2f}): {reason}"
+                        for item, score, reason in potential_matches
+                    ])
+                    
+                    if self.interactive:
+                        print("\nFound potentially similar items:")
+                        print(match_info)
+                        print("\nWould you like to:")
+                        print("1. Create new item anyway")
+                        print("2. Cancel")
+                        choice = input("Enter choice (1-2): ").strip()
+                        
+                        if choice == "2":
+                            return "Operation cancelled"
+                    else:
+                        return f"Found potentially similar items:\n{match_info}\nUse --force to add anyway"
                 
                 # Check for exact title match
                 existing_item = session.query(CatalogItem).filter(
@@ -540,11 +574,11 @@ Example:
                 all_tags = session.query(Tag).all()
                 
                 # Check for semantic duplicates
-                has_duplicates, similar_tags = self.check_semantic_duplicates(session, tag_name, all_tags)
+                has_duplicates, duplicates, potential_matches = self.check_semantic_duplicates(session, tag_name, all_tags)
                 if has_duplicates:
                     if self.interactive:
                         print("\nFound semantically similar tags:")
-                        for tag, score in similar_tags:
+                        for tag, score in duplicates:
                             status = "(archived)" if tag.deleted else "(active)"
                             print(f"- {tag.name} {status} (similarity: {score:.2f})")
                         print("\nWould you like to:")
@@ -553,8 +587,8 @@ Example:
                         print("3. Cancel")
                         choice = input("Enter choice (1-3): ").strip()
                         
-                        if choice == "2" and similar_tags:
-                            tag = similar_tags[0][0]  # Use the most similar tag
+                        if choice == "2" and duplicates:
+                            tag = duplicates[0][0]  # Use the most similar tag
                             if tag.deleted:
                                 tag.deleted = False
                                 session.commit()
@@ -563,8 +597,35 @@ Example:
                             return "Operation cancelled"
                     else:
                         similar_list = "\n".join(f"- {tag[0].name} ({'archived' if tag[0].deleted else 'active'})" 
-                                               for tag in similar_tags)
+                                               for tag in duplicates)
                         return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
+                
+                if potential_matches:
+                    # Format potential matches for display
+                    match_info = "\n".join([
+                        f"- {tag.name} (similarity: {score:.2f}): {reason}"
+                        for tag, score, reason in potential_matches
+                    ])
+                    
+                    if self.interactive:
+                        print("\nFound potentially similar tags:")
+                        print(match_info)
+                        print("\nWould you like to:")
+                        print("1. Create new tag anyway")
+                        print("2. Use existing tag")
+                        print("3. Cancel")
+                        choice = input("Enter choice (1-3): ").strip()
+                        
+                        if choice == "2" and potential_matches:
+                            tag = potential_matches[0][0]  # Use the most similar tag
+                            if tag.deleted:
+                                tag.deleted = False
+                                session.commit()
+                            tag_name = tag.name
+                        elif choice == "3":
+                            return "Operation cancelled"
+                    else:
+                        return f"Found potentially similar tags:\n{match_info}\nUse --force to add anyway"
                 
                 # Check for existing active tag
                 existing_tag = session.query(Tag).filter(
@@ -607,11 +668,11 @@ Example:
                 all_tags = session.query(Tag).all()
                 
                 # Check for semantic duplicates
-                has_duplicates, similar_tags = self.check_semantic_duplicates(session, tag_name, all_tags)
+                has_duplicates, duplicates, potential_matches = self.check_semantic_duplicates(session, tag_name, all_tags)
                 if has_duplicates:
                     if self.interactive:
                         print("\nFound semantically similar tags:")
-                        for tag, score in similar_tags:
+                        for tag, score in duplicates:
                             status = "(archived)" if tag.deleted else "(active)"
                             print(f"- {tag.name} {status} (similarity: {score:.2f})")
                         print("\nWould you like to:")
@@ -620,8 +681,8 @@ Example:
                         print("3. Cancel")
                         choice = input("Enter choice (1-3): ").strip()
                         
-                        if choice == "2" and similar_tags:
-                            tag = similar_tags[0][0]  # Use the most similar tag
+                        if choice == "2" and duplicates:
+                            tag = duplicates[0][0]  # Use the most similar tag
                             if tag.deleted:
                                 tag.deleted = False
                                 session.commit()
@@ -630,8 +691,35 @@ Example:
                             return "Operation cancelled"
                     else:
                         similar_list = "\n".join(f"- {tag[0].name} ({'archived' if tag[0].deleted else 'active'})" 
-                                               for tag in similar_tags)
+                                               for tag in duplicates)
                         return f"Found semantically similar tags:\n{similar_list}\nUse --force to add anyway"
+                
+                if potential_matches:
+                    # Format potential matches for display
+                    match_info = "\n".join([
+                        f"- {tag.name} (similarity: {score:.2f}): {reason}"
+                        for tag, score, reason in potential_matches
+                    ])
+                    
+                    if self.interactive:
+                        print("\nFound potentially similar tags:")
+                        print(match_info)
+                        print("\nWould you like to:")
+                        print("1. Create new tag anyway")
+                        print("2. Use existing tag")
+                        print("3. Cancel")
+                        choice = input("Enter choice (1-3): ").strip()
+                        
+                        if choice == "2" and potential_matches:
+                            tag = potential_matches[0][0]  # Use the most similar tag
+                            if tag.deleted:
+                                tag.deleted = False
+                                session.commit()
+                            tag_name = tag.name
+                        elif choice == "3":
+                            return "Operation cancelled"
+                    else:
+                        return f"Found potentially similar tags:\n{match_info}\nUse --force to add anyway"
                 
                 # Check for existing active tag
                 existing_tag = session.query(Tag).filter(
@@ -706,9 +794,9 @@ Example:
         
         try:
             response = self.client.messages.create(
-                model=CATALOG_CONFIG['SEMANTIC_MODEL'],
-                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
-                temperature=CATALOG_CONFIG['TEMPERATURE'],
+                model=API_CONFIG['MODEL'],
+                max_tokens=API_CONFIG['MAX_TOKENS'],
+                temperature=API_CONFIG['TEMPERATURE'],
                 messages=messages
             )
             
@@ -834,8 +922,8 @@ Example:
             ]
             
             response = self.client.messages.create(
-                model=CATALOG_CONFIG['SEMANTIC_MODEL'],
-                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
+                model=API_CONFIG['MODEL'],
+                max_tokens=API_CONFIG['MAX_TOKENS'],
                 temperature=0.0,  # Use deterministic output for ranking
                 messages=messages
             )
@@ -861,9 +949,9 @@ Example:
         session = self.get_session()
         try:
             response = self.client.messages.create(
-                model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
-                max_tokens=CATALOG_CONFIG['MAX_TOKENS'],
-                temperature=CATALOG_CONFIG['TEMPERATURE'],
+                model=API_CONFIG['MODEL'],
+                max_tokens=API_CONFIG['MAX_TOKENS'],
+                temperature=API_CONFIG['TEMPERATURE'],
                 messages=[{
                     "role": "user", 
                     "content": user_input
@@ -881,7 +969,7 @@ Example:
             self.chat_logger.log_interaction(
                 user_input=user_input,
                 system_response=result or response.content[0].text,
-                model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
+                model=API_CONFIG['MODEL'],
                 status="success" if result else "error",
                 error_details=None if result else "Failed to parse response",
                 metadata={
@@ -909,7 +997,7 @@ Example:
                 self.chat_logger.log_interaction(
                     user_input=user_input,
                     system_response=error_msg,
-                    model=CATALOG_CONFIG['ANTHROPIC_MODEL'],
+                    model=API_CONFIG['MODEL'],
                     status="error",
                     error_details=error_msg
                 )

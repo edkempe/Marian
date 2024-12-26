@@ -4,12 +4,12 @@
 1. Once the closing process begins:
    - DO NOT make any new code changes
    - DO NOT attempt to fix issues discovered during closing
-   - Instead, document all issues in NEXT_SESSION.md and BACKLOG.md
+   - Instead, document all issues in NEXT_SESSION.md and `docs/BACKLOG.md`
    - Revert any changes made during the closing process
 
 2. If issues are discovered:
    - Add them to the "Issues and Blockers" section in NEXT_SESSION.md
-   - Add corresponding tasks to BACKLOG.md with appropriate priority
+   - Add corresponding tasks to `docs/BACKLOG.md` with appropriate priority
    - Document any temporary workarounds or important context
 
 ## Close Process Steps
@@ -45,7 +45,7 @@ diff requirements.txt requirements.txt.new
 - Keep requirements.txt.new for reference
 
 ### 3. Update Documentation (In Order)
-1. **Update BACKLOG.md**
+1. **Update `docs/BACKLOG.md`**
    - Add any incomplete tasks
    - Update status of completed tasks
    - Add new tasks discovered during session
@@ -55,7 +55,7 @@ diff requirements.txt requirements.txt.new
    - Create `docs/sessions/session_YYYYMMDD_HHMM.md`
    - Use gathered metrics to inform content
    - Include technical decisions and rationale
-   - Reference BACKLOG.md tasks
+   - Reference `docs/BACKLOG.md` tasks
    - Commit changes
 
 3. **Run Automated Close**
@@ -130,7 +130,7 @@ Use this template when creating `session_YYYYMMDD_HHMM.md`:
 
 ### Common Issues
 1. **Failed Tests**
-   - Document failing tests in BACKLOG.md
+   - Document failing tests in `docs/BACKLOG.md`
    - Add test failures to session log
    - Note any temporary workarounds
 
@@ -140,7 +140,7 @@ Use this template when creating `session_YYYYMMDD_HHMM.md`:
    - Document reasons for any postponed commits
 
 3. **Documentation Discrepancies**
-   - Ensure BACKLOG.md and session log align
+   - Ensure `docs/BACKLOG.md` and session log align
    - Cross-reference tasks and changes
    - Update both if discrepancies found
 
@@ -171,7 +171,7 @@ All changes have been committed and pushed. The project is ready for the next se
   - Document current state
   - List issues and blockers
   - Define next steps
-- [ ] Update BACKLOG.md
+- [ ] Update `docs/BACKLOG.md`
   - Add new tasks discovered
   - Update priorities
   - Add technical debt items

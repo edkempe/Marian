@@ -226,4 +226,4 @@ mypy .
 - See `README.md` for project overview
 - Check `CHAT_START.md` for session workflow
 - Review `CODE_STANDARDS.md` for coding standards
-- Refer to `BACKLOG.md` for task tracking
+- Refer to `docs/BACKLOG.md` for task tracking

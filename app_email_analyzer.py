@@ -17,7 +17,7 @@ from shared_lib.database_session_util import get_email_session, get_analysis_ses
 import sqlalchemy.exc
 from structlog import get_logger
 from prometheus_client import start_http_server as start_prometheus_server
-from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
+from constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG, ERROR_MESSAGES
 import anthropic  # <--- Added missing anthropic import
 import re
 
@@ -108,7 +108,7 @@ class EmailAnalyzer:
             # Extract URLs from content
             full_urls, display_urls = self._extract_urls(email_data.get('content', ''))
             
-            # Format email data for analysis
+            # Create prompt using template
             content = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
                 email_content=f"""Subject: {email_data.get('subject', '')}
 Content: {email_data.get('content', '')}"""
@@ -118,7 +118,7 @@ Content: {email_data.get('content', '')}"""
             response = None
             try:
                 response = self.client.messages.create(
-                    model=API_CONFIG['ANTHROPIC_MODEL'],
+                    model=API_CONFIG['MODEL'],
                     max_tokens=API_CONFIG['MAX_TOKENS'],
                     temperature=API_CONFIG['TEMPERATURE'],
                     messages=[{
@@ -131,7 +131,7 @@ Content: {email_data.get('content', '')}"""
                 analysis_data = parse_claude_response(response.content[0].text)
                 if analysis_data is None:
                     logger.error(
-                        API_CONFIG['ERROR_MESSAGES']["api_error"].format(error="Failed to parse API response"),
+                        ERROR_MESSAGES['API_ERROR'].format(error="Failed to parse API response"),
                         error_type="parsing",
                         response=response.content[0].text if response and hasattr(response, 'content') else None
                     )
@@ -154,10 +154,10 @@ Content: {email_data.get('content', '')}"""
                     'email_id': email_data.get('id'),
                     'subject': email_data.get('subject', '')
                 }
-                logger.error(API_CONFIG['ERROR_MESSAGES']["api_error"].format(error=str(e)), **error_context)
+                logger.error(ERROR_MESSAGES['API_ERROR'].format(error=str(e)), **error_context)
                 return None
         except Exception as e:
-            logger.error(API_CONFIG['ERROR_MESSAGES']["api_error"].format(error=str(e)), 
+            logger.error(ERROR_MESSAGES['API_ERROR'].format(error=str(e)), 
                         error_type="analysis",
                         error=str(e))
             return None
@@ -274,7 +274,7 @@ Content: {email_data.get('content', '')}"""
             try:
                 test_response = self.client.messages.create(
                     model=API_CONFIG['TEST_MODEL'],
-                    max_tokens=API_CONFIG['API_TEST_MAX_TOKENS'],
+                    max_tokens=API_CONFIG['MAX_TOKENS_TEST'],
                     temperature=API_CONFIG['TEMPERATURE'],
                     messages=[{"role": "user", "content": "test"}]
                 )
@@ -341,7 +341,7 @@ Content: {email_request.truncated_body}"""
                                 )
                                 
                                 response = self.client.messages.create(
-                                    model=API_CONFIG['ANTHROPIC_MODEL'],
+                                    model=API_CONFIG['MODEL'],
                                     max_tokens=API_CONFIG['MAX_TOKENS'],
                                     temperature=API_CONFIG['TEMPERATURE'],
                                     messages=[{

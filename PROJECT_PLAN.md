@@ -49,7 +49,7 @@ This principle ensures:
 
 Examples of applying this principle:
 1. **Documentation**: Keep all core documentation in root directory
-2. **Backlog Management**: Single BACKLOG.md file instead of multiple workstream files
+2. **Backlog Management**: Single `docs/BACKLOG.md` file instead of multiple workstream files
 3. **Configuration**: Centralized constants.py for all settings
 4. **Code Organization**: Flat module structure where possible
 
@@ -167,7 +167,7 @@ The project follows a modular structure with clear separation of concerns:
   - Project principles
   - Architecture decisions
   - Development standards
-- Unified project backlog (BACKLOG.md)
+- Unified project backlog (`docs/BACKLOG.md`)
   - Single source of truth for all workstreams
   - Current sprint items
   - Prioritized by workstream
@@ -526,7 +526,7 @@ The project is organized into three main workstreams:
 - Development workflow optimization
 
 #### Backlog Management
-- Single unified backlog in BACKLOG.md
+- Single unified backlog in `docs/BACKLOG.md`
 - Organized by workstream for clarity
 - Maintains clear priorities across workstreams
 - Tracks dependencies between components

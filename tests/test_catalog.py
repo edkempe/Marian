@@ -15,7 +15,7 @@ Key Integration Points Tested:
 """
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import Session, sessionmaker
 import os
 import sys
@@ -28,7 +28,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.catalog import CatalogItem, Tag, CatalogTag
 from models.base import Base
 from constants import CATALOG_CONFIG
-from shared_lib.logging_util import setup_logger
+from shared_lib.logging_util import setup_logging
 from app_catalog import CatalogChat
 
 class TestCatalog:
@@ -43,7 +43,7 @@ class TestCatalog:
         Base.metadata.create_all(cls.engine)
         
         # Set up logging
-        cls.test_logger = setup_logger('test_catalog')
+        cls.test_logger = setup_logging('test_catalog')
         
         # Initialize CatalogChat
         cls.chat = CatalogChat(db_path=':memory:', mode='test')
@@ -175,15 +175,9 @@ class TestCatalog:
             assert item.deleted
             
             # Try to tag archived item
-            with pytest.raises(Exception) as cm:
-                new_tag = Tag(name=f"{test_marker}_new_tag")
-                self.session.add(new_tag)
-                self.session.commit()
-                
-                catalog_tag = CatalogTag(catalog_id=item.id, tag_id=new_tag.id)
-                self.session.add(catalog_tag)
-                self.session.commit()
-            assert "archived" in str(cm.value).lower()
+            with pytest.raises(ValueError) as cm:
+                CatalogTag.create(self.session, item.id, tag.id)
+            assert "Cannot tag an archived item" in str(cm.value)
             self.session.rollback()
             
             # Archive tag
@@ -196,11 +190,9 @@ class TestCatalog:
             self.session.add(new_item)
             self.session.commit()
             
-            with pytest.raises(Exception) as cm:
-                catalog_tag = CatalogTag(catalog_id=new_item.id, tag_id=tag.id)
-                self.session.add(catalog_tag)
-                self.session.commit()
-            assert "archived" in str(cm.value).lower()
+            with pytest.raises(ValueError) as cm:
+                CatalogTag.create(self.session, new_item.id, tag.id)
+            assert "Cannot use an archived tag" in str(cm.value)
             self.session.rollback()
             
         finally:
@@ -323,19 +315,26 @@ class TestCatalog:
         to ensure we catch any API integration issues.
         """
         # Create test items
-        title = f"{self.test_marker}_Test Item"
-        similar_title = f"{self.test_marker}_Similar Item"
+        title = f"{self.test_marker}_Python Programming Guide"
+        similar_title = f"{self.test_marker}_Guide to Python Programming"  # Very similar
+        related_title = f"{self.test_marker}_Programming Basics"  # Related but not duplicate
         
+        # Add first item
         self.chat.add_item(title)
-        self.chat.add_item(similar_title)
         
-        # Test semantic matching with real API call
-        items = [similar_title]
-        matches = self.chat.get_semantic_matches(title, items)
+        # Adding very similar item should raise duplicate error
+        with pytest.raises(ValueError) as cm:
+            self.chat.add_item(similar_title)
+        assert "Similar item already exists" in str(cm.value)
         
-        assert len(matches) > 0
-        assert matches[0][1] >= CATALOG_CONFIG['SEMANTIC_THRESHOLD']
-
+        # Adding related item should raise potential match warning
+        with pytest.raises(ValueError) as cm:
+            self.chat.add_item(related_title)
+        assert "Found potentially similar items" in str(cm.value)
+        
+        # Force add the related item
+        self.chat.add_item(related_title, force=True)
+        
     def test_semantic_duplicates(self):
         """Test semantic duplicate detection using real Claude API calls.
         
@@ -353,7 +352,11 @@ class TestCatalog:
                 title=f"{self.test_marker}_JavaScript Guide",
                 content="A guide to JavaScript programming language"
             )
-            self.session.add_all([item1, item2])
+            item3 = CatalogItem(
+                title=f"{self.test_marker}_Programming Intro",
+                content="Introduction to programming concepts"
+            )
+            self.session.add_all([item1, item2, item3])
             self.session.commit()
             
             # Get all items
@@ -361,43 +364,37 @@ class TestCatalog:
                 CatalogItem.title.like(f"{self.test_marker}%")
             ).all()
             
-            # Test duplicate detection with real API call
-            has_dups, similar = self.chat.check_semantic_duplicates(
+            # Test exact duplicate detection
+            has_dups, duplicates, potential_matches = self.chat.check_semantic_duplicates(
                 self.session,
-                "Python Tutorial",
+                "Python Programming Tutorial",  # Very similar to Python Guide
                 all_items
             )
             assert has_dups
-            assert len(similar) > 0
-            assert similar[0][0].title == item1.title
+            assert len(duplicates) > 0
+            assert duplicates[0][0].title == item1.title
+            assert duplicates[0][1] >= CATALOG_CONFIG['MATCH_THRESHOLD']
             
-            # Test non-duplicate with real API call
-            has_dups, similar = self.chat.check_semantic_duplicates(
+            # Test potential match detection
+            has_dups, duplicates, potential_matches = self.chat.check_semantic_duplicates(
                 self.session,
-                "Ruby Guide",
+                "Introduction to Software Development",  # Related to Programming Intro
+                all_items
+            )
+            assert not has_dups  # Not a direct duplicate
+            assert len(potential_matches) > 0  # But should be flagged as potential match
+            assert any(item3.title == match[0].title for match in potential_matches)
+            assert all(score >= CATALOG_CONFIG['POTENTIAL_MATCH_THRESHOLD'] for _, score, _ in potential_matches)
+            
+            # Test non-duplicate
+            has_dups, duplicates, potential_matches = self.chat.check_semantic_duplicates(
+                self.session,
+                "Database Design Patterns",  # Unrelated to any item
                 all_items
             )
             assert not has_dups
-            assert len(similar) == 0
-            
-            # Add test tag directly to database
-            tag = Tag(name=f"{self.test_marker}_programming")
-            self.session.add(tag)
-            self.session.commit()
-            
-            # Test tag duplicates with real API call
-            all_tags = self.session.query(Tag).filter(
-                Tag.name.like(f"{self.test_marker}%")
-            ).all()
-            
-            has_dups, similar = self.chat.check_semantic_duplicates(
-                self.session,
-                "coding",
-                all_tags
-            )
-            assert has_dups
-            assert len(similar) > 0
-            assert similar[0][0].name == tag.name
+            assert len(duplicates) == 0
+            assert len(potential_matches) == 0
             
         finally:
             self.cleanup_test_data(self.test_marker)
