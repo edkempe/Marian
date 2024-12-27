@@ -15,6 +15,18 @@ Authoritative checklist for regular project management verification tasks. See P
 - [ ] no unnecessary duplication
 - [ ] no critical gaps in structure
 
+## Code Organization and Dependencies
+- [ ] Are the existing files and folders necessary and sufficient?
+- [ ] Are the existing files and folders following standards and best practices?
+- [ ] Are we missing any key files or folders necessary to effectively follow standards and best practices?
+- [ ] Can we simplify our code or documents to make them easier to maintain (while following standards and best practices)?
+- [ ] Check shared library dependencies:
+  - [ ] Are there any circular dependencies between shared library components?
+  - [ ] Are shared library components as independent as possible?
+  - [ ] Do dependencies flow in a clear, single direction?
+  - [ ] Can any shared components be simplified or split into separate utilities?
+  - [ ] Are there any components that should be moved to scripts or other directories?
+
 ## Code Quality
 - [ ] All code follows style guide
 - [ ] Documentation current
