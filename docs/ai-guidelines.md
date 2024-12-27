@@ -1,4 +1,34 @@
-# AI Assistant Guidelines
+# AI Guidelines and Session Management
+
+## Core Principles
+- Follow established guidelines and practices
+- Keep changes focused and atomic
+- Document all changes thoroughly
+- Maintain consistent project structure
+- Communicate clearly and concisely
+
+## Session Management
+
+### Before Starting a Session
+- Review recent session logs
+- Check backlog for priorities
+- Understand current project state
+- Set clear session objectives
+- Verify environment and dependencies
+
+### During a Session
+- Follow coding and git guidelines
+- Keep session log updated
+- Document all decisions
+- Track time on tasks
+- Ask for clarification when needed
+
+### After a Session
+- Complete session summary
+- Update backlog
+- Document follow-up tasks
+- Push session log and code changes
+- Review all changes for consistency
 
 ## Git Operations
 
@@ -37,17 +67,19 @@
 - Use appropriate tools for file operations
 - Keep changes focused and atomic
 - Update documentation to reflect changes
+- Follow test-driven development practices
+- Maintain backward compatibility when possible
 
 ## Library Organization
 
 ### File Organization
-- All shared libraries and utilities are stored in the `shared_lib/` directory
-- Keep the directory structure flat unless there's a clear need for subfolders
+- All shared libraries and utilities in `shared_lib/` directory
+- Keep directory structure flat unless needed
 - Use clear, descriptive file names with appropriate suffixes:
-  - `*_lib.py` for external integrations and core libraries (e.g., `gmail_lib.py`)
-  - `*_util.py` for utility functions and helpers (e.g., `security_util.py`)
-- Avoid creating deep hierarchies or unnecessary abstractions
-- Each file should have a single, clear responsibility
+  - `*_lib.py` for external integrations (e.g., `gmail_lib.py`)
+  - `*_util.py` for utility functions (e.g., `security_util.py`)
+- Avoid deep hierarchies or unnecessary abstractions
+- Each file should have a single responsibility
 
 ### Import Guidelines
 - Import from `shared_lib` directly:
@@ -55,25 +87,96 @@
   from shared_lib.gmail_lib import GmailAPI
   from shared_lib.security_util import authenticate
   ```
-- Use the `__init__.py` file to expose commonly used functions and classes
-- Group imports by type (standard library, third-party, local)
+- Use `__init__.py` to expose common functions/classes
+- Group imports by type (standard, third-party, local)
 - Use absolute imports for clarity
 
 ### Library Development
 - Keep utility functions focused and single-purpose
-- Document all public functions and classes with docstrings
-- Include usage examples in docstrings for complex functionality
+- Document all public functions and classes
+- Include usage examples in docstrings
 - Write unit tests for all library code
-- Avoid circular dependencies between library modules
+- Avoid circular dependencies
 
-## Documentation
+## Documentation Standards
+
+### File Organization
+```
+docs/
+├── sessions/
+│   ├── YYYY-MM-DD-HH-MM.md  # Current session
+│   └── README.md            # Session log index
+├── backlog.md              # Task tracking
+└── *.md                    # Technical documentation
+```
+
+### Session Log Template
+```markdown
+# Session YYYY-MM-DD-HH-MM
+
+## Focus
+[Session objectives]
+
+## Running Log
+- HH:MM - Session started
+- HH:MM - [Action/decision]
+
+## Accomplished
+[Work completed]
+
+## Decisions
+[Key decisions]
+
+## Follow-up Tasks
+[New backlog items]
+```
+
+### Task Template
+```markdown
+- [ ] Task Name (From: Session YYYY-MM-DD)
+  - Context: [Background]
+  - Priority: [Level]
+  - Dependencies: [Requirements]
+  - Added: YYYY-MM-DD
+```
+
+### Documentation Guidelines
 - Keep README.md high-level and user-focused
 - Put detailed technical information in specific guides
-- Update session logs with all significant changes
-- Follow the principle of DRY (Don't Repeat Yourself)
+- Use lowercase with hyphens for filenames
+- Follow consistent formatting within documents
+- Include examples for complex concepts
+- Keep documentation up to date with code changes
 
-## Communication
+## Task Management
+
+### Backlog Structure
+```markdown
+# Backlog
+
+## Immediate Priority
+- [ ] Task A (From: Session YYYY-MM-DD)
+  - Context: [Direct follow-up from previous work]
+  - Priority: [Immediate/High/Medium/Low]
+  - Dependencies: [Other tasks/requirements]
+
+## High Priority
+- [ ] Task B
+  - Context: [Background information]
+  - Added: YYYY-MM-DD
+```
+
+### Task Management Guidelines
+- Add new tasks with clear context
+- Include session reference
+- Specify priority level
+- Note dependencies
+- Update existing task priorities
+
+## Communication Style
 - Be concise and clear
 - Explain rationale for changes
 - Proactively suggest improvements
 - Ask for clarification when needed
+- Use markdown formatting consistently
+- Reference specific files and functions with backticks
