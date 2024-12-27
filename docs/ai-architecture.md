@@ -1,6 +1,54 @@
-# Marian AI Architecture
+# Jexi AI Architecture
 
-This document explains the two distinct AI systems in the Marian project and establishes the documentation hierarchy for AI-related content.
+This document explains the AI systems in the Jexi project and establishes the documentation hierarchy for AI-related content.
+
+## Project Structure
+- **Jexi**: The core AI assistant, powered by Anthropic
+  - **Marian**: Jexi's librarian, who maintains the Catalog
+    - **Catalog**: The knowledge database that Marian manages for Jexi
+
+## AI Systems
+
+### 1. Development AI (Cascade, "Cassy")
+> Cascade (affectionately known as Cassy) is the Windsurf.ai copilot that assists with development. Think of Cassy as a skilled pair programmer who understands both code and documentation.
+
+#### Primary Responsibilities
+- Code development and review
+- Documentation maintenance
+- Test generation and validation
+- Architecture decisions
+
+#### Limitations
+- Cannot access gitignored directories
+- Cannot run unsafe commands automatically
+- Must validate all generated code
+
+### 2. Runtime AIs
+
+#### Jexi (Core Assistant)
+> Jexi is the core AI assistant, powered by Anthropic, that interacts with users and manages their digital life.
+
+##### Primary Responsibilities
+- User interaction
+- Task management
+- Information processing
+- Decision support
+
+#### Marian (The Librarian)
+> Marian is Jexi's librarian, also powered by Anthropic, who specializes in maintaining and organizing the Catalog.
+
+##### Primary Responsibilities
+- Catalog entry management
+- Content classification
+- Relationship inference
+- Query processing
+- Source of truth management
+
+##### Integration Points
+- Maintains the Catalog for Jexi
+- Answers Jexi's questions about information hierarchy
+- Ensures data consistency and accuracy
+- Manages sources of truth
 
 ## Documentation Hierarchy
 
@@ -12,7 +60,7 @@ This document explains the two distinct AI systems in the Marian project and est
    - `README.md`: Project overview
    - `ai-architecture.md`: AI system boundaries
 
-### Development AI (Windsurf.ai)
+### Development AI (Cascade)
 1. **Primary Documentation**
    - `dev-ai-workflow.md`: Development process and standards
 2. **Supporting Documentation**
@@ -20,44 +68,20 @@ This document explains the two distinct AI systems in the Marian project and est
    - `testing-guide.md`: Test development practices
    - Session logs: Historical record
 
-### Runtime AI (Anthropic)
+### Runtime AI (Jexi and Marian)
 1. **Primary Documentation**
-   - `librarian.md`: Catalog operations and behavior
+   - `core-assistant.md`: Jexi's behavior and operations
+   - `librarian.md`: Marian's behavior and operations
 2. **Supporting Documentation**
    - `testing-guide.md`: Runtime AI testing
    - `design-decisions.md`: Architecture decisions
-
-## 1. Development AI (Windsurf.ai)
-
-The development environment uses Windsurf.ai as an AI copilot for code development and documentation.
-
-### Primary Documentation
-- `ai-guidelines.md`: Core development practices with AI
-- `session-workflow.md`: Development session management
-
-### Related Documentation
-- `code-standards.md`: Code review practices (see "AI Review Guidelines" section)
-- `testing-guide.md`: Test development approach (see "Test Generation" section)
-- `backlog.md`: Development task planning (see "AI Assistance" section)
-
-## 2. Runtime AI (Anthropic)
-
-The Marian system uses Anthropic's AI for catalog operations and content analysis.
-
-### Primary Documentation
-- `librarian.md`: Core catalog AI behaviors
-- `testing-guide.md`: Claude API testing approach
-
-### Related Documentation
-- `design-decisions.md`: AI architecture decisions (see "AI Integration" section)
-- `backlog.md`: AI feature planning (see "Catalog Intelligence" section)
 
 ## Interaction Between Systems
 
 While these are separate systems, they work together in several ways:
 
 1. **Development Support**
-   - Windsurf.ai helps develop and test Anthropic integrations
+   - Cascade helps develop and test Jexi and Marian integrations
    - Development AI assists in prompt engineering for runtime AI
    - Test cases are developed with AI assistance
 
