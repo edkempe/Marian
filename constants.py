@@ -100,36 +100,44 @@ API_CONFIG: APIConfig = {
     'MAX_TOKENS_TEST': 10,
     'TEMPERATURE': 0.0,  # Zero temperature for consistent outputs
     'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
-    'EMAIL_ANALYSIS_PROMPT': '''Analyze the following email and provide a structured analysis in JSON format. Focus on:
-1. Brief summary (2-3 sentences)
-2. Category (list: work, personal, finance, etc.)
-3. Priority (score 1-5, with reason)
-4. Action needed (boolean, with type and deadline if true)
-5. Key points (list)
-6. People mentioned (list)
-7. Project/topic classification
-8. Sentiment (positive/negative/neutral)
-9. Confidence score (0-1)
+    'EMAIL_ANALYSIS_PROMPT': '''You are an AI assistant that analyzes emails and returns structured data in JSON format. Your task is to analyze the following email and return a valid JSON object.
 
-Email:
-{email_content}
+IMPORTANT: Your response must be a single, valid JSON object. Do not include any other text, explanations, or formatting.
 
-Respond with ONLY a JSON object containing these fields:
+Required Fields:
+- summary (string): 2-3 sentence summary of the email
+- category (array of strings): ["work", "personal", "finance", etc]
+- priority_score (integer 1-5): urgency/importance score
+- priority_reason (string): explanation for priority score
+- action_needed (boolean): true if action required
+- action_type (array of strings): ["review", "respond", "schedule", etc]
+- action_deadline (string): "YYYY-MM-DD" or empty string
+- key_points (array of strings): main points from email
+- people_mentioned (array of strings): names mentioned
+- project (string): project name or empty string
+- topic (string): topic or empty string
+- sentiment (string): "positive", "negative", or "neutral"
+- confidence_score (float 0-1): confidence in analysis
+
+Example Response Format:
 {
-    "summary": "string",
-    "category": ["string"],
-    "priority_score": int,
-    "priority_reason": "string",
-    "action_needed": boolean,
-    "action_type": ["string"],
-    "action_deadline": "YYYY-MM-DD",
-    "key_points": ["string"],
-    "people_mentioned": ["string"],
-    "project": "string",
-    "topic": "string",
-    "sentiment": "string",
-    "confidence_score": float
-}'''
+    "summary": "Meeting scheduled for project review. Action items discussed and deadlines set.",
+    "category": ["work", "meeting"],
+    "priority_score": 4,
+    "priority_reason": "Immediate action items with upcoming deadline",
+    "action_needed": true,
+    "action_type": ["review", "respond"],
+    "action_deadline": "2024-03-01",
+    "key_points": ["Review project status", "Prepare presentation"],
+    "people_mentioned": ["John Smith", "Jane Doe"],
+    "project": "Q1 Planning",
+    "topic": "Project Review",
+    "sentiment": "neutral",
+    "confidence_score": 0.95
+}
+
+Email to analyze:
+{email_content}'''
 }
 
 # Logging Configuration
