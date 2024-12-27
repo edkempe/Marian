@@ -1,35 +1,34 @@
 # NEW Testing Guide and Strategy
 
-> **Documentation Role**: This guide is a supporting document for testing all AI components in the Jexi project. See `ai-architecture.md` for the complete documentation hierarchy.
+> **Documentation Role**: This guide is a supporting document for testing all AI components in the Jexi project, with a focus on ensuring the reliability and performance of our AI-driven features. See `ai-architecture.md` for the complete documentation hierarchy.
 
-## Overview
-This document outlines the testing strategy and guidelines for the Jexi project, explaining our approach to testing different AI components and their interactions.
+This document outlines the testing strategy and guidelines for the Jexi project, explaining our approach to testing different AI components, their interactions, and the overall AI ecosystem.
 
 ## Core Testing Principles
 
-### 1. Test What Matters
-- Focus on critical user paths
-- Test complex AI interactions
-- Cover edge cases and error handling
-- Validate data integrity
+### 1. Testing Philosophy
+Our testing approach prioritizes reliability and maintainability over theoretical purity. While unit tests with mocks are valuable in some contexts, they can be problematic when testing complex API integrations.
 
-### 2. Test Close to Production
-- Minimize mocking where possible
-- Use realistic test data
-- Match production configurations
-- Test actual AI integrations
+### 2. Data Model Validation
+- All tests must validate against the catalog data model defined in `models/catalog.py`
+- The data model is the single source of truth
+- Test structure follows data model hierarchy:
+  1. Schema conformance tests
+  2. Data integrity tests
+  3. Business logic tests
+  4. Integration tests
 
-### 3. Test for Maintainability
-- Keep tests simple and focused
-- Document test rationale
-- Make test failures clear
-- Update tests with AI behavior changes
+### 3. Test Preservation
+- Existing tests must not be modified without approval
+- Document any proposed changes thoroughly
+- Maintain backward compatibility
+- Prefer test duplication over removal
 
-### 4. Test for Reliability
-- Avoid flaky tests
-- Handle async AI operations properly
-- Clean up test data
-- Isolate test environments
+### 4. Test Coverage Requirements
+- All new features require corresponding tests
+- Integration tests preferred over unit tests
+- Real API calls used instead of mocks
+- Document test coverage gaps
 
 ## Testing Approach
 
