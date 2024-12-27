@@ -1,5 +1,8 @@
 # Development Guidelines
 
+**Version:** 1.0.0
+**Status:** Authoritative source for development guidelines
+
 ## Critical Development Guidelines
 
 ### 1. Code Preservation Policy
@@ -59,3 +62,30 @@
   - Extract common patterns into reusable functions or classes
   - Use inheritance and composition to share behavior
   - Maintain single source of truth for business logic
+
+## Documentation Standards
+
+### File Naming Conventions
+- Use lowercase with hyphens (kebab-case) for all documentation files
+  - Good: `setup.md`, `api-reference.md`
+  - Avoid: `SETUP_GUIDE.md`, `API_REFERENCE.md`
+- Avoid redundant suffixes like `_GUIDE` or `_MANUAL`
+- Use standard names for common documentation:
+  - `readme.md`: Project overview and getting started
+  - `contributing.md`: Development guidelines and standards
+  - `changelog.md`: Version history and changes
+  - `license.md`: Project license
+  - `api.md`: API documentation
+  - `troubleshooting.md`: Common issues and solutions
+
+### Documentation Organization
+- Keep documentation in the `docs/` directory
+- Use subdirectories for specific types of documentation:
+  - `docs/sessions/`: AI pair programming session logs
+  - `docs/decisions/`: Architecture Decision Records (ADRs)
+  - `docs/api/`: Detailed API documentation
+- Link related documentation files using relative links
+- Keep paths short and descriptive
+
+## Version History
+- 1.0.0: Initial guidelines documentation covering code preservation, addition, testing, and change management policies
