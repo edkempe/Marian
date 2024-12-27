@@ -5,10 +5,9 @@
 ### Active Documentation
 - `/docs`
   - `README.md` - This guide
-  - `database_design.md` - Database design decisions and schema
-  - `code_standards.md` - Coding standards and practices
+  - `code-standards.md` - Coding standards and practices
   - `troubleshooting.md` - Common issues and solutions
-  - `testing_guide.md` - Testing practices and guidelines
+  - `testing-guide.md` - Testing practices and guidelines
 
 ### Session Logs
 - `/docs/sessions`
@@ -21,7 +20,7 @@
   - Archived documentation
   - Old versions
   - Superseded files
-  - Naming: `{filename}_{YYYYMMDD}.md`
+  - Naming: `ARCHIVED_YYYYMMDD_HHMM_{filename}.md`
 
 ## Documentation Principles
 
