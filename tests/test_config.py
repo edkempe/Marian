@@ -2,6 +2,10 @@
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Test data directory
 TEST_DATA_DIR = Path(__file__).parent / 'test_data'
@@ -13,7 +17,6 @@ TEST_ANALYSIS_DB = str(TEST_DATA_DIR / 'test_analysis_store.db')
 
 # Test environment configuration
 TEST_ENV = {
-    'ANTHROPIC_API_KEY': 'test-key',  # Will be replaced with real key in CI
     'DB_EMAIL_PATH': TEST_EMAIL_DB,
     'DB_ANALYSIS_PATH': TEST_ANALYSIS_DB,
     'LOG_LEVEL': 'INFO',
@@ -25,8 +28,16 @@ TEST_ENV = {
 
 def setup_test_env():
     """Set up test environment variables."""
+    # Preserve existing API key if present
+    api_key = os.getenv('ANTHROPIC_API_KEY')
+    
+    # Set test environment variables
     for key, value in TEST_ENV.items():
         os.environ[key] = value
+    
+    # Restore API key if it was present
+    if api_key:
+        os.environ['ANTHROPIC_API_KEY'] = api_key
 
 def cleanup_test_env():
     """Clean up test environment and databases."""
