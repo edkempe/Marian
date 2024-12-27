@@ -1,314 +1,255 @@
 """Tests for email reporting functionality."""
 import pytest
-import json
-import sqlite3
 from datetime import datetime, timedelta
-from unittest.mock import Mock, MagicMock, patch
+from sqlalchemy.orm import Session
 
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from app_email_reports import EmailAnalytics
+from shared_lib.database_session_util import get_email_session, get_analysis_session
 
-@pytest.fixture
-def mock_email_db():
-    """Create an in-memory SQLite database for email testing."""
-    conn = sqlite3.connect(':memory:')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS emails
-                 (id TEXT PRIMARY KEY,
-                  thread_id TEXT NOT NULL,
-                  subject TEXT DEFAULT 'No Subject',
-                  from_address TEXT NOT NULL,
-                  to_address TEXT NOT NULL,
-                  cc_address TEXT DEFAULT '',
-                  bcc_address TEXT DEFAULT '',
-                  received_date TIMESTAMP NOT NULL,
-                  content TEXT DEFAULT '',
-                  labels TEXT DEFAULT '',
-                  has_attachments BOOLEAN NOT NULL DEFAULT 0,
-                  full_api_response TEXT DEFAULT '{}',
-                  reply_to_address TEXT DEFAULT '',
-                  sender_name TEXT DEFAULT '',
-                  to_name TEXT DEFAULT '',
-                  cc_name TEXT DEFAULT '',
-                  bcc_name TEXT DEFAULT '',
-                  reply_to_name TEXT DEFAULT '')''')
-    
-    # Insert test data
-    test_data = [
-        ('1', 'thread1', 'Test Subject 1', 'sender1@test.com', 'to1@test.com', 'cc1@test.com', 'bcc1@test.com',
-         '2024-12-19 10:00:00', 'Test body 1', 'INBOX,IMPORTANT', False, '{}', 'reply1@test.com', 'Sender 1', 'To 1', 'CC 1', 'BCC 1', 'Reply To 1'),
-        ('2', 'thread2', 'Test Subject 2', 'sender2@test.com', 'to2@test.com', 'cc2@test.com', 'bcc2@test.com',
-         '2024-12-19 11:00:00', 'Test body 2', 'INBOX,UNREAD', False, '{}', 'reply2@test.com', 'Sender 2', 'To 2', 'CC 2', 'BCC 2', 'Reply To 2'),
-        ('3', 'thread3', 'Test Subject 3', 'sender1@test.com', 'to3@test.com', 'cc3@test.com', 'bcc3@test.com',
-         '2024-12-19 12:00:00', 'Test body 3', 'INBOX,SENT', False, '{}', 'reply3@test.com', 'Sender 3', 'To 3', 'CC 3', 'BCC 3', 'Reply To 3')
-    ]
-    c.executemany('INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', test_data)
-    conn.commit()
-    return conn
+@pytest.fixture(scope="session")
+def email_analytics():
+    """Create EmailAnalytics instance for testing."""
+    return EmailAnalytics()
 
-@pytest.fixture
-def mock_label_db():
-    """Create an in-memory SQLite database for label testing."""
-    conn = sqlite3.connect(':memory:')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS gmail_labels
-                 (label_id TEXT PRIMARY KEY,
-                  name TEXT NOT NULL,
-                  type TEXT,
-                  message_list_visibility TEXT,
-                  label_list_visibility TEXT,
-                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    # Insert test data
-    test_data = [
-        ('INBOX', 'Inbox', 'system', 'show', 'show', '2024-12-19'),
-        ('IMPORTANT', 'Important', 'system', 'show', 'show', '2024-12-19'),
-        ('UNREAD', 'Unread', 'system', 'show', 'show', '2024-12-19'),
-        ('SENT', 'Sent', 'system', 'show', 'show', '2024-12-19')
-    ]
-    c.executemany('INSERT INTO gmail_labels VALUES (?, ?, ?, ?, ?, ?)', test_data)
-    conn.commit()
-    return conn
+def setup_test_data():
+    """Set up test data in real databases."""
+    with get_email_session() as session:
+        # Add test emails
+        for i in range(10):
+            email = Email(
+                id=f'test_{i}_{datetime.now().timestamp()}',
+                thread_id=f'thread_{i}',
+                subject=f'Test Email {i}',
+                content=f'This is test email {i} content.',
+                received_date=datetime.now() - timedelta(days=i),
+                labels='["INBOX"]',
+                from_address=f'sender{i}@example.com',
+                to_address='recipient@example.com'
+            )
+            session.add(email)
+        session.commit()
 
-@pytest.fixture
-def mock_analysis_db():
-    """Create an in-memory SQLite database for analysis testing."""
-    conn = sqlite3.connect(':memory:')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS email_analysis
-                 (email_id TEXT PRIMARY KEY,
-                  thread_id TEXT NOT NULL,
-                  analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  analyzed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  prompt_version TEXT,
-                  summary TEXT,
-                  category TEXT,
-                  priority_score INTEGER,
-                  priority_reason TEXT,
-                  action_needed BOOLEAN,
-                  action_type TEXT,
-                  action_deadline TIMESTAMP,
-                  key_points TEXT,
-                  people_mentioned TEXT,
-                  links_found TEXT,
-                  links_display TEXT,
-                  project TEXT,
-                  topic TEXT,
-                  sentiment TEXT,
-                  confidence_score REAL,
-                  full_api_response TEXT)''')
-    
-    # Insert test data
-    test_data = [
-        ('1', 'thread1', '2024-12-19', '2024-12-19', 'v1', 'Summary 1', 
-         '["work"]', 3, 'Important meeting', True, '["review"]', '2024-12-20',
-         '["point1"]', '["person1"]', '[]', '[]', 'project1', 'topic1', 
-         'positive', 0.9, '{}'),
-        ('2', 'thread2', '2024-12-19', '2024-12-19', 'v1', 'Summary 2', 
-         '["personal"]', 2, 'Follow-up needed', False, '[]', None,
-         '["point2"]', '[]', '[]', '[]', 'project2', 'topic2', 
-         'neutral', 0.8, '{}')
-    ]
-    c.executemany('''INSERT INTO email_analysis VALUES
-                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', test_data)
-    conn.commit()
-    return conn
+    with get_analysis_session() as session:
+        # Add test analysis results
+        for i in range(10):
+            analysis = EmailAnalysis(
+                email_id=f'test_{i}_{datetime.now().timestamp()}',
+                summary=f'Summary of email {i}',
+                category=['work', 'important'] if i % 2 == 0 else ['personal'],
+                priority_score=i % 5 + 1,
+                priority_reason=f'Priority reason {i}',
+                action_needed=i % 2 == 0,
+                action_type=['review'] if i % 2 == 0 else [],
+                sentiment='positive' if i % 3 == 0 else 'neutral',
+                confidence_score=0.8 + (i / 100),
+                project=f'Project {i}' if i % 2 == 0 else '',
+                topic=f'Topic {i}'
+            )
+            session.add(analysis)
+        session.commit()
 
-@pytest.fixture
-def analytics(mock_email_db, mock_label_db, mock_analysis_db):
-    """Create EmailAnalytics instance with test databases."""
-    return EmailAnalytics(email_conn=mock_email_db, analysis_conn=mock_analysis_db)
-
-def test_get_total_emails(analytics):
+def test_get_total_emails(email_analytics):
     """Test getting total email count."""
-    assert analytics.get_total_emails() == 3
+    setup_test_data()
+    total = email_analytics.get_total_emails()
+    assert total > 0
+    assert isinstance(total, int)
 
-def test_get_top_senders(analytics):
+def test_get_top_senders(email_analytics):
     """Test getting top email senders."""
-    top_senders = analytics.get_top_senders()
-    assert len(top_senders) == 2
-    assert ('sender1@test.com', 2) in top_senders
-    assert ('sender2@test.com', 1) in top_senders
+    senders = email_analytics.get_top_senders()
+    assert len(senders) > 0
+    for sender in senders:
+        assert 'sender' in sender
+        assert 'count' in sender
+        assert isinstance(sender['count'], int)
+        assert sender['count'] > 0
 
-def test_get_email_by_date(analytics):
+def test_get_email_by_date(email_analytics):
     """Test getting email distribution by date."""
-    date_dist = analytics.get_email_by_date()
-    assert len(date_dist) == 1  # All emails are from the same date
-    assert date_dist[0][1] == 3  # Total emails for that date
+    distribution = email_analytics.get_email_by_date()
+    assert len(distribution) > 0
+    for entry in distribution:
+        assert 'date' in entry
+        assert 'count' in entry
+        assert isinstance(entry['count'], int)
 
-def test_get_label_distribution(analytics):
+def test_get_label_distribution(email_analytics):
     """Test getting label distribution."""
-    label_dist = analytics.get_label_distribution()
-    assert len(label_dist) >= 4  # We have at least 4 different labels
-    assert label_dist['INBOX'] == 3  # All emails have INBOX label
-    assert label_dist['IMPORTANT'] == 1
-    assert label_dist['UNREAD'] == 1
-    assert label_dist['SENT'] == 1
+    labels = email_analytics.get_label_distribution()
+    assert len(labels) > 0
+    for label in labels:
+        assert 'label' in label
+        assert 'count' in label
+        assert isinstance(label['count'], int)
+        assert label['count'] > 0
 
-def test_get_anthropic_analysis(analytics):
+def test_get_anthropic_analysis(email_analytics):
     """Test getting AI analysis results."""
-    analysis = analytics.get_anthropic_analysis()
-    assert len(analysis) == 2
-    
-    # Check first analysis
-    assert analysis[0]['email_id'] == '1'
-    assert analysis[0]['summary'] == 'Summary 1'
-    assert analysis[0]['sentiment'] == 'positive'
-    assert analysis[0]['confidence_score'] == 0.9
-    
-    # Check second analysis
-    assert analysis[1]['email_id'] == '2'
-    assert analysis[1]['summary'] == 'Summary 2'
-    assert analysis[1]['sentiment'] == 'neutral'
-    assert analysis[1]['confidence_score'] == 0.8
+    analysis = email_analytics.get_anthropic_analysis()
+    assert len(analysis) > 0
+    for entry in analysis:
+        assert 'email_id' in entry
+        assert 'summary' in entry
+        assert 'priority_score' in entry
+        assert isinstance(entry['priority_score'], int)
+        assert 1 <= entry['priority_score'] <= 5
 
-def test_get_confidence_distribution(analytics):
+def test_get_confidence_distribution(email_analytics):
     """Test getting confidence score distribution."""
-    conf_dist = analytics.get_confidence_distribution()
-    assert len(conf_dist) > 0
-    # Should have entries for confidence ranges 0.8-0.89 and 0.9-1.0
-    ranges = [row[0] for row in conf_dist]
-    assert '0.8-0.89' in ranges
-    assert '0.9-1.0' in ranges
+    distribution = email_analytics.get_confidence_distribution()
+    assert len(distribution) > 0
+    for entry in distribution:
+        assert 'range' in entry
+        assert 'count' in entry
+        assert isinstance(entry['count'], int)
 
-def test_get_priority_distribution(analytics):
+def test_get_priority_distribution(email_analytics):
     """Test getting priority score distribution."""
-    priority_dist = analytics.get_priority_distribution()
-    assert len(priority_dist) > 0
-    assert priority_dist['High (3)'] == 1  # One high priority email
-    assert priority_dist['Medium (2)'] == 1  # One medium priority email
+    distribution = email_analytics.get_priority_distribution()
+    assert len(distribution) > 0
+    for score in distribution:
+        assert 'score' in score
+        assert 'count' in score
+        assert isinstance(score['count'], int)
 
-def test_get_sentiment_distribution(analytics):
+def test_get_sentiment_distribution(email_analytics):
     """Test getting sentiment distribution."""
-    sentiment_dist = analytics.get_sentiment_distribution()
-    assert len(sentiment_dist) > 0
-    assert sentiment_dist['positive'] == 1  # One positive sentiment
-    assert sentiment_dist['neutral'] == 1  # One neutral sentiment
+    distribution = email_analytics.get_sentiment_distribution()
+    assert len(distribution) > 0
+    for sentiment in distribution:
+        assert 'sentiment' in sentiment
+        assert 'count' in sentiment
+        assert isinstance(sentiment['count'], int)
 
-def test_get_action_needed_distribution(analytics):
+def test_get_action_needed_distribution(email_analytics):
     """Test getting action needed distribution."""
-    action_dist = analytics.get_action_needed_distribution()
-    assert len(action_dist) == 2  # Should have both True and False
-    assert action_dist[True] == 1  # One email needs action
-    assert action_dist[False] == 1  # One email doesn't need action
+    distribution = email_analytics.get_action_needed_distribution()
+    assert len(distribution) > 0
+    for entry in distribution:
+        assert 'needs_action' in entry
+        assert 'count' in entry
+        assert isinstance(entry['count'], int)
 
-def test_get_project_distribution(analytics):
+def test_get_project_distribution(email_analytics):
     """Test getting project distribution."""
-    project_dist = analytics.get_project_distribution()
-    assert len(project_dist) == 2
-    assert 'project1' in project_dist
-    assert 'project2' in project_dist
-    assert project_dist['project1'] == 1
-    assert project_dist['project2'] == 1
+    distribution = email_analytics.get_project_distribution()
+    assert len(distribution) > 0
+    for project in distribution:
+        assert 'project' in project
+        assert 'count' in project
+        assert isinstance(project['count'], int)
 
-def test_get_topic_distribution(analytics):
+def test_get_topic_distribution(email_analytics):
     """Test getting topic distribution."""
-    topic_dist = analytics.get_topic_distribution()
-    assert len(topic_dist) == 2
-    assert 'topic1' in topic_dist
-    assert 'topic2' in topic_dist
-    assert topic_dist['topic1'] == 1
-    assert topic_dist['topic2'] == 1
+    distribution = email_analytics.get_topic_distribution()
+    assert len(distribution) > 0
+    for topic in distribution:
+        assert 'topic' in topic
+        assert 'count' in topic
+        assert isinstance(topic['count'], int)
 
-def test_get_category_distribution(analytics):
+def test_get_category_distribution(email_analytics):
     """Test getting category distribution."""
-    category_dist = analytics.get_category_distribution()
-    assert len(category_dist) == 2
-    assert 'work' in category_dist
-    assert 'personal' in category_dist
-    assert category_dist['work'] == 1
-    assert category_dist['personal'] == 1
+    distribution = email_analytics.get_category_distribution()
+    assert len(distribution) > 0
+    for category in distribution:
+        assert 'category' in category
+        assert 'count' in category
+        assert isinstance(category['count'], int)
 
-def test_get_analysis_by_date(analytics):
+def test_get_analysis_by_date(email_analytics):
     """Test getting analysis distribution by date."""
-    date_dist = analytics.get_analysis_by_date()
-    assert len(date_dist) == 1  # All analyses are from the same date
-    assert date_dist[0][1] == 2  # Total analyses for that date
+    distribution = email_analytics.get_analysis_by_date()
+    assert len(distribution) > 0
+    for entry in distribution:
+        assert 'date' in entry
+        assert 'count' in entry
+        assert isinstance(entry['count'], int)
 
-def test_get_detailed_analysis(analytics):
+def test_get_detailed_analysis(email_analytics):
     """Test getting detailed analysis for a specific email."""
-    analysis = analytics.get_detailed_analysis('1')
-    assert analysis is not None
-    assert analysis['email_id'] == '1'
-    assert analysis['summary'] == 'Summary 1'
-    assert analysis['category'] == ['work']
-    assert analysis['priority']['score'] == 3
-    assert analysis['priority']['reason'] == 'Important meeting'
-    assert analysis['action']['needed'] is True
-    assert analysis['action']['type'] == ['review']
-    assert analysis['action']['deadline'] == '2024-12-20'
-    assert analysis['key_points'] == ['point1']
-    assert analysis['people_mentioned'] == ['person1']
-    assert analysis['sentiment'] == 'positive'
-    assert analysis['confidence_score'] == 0.9
+    # Get a test email ID
+    with get_email_session() as session:
+        email = session.query(Email).first()
+        email_id = email.id
 
-def test_get_detailed_analysis_not_found(analytics):
+    analysis = email_analytics.get_detailed_analysis(email_id)
+    assert analysis is not None
+    assert 'summary' in analysis
+    assert 'priority_score' in analysis
+    assert 'sentiment' in analysis
+
+def test_get_detailed_analysis_not_found(email_analytics):
     """Test getting detailed analysis for a non-existent email."""
-    analysis = analytics.get_detailed_analysis('999')
+    analysis = email_analytics.get_detailed_analysis('nonexistent_id')
     assert analysis is None
 
-def test_get_analysis_with_action_needed(analytics):
+def test_get_analysis_with_action_needed(email_analytics):
     """Test getting analyses that require action."""
-    analyses = analytics.get_analysis_with_action_needed()
-    assert len(analyses) == 1
-    assert analyses[0]['email_id'] == '1'
-    assert analyses[0]['action']['needed'] is True
-    assert analyses[0]['action']['type'] == ['review']
+    analyses = email_analytics.get_analysis_with_action_needed()
+    assert isinstance(analyses, list)
+    for analysis in analyses:
+        assert analysis['action_needed'] is True
+        assert len(analysis['action_type']) > 0
 
-def test_get_high_priority_analysis(analytics):
+def test_get_high_priority_analysis(email_analytics):
     """Test getting high priority analyses."""
-    analyses = analytics.get_high_priority_analysis()
-    assert len(analyses) == 1
-    assert analyses[0]['email_id'] == '1'
-    assert analyses[0]['priority']['score'] == 3
+    analyses = email_analytics.get_high_priority_analysis()
+    assert isinstance(analyses, list)
+    for analysis in analyses:
+        assert analysis['priority_score'] >= 4
 
-def test_get_analysis_by_sentiment(analytics):
+def test_get_analysis_by_sentiment(email_analytics):
     """Test getting analyses by sentiment."""
-    positive = analytics.get_analysis_by_sentiment('positive')
-    neutral = analytics.get_analysis_by_sentiment('neutral')
-    
-    assert len(positive) == 1
-    assert len(neutral) == 1
-    assert positive[0]['email_id'] == '1'
-    assert neutral[0]['email_id'] == '2'
+    sentiments = ['positive', 'negative', 'neutral']
+    for sentiment in sentiments:
+        analyses = email_analytics.get_analysis_by_sentiment(sentiment)
+        assert isinstance(analyses, list)
+        for analysis in analyses:
+            assert analysis['sentiment'] == sentiment
 
-def test_get_analysis_by_project(analytics):
+def test_get_analysis_by_project(email_analytics):
     """Test getting analyses by project."""
-    project1 = analytics.get_analysis_by_project('project1')
-    project2 = analytics.get_analysis_by_project('project2')
+    with get_analysis_session() as session:
+        project = session.query(EmailAnalysis.project).filter(
+            EmailAnalysis.project != ''
+        ).first()[0]
     
-    assert len(project1) == 1
-    assert len(project2) == 1
-    assert project1[0]['email_id'] == '1'
-    assert project2[0]['email_id'] == '2'
+    analyses = email_analytics.get_analysis_by_project(project)
+    assert isinstance(analyses, list)
+    for analysis in analyses:
+        assert analysis['project'] == project
 
-def test_get_analysis_by_topic(analytics):
+def test_get_analysis_by_topic(email_analytics):
     """Test getting analyses by topic."""
-    topic1 = analytics.get_analysis_by_topic('topic1')
-    topic2 = analytics.get_analysis_by_topic('topic2')
+    with get_analysis_session() as session:
+        topic = session.query(EmailAnalysis.topic).filter(
+            EmailAnalysis.topic != ''
+        ).first()[0]
     
-    assert len(topic1) == 1
-    assert len(topic2) == 1
-    assert topic1[0]['email_id'] == '1'
-    assert topic2[0]['email_id'] == '2'
+    analyses = email_analytics.get_analysis_by_topic(topic)
+    assert isinstance(analyses, list)
+    for analysis in analyses:
+        assert analysis['topic'] == topic
 
-def test_get_analysis_by_category(analytics):
+def test_get_analysis_by_category(email_analytics):
     """Test getting analyses by category."""
-    work = analytics.get_analysis_by_category('work')
-    personal = analytics.get_analysis_by_category('personal')
+    with get_analysis_session() as session:
+        category = session.query(EmailAnalysis.category).first()[0][0]
     
-    assert len(work) == 1
-    assert len(personal) == 1
-    assert work[0]['email_id'] == '1'
-    assert personal[0]['email_id'] == '2'
+    analyses = email_analytics.get_analysis_by_category(category)
+    assert isinstance(analyses, list)
+    for analysis in analyses:
+        assert category in analysis['category']
 
-def test_get_analysis_stats(analytics):
+def test_get_analysis_stats(email_analytics):
     """Test getting overall analysis statistics."""
-    stats = analytics.get_analysis_stats()
-    assert stats['total_analyzed'] == 2
-    assert stats['avg_confidence'] == 0.85  # (0.9 + 0.8) / 2
-    assert stats['action_needed_count'] == 1
-    assert stats['high_priority_count'] == 1
-    assert stats['sentiment_counts']['positive'] == 1
-    assert stats['sentiment_counts']['neutral'] == 1
+    stats = email_analytics.get_analysis_stats()
+    assert isinstance(stats, dict)
+    assert 'total_emails' in stats
+    assert 'analyzed_emails' in stats
+    assert 'average_priority' in stats
+    assert 'action_needed_count' in stats

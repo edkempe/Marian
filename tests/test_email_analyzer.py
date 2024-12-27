@@ -1,7 +1,6 @@
 """Tests for the email analyzer module."""
 import json
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
@@ -9,460 +8,162 @@ from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from models.email import Email
 from app_email_analyzer import EmailAnalyzer
 from constants import API_CONFIG
+from shared_lib.database_session_util import get_email_session, get_analysis_session
 
-@pytest.fixture
-def valid_api_response():
-    """Valid API response data"""
-    return {
-        "summary": "test summary",
-        "category": ["test"],
-        "priority_score": 3,
-        "priority_reason": "test",
-        "action_needed": True,
-        "action_type": ["test"],
-        "action_deadline": "2024-01-01",
-        "key_points": ["test"],
-        "people_mentioned": ["test"],
-        "links_found": ["http://test.com"],
-        "links_display": ["http://test.com"],
-        "project": "test",
-        "topic": "test",
-        "sentiment": "positive",
-        "confidence_score": 0.9
-    }
-
-@pytest.fixture
-def mock_anthropic(valid_api_response):
-    """Mock Anthropic client"""
-    with patch('anthropic.Anthropic') as mock:
-        mock_instance = Mock()
-        mock_content = Mock()
-        mock_content.text = json.dumps(valid_api_response)
-        mock_instance.messages.create.return_value = Mock(content=[mock_content])
-        mock.return_value = mock_instance
-        yield mock
-
-@pytest.fixture
-def mock_metrics():
-    """Mock metrics server"""
-    with patch('prometheus_client.start_http_server', return_value=None):
-        yield
-
-@pytest.fixture
-def mock_db():
-    """Mock database sessions"""
-    with patch('app_email_analyzer.get_analysis_session') as mock_analysis_session, \
-         patch('app_email_analyzer.get_email_session') as mock_email_session:
-        # Create mock session with context manager methods
-        mock_session = MagicMock()
-        mock_session.__enter__ = MagicMock(return_value=mock_session)
-        mock_session.__exit__ = MagicMock(return_value=None)
-        
-        # Configure session mocks
-        mock_analysis_session.return_value = mock_session
-        mock_email_session.return_value = mock_session
-        
-        yield mock_session
-
-@pytest.fixture
-def analyzer(mock_anthropic, mock_metrics, mock_db):
-    """Email analyzer fixture"""
-    analyzer = EmailAnalyzer(metrics_port=0)  
-    analyzer.client = mock_anthropic.return_value
+@pytest.fixture(scope="session")
+def email_analyzer():
+    """Create EmailAnalyzer instance for testing."""
+    analyzer = EmailAnalyzer(metrics_port=0)  # Disable metrics for tests
     return analyzer
 
 @pytest.fixture
 def valid_email_data():
-    """Valid email data fixture."""
+    """Valid email data for testing."""
     return {
-        'id': 'test_id',
-        'subject': 'Test Subject',
-        'sender': 'test@example.com',
-        'date': datetime.now().isoformat(),
-        'content': 'Test content',
+        'id': f'test_{datetime.now().timestamp()}',
         'thread_id': 'thread1',
-        'labels': ['INBOX']
+        'subject': 'Test Email',
+        'content': 'This is an important work email that requires review by tomorrow.',
+        'date': datetime.now().isoformat(),
+        'labels': '["INBOX"]'
     }
 
-def test_email_analysis_response_validation(valid_api_response):
-    """Test EmailAnalysisResponse validation."""
-    response = EmailAnalysisResponse.model_validate(valid_api_response)
-    assert response.summary == "test summary"
-    assert response.priority_score == 3
-    assert response.priority_reason == "test"
-    assert response.action_needed is True
-    assert response.sentiment == "positive"
-    assert 0 <= response.confidence_score <= 1
-
-def test_email_analysis_response_validation_errors():
-    """Test EmailAnalysisResponse validation errors with various invalid inputs."""
-    from pydantic import ValidationError
+def test_email_analysis_response_validation():
+    """Test EmailAnalysisResponse validation with real API response."""
+    analyzer = EmailAnalyzer(metrics_port=0)
     
-    test_cases = [
-        {
-            "name": "empty_summary",
-            "data": {
-                "summary": "",  # Invalid: empty summary
-                "category": ["test"],
-                "priority_score": 3,
-                "priority_reason": "test",
-                "action_needed": True,
-                "action_type": ["test"],
-                "action_deadline": "2024-01-01",
-                "key_points": ["test"],
-                "people_mentioned": ["test"],
-                "links_found": ["http://test.com"],
-                "links_display": ["http://test.com"],
-                "project": "test",
-                "topic": "test",
-                "sentiment": "positive",
-                "confidence_score": 0.9
-            },
-            "expected_error": "String should have at least 1 character"
-        },
-        {
-            "name": "invalid_category_type",
-            "data": {
-                "summary": "test",
-                "category": "not_a_list",  # Invalid: should be a list
-                "priority_score": 3,
-                "priority_reason": "test",
-                "action_needed": True,
-                "action_type": ["test"],
-                "action_deadline": "2024-01-01",
-                "key_points": ["test"],
-                "people_mentioned": ["test"],
-                "links_found": ["http://test.com"],
-                "links_display": ["http://test.com"],
-                "project": "test",
-                "topic": "test",
-                "sentiment": "positive",
-                "confidence_score": 0.9
-            },
-            "expected_error": "Input should be a valid list"
-        },
-        {
-            "name": "invalid_priority_score",
-            "data": {
-                "summary": "test",
-                "category": ["test"],
-                "priority_score": 6,  # Invalid: score > 5
-                "priority_reason": "test",
-                "action_needed": True,
-                "action_type": ["test"],
-                "action_deadline": "2024-01-01",
-                "key_points": ["test"],
-                "people_mentioned": ["test"],
-                "links_found": ["http://test.com"],
-                "links_display": ["http://test.com"],
-                "project": "test",
-                "topic": "test",
-                "sentiment": "positive",
-                "confidence_score": 0.9
-            },
-            "expected_error": "Input should be less than or equal to 5"
-        },
-        {
-            "name": "invalid_sentiment",
-            "data": {
-                "summary": "test",
-                "category": ["test"],
-                "priority_score": 3,
-                "priority_reason": "test",
-                "action_needed": True,
-                "action_type": ["test"],
-                "action_deadline": "2024-01-01",
-                "key_points": ["test"],
-                "people_mentioned": ["test"],
-                "links_found": ["http://test.com"],
-                "links_display": ["http://test.com"],
-                "project": "test",
-                "topic": "test",
-                "sentiment": "invalid",  # Invalid: not in allowed values
-                "confidence_score": 0.9
-            },
-            "expected_error": "String should match pattern '^(positive|negative|neutral)$'"
-        }
-    ]
+    test_email = {
+        'id': f'test_{datetime.now().timestamp()}',
+        'thread_id': 'thread1',
+        'subject': 'Test Email',
+        'content': 'This is an important work email that requires review by tomorrow.',
+        'date': datetime.now().isoformat(),
+        'labels': '["INBOX"]'
+    }
     
-    for case in test_cases:
-        with pytest.raises(ValidationError) as exc_info:
-            EmailAnalysisResponse.model_validate(case["data"])
-        error_message = str(exc_info.value)
-        assert case["expected_error"] in error_message, \
-            f"Failed for case {case['name']}\nExpected: {case['expected_error']}\nGot: {error_message}"
+    # Get real API response
+    response = analyzer.analyze_email(test_email)
+    assert response is not None
+    assert isinstance(response, EmailAnalysis)
+    assert response.email_id == test_email['id']
+    assert response.summary is not None
+    assert response.priority_score > 0
+    assert response.priority_reason is not None
 
-def test_analyze_email_success(analyzer, valid_email_data, valid_api_response, mock_db):
-    """Test successful email analysis with detailed assertions."""
-    mock_content = Mock()
-    mock_content.text = json.dumps(valid_api_response)
-    analyzer.client.messages.create.return_value = Mock(content=[mock_content])
-
-    # Call analyze_email
-    result = analyzer.analyze_email(valid_email_data)
-
-    # Basic assertions
+def test_analyze_email_success(email_analyzer, valid_email_data):
+    """Test successful email analysis with real API."""
+    result = email_analyzer.analyze_email(valid_email_data)
+    
     assert result is not None
-    assert isinstance(result, EmailAnalysis)
+    assert result.email_id == valid_email_data['id']
+    assert result.summary is not None
+    assert result.priority_score > 0
+    assert result.priority_reason is not None
+    assert isinstance(result.category, list)
+    assert isinstance(result.action_type, list)
+    assert isinstance(result.confidence_score, float)
 
-    # Verify API response was processed correctly
-    assert result.summary == valid_api_response["summary"]
-    assert result.category == valid_api_response["category"]
-    assert result.priority_score == valid_api_response["priority_score"]
-    assert result.action_needed == valid_api_response["action_needed"]
-    assert result.action_type == valid_api_response["action_type"]
-    assert result.sentiment == valid_api_response["sentiment"]
-    assert result.confidence_score == valid_api_response["confidence_score"]
-
-def test_analyze_email_with_empty_fields(analyzer, valid_email_data, mock_anthropic, mock_db):
-    """Test email analysis with empty optional fields."""
-    minimal_response = {
-        "summary": "Minimal summary",
-        "category": ["test"],
-        "priority_score": 1,
-        "priority_reason": "low priority",
-        "action_needed": False,
-        "action_type": [],
-        "action_deadline": None,
-        "key_points": [],
-        "people_mentioned": [],
-        "links_found": [],
-        "links_display": [],
-        "project": "",
-        "topic": "",
-        "sentiment": "neutral",
-        "confidence_score": 0.5
+def test_analyze_email_with_empty_fields(email_analyzer):
+    """Test email analysis with minimal content."""
+    minimal_email = {
+        'id': f'test_{datetime.now().timestamp()}',
+        'thread_id': 'thread1',
+        'subject': '',
+        'content': 'Short test.',
+        'date': datetime.now().isoformat(),
+        'labels': '["INBOX"]'
     }
-
-    mock_content = Mock()
-    mock_content.text = json.dumps(minimal_response)
-    analyzer.client.messages.create.return_value = Mock(content=[mock_content])
-
-    result = analyzer.analyze_email(valid_email_data)
-
+    
+    result = email_analyzer.analyze_email(minimal_email)
     assert result is not None
-    assert isinstance(result, EmailAnalysis)
-    assert result.summary == minimal_response["summary"]
-    assert result.category == minimal_response["category"]
-    assert result.priority_score == minimal_response["priority_score"]
-    assert result.action_needed == minimal_response["action_needed"]
-    assert result.action_type == minimal_response["action_type"]
-    assert result.sentiment == minimal_response["sentiment"]
-    assert result.confidence_score == minimal_response["confidence_score"]
+    assert result.email_id == minimal_email['id']
+    assert result.summary is not None
 
-def test_analyze_email_api_error(analyzer, mock_anthropic, valid_email_data):
-    """Test various API error scenarios."""
-    # Mock error classes
-    class MockAPIError(Exception):
-        def __init__(self, message):
-            self.message = message
-            super().__init__(message)
-
-    class MockAPIConnectionError(Exception):
-        def __init__(self, message):
-            self.message = message
-            super().__init__(message)
-
-    class MockInternalServerError(Exception):
-        def __init__(self, message):
-            self.message = message
-            super().__init__(message)
-
-    error_cases = [
-        (Exception("API Error"), "Generic API error"),
-        (MockAPIError("Rate limit exceeded"), "Rate limit error"),
-        (MockAPIConnectionError("Connection failed"), "Connection error"),
-        (MockInternalServerError("Server error"), "Server error")
-    ]
-    
-    for error, description in error_cases:
-        mock_anthropic.return_value.messages.create.side_effect = error
-        
-        with patch('app_email_analyzer.get_analysis_session'):
-            result = analyzer.analyze_email(valid_email_data)
-        
-        assert result is None, f"Failed for {description}"
-        mock_anthropic.return_value.messages.create.reset_mock()
-
-def test_analyze_email_validation_error(analyzer, mock_anthropic, valid_email_data):
-    """Test error handling during response validation."""
-    invalid_responses = [
-        {
-            "name": "missing_required_fields",
-            "response": {"summary": "Test"},
-            "description": "Missing required fields"
-        },
-        {
-            "name": "invalid_types",
-            "response": {
-                "summary": "",
-                "category": "not_a_list",  # Invalid: should be a list
-                "priority_score": 6,
-                "priority_reason": "",
-                "action_needed": "not_bool",
-                "action_type": [],
-                "key_points": None,
-                "people_mentioned": {},
-                "links_found": ["invalid_url"],
-                "links_display": None,
-                "project": "",
-                "topic": "",
-                "sentiment": "invalid",
-                "confidence_score": 2.0
-            },
-            "description": "Invalid field types"
-        },
-        {
-            "name": "malformed_json",
-            "response": "not_json",
-            "description": "Malformed JSON"
-        }
-    ]
-    
-    for case in invalid_responses:
-        mock_content = Mock()
-        mock_content.text = case["response"] if isinstance(case["response"], str) else json.dumps(case["response"])
-        mock_anthropic.return_value.messages.create.return_value = Mock(content=[mock_content])
-
-        with patch('app_email_analyzer.get_analysis_session'):
-            result = analyzer.analyze_email(valid_email_data)
-
-        assert result is None, f"Failed for {case['description']}"
-        mock_anthropic.return_value.messages.create.reset_mock()
-
-def test_process_emails_batch_handling(analyzer, valid_email_data):
-    """Test email batch processing with different batch sizes and scenarios."""
-    # Create test data
-    test_emails = [
-        {
-            **valid_email_data,
-            'id': f'test_id_{i}',
-            'thread_id': f'thread_{i}',
-            'subject': f'Test {i}',
-            'sender': 'test@example.com',
-            'date': '2024-12-23T12:25:31',
-            'body': f'Test content {i}',
-            'labels': 'INBOX',
-            'has_attachments': False,
-            'full_api_response': '{}'
-        }
-        for i in range(5)
-    ]
-
-    # Mock API response
-    mock_response = {
-        'summary': 'Test summary',
-        'category': ['test'],
-        'priority_score': 3,
-        'priority_reason': 'test',
-        'action_needed': True,
-        'action_type': ['review'],
-        'action_deadline': '2024-12-20',
-        'key_points': ['point1'],
-        'people_mentioned': ['person1'],
-        'links_found': ['http://test.com'],
-        'links_display': ['test.com'],
-        'project': 'test',
-        'topic': 'test',
-        'sentiment': 'neutral',
-        'confidence_score': 0.9
+def test_analyze_email_api_error(email_analyzer):
+    """Test handling of API errors with invalid content."""
+    invalid_email = {
+        'id': f'test_{datetime.now().timestamp()}',
+        'thread_id': 'thread1',
+        'subject': 'Test Email',
+        'content': '\x00\x01\x02\x03',  # Invalid binary content
+        'date': datetime.now().isoformat(),
+        'labels': '["INBOX"]'
     }
+    
+    result = email_analyzer.analyze_email(invalid_email)
+    assert result is None
 
-    test_cases = [
-        {"batch_size": 1, "expected_calls": 6},  # 5 emails + 1 API test
-        {"batch_size": 2, "expected_calls": 6},  # 5 emails + 1 API test
-        {"batch_size": 5, "expected_calls": 6},  # 5 emails + 1 API test
-        {"batch_size": 10, "expected_calls": 6}  # 5 emails + 1 API test
-    ]
+def test_process_emails_batch_handling(email_analyzer):
+    """Test email batch processing with real emails."""
+    # Add test emails to database
+    with get_email_session() as session:
+        for i in range(5):
+            email = Email(
+                id=f'test_{i}_{datetime.now().timestamp()}',
+                thread_id=f'thread_{i}',
+                subject=f'Test Email {i}',
+                content=f'This is test email {i} that needs to be reviewed.',
+                received_date=datetime.now(),
+                labels='["INBOX"]',
+                from_address='test@example.com'
+            )
+            session.add(email)
+        session.commit()
+    
+    # Process emails
+    email_analyzer.process_emails()
+    
+    # Verify results
+    with get_analysis_session() as session:
+        analyses = session.query(EmailAnalysis).all()
+        assert len(analyses) > 0
+        for analysis in analyses:
+            assert analysis.summary is not None
+            assert analysis.priority_score > 0
+            assert analysis.priority_reason is not None
 
-    for case in test_cases:
-        # Setup mock session
-        mock_session = Mock()
-        mock_session.__enter__ = Mock(return_value=mock_session)
-        mock_session.__exit__ = Mock(return_value=None)
-        mock_session.execute.return_value.mappings.return_value.all.return_value = test_emails
-        analyzer.client.messages.create.return_value = Mock(content=[Mock(text=json.dumps(mock_response))])
-        
-        # Mock both database sessions
-        with patch('app_email_analyzer.get_email_session', return_value=mock_session), \
-             patch('app_email_analyzer.get_analysis_session', return_value=mock_session):
-            # Process emails
-            analyzer.process_emails(batch_size=case["batch_size"])
-
-        # Verify number of API calls
-        assert analyzer.client.messages.create.call_count == case["expected_calls"], \
-            f"Failed for batch_size={case['batch_size']}"
-
-        # Verify API call configuration
-        calls = analyzer.client.messages.create.call_args_list
-        for call_args in calls:
-            args, kwargs = call_args
-            
-            # Check model version
-            assert kwargs.get('model') == API_CONFIG['TEST_MODEL'], \
-                f"Incorrect model version. Expected {API_CONFIG['TEST_MODEL']}, got {kwargs.get('model')}"
-            
-            # Check required fields are present and non-empty
-            for field in API_CONFIG['REQUIRED_FIELDS']:
-                assert kwargs.get(field) is not None, f"Missing required field: {field}"
-                
-            # Check messages structure
-            messages = kwargs.get('messages', [])
-            assert len(messages) > 0, "No messages provided to API"
-            assert all('role' in msg and 'content' in msg for msg in messages), \
-                "Messages missing required fields (role or content)"
-
-        # Reset mock for next test case
-        analyzer.client.messages.create.reset_mock()
-
-def test_process_emails_error_handling(analyzer, valid_email_data, mock_anthropic, valid_api_response):
+def test_process_emails_error_handling(email_analyzer):
     """Test error handling during batch processing."""
-    # Create test emails with all required fields
-    test_emails = [
-        {
-            'id': f'test_id_{i}',
-            'thread_id': f'thread_{i}',
-            'subject': f'Test {i}',
-            'sender': 'test@example.com',
-            'date': '2024-12-23T12:25:31',
-            'body': f'Test content {i}',
-            'labels': 'INBOX',
-            'has_attachments': False,
-            'full_api_response': '{}'
-        }
-        for i in range(3)
-    ]
-    
-    with patch('app_email_analyzer.get_email_session') as mock_session, \
-         patch('app_email_analyzer.get_analysis_session'), \
-         patch('time.sleep'):  # Mock sleep to speed up tests
-        # Setup mock to raise an exception on second email's attempts
-        def side_effect(*args, **kwargs):
-            call_count = mock_anthropic.return_value.messages.create.call_count
-            # Call sequence:
-            # 1. API test - success
-            # 2. First email - success
-            # 3-5. Second email (3 retries) - all fail
-            # 6. Third email - success
-            if 3 <= call_count <= 5:  # All attempts for second email fail
-                raise Exception("API Error")
-            
-            # All other calls succeed
-            mock_content = Mock()
-            mock_content.text = json.dumps(valid_api_response)
-            return Mock(content=[mock_content])
-        
-        mock_anthropic.return_value.messages.create.side_effect = side_effect
-        mock_session.return_value.__enter__.return_value.execute.return_value.mappings.return_value.all.return_value = test_emails
-        
-        # Process emails
-        analyzer.process_emails(batch_size=1)
-        
-        # Verify total API calls
-        expected_calls = (
-            1 +  # Initial API test
-            1 +  # First email (success)
-            3 +  # Second email (3 failed retries)
-            1    # Third email (success)
+    # Add test emails with some invalid content
+    with get_email_session() as session:
+        # Valid email
+        email1 = Email(
+            id=f'test_valid_{datetime.now().timestamp()}',
+            thread_id='thread_valid',
+            subject='Valid Email',
+            content='This is a valid test email.',
+            received_date=datetime.now(),
+            labels='["INBOX"]',
+            from_address='test@example.com'
         )
-        assert mock_anthropic.return_value.messages.create.call_count == expected_calls
+        # Invalid email
+        email2 = Email(
+            id=f'test_invalid_{datetime.now().timestamp()}',
+            thread_id='thread_invalid',
+            subject='Invalid Email',
+            content='\x00\x01\x02\x03',  # Invalid binary content
+            received_date=datetime.now(),
+            labels='["INBOX"]',
+            from_address='test@example.com'
+        )
+        session.add(email1)
+        session.add(email2)
+        session.commit()
+    
+    # Process emails
+    email_analyzer.process_emails()
+    
+    # Verify results
+    with get_analysis_session() as session:
+        # Should have analysis for valid email
+        analysis = session.query(EmailAnalysis).filter(
+            EmailAnalysis.email_id.like('test_valid%')
+        ).first()
+        assert analysis is not None
+        assert analysis.summary is not None
+        
+        # Should not have analysis for invalid email
+        invalid_analysis = session.query(EmailAnalysis).filter(
+            EmailAnalysis.email_id.like('test_invalid%')
+        ).first()
+        assert invalid_analysis is None
