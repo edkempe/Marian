@@ -1,5 +1,8 @@
 # Marian Development Backlog
 
+**Version:** 1.0.0
+**Status:** Source of truth for project tasks and priorities
+
 ## Workstreams Overview
 ### Email Processing
 **Status**: Active
@@ -1716,3 +1719,6 @@ Short-form matching isn't reliably handling compound concepts and technical abbr
 - [ ] Build A/B testing framework
 
 {{ ... }}
+
+## Version History
+- 1.0.0: Initial backlog covering Email Processing, Catalog/Librarian, and Program Management workstreams

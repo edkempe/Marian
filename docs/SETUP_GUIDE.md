@@ -1,5 +1,8 @@
 # Marian Setup Guide
 
+**Version:** 1.0.0
+**Status:** Active setup and configuration guide
+
 ## Prerequisites
 - Python 3.12.8 or higher
 - Gmail API credentials (`credentials.json`) from Google Cloud Console
@@ -222,8 +225,11 @@ mypy .
 # Commit changes with clear messages
 ```
 
+## Version History
+- 1.0.0: Initial setup guide covering environment setup, configuration, and troubleshooting
+
 ## Additional Resources
 - See `README.md` for project overview
-- Check `CHAT_START.md` for session workflow
+- Check `SESSION_WORKFLOW.md` for development workflow
 - Review `CODE_STANDARDS.md` for coding standards
 - Refer to `docs/BACKLOG.md` for task tracking
