@@ -27,7 +27,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.catalog import CatalogItem, Tag, CatalogTag
 from models.base import Base
-from constants import CATALOG_CONFIG
+from shared_lib.constants import CATALOG_CONFIG
 from shared_lib.logging_util import setup_logging
 from app_catalog import CatalogChat
 

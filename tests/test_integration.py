@@ -19,7 +19,7 @@ from shared_lib.gmail_lib import GmailAPI
 from app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
 from models.email import Email
 from email.utils import parsedate_to_datetime
-from constants import DATABASE_CONFIG, EMAIL_CONFIG
+from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 from sqlalchemy import func
 # test_db_session fixture is automatically available from conftest.py
 

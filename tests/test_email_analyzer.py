@@ -7,7 +7,7 @@ from typing import Dict, Any
 from models.email_analysis import EmailAnalysisResponse, EmailAnalysis
 from models.email import Email
 from app_email_analyzer import EmailAnalyzer
-from constants import API_CONFIG
+from shared_lib.constants import API_CONFIG
 from shared_lib.database_session_util import get_email_session, get_analysis_session
 
 @pytest.fixture(scope="session")

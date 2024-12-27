@@ -9,7 +9,7 @@ from shared_lib.database_session_util import get_email_session, get_analysis_ses
 from app_email_analyzer import EmailAnalyzer
 from shared_lib.gmail_lib import GmailAPI
 from app_get_mail import fetch_emails
-from constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
+from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
 
 @pytest.fixture(scope="session")
 def email_analyzer():

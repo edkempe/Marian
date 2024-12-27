@@ -33,7 +33,7 @@ from models.email import Email
 from models.gmail_label import GmailLabel
 from shared_lib.gmail_lib import GmailAPI
 from shared_lib.database_session_util import get_email_session, get_analysis_session, init_db
-from constants import DATABASE_CONFIG, EMAIL_CONFIG
+from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 # Configuration
 UTC_TZ = pytz.UTC

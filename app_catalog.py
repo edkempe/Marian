@@ -7,11 +7,11 @@ import argparse
 from shared_lib.logging_util import setup_logging
 from shared_lib.anthropic_client_lib import get_anthropic_client
 from shared_lib.chat_log_util import ChatLogger
+from shared_lib.constants import CATALOG_CONFIG, API_CONFIG
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from constants import CATALOG_CONFIG, API_CONFIG
 from typing import List
 import sys
 import logging

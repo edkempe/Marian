@@ -28,7 +28,7 @@ from dateutil import parser
 import numpy as np
 from textblob import TextBlob
 from shared_lib.logging_util import setup_logging, log_error
-from constants import DATABASE_CONFIG, EMAIL_CONFIG
+from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 logger = setup_logging(__name__)
 

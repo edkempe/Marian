@@ -2,7 +2,7 @@
 import pytest
 from app_catalog import CatalogChat
 from models.catalog import CatalogItem, Tag
-from constants import CATALOG_CONFIG
+from shared_lib.constants import CATALOG_CONFIG
 
 def test_semantic_search_disabled():
     """Test that semantic search returns empty list when disabled."""

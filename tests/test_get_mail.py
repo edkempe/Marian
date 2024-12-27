@@ -10,7 +10,7 @@ from app_get_mail import (
     get_newest_email_date, count_emails,
     list_labels
 )
-from constants import DATABASE_CONFIG, API_CONFIG
+from shared_lib.constants import DATABASE_CONFIG, API_CONFIG
 
 @pytest.fixture
 def mock_gmail_service():

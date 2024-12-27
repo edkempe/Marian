@@ -3,7 +3,7 @@
 import pytest
 from app_catalog import CatalogChat
 from models.catalog import CatalogItem
-from constants import CATALOG_CONFIG, API_CONFIG
+from shared_lib.constants import CATALOG_CONFIG, API_CONFIG
 from tests.test_data.semantic_test_data import get_test_items, get_similar_titles
 
 @pytest.fixture(scope="session", autouse=True)
