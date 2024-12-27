@@ -1,4 +1,22 @@
-"""Scalability utilities for email analysis system."""
+"""Performance and scalability utilities for the email analysis system.
+
+This module provides utilities for improving system performance and scalability:
+
+1. Caching: Redis-based caching to reduce repeated computations
+2. Rate Limiting: Protect APIs and resources from overuse
+3. Circuit Breaking: Prevent cascade failures in distributed systems
+4. Performance Metrics: Monitor system performance using Prometheus
+
+Future Use:
+- Will be integrated when implementing API rate limiting for external services
+- Will add caching for frequently accessed email analyses
+- Will add performance monitoring for long-running operations
+- Will implement circuit breakers for external API calls
+
+Dependencies:
+- Redis server for caching and rate limiting
+- Prometheus for metrics collection
+"""
 import os
 from functools import wraps
 from typing import Any, Callable, Optional
