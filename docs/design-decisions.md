@@ -72,14 +72,14 @@
 - docs/architecture/*
 
 ### AI Session Management Location (2024-12-24)
-**Decision**: Create root-level AI_SESSION_GUIDE.md for primary AI interaction documentation, separate from session logs.
+**Decision**: Create root-level `ai-sessions.md` for primary AI interaction documentation, separate from session logs.
 
 #### Context
-- Previously had session management spread across multiple files:
-  - CHAT_START.md
-  - CHAT_CLOSE.md
-  - SESSION_WORKFLOW.md
-  - docs/sessions/README.md
+- Need central location for AI interaction guidelines
+- Current documentation spread across:
+  - `session-workflow.md`
+  - Session logs
+  - Various README sections
 
 #### Decision Factors
 1. **Visibility**
@@ -104,11 +104,12 @@
 - Improved documentation findability
 
 #### Implementation
-- Created root-level AI_SESSION_GUIDE.md for primary AI interaction documentation
+- Created root-level `ai-sessions.md` for primary AI interaction documentation
 
 #### Related Documents
-- AI_SESSION_GUIDE.md
-- docs/sessions/* (for logs only)
+- `ai-sessions.md`
+- `session-workflow.md`
+- Individual session logs
 
 ### Task Management Simplification (2024-12-24)
 **Decision**: Remove NEXT_SESSION.md and enhance BACKLOG.md to handle immediate priorities.

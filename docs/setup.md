@@ -230,6 +230,6 @@ mypy .
 
 ## Additional Resources
 - See `README.md` for project overview
-- Check `SESSION_WORKFLOW.md` for development workflow
+- Check `session-workflow.md` for development workflow
 - Review `CODE_STANDARDS.md` for coding standards
 - Refer to `docs/BACKLOG.md` for task tracking

@@ -67,7 +67,7 @@
 
 ### File Naming Conventions
 - Use lowercase with hyphens (kebab-case) for all documentation files
-  - Good: `setup.md`, `api-reference.md`
+  - Good: `getting-started.md`, `api-documentation.md`
   - Avoid: `SETUP_GUIDE.md`, `API_REFERENCE.md`
 - Avoid redundant suffixes like `_GUIDE` or `_MANUAL`
 - Use standard names for common documentation:

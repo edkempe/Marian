@@ -3,7 +3,7 @@
 ## Core Principles
 
 ### AI Session Guide Authority
-The AI Session Guide (defined in `docs/AI_SESSION_GUIDE.md`) is the single source of truth for all AI interaction:
+The AI Session Guide (defined in `docs/ai-session-guide.md`) is the single source of truth for all AI interaction:
 1. **Before Starting a Session**
    - Verify understanding aligns with AI Session Guide
    - Propose changes to AI Session Guide first if needed
