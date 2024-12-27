@@ -199,22 +199,22 @@ def update_next_session(changes: Dict[str, List[str]],
 
 def run_session_start_checks():
     """
-    Run checks from SESSION_WORKFLOW.md and DEV_SESSION_CHECKLIST.md
+    Run checks from session-workflow.md and dev-checklist.md
     """
     # Run environment checks
     python_cmd = get_python_command()
     print("\nEnvironment:")
     print(run_pip_list())
 
-    # Run checks from SESSION_WORKFLOW.md
-    if Path('SESSION_WORKFLOW.md').exists():
-        workflow = Path('SESSION_WORKFLOW.md').read_text()
+    # Run checks from session-workflow.md
+    if Path('session-workflow.md').exists():
+        workflow = Path('session-workflow.md').read_text()
         print("\nSession Workflow:")
         print(workflow)
 
-    # Run checks from DEV_SESSION_CHECKLIST.md
-    if Path('DEV_SESSION_CHECKLIST.md').exists():
-        checklist = Path('DEV_SESSION_CHECKLIST.md').read_text()
+    # Run checks from dev-checklist.md
+    if Path('dev-checklist.md').exists():
+        checklist = Path('dev-checklist.md').read_text()
         print("\nDevelopment Session Checklist:")
         print(checklist)
 

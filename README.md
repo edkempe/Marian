@@ -4,13 +4,13 @@
 **Status:** Active Development
 
 ## Important Process Documents
-**REQUIRED**: Follow the authoritative [Development Session Checklist](docs/DEV_SESSION_CHECKLIST.md) for all development sessions.
+**REQUIRED**: Follow the authoritative [Development Session Checklist](docs/dev-checklist.md) for all development sessions.
 
 **Supporting Documentation**:
-- [Session Workflow Guide](docs/SESSION_WORKFLOW.md)
-- [Project Guidelines](docs/GUIDELINES.md)
-- [Setup Guide](docs/SETUP_GUIDE.md)
-- [Project Design Decisions](docs/DESIGN_DECISIONS.md)
+- [Session Workflow Guide](docs/session-workflow.md)
+- [Project Guidelines](docs/contributing.md)
+- [Setup Guide](docs/setup.md)
+- [Project Design Decisions](docs/design-decisions.md)
 
 The checklist must be followed for every development session, with the supporting documents providing additional context and details as needed.
 
@@ -101,10 +101,10 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 ### Getting Started
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
-3. Configure environment variables (see [Setup Guide](docs/SETUP_GUIDE.md))
+3. Configure environment variables (see [Setup Guide](docs/setup.md))
 4. Run tests: `python -m pytest tests/`
 
-For detailed setup instructions and development guidelines, see the [Setup Guide](docs/SETUP_GUIDE.md).
+For detailed setup instructions and development guidelines, see the [Setup Guide](docs/setup.md).
 
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
@@ -224,26 +224,26 @@ If you encounter any issues while running the application, please refer to our c
   - Living documentation
 
 ### Historical Reference
-- `/archive` - Historical content (see [ARCHIVE_GUIDE.md](docs/ARCHIVE_GUIDE.md))
+- `/archive` - Historical content (see [Archiving Guide](docs/archiving.md))
   - Past versions
   - Superseded content
   - Clear naming convention
   - Single location for all archives
 
 ### Data Protection
-- `/backup` - Disaster recovery only (see [BACKUP_GUIDE.md](docs/BACKUP_GUIDE.md))
+- `/backup` - Disaster recovery only (see [Backup Guide](docs/backup.md))
   - Follows 3-2-1 backup strategy
   - Copies of active files
   - Not for archival purposes
 
 ## Documentation
-- [Database Design](docs/database_design.md): Complete database documentation
-- [API Usage](docs/api_usage.md): Guidelines for using external APIs
+- [Database Design](docs/database-design.md): Complete database documentation
+- [API Usage](docs/api-usage.md): Guidelines for using external APIs
 - [Development Guide](docs/development.md): Setup and development practices
 
 ## Development Standards
 
-- Follow the code standards in `docs/CODE_STANDARDS.md`
+- Follow the code standards in `docs/code-standards.md`
 - Pay special attention to SQLAlchemy model standards to avoid common issues:
   - Use absolute imports for models (`from models.email import Email`)
   - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)
@@ -317,7 +317,7 @@ This process ensures:
    - Use connection pooling
 
 ## Schema Management
-See [Database Design](docs/database_design.md) for complete documentation on:
+See [Database Design](docs/database-design.md) for complete documentation on:
 - Database schema and design decisions
 - ID handling and validation
 - Migration procedures
@@ -502,9 +502,9 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 ## Documentation
 - Project overview and quick start (README.md)
 - Development roadmap (PROJECT_PLAN.md)
-- Design decisions and architecture (docs/DESIGN_DECISIONS.md)
-- Session workflow guide (docs/SESSION_WORKFLOW.md)
-- Project guidelines (docs/GUIDELINES.md)
+- Design decisions and architecture (docs/design-decisions.md)
+- Session workflow guide (docs/session-workflow.md)
+- Project guidelines (docs/contributing.md)
 
 ## Version History
 - 1.0.0: Initial project setup and core documentation
