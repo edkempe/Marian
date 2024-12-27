@@ -8,8 +8,8 @@ This document outlines the testing strategy and guidelines for the Marian projec
 Our testing approach prioritizes reliability and maintainability over theoretical purity. While unit tests with mocks are valuable in some contexts, they can be problematic when testing complex API integrations.
 
 ### 2. Data Model Validation
-- All tests must validate against the data model defined in `database_schema.md`
-- Data model is the single source of truth
+- All tests must validate against the data models defined in the `models/` directory
+- The data models are the single source of truth
 - Test structure follows data model hierarchy:
   1. Schema conformance tests
   2. Data integrity tests
@@ -69,7 +69,7 @@ We deliberately avoid mocking the Claude API for several reasons:
 Located in `tests/test_data_model.py`
 
 #### Schema Validation
-- Verify database schema matches data model
+- Verify data models match schema
 - Validate field types and constraints
 - Check index definitions
 - Confirm foreign key relationships

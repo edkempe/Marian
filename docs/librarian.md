@@ -5,7 +5,7 @@ The Librarian is the AI assistant responsible for managing and organizing inform
 
 ## Foundational Principle: Data Model Authority
 
-The catalog's data model (defined in `docs/database_schema.md`) is the single source of truth that governs all catalog operations:
+The catalog's data model (defined in the `models/` directory) is the single source of truth that governs all catalog operations:
 
 ### Data Model Compliance
 - All catalog entries must conform to the defined schema

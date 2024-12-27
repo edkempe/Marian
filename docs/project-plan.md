@@ -49,7 +49,7 @@ This principle ensures:
 
 Examples of applying this principle:
 1. **Documentation**: Keep all core documentation in root directory
-2. **Backlog Management**: Single `docs/BACKLOG.md` file instead of multiple workstream files
+2. **Backlog Management**: Single `docs/backlog.md` file instead of multiple workstream files
 3. **Configuration**: Centralized constants.py for all settings
 4. **Code Organization**: Flat module structure where possible
 
@@ -194,14 +194,14 @@ The project follows a modular structure with clear separation of concerns:
 ```
 /
 ├── README.md                     # Project overview and quick start
-├── LIBRARIAN_GUIDE.md           # Core catalog operations
-├── AI_SESSION_GUIDE.md          # AI interaction guidelines
-├── SETUP_GUIDE.md               # Environment setup
-├── BACKUP_GUIDE.md              # Backup procedures
-├── ARCHIVE_GUIDE.md             # Archive standards
-├── CODE_STANDARDS.md            # Development standards
-├── TESTING_GUIDE.md             # Testing procedures
-└── DATABASE_SCHEMA.md           # Data model reference
+├── librarian-guide.md           # Core catalog operations
+├── ai-session-guide.md          # AI interaction guidelines
+├── setup.md                     # Environment setup
+├── backup-guide.md              # Backup procedures
+├── archive-guide.md             # Archive standards
+├── code-standards.md            # Development standards
+├── testing-guide.md             # Testing procedures
+└── database-schema.md           # Data model reference
 ```
 
 ### Documentation Content Organization
@@ -216,7 +216,7 @@ The project follows a modular structure with clear separation of concerns:
   - Project principles
   - Architecture decisions
   - Development standards
-- Unified project backlog (`docs/BACKLOG.md`)
+- Unified project backlog (`docs/backlog.md`)
   - Single source of truth for all workstreams
   - Current sprint items
   - Prioritized by workstream
@@ -225,44 +225,44 @@ The project follows a modular structure with clear separation of concerns:
 
 #### Process Guides
 Located in `/docs`:
-- Librarian functionality (LIBRARIAN_GUIDE.md)
+- Librarian functionality (librarian-guide.md)
   - Core catalog operations
   - Usage guidelines
   - Best practices
-- AI session management (AI_SESSION_GUIDE.md)
+- AI session management (ai-session-guide.md)
   - Session protocols
   - AI interaction guidelines
   - Error handling
-- Environment setup (SETUP_GUIDE.md)
+- Environment setup (setup.md)
   - Installation steps
   - Configuration guide
   - Troubleshooting
-- Backup procedures (BACKUP_GUIDE.md)
+- Backup procedures (backup-guide.md)
   - Backup strategies
   - Recovery procedures
   - Verification steps
-- Archive standards (ARCHIVE_GUIDE.md)
+- Archive standards (archive-guide.md)
   - Archival policies
   - File organization
   - Retention guidelines
 
 #### Development Standards
 Located in `/docs`:
-- Code standards (CODE_STANDARDS.md)
+- Code standards (code-standards.md)
   - Python style guidelines
   - Documentation requirements
   - Code review checklist
   - PR templates
-- Testing procedures (TESTING_GUIDE.md)
+- Testing procedures (testing-guide.md)
   - Test organization
   - Coverage requirements
   - Test patterns
   - Integration test guidelines
-- Database schema (DATABASE_SCHEMA.md)
+- Database schema (database-schema.md)
   - Data model implementation
   - Component interactions
   - Security considerations
-- Session workflow (SESSION_WORKFLOW.md)
+- Session workflow (session-workflow.md)
   - Starting a session
   - Development guidelines
   - Closing procedures
@@ -590,7 +590,7 @@ The project is organized into three main workstreams:
 - Development workflow optimization
 
 #### Backlog Management
-- Single unified backlog in `docs/BACKLOG.md`
+- Single unified backlog in `docs/backlog.md`
 - Organized by workstream for clarity
 - Maintains clear priorities across workstreams
 - Tracks dependencies between components
@@ -705,14 +705,14 @@ src/catalog/
 ```
 /
 ├── README.md                     # Project overview and quick start
-├── LIBRARIAN_GUIDE.md           # Core catalog operations
-├── AI_SESSION_GUIDE.md          # AI interaction guidelines
-├── SETUP_GUIDE.md               # Environment setup
-├── BACKUP_GUIDE.md              # Backup procedures
-├── ARCHIVE_GUIDE.md             # Archive standards
-├── CODE_STANDARDS.md            # Development standards
-├── TESTING_GUIDE.md             # Testing procedures
-└── DATABASE_SCHEMA.md           # Data model reference
+├── librarian-guide.md           # Core catalog operations
+├── ai-session-guide.md          # AI interaction guidelines
+├── setup.md                     # Environment setup
+├── backup-guide.md              # Backup procedures
+├── archive-guide.md             # Archive standards
+├── code-standards.md            # Development standards
+├── testing-guide.md             # Testing procedures
+└── database-schema.md           # Data model reference
 ```
 
 ### Documentation Priorities
@@ -727,7 +727,7 @@ src/catalog/
    - Historical records
 
 3. **Session Management**
-   - AI_SESSION_GUIDE.md as primary reference
+   - ai-session-guide.md as primary reference
    - Session logs in docs/sessions/
    - Clear templates and procedures
 
@@ -774,6 +774,6 @@ src/catalog/
 
 ### Documentation
 - Project overview (README.md)
-- Development guidelines (GUIDELINES.md)
-- Session workflow (SESSION_WORKFLOW.md)
-- Design decisions (DESIGN_DECISIONS.md)
+- Development guidelines (contributing.md)
+- Session workflow (session-workflow.md)
+- Design decisions (design-decisions.md)
