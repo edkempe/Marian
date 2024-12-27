@@ -3,44 +3,46 @@ import json
 from collections import Counter, defaultdict
 import pandas as pd
 from tabulate import tabulate
-from datetime import datetime, timezone
-from typing import Dict, List
+from datetime import datetime, timezone, timedelta
+from typing import Dict, List, Optional, Tuple, Any
 from sqlalchemy.orm import Session
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from shared_lib.database_session_util import get_email_session, get_analysis_session, EmailSession, AnalysisSession
 import argparse
 import sqlite3
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, and_, text
 from shared_lib import constants
 from shared_lib.gmail_lib import GmailAPI
 
 class EmailAnalytics:
     """Analytics for email and analysis data."""
     
-    def __init__(self, email_conn=None, analysis_conn=None):
+    def __init__(self, email_conn: Optional[EmailSession] = None, analysis_conn: Optional[AnalysisSession] = None, testing: bool = False):
         """Initialize analytics.
         
         Args:
             email_conn: Optional SQLite connection for email database
             analysis_conn: Optional SQLite connection for analysis database
+            testing: If True, use in-memory SQLite database for testing
         """
         self.email_conn = email_conn
         self.analysis_conn = analysis_conn
+        self.testing = testing
 
-    def _get_email_session(self):
+    def _get_email_session(self) -> EmailSession:
         """Get email database session."""
         if self.email_conn:
             return self.email_conn
-        return get_email_session(constants.DATABASE_CONFIG['email'])
+        return get_email_session(constants.DATABASE_CONFIG['email'], testing=self.testing)
 
-    def _get_analysis_session(self):
+    def _get_analysis_session(self) -> AnalysisSession:
         """Get analysis database session."""
         if self.analysis_conn:
             return self.analysis_conn
-        return get_analysis_session(constants.DATABASE_CONFIG['analysis'])
+        return get_analysis_session(constants.DATABASE_CONFIG['analysis'], testing=self.testing)
 
-    def get_total_emails(self):
+    def get_total_emails(self) -> int:
         """Get total number of emails in the database"""
         with self._get_email_session() as session:
             if hasattr(session, 'query'):
@@ -53,7 +55,7 @@ class EmailAnalytics:
                 result = cursor.fetchone()
                 return result[0] if result else 0
 
-    def _execute_sqlite_query(self, session, query: str, params: tuple = ()) -> List[str]:
+    def _execute_sqlite_query(self, session: sqlite3.Connection, query: str, params: tuple = ()) -> List[str]:
         """Helper method to execute SQLite query and return email IDs."""
         cursor = session.cursor()
         cursor.execute(query, params)
@@ -68,7 +70,7 @@ class EmailAnalytics:
                 analyses.append(analysis)
         return analyses
 
-    def get_top_senders(self, limit=10):
+    def get_top_senders(self, limit: int = 10) -> List[Tuple[str, int]]:
         """Get top email senders by volume"""
         with self._get_email_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -85,7 +87,7 @@ class EmailAnalytics:
                 results = session.query(Email.sender, Email.id).group_by(Email.sender).order_by(Email.id.desc()).limit(limit).all()
                 return [(sender, count) for sender, count in results]
 
-    def get_email_by_date(self):
+    def get_email_by_date(self) -> List[Tuple[str, int]]:
         """Get email distribution by date"""
         with self._get_email_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -125,7 +127,7 @@ class EmailAnalytics:
         
         return dict(label_counts)
 
-    def get_anthropic_analysis(self):
+    def get_anthropic_analysis(self) -> List[Dict]:
         """Get all Anthropic analysis results."""
         analyses = []
         
@@ -149,11 +151,15 @@ class EmailAnalytics:
                     if isinstance(analysis_session, sqlite3.Connection):
                         email_id = result['email_id']
                         cursor = email_session.cursor()
-                        cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+                        cursor.execute("""
+                            SELECT * FROM emails 
+                            WHERE id = ?
+                        """, (email_id,))
                         email_row = cursor.fetchone()
                         if email_row:
                             email_columns = [description[0] for description in cursor.description]
                             email = dict(zip(email_columns, email_row))
+
                             analysis = {
                                 'email_id': result['email_id'],
                                 'thread_id': result['thread_id'],
@@ -220,7 +226,7 @@ class EmailAnalytics:
         
         return analyses
 
-    def get_priority_distribution(self):
+    def get_priority_distribution(self) -> List[Tuple[int, int]]:
         """Get distribution of priority scores."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -233,20 +239,23 @@ class EmailAnalytics:
                 """)
                 results = cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.priority_score).all()
-                results = Counter(score[0] for score in results if score[0] is not None).items()
+                results = session.query(EmailAnalysis.priority_score, func.count(EmailAnalysis.email_id).label('count'))\
+                                .group_by(EmailAnalysis.priority_score)\
+                                .order_by(EmailAnalysis.priority_score)\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
-            priorities = {}
+            priorities = []
             for score, count in results:
                 if score >= 3:
-                    priorities['High (3)'] = priorities.get('High (3)', 0) + count
+                    priorities.append(('High (3)', count))
                 elif score >= 2:
-                    priorities['Medium (2)'] = priorities.get('Medium (2)', 0) + count
+                    priorities.append(('Medium (2)', count))
                 else:
-                    priorities['Low (1)'] = priorities.get('Low (1)', 0) + count
+                    priorities.append(('Low (1)', count))
             return priorities
 
-    def get_sentiment_distribution(self):
+    def get_sentiment_distribution(self) -> List[Tuple[str, int]]:
         """Get distribution of sentiment analysis."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -257,12 +266,14 @@ class EmailAnalytics:
                     WHERE sentiment IS NOT NULL 
                     GROUP BY sentiment
                 """)
-                return dict(cursor.fetchall())
+                return cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.sentiment).all()
-                return dict(Counter(s[0] for s in results if s[0]))
+                results = session.query(EmailAnalysis.sentiment, func.count(EmailAnalysis.email_id).label('count'))\
+                                .group_by(EmailAnalysis.sentiment)\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
-    def get_action_needed_distribution(self):
+    def get_action_needed_distribution(self) -> List[Tuple[bool, int]]:
         """Get distribution of emails needing action."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -272,12 +283,14 @@ class EmailAnalytics:
                     FROM email_analysis 
                     GROUP BY action_needed
                 """)
-                return dict((bool(k), v) for k, v in cursor.fetchall())
+                return [(bool(k), v) for k, v in cursor.fetchall()]
             else:
-                results = session.query(EmailAnalysis.action_needed).all()
-                return dict(Counter(bool(a[0]) for a in results))
+                results = session.query(EmailAnalysis.action_needed, func.count(EmailAnalysis.email_id).label('count'))\
+                                .group_by(EmailAnalysis.action_needed)\
+                                .all()
+                return [(bool(r[0]), r[1]) for r in results]
 
-    def get_project_distribution(self):
+    def get_project_distribution(self) -> List[Tuple[str, int]]:
         """Get distribution of projects."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -288,12 +301,15 @@ class EmailAnalytics:
                     WHERE project IS NOT NULL AND project != ''
                     GROUP BY project
                 """)
-                return dict(cursor.fetchall())
+                return cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.project).filter(EmailAnalysis.project != None, EmailAnalysis.project != '').all()
-                return dict(Counter(p[0] for p in results))
+                results = session.query(EmailAnalysis.project, func.count(EmailAnalysis.email_id).label('count'))\
+                                .filter(EmailAnalysis.project != None, EmailAnalysis.project != '')\
+                                .group_by(EmailAnalysis.project)\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
-    def get_topic_distribution(self):
+    def get_topic_distribution(self) -> List[Tuple[str, int]]:
         """Get distribution of topics."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -304,12 +320,15 @@ class EmailAnalytics:
                     WHERE topic IS NOT NULL AND topic != ''
                     GROUP BY topic
                 """)
-                return dict(cursor.fetchall())
+                return cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.topic).filter(EmailAnalysis.topic != None, EmailAnalysis.topic != '').all()
-                return dict(Counter(t[0] for t in results))
+                results = session.query(EmailAnalysis.topic, func.count(EmailAnalysis.email_id).label('count'))\
+                                .filter(EmailAnalysis.topic != None, EmailAnalysis.topic != '')\
+                                .group_by(EmailAnalysis.topic)\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
-    def get_category_distribution(self):
+    def get_category_distribution(self) -> Dict[str, int]:
         """Get distribution of categories."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -333,7 +352,7 @@ class EmailAnalytics:
         
         return dict(category_counts)
 
-    def get_confidence_distribution(self):
+    def get_confidence_distribution(self) -> List[Tuple[str, int]]:
         """Get distribution of confidence scores."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -346,8 +365,10 @@ class EmailAnalytics:
                 """)
                 results = cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.confidence_score).all()
-                results = Counter(score[0] for score in results if score[0] is not None).items()
+                results = session.query(EmailAnalysis.confidence_score, func.count(EmailAnalysis.email_id).label('count'))\
+                                .group_by(EmailAnalysis.confidence_score)\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
             confidence_dist = []
             for score, count in results:
@@ -364,7 +385,7 @@ class EmailAnalytics:
             
             return confidence_dist
 
-    def get_analysis_by_date(self):
+    def get_analysis_by_date(self) -> List[Tuple[datetime, int]]:
         """Get analysis distribution by date."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -377,11 +398,13 @@ class EmailAnalytics:
                 """)
                 return cursor.fetchall()
             else:
-                results = session.query(EmailAnalysis.analysis_date).all()
-                date_counts = Counter(d[0].date() for d in results)
-                return list(date_counts.items())
+                results = session.query(EmailAnalysis.analysis_date, func.count(EmailAnalysis.email_id).label('count'))\
+                                .group_by(EmailAnalysis.analysis_date)\
+                                .order_by(EmailAnalysis.analysis_date.desc())\
+                                .all()
+                return [(r[0], r[1]) for r in results]
 
-    def get_detailed_analysis(self, email_id):
+    def get_detailed_analysis(self, email_id: str) -> Dict:
         """Get detailed analysis for a specific email."""
         with self._get_analysis_session() as analysis_session:
             if isinstance(analysis_session, sqlite3.Connection):
@@ -483,7 +506,7 @@ class EmailAnalytics:
                 }
                 return analysis
 
-    def get_analysis_by_category(self, category):
+    def get_analysis_by_category(self, category: str) -> List[Dict]:
         """Get all analyses with a specific category."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -506,7 +529,7 @@ class EmailAnalytics:
                         matching_ids.append(result.email_id)
                 return self._get_analyses_from_ids(matching_ids)
 
-    def get_analysis_stats(self):
+    def get_analysis_stats(self) -> Dict[str, Any]:
         """Get overall analysis statistics."""
         with self._get_analysis_session() as session:
             if isinstance(session, sqlite3.Connection):
@@ -708,7 +731,7 @@ class EmailAnalytics:
             'full_api_response': analysis.full_api_response
         }
 
-    def generate_report(self):
+    def generate_report(self) -> Dict:
         """Generate a summary report of email data.
         
         Returns:
@@ -748,7 +771,7 @@ class EmailAnalytics:
 
             return report
 
-    def print_analysis_report(self):
+    def print_analysis_report(self) -> None:
         """Print a comprehensive analysis report."""
         print("\n=== Email Analysis Report ===\n")
         
@@ -759,13 +782,13 @@ class EmailAnalytics:
         # Priority Distribution
         print("\nPriority Distribution:")
         priorities = self.get_priority_distribution()
-        for score, count in priorities.items():
+        for score, count in priorities:
             print(f"  {score}: {count} emails ({count/total*100:.1f}%)")
         
         # Action Types
         print("\nAction Type Distribution:")
         actions = self.get_action_needed_distribution()
-        for action, count in actions.items():
+        for action, count in actions:
             print(f"  {action}: {count} emails")
         
         # Categories
@@ -777,7 +800,7 @@ class EmailAnalytics:
         # Sentiment
         print("\nSentiment Distribution:")
         sentiments = self.get_sentiment_distribution()
-        for sentiment, count in sentiments.items():
+        for sentiment, count in sentiments:
             print(f"  {sentiment}: {count} emails ({count/total*100:.1f}%)")
         
         # Topic Distribution
@@ -785,7 +808,7 @@ class EmailAnalytics:
         topics = self.get_topic_distribution()
         if topics:
             print(tabulate(
-                [[topic, count] for topic, count in topics.items()],
+                [[topic, count] for topic, count in topics],
                 headers=['Topic', 'Count'],
                 tablefmt='pipe'
             ))
@@ -796,7 +819,7 @@ class EmailAnalytics:
         projects = self.get_project_distribution()
         if projects:
             print(tabulate(
-                [[project, count] for project, count in projects.items()],
+                [[project, count] for project, count in projects],
                 headers=['Project', 'Count'],
                 tablefmt='pipe'
             ))
@@ -827,7 +850,7 @@ class EmailAnalytics:
                         print(f"Action Items: {', '.join(action_items)}")
                 print("-" * 80 + "\n")
 
-    def show_basic_stats(self):
+    def show_basic_stats(self) -> None:
         """Show basic email statistics."""
         print("\nBasic Email Statistics:")
         print(f"Total Emails: {self.get_total_emails()}")
@@ -835,25 +858,25 @@ class EmailAnalytics:
         print(f"Email Distribution by Date: {self.get_email_by_date()}")
         print(f"Label Distribution: {self.get_label_distribution()}")
 
-    def show_top_senders(self):
+    def show_top_senders(self) -> None:
         """Show top email senders."""
         print("\nTop Email Senders:")
         top_senders = self.get_top_senders()
         print(tabulate(top_senders, headers=['Sender', 'Count'], tablefmt='psql'))
 
-    def show_email_distribution(self):
+    def show_email_distribution(self) -> None:
         """Show email distribution by date."""
         print("\nEmail Distribution by Date:")
         date_dist = self.get_email_by_date()
         print(tabulate(date_dist, headers=['Date', 'Count'], tablefmt='psql'))
 
-    def show_label_distribution(self):
+    def show_label_distribution(self) -> None:
         """Show label distribution."""
         print("\nLabel Distribution:")
         label_dist = self.get_label_distribution()
         print(tabulate(label_dist.items(), headers=['Label', 'Count'], tablefmt='psql'))
 
-    def show_ai_analysis_summary(self):
+    def show_ai_analysis_summary(self) -> None:
         """Show AI analysis summary."""
         print("\nAI Analysis Summary:")
         analysis_data = self.get_anthropic_analysis()
@@ -870,13 +893,13 @@ class EmailAnalytics:
                     print(f"Action Deadline: {analysis['action']['deadline']}")
                 print("-" * 80)
 
-    def show_confidence_distribution(self):
+    def show_confidence_distribution(self) -> None:
         """Show confidence distribution."""
         print("\nConfidence Distribution:")
         confidence_dist = self.get_confidence_distribution()
         print(tabulate(confidence_dist, headers=['Confidence Level', 'Count'], tablefmt='psql'))
 
-def sync_gmail_labels():
+def sync_gmail_labels() -> None:
     """Sync Gmail labels with local database."""
     from shared_lib.gmail_lib import GmailAPI
     
@@ -884,7 +907,7 @@ def sync_gmail_labels():
     gmail = GmailAPI()
     gmail.sync_labels()
 
-def print_menu():
+def print_menu() -> None:
     print("\n=== Email Analytics Menu ===")
     print("1. Show Basic Stats")
     print("2. Show Top Senders")
@@ -945,17 +968,18 @@ def run_report(analytics: EmailAnalytics, report_type: str) -> None:
             run_report(analytics, report)
             print("\n" + "="*80 + "\n")
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Email Analytics Reports')
     parser.add_argument('--report', choices=['basic', 'senders', 'dates', 'labels', 'analysis', 'full', 'confidence', 'all'],
                       help='Type of report to run. If not specified, starts interactive menu.')
+    parser.add_argument('--testing', action='store_true', help='Use in-memory SQLite database for testing')
     args = parser.parse_args()
     
     # Sync labels first
     sync_gmail_labels()
     
-    analytics = EmailAnalytics()
+    analytics = EmailAnalytics(testing=args.testing)
     
     try:
         if args.report:
