@@ -20,17 +20,22 @@ We deliberately avoid mocking the Claude API for several reasons:
 
 Instead, we use a hybrid approach:
 
-1. **Integration Tests** (`tests/test_minimal.py`):
+1. **Pure Function Tests** (`tests/test_*_pure.py`):
+   - Test functions that don't depend on external services
+   - Focus on JSON parsing, data transformation, etc.
+   - Run quickly and reliably
+   - Examples:
+     * `test_semantic_search_pure.py`: Tests semantic search logic without API calls
+     * `test_json_extraction.py`: Tests JSON parsing utilities
+     * `test_pure_functions.py`: Tests other utility functions
+
+2. **Integration Tests** (`tests/test_*.py`):
    - Use real API calls for core functionality
    - Provide high confidence in actual behavior
    - Serve as documentation of real API usage
    - Run as part of CI/CD pipeline
-
-2. **Unit Tests** (for pure functions):
-   - Test functions that don't depend on external services
-   - Focus on JSON parsing, data transformation, etc.
-   - Run quickly and reliably
-   - Example: `tests/test_json_extraction.py`
+   - Skip tests gracefully if API is unavailable
+   - Example: `test_semantic_search.py`
 
 3. **Test Fixtures** (`tests/conftest.py`):
    - Provide reusable test data
@@ -40,17 +45,23 @@ Instead, we use a hybrid approach:
 
 ## Test Categories
 
-### 1. API Integration Tests
-- Located in: `tests/test_minimal.py`
+### 1. Pure Function Tests
+- No external dependencies
+- Fast execution
+- High reliability
+- Test core logic and edge cases
+- Examples:
+  * Semantic search threshold logic
+  * JSON response parsing
+  * Input validation
+  * Error handling
+
+### 2. API Integration Tests
+- Located in: `tests/test_*.py`
 - Purpose: Verify core API functionality
 - Requirements: Valid API key
 - When to run: Pre-deployment, major changes
-
-### 2. Pure Function Tests
-- Located in: `tests/test_json_extraction.py`, `tests/test_anthropic_lib.py`
-- Purpose: Test utility functions
-- No external dependencies
-- Run frequently during development
+- Skip gracefully if API unavailable
 
 ### 3. Database Tests
 - Located in: `tests/test_email_reports.py`
@@ -60,34 +71,36 @@ Instead, we use a hybrid approach:
 
 ## Best Practices
 
-1. **API Tests**:
+1. **Pure Function Tests**:
    ```python
-   def test_email_analysis():
-       """Test email analysis with real API calls."""
-       try:
-           analysis = analyzer.analyze_email(test_email)
-           assert analysis is not None
-           assert analysis.summary is not None
-       except Exception as e:
-           pytest.fail(f"Email analysis failed: {str(e)}")
+   def test_semantic_search_disabled():
+       """Test that semantic search returns empty list when disabled."""
+       chat = CatalogChat(mode='test', enable_semantic=False)
+       items = [CatalogItem(title="Python Tutorial")]
+       matches = chat.get_semantic_matches("python", items)
+       assert len(matches) == 0
    ```
 
-2. **Pure Function Tests**:
+2. **API Integration Tests**:
    ```python
-   def test_json_extraction():
-       """Test JSON extraction from text."""
-       input_text = 'Here is JSON: {"key": "value"}'
-       json_str, error = extract_json(input_text)
-       assert error is None
-       assert json_str == '{"key": "value"}'
+   @pytest.fixture(scope="session", autouse=True)
+   def verify_claude_api():
+       """Verify Claude API before running tests."""
+       try:
+           # API verification code
+           response = client.messages.create(...)
+           if "API_TEST" not in response:
+               pytest.skip("API test failed")
+       except Exception as e:
+           pytest.skip(f"API unavailable: {str(e)}")
    ```
 
 3. **Using Fixtures**:
    ```python
    @pytest.fixture(scope="session")
-   def api_client():
-       """Provide configured API client."""
-       return get_anthropic_client()
+   def test_items():
+       """Provide test catalog items."""
+       return get_test_items()
    ```
 
 ## Running Tests
@@ -97,9 +110,9 @@ Instead, we use a hybrid approach:
    pytest
    ```
 
-2. Run specific test file:
+2. Run only pure function tests:
    ```bash
-   pytest tests/test_minimal.py -v
+   pytest tests/test_*_pure.py
    ```
 
 3. Run with output:
@@ -122,15 +135,17 @@ Instead, we use a hybrid approach:
 
 When adding new tests:
 
-1. **For API Features**:
-   - Add to `test_minimal.py`
-   - Include proper error handling
-   - Document API key requirements
-
-2. **For Utility Functions**:
-   - Create dedicated test file
+1. **For Core Logic**:
+   - Create `test_*_pure.py` file
    - No external dependencies
    - Focus on edge cases
+   - Test error handling
+
+2. **For API Features**:
+   - Add to existing test file
+   - Include API verification
+   - Handle API unavailability
+   - Document API requirements
 
 3. **For Database Operations**:
    - Use in-memory database
@@ -154,7 +169,7 @@ Our CI pipeline:
    - Speed up test execution
 
 2. **Test Coverage**:
-   - Add more edge case tests
+   - Add more pure function tests
    - Improve error scenario coverage
    - Add performance tests
 

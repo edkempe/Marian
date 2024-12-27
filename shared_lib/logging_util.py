@@ -14,7 +14,7 @@ from typing import Any, Dict
 import structlog
 from prometheus_client import Counter, Histogram, start_http_server, REGISTRY
 
-from constants import LOGGING_CONFIG
+from .constants import LOGGING_CONFIG
 
 # Track if metrics have been registered
 _metrics_registered = False

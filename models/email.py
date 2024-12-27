@@ -1,6 +1,6 @@
 """Email database model."""
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func, CheckConstraint
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, relationship
 from models.base import Base
 from typing import Optional
 from datetime import datetime
@@ -48,6 +48,9 @@ class Email(Base):
     labels: Mapped[str] = Column(String(150), server_default='')
     has_attachments: Mapped[bool] = Column(Boolean, nullable=False, server_default='0')
     full_api_response: Mapped[str] = Column(Text, server_default='{}')
+
+    # Relationships
+    analysis = relationship("EmailAnalysis", back_populates="email", uselist=False)
 
     def __repr__(self):
         """Return string representation."""

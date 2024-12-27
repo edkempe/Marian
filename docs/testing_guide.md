@@ -64,7 +64,7 @@ Located in `tests/test_integration.py`
 - Summary generation
 
 ### 3. Catalog Tests
-Located in `tests/test_catalog.py`
+Located in `tests/test_catalog.py` and `tests/test_semantic_search_pure.py`
 
 #### Entry Management
 - Create catalog entries
@@ -80,45 +80,63 @@ Located in `tests/test_catalog.py`
 - Metadata queries
 - Combined search criteria
 
-#### Semantic Checks
-- Similar items detection
-  ```python
-  # Test similar items detection
-  def test_similar_items():
-      # Add original item
-      add_item("Python Programming Guide", "A comprehensive guide to Python programming")
-      
-      # Try adding semantically similar items
-      result = add_item("Python Tutorial", "A complete tutorial for Python programming")
-      assert result.similarity_detected == True
-      assert result.similarity_score > 0.8
-  ```
+#### Semantic Search Tests
+Located in `tests/test_semantic_search_pure.py`
 
-- Tag similarity detection
-  ```python
-  # Test similar tags detection
-  def test_similar_tags():
-      # Create original tag
-      create_tag("programming")
-      
-      # Try creating semantically similar tag
-      result = create_tag("coding")
-      assert result.similar_tags == ["programming"]
-      assert result.similarity_score > 0.7
-  ```
+##### Pure Function Tests
+Tests that don't require external API calls:
+- Response validation tests (invalid JSON, missing fields)
+- Score filtering tests (threshold-based filtering)
+- Index validation tests (invalid indices handling)
+- Prompt variation tests (short vs long queries)
+- Item type handling tests (strings, CatalogItems, Tags)
 
-- Archived items handling
-  ```python
-  # Test archived items detection
-  def test_archived_items():
-      # Add and archive an item
-      item = add_item("Python Guide", "Guide to Python")
-      archive_item(item.id)
-      
-      # Try adding similar item
-      result = add_item("Python Tutorial", "Tutorial for Python")
-      assert result.archived_similar_items == [item.id]
-  ```
+Example test structure:
+```python
+def test_semantic_search_score_filtering():
+    """Test filtering of matches based on threshold."""
+    chat = CatalogChat(mode='test')
+    items = [
+        CatalogItem(title="Item 1"),
+        CatalogItem(title="Item 2"),
+        CatalogItem(title="Item 3")
+    ]
+    
+    # Mock API response with various scores
+    def mock_scores(*args, **kwargs):
+        return type('Response', (), {
+            'content': [type('Content', (), {'text': '''
+                {
+                    "matches": [
+                        {"index": 0, "score": 0.9, "reasoning": "high match"},
+                        {"index": 1, "score": 0.7, "reasoning": "medium match"},
+                        {"index": 2, "score": 0.5, "reasoning": "low match"}
+                    ]
+                }
+            '''})]
+        })
+    
+    chat.client.messages.create = mock_scores
+    
+    # Test high threshold
+    matches = chat.get_semantic_matches("query", items, threshold=0.8)
+    assert len(matches) == 1
+    assert matches[0][0].title == "Item 1"
+```
+
+##### Coverage Insights
+Current coverage for semantic search functionality:
+- Overall coverage for `app_catalog.py`: 17%
+- Well-covered areas:
+  * Semantic search core functionality
+  * Error handling for API responses
+  * Input validation
+- Areas needing coverage:
+  * Database operations (lines 246-315)
+  * Item management (lines 328-347)
+  * Tag management (lines 364-381)
+  * Query processing (lines 789-813)
+  * Result ranking (lines 913-945)
 
 ### 4. Database Tests
 Located in `tests/test_database.py`
@@ -177,12 +195,29 @@ pytest
 # Run specific test file
 pytest tests/test_catalog.py
 
-# Run with coverage
-pytest --cov
+# Run coverage on specific module (recommended)
+pytest --cov=app_catalog --cov-report=term-missing tests/test_semantic_search_pure.py
 
-# Generate coverage report
+# Run coverage on entire codebase (may be slow)
 pytest --cov --cov-report=html
 ```
+
+### Coverage Reporting Best Practices
+1. Focus coverage reporting on specific modules:
+   - Run coverage reports on individual modules
+   - Target specific test categories
+   - Monitor coverage trends over time
+
+2. Handle known coverage reporting issues:
+   - Coverage tool may appear to stall on large codebases
+   - Use module-specific coverage reporting
+   - Set reasonable timeouts for CI/CD pipelines
+
+3. Coverage improvement strategy:
+   - Identify critical paths needing coverage
+   - Prioritize business logic coverage
+   - Document coverage gaps
+   - Track coverage metrics in CI/CD
 
 ### CI/CD Pipeline
 - Tests run automatically on push

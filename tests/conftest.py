@@ -30,7 +30,7 @@ from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from constants import API_CONFIG, DATABASE_CONFIG
+from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
 
 @pytest.fixture
 def test_db_session():

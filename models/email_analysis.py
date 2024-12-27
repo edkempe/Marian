@@ -88,41 +88,102 @@ class EmailAnalysis(Base):
 
     # Email identification
     email_id: Mapped[str] = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
-    thread_id: Mapped[str] = Column(Text, nullable=False)  # Gmail thread ID for grouping related emails
+    thread_id: Mapped[str] = Column(Text, nullable=True)  # Gmail thread ID for grouping related emails
     
     # Analysis metadata
-    analysis_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    analyzed_date: Mapped[datetime] = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))  # When analysis was performed
-    prompt_version: Mapped[str] = Column(Text)  # Version of the prompt used for analysis
+    analysis_date: Mapped[str] = Column(Text, nullable=False)  # When the analysis was performed
+    analyzed_date: Mapped[str] = Column(Text, nullable=False)  # When the email was analyzed
+    prompt_version: Mapped[Optional[str]] = Column(Text, nullable=True)  # Version of the prompt used
     
-    # Content analysis
-    summary: Mapped[str] = Column(Text)  # Brief summary of the email
-    category: Mapped[str] = Column(Text)  # List of categories as comma-separated string
-    priority_score: Mapped[int] = Column(Integer)  # Priority score (1-5)
-    priority_reason: Mapped[str] = Column(Text)  # Explanation for priority score
+    # Core analysis
+    summary: Mapped[str] = Column(Text, nullable=False)  # Brief summary of the email
+    _category: Mapped[str] = Column('category', Text, nullable=True)  # List of categories (serialized)
+    priority_score: Mapped[int] = Column(Integer, nullable=False)  # Priority score from 1-5
+    priority_reason: Mapped[str] = Column(Text, nullable=False)  # Reason for priority score
     
     # Action items
-    action_needed: Mapped[bool] = Column(Boolean)  # Whether action is required
-    action_type: Mapped[str] = Column(Text)  # List of action types as comma-separated string
+    action_needed: Mapped[bool] = Column(Boolean, nullable=False, default=False)  # Whether action is needed
+    _action_type: Mapped[str] = Column('action_type', Text, nullable=True)  # List of action types (serialized)
     action_deadline: Mapped[Optional[str]] = Column(Text, nullable=True)  # When action is needed by
     
-    # Key information
-    key_points: Mapped[str] = Column(Text)  # List of key points as comma-separated string
-    people_mentioned: Mapped[str] = Column(Text)  # List of people as comma-separated string
-    links_found: Mapped[str] = Column(Text)  # List of links as comma-separated string
-    links_display: Mapped[str] = Column(Text)  # List of display text as comma-separated string
+    # Extracted data
+    _key_points: Mapped[str] = Column('key_points', Text, nullable=True)  # List of key points (serialized)
+    _people_mentioned: Mapped[str] = Column('people_mentioned', Text, nullable=True)  # List of people (serialized)
+    _links_found: Mapped[str] = Column('links_found', Text, nullable=True)  # List of links (serialized)
+    _links_display: Mapped[str] = Column('links_display', Text, nullable=True)  # List of display links (serialized)
     
     # Classification
-    project: Mapped[Optional[str]] = Column(Text, nullable=True)  # Project name if email is project-related
-    topic: Mapped[Optional[str]] = Column(Text, nullable=True)  # Topic classification
-    sentiment: Mapped[Optional[str]] = Column(Text, nullable=True)  # Sentiment analysis
-    confidence_score: Mapped[Optional[float]] = Column(Float, nullable=True)  # Confidence score of the analysis
+    project: Mapped[str] = Column(Text, nullable=True)  # Project name
+    topic: Mapped[str] = Column(Text, nullable=True)  # Topic name
+    sentiment: Mapped[str] = Column(Text, nullable=False)  # Sentiment analysis
+    confidence_score: Mapped[float] = Column(Float, nullable=False)  # Analysis confidence
     
-    # Raw data
-    full_api_response: Mapped[Dict] = Column(JSON)  # Full API response for debugging
-    
+    # Raw response
+    full_api_response: Mapped[str] = Column(Text, nullable=True)  # Complete API response
+
     # Relationships
-    email = relationship("models.email.Email", backref="analysis", foreign_keys=[email_id])
+    email = relationship("Email", back_populates="analysis")
+
+    # List property getters and setters
+    @property
+    def category(self) -> List[str]:
+        """Get the category list."""
+        return json.loads(self._category) if self._category else []
+
+    @category.setter
+    def category(self, value: List[str]):
+        """Set the category list."""
+        self._category = json.dumps(value) if value else None
+
+    @property
+    def action_type(self) -> List[str]:
+        """Get the action type list."""
+        return json.loads(self._action_type) if self._action_type else []
+
+    @action_type.setter
+    def action_type(self, value: List[str]):
+        """Set the action type list."""
+        self._action_type = json.dumps(value) if value else None
+
+    @property
+    def key_points(self) -> List[str]:
+        """Get the key points list."""
+        return json.loads(self._key_points) if self._key_points else []
+
+    @key_points.setter
+    def key_points(self, value: List[str]):
+        """Set the key points list."""
+        self._key_points = json.dumps(value) if value else None
+
+    @property
+    def people_mentioned(self) -> List[str]:
+        """Get the people mentioned list."""
+        return json.loads(self._people_mentioned) if self._people_mentioned else []
+
+    @people_mentioned.setter
+    def people_mentioned(self, value: List[str]):
+        """Set the people mentioned list."""
+        self._people_mentioned = json.dumps(value) if value else None
+
+    @property
+    def links_found(self) -> List[str]:
+        """Get the links found list."""
+        return json.loads(self._links_found) if self._links_found else []
+
+    @links_found.setter
+    def links_found(self, value: List[str]):
+        """Set the links found list."""
+        self._links_found = json.dumps(value) if value else None
+
+    @property
+    def links_display(self) -> List[str]:
+        """Get the links display list."""
+        return json.loads(self._links_display) if self._links_display else []
+
+    @links_display.setter
+    def links_display(self, value: List[str]):
+        """Set the links display list."""
+        self._links_display = json.dumps(value) if value else None
 
     @classmethod
     def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse, 
@@ -131,19 +192,19 @@ class EmailAnalysis(Base):
         return cls(
             email_id=email_id,
             thread_id=thread_id,
-            analysis_date=datetime.now(UTC),
+            analysis_date=datetime.now(UTC).isoformat(),
             prompt_version="1.0",  # TODO: Make this configurable
             summary=response.summary,
-            category=','.join(response.category),
+            category=response.category,
             priority_score=response.priority_score,
             priority_reason=response.priority_reason,
             action_needed=response.action_needed,
-            action_type=','.join(response.action_type) if response.action_type else '',
+            action_type=response.action_type,
             action_deadline=response.action_deadline or '',  # Store deadline as string
-            key_points=','.join(response.key_points),
-            people_mentioned=','.join(response.people_mentioned),
-            links_found=','.join(links_found or []),  # Use provided URLs or empty list
-            links_display=','.join(links_display or []),  # Use provided display URLs or empty list
+            key_points=response.key_points,
+            people_mentioned=response.people_mentioned,
+            links_found=links_found or [],  # Use provided URLs or empty list
+            links_display=links_display or [],  # Use provided display URLs or empty list
             project=response.project,
             topic=response.topic,
             sentiment=response.sentiment,

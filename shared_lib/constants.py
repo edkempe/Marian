@@ -119,11 +119,13 @@ DATABASE_CONFIG: DatabaseConfig = {
         'path': os.path.join(DATA_DIR, 'db_email_store.db'),
         'table': 'emails',
         'test_path': ':memory:',
+        'url': f'sqlite:///{os.path.join(DATA_DIR, "db_email_store.db")}'
     },
     'analysis': {
         'path': os.path.join(DATA_DIR, 'db_email_analysis.db'),
         'table': 'email_analysis',
         'test_path': ':memory:',
+        'url': f'sqlite:///{os.path.join(DATA_DIR, "db_email_analysis.db")}'
     },
     'session': {
         'timeout': 300,  # Session timeout in seconds
@@ -199,34 +201,26 @@ CATALOG_CONFIG: CatalogConfig = {
     'DB_PATH': os.path.join(DATA_DIR, 'db_catalog.db'),
     'CHAT_LOG': 'chat_logs.jsonl',
     'MATCH_THRESHOLD': 0.85,  # High threshold for near-identical content
-    'POTENTIAL_MATCH_THRESHOLD': 0.70,  # Moderate threshold for semantically related content
-    'TAG_MATCH_THRESHOLD': 0.75,  # Threshold for tag matching
+    'POTENTIAL_MATCH_THRESHOLD': 0.70,  # Lower threshold for potential matches
+    'TAG_MATCH_THRESHOLD': 0.60,  # Threshold for tag matching
     'RESULTS_PER_PAGE': 10,
-    'RELATIONSHIP_TYPES': [
-        'contains',
-        'references',
-        'implements',
-        'extends',
-        'uses',
-        'related_to'
-    ],
+    'RELATIONSHIP_TYPES': ['similar', 'related', 'parent', 'child'],
     'TABLES': {
-        'ITEMS': 'catalog_items',
+        'ENTRIES': 'catalog_entries',
         'RELATIONSHIPS': 'catalog_relationships',
-        'TAGS': 'catalog_tags',
-        'ITEM_TAGS': 'catalog_item_tags',
-        'CHAT_HISTORY': 'chat_history'
+        'TAGS': 'catalog_tags'
     },
     'ENABLE_SEMANTIC': True,
     'ERROR_MESSAGES': {
-        'DUPLICATE_ERROR': "Similar item already exists with title '{title}'",
-        'POTENTIAL_MATCH_WARNING': "Found potentially similar items:\n{matches}\nUse force=True to add anyway.",
-        'INVALID_TITLE': "Title cannot be empty",
-        'INVALID_RELATIONSHIP': "Invalid relationship type. Must be one of: {valid_types}",
-        'ITEM_NOT_FOUND': "Item not found: {title}",
-        'ARCHIVED_ACCESS': "Cannot modify archived item: {title}",
-        'SEMANTIC_MATCH_DETAILS': "Similarity score: {score:.2f}\nReason: {reason}"
-    },
+        'API_ERROR': 'Failed to get API response: {}',
+        'DATABASE_ERROR': 'Database error: {}',
+        'VALIDATION_ERROR': 'Invalid data: {}',
+        'JSON_DECODE_ERROR': 'Failed to decode JSON: {}',
+        'SEMANTIC_ERROR': 'Semantic matching error: {}',
+        'DUPLICATE_ERROR': 'Duplicate entry: {}',
+        'TAG_ERROR': 'Invalid tag: {}',
+        'RELATIONSHIP_ERROR': 'Invalid relationship: {}'
+    }
 }
 
 # Error Messages
