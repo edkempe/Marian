@@ -1,10 +1,13 @@
 # Marian Project
 
 ## Important Process Documents
-**REQUIRED**: Review and follow these process documents at the start and end of EVERY development session:
-- [Chat Session Start Guide](docs/CHAT_START.md) - Must be followed at the start of each session
-- [Chat Session Close Guide](docs/CHAT_CLOSE.md) - Must be followed at the end of each session
-These documents contain critical procedures for maintaining project quality and consistency.
+**REQUIRED**: Follow the authoritative [Development Session Checklist](docs/DEV_SESSION_CHECKLIST.md) for all development sessions.
+
+Supporting documentation with additional context:
+- [Chat Session Start Guide](docs/CHAT_START.md)
+- [Chat Session Close Guide](docs/CHAT_CLOSE.md)
+
+The checklist must be followed for every development session, with the supporting documents providing additional context and details as needed.
 
 ## Critical Development Guidelines
 

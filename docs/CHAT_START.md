@@ -1,5 +1,7 @@
 # Starting a New Development Session
 
+> **IMPORTANT**: The [Development Session Checklist](DEV_SESSION_CHECKLIST.md) is the authoritative source for development session procedures. This document provides additional context and detailed explanations for the checklist items.
+
 ## CRITICAL: Review and Understand Project Guidelines
 Before starting any development work, you MUST:
 1. Review and understand ALL project guidelines in `docs/GUIDELINES.md`

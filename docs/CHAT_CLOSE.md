@@ -1,5 +1,7 @@
 # Closing a Development Session
 
+> **IMPORTANT**: The [Development Session Checklist](DEV_SESSION_CHECKLIST.md) is the authoritative source for development session procedures. This document provides additional context and detailed explanations for the checklist items.
+
 ## Important Guidelines
 1. Once the closing process begins:
    - DO NOT make any new code changes
