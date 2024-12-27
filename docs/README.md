@@ -1,13 +1,14 @@
 # Marian Documentation
 
-## Directory Structure
+## Documentation Hierarchy
 
-### Active Documentation
-- `/docs`
-  - `README.md` - This guide
-  - `code-standards.md` - Coding standards and practices
-  - `troubleshooting.md` - Common issues and solutions
-  - `testing-guide.md` - Testing practices and guidelines
+The Marian project uses a structured documentation hierarchy to maintain clarity and avoid duplication. See `ai-architecture.md` for the complete documentation hierarchy.
+
+### Core Documentation
+- `README.md` - This guide
+- `ai-architecture.md` - AI systems and documentation hierarchy
+- `code-standards.md` - Coding standards and practices
+- `testing-guide.md` - Testing practices and guidelines
 
 ### Session Logs
 - `/docs/sessions`
@@ -28,6 +29,7 @@
    - Code is primary documentation
    - Active docs explain "why" not "how"
    - Tests show usage patterns
+   - See hierarchy in `ai-architecture.md`
 
 2. **Necessary and Sufficient**
    - No duplicate information
