@@ -5,6 +5,7 @@ from anthropic import Anthropic
 import pytest
 from unittest.mock import patch, MagicMock
 from dotenv import load_dotenv
+from .constants import DEFAULT_MODEL
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,7 +23,7 @@ def test_anthropic_connection(client: Optional[Anthropic] = None) -> bool:
         test_client = client or get_anthropic_client()
         # Simple completion to test connection
         response = test_client.messages.create(
-            model="claude-3-opus-20240229",
+            model=DEFAULT_MODEL,
             max_tokens=10,
             messages=[{
                 "role": "user",
