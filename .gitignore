@@ -107,5 +107,5 @@ logs/
 .env.production.local
 
 # Test coverage
-.coverage
 htmlcov/
+.coverage
