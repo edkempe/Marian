@@ -1,5 +1,7 @@
 # Marian Design and Decisions
 
+> **Documentation Role**: This document supports both Development AI and Runtime AI architecture decisions. See `ai-architecture.md` for the complete documentation hierarchy.
+
 ## Decision Record Template
 ```markdown
 ### [Title] (YYYY-MM-DD)

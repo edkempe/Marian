@@ -1,5 +1,7 @@
 # Marian Librarian's Guide
 
+> **Documentation Role**: This is the primary documentation for Runtime AI (Anthropic) behavior in the Marian system. See `ai-architecture.md` for the complete documentation hierarchy.
+
 ## Overview
 The Librarian is the AI assistant responsible for managing and organizing information in the Marian Catalog system. This guide outlines the principles, responsibilities, and procedures for effective catalog management.
 

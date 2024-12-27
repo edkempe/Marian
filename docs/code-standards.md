@@ -1,5 +1,7 @@
 # Code Standards and Best Practices
 
+> **Documentation Role**: This is a supporting document for Development AI (Windsurf.ai) workflow, providing implementation standards. See `ai-architecture.md` for the complete documentation hierarchy.
+
 ## Critical Guidelines
 
 1. **Code Removal Policy**
