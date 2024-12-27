@@ -16,7 +16,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from prompt_toolkit.history import FileHistory
 
-from app_catalog import CatalogChat
+from .app_catalog import CatalogChat
 from models.catalog import CatalogItem, Tag
 
 # Style for syntax highlighting

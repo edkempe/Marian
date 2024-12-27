@@ -17,7 +17,7 @@ from shared_lib.database_session_util import get_email_session, get_analysis_ses
 import sqlalchemy.exc
 from structlog import get_logger
 from prometheus_client import start_http_server as start_prometheus_server
-from shared_lib.constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG, ERROR_MESSAGES, DEFAULT_MODEL
+from shared_lib.constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG, ERROR_MESSAGES, DEFAULT_MODEL, DATABASE_CONFIG
 import anthropic  # <--- Added missing anthropic import
 import re
 
@@ -128,12 +128,12 @@ Content: {email_data.get('content', '')}"""
                 )
                 
                 # Extract and parse JSON from response
-                analysis_data = parse_claude_response(response.content[0].text)
+                analysis_data = parse_claude_response(response.content)
                 if analysis_data is None:
                     logger.error(
                         ERROR_MESSAGES['API_ERROR'].format(error="Failed to parse API response"),
                         error_type="parsing",
-                        response=response.content[0].text if response and hasattr(response, 'content') else None
+                        response=response.content if response else None
                     )
                     return None
                 
@@ -144,13 +144,14 @@ Content: {email_data.get('content', '')}"""
                     thread_id=email_data.get('thread_id', ''),
                     response=analysis_response,
                     links_found=full_urls,
-                    links_display=display_urls
+                    links_display=display_urls,
+                    analyzed_date=datetime.now()  # Add analyzed_date
                 )
             except Exception as e:
                 error_context = {
                     'error_type': "analysis",
                     'error': str(e),
-                    'response': response.content[0].text if response and hasattr(response, 'content') else None,
+                    'response': response.content if response else None,
                     'email_id': email_data.get('id'),
                     'subject': email_data.get('subject', '')
                 }
@@ -235,7 +236,7 @@ Content: {email_data.get('content', '')}"""
         try:
             with get_email_session() as email_session:
                 # Get unanalyzed emails
-                email_session.execute(text("ATTACH DATABASE 'data/db_email_analysis.db' AS analysis_db"))
+                email_session.execute(text(f"ATTACH DATABASE '{DATABASE_CONFIG['ANALYSIS_DB_PATH']}' AS analysis_db"))
                 
                 unanalyzed = email_session.execute(text("""
                     SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
@@ -284,7 +285,7 @@ Content: {email_data.get('content', '')}"""
 
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
                 # Get unanalyzed emails
-                email_session.execute(text("ATTACH DATABASE 'data/db_email_analysis.db' AS analysis_db"))
+                email_session.execute(text(f"ATTACH DATABASE '{DATABASE_CONFIG['ANALYSIS_DB_PATH']}' AS analysis_db"))
                 
                 unanalyzed = email_session.execute(text("""
                     SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
@@ -353,12 +354,12 @@ Content: {email_request.truncated_body}"""
                                 links_found, links_display = self._extract_urls(email_data.get('content', ''))
                                 
                                 # Parse response and validate
-                                analysis_data = parse_claude_response(response.content[0].text)
+                                analysis_data = parse_claude_response(response.content)
                                 if not analysis_data:
                                     logger.error(
                                         "Failed to parse API response",
                                         email_id=email_request.id,
-                                        response=response.content[0].text
+                                        response=response.content
                                     )
                                     continue
                                 

@@ -9,47 +9,70 @@ from pytz import UTC
 from models.base import Base
 import json
 from pydantic import BaseModel, Field, model_validator
-from shared_lib.constants import VALIDATION, DEFAULT_VALUES, SentimentTypes, DATE_PATTERNS
+
+# Constants used in this model
+ANALYSIS_VALIDATION = {
+    'PRIORITY_SCORE': {'MIN': 1, 'MAX': 5},
+    'TEXT_LENGTH': {'MIN': 1, 'MAX': 10000},
+    'CONFIDENCE_SCORE': {'MIN': 0.0, 'MAX': 1.0}
+}
+
+ANALYSIS_DEFAULTS = {
+    'ACTION_NEEDED': False,
+    'EMPTY_STRING': '',
+    'CONFIDENCE_SCORE': 0.8
+}
+
+ANALYSIS_SENTIMENT_TYPES = {
+    'POSITIVE': 'positive',
+    'NEGATIVE': 'negative',
+    'NEUTRAL': 'neutral'
+}
+
+ANALYSIS_DATE_PATTERNS = {
+    'ISO_DATE_OR_EMPTY': r'^(\d{4}-\d{2}-\d{2})?$',
+    'ISO_DATE_OR_EMPTY_OR_ASAP': r'^(\d{4}-\d{2}-\d{2}|ASAP)?$'
+}
 
 class PriorityModel(BaseModel):
     """Priority information for an email."""
-    score: int = Field(..., ge=VALIDATION['PRIORITY_SCORE']['MIN'], le=VALIDATION['PRIORITY_SCORE']['MAX'], 
+    score: int = Field(..., ge=ANALYSIS_VALIDATION['PRIORITY_SCORE']['MIN'], le=ANALYSIS_VALIDATION['PRIORITY_SCORE']['MAX'], 
                       description="Priority score from 1-5")
-    reason: str = Field(..., min_length=VALIDATION['TEXT_LENGTH']['MIN'], 
-                       max_length=VALIDATION['TEXT_LENGTH']['MAX'])
+    reason: str = Field(..., min_length=ANALYSIS_VALIDATION['TEXT_LENGTH']['MIN'], 
+                       max_length=ANALYSIS_VALIDATION['TEXT_LENGTH']['MAX'])
 
 class ActionModel(BaseModel):
     """Action required for an email."""
-    needed: bool = DEFAULT_VALUES['ACTION_NEEDED']
+    needed: bool = ANALYSIS_DEFAULTS['ACTION_NEEDED']
     type: List[str] = Field(default_factory=list)
-    deadline: Optional[str] = Field(None, pattern=DATE_PATTERNS['ISO_DATE_OR_EMPTY'])
+    deadline: Optional[str] = Field(None, pattern=ANALYSIS_DATE_PATTERNS['ISO_DATE_OR_EMPTY'])
 
 class ContextModel(BaseModel):
     """Context information for an email."""
-    project: Optional[str] = DEFAULT_VALUES['EMPTY_STRING']
-    topic: Optional[str] = DEFAULT_VALUES['EMPTY_STRING']
+    project: Optional[str] = ANALYSIS_DEFAULTS['EMPTY_STRING']
+    topic: Optional[str] = ANALYSIS_DEFAULTS['EMPTY_STRING']
 
 class EmailAnalysisResponse(BaseModel):
     """Pydantic model for API response validation."""
-    summary: str = Field(..., min_length=VALIDATION['TEXT_LENGTH']['MIN'], 
+    summary: str = Field(..., min_length=ANALYSIS_VALIDATION['TEXT_LENGTH']['MIN'], 
                         description="Brief summary of the email")
     category: List[str] = Field(default_factory=list)
-    priority_score: int = Field(..., ge=VALIDATION['PRIORITY_SCORE']['MIN'], 
-                              le=VALIDATION['PRIORITY_SCORE']['MAX'], 
+    priority_score: int = Field(..., ge=ANALYSIS_VALIDATION['PRIORITY_SCORE']['MIN'], 
+                              le=ANALYSIS_VALIDATION['PRIORITY_SCORE']['MAX'], 
                               description="Priority score from 1-5")
-    priority_reason: str = Field(..., min_length=VALIDATION['TEXT_LENGTH']['MIN'], 
-                               max_length=VALIDATION['TEXT_LENGTH']['MAX'])
-    action_needed: bool = Field(default=DEFAULT_VALUES['ACTION_NEEDED'])
+    priority_reason: str = Field(..., min_length=ANALYSIS_VALIDATION['TEXT_LENGTH']['MIN'], 
+                               max_length=ANALYSIS_VALIDATION['TEXT_LENGTH']['MAX'])
+    action_needed: bool = Field(default=ANALYSIS_DEFAULTS['ACTION_NEEDED'])
     action_type: List[str] = Field(default_factory=list)  
-    action_deadline: Optional[str] = Field(None, pattern=DATE_PATTERNS['ISO_DATE_OR_EMPTY_OR_ASAP'])
+    action_deadline: Optional[str] = Field(None, pattern=ANALYSIS_DATE_PATTERNS['ISO_DATE_OR_EMPTY_OR_ASAP'])
     key_points: List[str] = Field(default_factory=list)
     people_mentioned: List[str] = Field(default_factory=list)
-    project: str = Field(default=DEFAULT_VALUES['EMPTY_STRING'])
-    topic: str = Field(default=DEFAULT_VALUES['EMPTY_STRING'])
-    sentiment: str = Field(..., pattern=f"^({'|'.join(SentimentTypes.values())})$")
-    confidence_score: float = Field(default=DEFAULT_VALUES['CONFIDENCE_SCORE'], 
-                                  ge=VALIDATION['CONFIDENCE_SCORE']['MIN'], 
-                                  le=VALIDATION['CONFIDENCE_SCORE']['MAX'])
+    project: str = Field(default=ANALYSIS_DEFAULTS['EMPTY_STRING'])
+    topic: str = Field(default=ANALYSIS_DEFAULTS['EMPTY_STRING'])
+    sentiment: str = Field(..., pattern=f"^({'|'.join(ANALYSIS_SENTIMENT_TYPES.values())})$")
+    confidence_score: float = Field(default=ANALYSIS_DEFAULTS['CONFIDENCE_SCORE'], 
+                                  ge=ANALYSIS_VALIDATION['CONFIDENCE_SCORE']['MIN'], 
+                                  le=ANALYSIS_VALIDATION['CONFIDENCE_SCORE']['MAX'])
 
     @model_validator(mode='before')
     @classmethod
@@ -111,7 +134,7 @@ class EmailAnalysis(Base):
     priority_reason: Mapped[str] = Column(Text, nullable=False)  # Reason for priority score
     
     # Action items
-    action_needed: Mapped[bool] = Column(Boolean, nullable=False, default=DEFAULT_VALUES['ACTION_NEEDED'])  # Whether action is needed
+    action_needed: Mapped[bool] = Column(Boolean, nullable=False, default=ANALYSIS_DEFAULTS['ACTION_NEEDED'])  # Whether action is needed
     _action_type: Mapped[str] = Column('action_type', Text, nullable=True)  # List of action types (serialized)
     action_deadline: Mapped[Optional[str]] = Column(Text, nullable=True)  # When action is needed by
     

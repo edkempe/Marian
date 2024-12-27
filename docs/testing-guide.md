@@ -224,7 +224,7 @@ def test_semantic_search_score_filtering():
 
 ##### Coverage Insights
 Current coverage for semantic search functionality:
-- Overall coverage for `app_catalog.py`: 17%
+- Overall coverage for `src/app_catalog.py`: 17%
 - Well-covered areas:
   * Semantic search core functionality
   * Error handling for API responses
@@ -334,7 +334,7 @@ pytest tests/test_*_pure.py
 pytest -s
 
 # Run coverage on specific module (recommended)
-pytest --cov=app_catalog --cov-report=term-missing tests/test_semantic_search_pure.py
+pytest --cov=src.app_catalog --cov-report=term-missing tests/test_semantic_search_pure.py
 ```
 
 ## Test Environment
@@ -456,7 +456,7 @@ pytest tests/test_*_pure.py
 pytest -s
 
 # Run coverage on specific module (recommended)
-pytest --cov=app_catalog --cov-report=term-missing tests/test_semantic_search_pure.py
+pytest --cov=src.app_catalog --cov-report=term-missing tests/test_semantic_search_pure.py
 ```
 
 ## Best Practices

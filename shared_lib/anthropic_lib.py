@@ -148,6 +148,10 @@ def parse_claude_response(response_text: str, error_context: Optional[Dict[str, 
         Parsed JSON as dict if successful, None if parsing failed
     """
     try:
+        # If response_text is a Message object, get its content
+        if hasattr(response_text, 'content'):
+            response_text = response_text.content
+        
         # Extract JSON from response
         json_str, error_msg = extract_json(response_text)
         if not json_str:

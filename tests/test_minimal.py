@@ -5,9 +5,7 @@ from datetime import datetime
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app_email_analyzer import EmailAnalyzer
-from app_email_self_log import EmailSelfAnalyzer
-from app_email_reports import EmailAnalytics
+from src import EmailAnalyzer, EmailSelfAnalyzer, EmailAnalytics
 from models.email import Email, Base as EmailBase
 from models.email_analysis import EmailAnalysis, Base as AnalysisBase
 from .test_config import setup_test_env, cleanup_test_env, TEST_EMAIL_DB, TEST_ANALYSIS_DB
@@ -101,7 +99,9 @@ def test_email_analytics():
     with Session() as session:
         analysis = EmailAnalysis(
             email_id=f'test_{datetime.now().timestamp()}',
-            thread_id='thread1',  
+            thread_id='thread1',
+            analysis_date=datetime.now(),
+            analyzed_date=datetime.now(),
             summary='Test summary',
             category=json.dumps(['work']),
             priority_score=3,

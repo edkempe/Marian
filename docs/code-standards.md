@@ -157,12 +157,16 @@
 1. **File Structure**
    ```
    marian/
-   ├── app_*.py          # Main application files
+   ├── src/               # Source code directory
+   │   ├── app_*.py      # Main application files
+   │   └── proto_*.py    # Prototype/experimental features
+   ├── tests/            # Test files
+   ├── docs/             # Documentation
    ├── config/           # Configuration files
    ├── models/           # Database models
-   ├── utils/            # Utility functions
-   ├── docs/            # Documentation
-   └── tests/           # Test files
+   ├── services/         # Service layer
+   ├── shared_lib/       # Shared utilities
+   └── scripts/          # Utility scripts
    ```
 
 2. **Import Order**

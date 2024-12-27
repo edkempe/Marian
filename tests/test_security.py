@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 from jose import jwt
 
-from ..shared_lib.security_util import (
+from shared_lib.security_util import (
     get_password_hash, verify_password, create_access_token,
     verify_token, encrypt_data, decrypt_data,
     sanitize_email_content

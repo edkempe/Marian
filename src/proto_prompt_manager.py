@@ -5,9 +5,10 @@ import uuid
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
+from shared_lib.constants import DATABASE_CONFIG
 
 class PromptManager:
-    def __init__(self, db_path: str = "data/prompts.db"):
+    def __init__(self, db_path: str = DATABASE_CONFIG['PROMPTS_DB_PATH']):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
