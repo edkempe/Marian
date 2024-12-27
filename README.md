@@ -1,11 +1,16 @@
 # Marian Project
 
+**Version:** 1.0.0
+**Status:** Active Development
+
 ## Important Process Documents
 **REQUIRED**: Follow the authoritative [Development Session Checklist](docs/DEV_SESSION_CHECKLIST.md) for all development sessions.
 
-Supporting documentation with additional context:
-- [Chat Session Start Guide](docs/CHAT_START.md)
-- [Chat Session Close Guide](docs/CHAT_CLOSE.md)
+**Supporting Documentation**:
+- [Session Workflow Guide](docs/SESSION_WORKFLOW.md)
+- [Project Guidelines](docs/GUIDELINES.md)
+- [Setup Guide](docs/SETUP_GUIDE.md)
+- [Project Design Decisions](docs/DESIGN_DECISIONS.md)
 
 The checklist must be followed for every development session, with the supporting documents providing additional context and details as needed.
 
@@ -206,6 +211,11 @@ If you encounter any issues while running the application, please refer to our c
 - `/docs` - Project documentation and guides
 - `/scripts` - Shell scripts for deployment, testing, and maintenance
 - `/infrastructure` - Infrastructure as code (CloudFormation)
+- `/shared_lib/`: Shared libraries used across the codebase
+  - Must be referenced by multiple application files
+  - Contains utilities, constants, and helpers
+  - Not for standalone scripts or development tools
+  - Example: database_session_util.py used by apps and services
 
 ### Active Content
 - `/docs` - Current documentation only
@@ -495,3 +505,6 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 - Design decisions and architecture (docs/DESIGN_DECISIONS.md)
 - Session workflow guide (docs/SESSION_WORKFLOW.md)
 - Project guidelines (docs/GUIDELINES.md)
+
+## Version History
+- 1.0.0: Initial project setup and core documentation

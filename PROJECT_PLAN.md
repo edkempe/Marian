@@ -84,9 +84,58 @@ This restructuring plan aims to:
 5. Ensure comprehensive and accessible documentation
 6. Preserve all existing functionality while improving organization
 
-## Project Organization
+## Project Structure
 
-#### Code Structure
+### Directory Organization Guidelines
+
+#### Core Components
+- `shared_lib/`: Shared libraries used across the codebase
+  - Must be referenced by multiple application files
+  - Contains utilities, constants, and helpers
+  - Not for standalone scripts or development tools
+  - Regular review required to ensure proper usage
+  - Each file must have clear documentation of its shared purpose
+
+- `scripts/`: Development and utility scripts
+  - Standalone tools and scripts
+  - Development utilities
+  - Database management tools
+  - Must have clear naming and documentation
+  - No application-critical code
+
+- `docs/`: Documentation and guides
+  - Follows standard format
+  - Version numbers on key documents
+  - Regular review for accuracy
+  - Archive process for outdated documents
+
+- `tests/`: Test suite
+  - Tests for all major functionality
+  - Clear organization structure
+  - Regular maintenance required
+  - Documentation must be current
+
+### Code Quality Standards
+- Style guide compliance
+- Documentation requirements
+- Test coverage expectations
+- Code review process
+- Performance standards
+- Security requirements
+
+### Version Control Practices
+- Commit message standards
+- Branch management
+- Release process
+- Version numbering scheme
+
+### Review Schedules
+- Code reviews: Weekly
+- Documentation reviews: Monthly
+- Dependency reviews: Quarterly
+- Architecture reviews: Semi-annual
+
+### Code Structure
 ```
 project/
 ├── docs/                # Documentation
@@ -213,7 +262,7 @@ Located in `/docs`:
   - Data model implementation
   - Component interactions
   - Security considerations
-- Session workflow (CHAT_START.md, CHAT_CLOSE.md)
+- Session workflow (SESSION_WORKFLOW.md)
   - Starting a session
   - Development guidelines
   - Closing procedures
@@ -260,6 +309,21 @@ Located in `/docs/sessions`:
 - Group related functionality
 - Clear separation of concerns
 - Consistent module structure
+
+## Project Structure
+
+### Core Components
+- `shared_lib/`: Shared libraries used across the codebase
+  - Must be referenced by multiple application files
+  - Contains utilities, constants, and helpers
+  - Not for standalone scripts or development tools
+  - Example: database_session_util.py used by apps and services
+
+- `scripts/`: Development and utility scripts
+  - Standalone tools and scripts
+  - Development utilities
+  - Database management tools
+  - Example: chat_session_manager.py for development sessions
 
 ## 4. Data Management
 
@@ -707,3 +771,9 @@ src/catalog/
    - Document capabilities
    - Monitor usage patterns
    - Identify consolidation opportunities
+
+### Documentation
+- Project overview (README.md)
+- Development guidelines (GUIDELINES.md)
+- Session workflow (SESSION_WORKFLOW.md)
+- Design decisions (DESIGN_DECISIONS.md)
