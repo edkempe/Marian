@@ -99,6 +99,72 @@ class ErrorMessages(TypedDict):
     TAG_ERROR: str
     RELATIONSHIP_ERROR: str
 
+# Database Column Sizes
+COLUMN_SIZES = {
+    'EMAIL_LABELS': 150,
+    'GMAIL_LABEL_ID': 30,
+    'GMAIL_LABEL_NAME': 100,
+}
+
+# Default Values
+DEFAULT_VALUES = {
+    'EMAIL_SUBJECT': 'No Subject',
+    'API_RESPONSE': '{}',
+    'HAS_ATTACHMENTS': '0',
+    'EMPTY_STRING': '',
+    'ACTION_NEEDED': False,
+    'CONFIDENCE_SCORE': 0.9,
+}
+
+# Validation Constraints
+VALIDATION = {
+    'PRIORITY_SCORE': {
+        'MIN': 1,
+        'MAX': 5,
+    },
+    'CONFIDENCE_SCORE': {
+        'MIN': 0.0,
+        'MAX': 1.0,
+    },
+    'TEXT_LENGTH': {
+        'MIN': 1,
+        'MAX': 500,
+    },
+}
+
+# Asset Types
+class AssetTypes:
+    """Valid asset types for the catalog."""
+    CODE = 'code'
+    DOCUMENT = 'document'
+    TEST = 'test'
+    CONFIG = 'config'
+    SCRIPT = 'script'
+    
+    @classmethod
+    def values(cls) -> List[str]:
+        """Return all valid asset types."""
+        return [cls.CODE, cls.DOCUMENT, cls.TEST, cls.CONFIG, cls.SCRIPT]
+
+# Sentiment Values
+class SentimentTypes:
+    """Valid sentiment types for analysis."""
+    POSITIVE = 'positive'
+    NEGATIVE = 'negative'
+    NEUTRAL = 'neutral'
+    
+    @classmethod
+    def values(cls) -> List[str]:
+        """Return all valid sentiment types."""
+        return [cls.POSITIVE, cls.NEGATIVE, cls.NEUTRAL]
+
+# Date Patterns
+DATE_PATTERNS = {
+    'ISO_DATE': r'^\d{4}-\d{2}-\d{2}$',
+    'ISO_DATE_OR_EMPTY': r'^\d{4}-\d{2}-\d{2}$|^$',
+    'ISO_DATE_OR_EMPTY_OR_ASAP': r'^\d{4}-\d{2}-\d{2}$|^$|^ASAP$',
+}
+
 # Email Configuration
 EMAIL_CONFIG: EmailConfig = {
     'COUNT': 100,  # Number of emails to process at once
