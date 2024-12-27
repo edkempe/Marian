@@ -26,6 +26,11 @@ Authoritative checklist for regular project management verification tasks. See P
   - [ ] Do dependencies flow in a clear, single direction?
   - [ ] Can any shared components be simplified or split into separate utilities?
   - [ ] Are there any components that should be moved to scripts or other directories?
+- [ ] Check for hard-coded values:
+  - [ ] Review all Python files for values that should be in constants.py
+  - [ ] Check for duplicated values across different files
+  - [ ] Verify configuration values are centralized and consistent
+  - [ ] Look for magic numbers or strings that should be named constants
 
 ## Code Quality
 - [ ] All code follows style guide
