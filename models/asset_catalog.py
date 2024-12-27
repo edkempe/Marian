@@ -29,7 +29,7 @@ class AssetCatalogItem(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     language: Mapped[Optional[str]] = mapped_column(String)
     dependencies: Mapped[Optional[List[str]]] = mapped_column(JSON)
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    asset_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(
         String,
         nullable=False,
@@ -83,7 +83,7 @@ class AssetCatalogItem(Base):
             'file_path': self.file_path,
             'language': self.language,
             'dependencies': self.dependencies,
-            'metadata': self.metadata,
+            'asset_metadata': self.asset_metadata,
             'status': self.status,
             'created_date': self.created_date,
             'modified_date': self.modified_date,
@@ -125,7 +125,7 @@ class AssetDependency(Base):
     source_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), nullable=False)
     target_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), nullable=False)
     dependency_type: Mapped[str] = mapped_column(String, nullable=False)
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    dependency_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     created_date: Mapped[int] = mapped_column(
         Integer,
         default=lambda: int(datetime.utcnow().timestamp()),

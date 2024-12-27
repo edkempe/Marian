@@ -6,6 +6,8 @@ import argparse
 from typing import Dict, List, Set
 import ast
 from pathlib import Path
+from contextlib import contextmanager
+from datetime import datetime
 
 # Add project root to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +17,7 @@ from services.asset_catalog_service import AssetCatalogService, AssetType
 from models.base import Base
 from shared_lib.database_session_util import get_analysis_session
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 def get_file_language(file_path: str) -> str:
     """Determine the language of a file based on its extension."""
@@ -98,65 +101,81 @@ def scan_directory(
     service: AssetCatalogService,
     exclude_dirs: List[str] = None,
     exclude_files: List[str] = None
-) -> None:
+):
     """Scan a directory and add its contents to the asset catalog."""
     exclude_dirs = set(exclude_dirs or [])
     exclude_files = set(exclude_files or [])
 
+    # Walk through all files in the directory
     for root, dirs, files in os.walk(directory):
         # Skip excluded directories
-        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
         for file in files:
-            if file in exclude_files or file.startswith('.'):
+            if file in exclude_files:
                 continue
 
             file_path = os.path.join(root, file)
             rel_path = os.path.relpath(file_path, directory)
 
-            # Skip certain file types
-            if any(file.endswith(ext) for ext in ['.pyc', '.pyo', '.pyd', '.so']):
-                continue
-
             try:
-                # Get file information
-                language = get_file_language(file_path)
-                asset_type = determine_asset_type(file_path)
+                # Get file metadata
                 metadata = get_file_metadata(file_path)
-
-                # Create asset
-                title = os.path.splitext(file)[0].replace('_', ' ').title()
-                asset = service.add_asset(
-                    title=title,
-                    file_path=rel_path,
-                    asset_type=asset_type,
-                    language=language,
-                    metadata=metadata
-                )
-
-                print(f"Added asset: {rel_path} ({asset_type})")
-
-                # For Python files, add dependencies
+                
+                # Get file language
+                language = get_file_language(file_path)
+                
+                # Get dependencies for Python files
+                dependencies = []
                 if language == 'python':
-                    imports = get_python_imports(file_path)
-                    for imp in imports:
-                        # Try to find the imported module in our codebase
-                        possible_paths = [
-                            f"{imp.replace('.', '/')}.py",
-                            f"{imp.split('.')[0]}.py"
-                        ]
-                        for path in possible_paths:
-                            if os.path.exists(os.path.join(directory, path)):
-                                try:
-                                    target = service.search_assets(file_path=path)[0]
-                                    service.add_dependency(
-                                        source_id=asset.id,
-                                        target_id=target.id,
-                                        dependency_type='imports'
-                                    )
-                                    print(f"Added dependency: {rel_path} -> {path}")
-                                except Exception as e:
-                                    print(f"Warning: Could not add dependency {rel_path} -> {path}: {e}")
+                    try:
+                        dependencies = list(get_python_imports(file_path))
+                    except Exception as e:
+                        print(f"Warning: Could not parse imports from {file_path}: {e}")
+                
+                # Determine asset type
+                asset_type = determine_asset_type(rel_path)
+                
+                # Check if asset already exists
+                existing_assets = service.search_assets(file_path=rel_path)
+                if existing_assets:
+                    # Update existing asset
+                    asset = existing_assets[0]
+                    asset.title = os.path.basename(file_path)
+                    asset.description = metadata.get('docstring', '')
+                    asset.language = language
+                    asset.dependencies = dependencies
+                    asset.asset_metadata = metadata
+                    asset.asset_type = asset_type
+                    asset.modified_date = int(datetime.utcnow().timestamp())
+                    print(f"Updated asset: {rel_path} ({asset_type})")
+                else:
+                    # Create new asset
+                    asset = service.add_asset(
+                        title=os.path.basename(file_path),
+                        file_path=rel_path,
+                        asset_type=asset_type,
+                        description=metadata.get('docstring', ''),
+                        language=language,
+                        dependencies=dependencies,
+                        metadata=metadata
+                    )
+                    print(f"Added asset: {rel_path} ({asset_type})")
+
+                # Add dependencies
+                if dependencies:
+                    for dep in dependencies:
+                        try:
+                            # Find the dependency in the catalog
+                            dep_assets = service.search_assets(file_path=f"{dep}.py")
+                            if dep_assets:
+                                service.add_dependency(
+                                    source_id=asset.id,
+                                    target_id=dep_assets[0].id,
+                                    dependency_type='import'
+                                )
+                        except Exception as e:
+                            print(f"Warning: Could not add dependency {rel_path} -> {dep}.py: {e}")
 
             except Exception as e:
                 print(f"Error processing {file_path}: {e}")
@@ -175,17 +194,29 @@ def main():
     # Initialize database
     engine = create_engine('sqlite:///data/asset_catalog.db')
     Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    # Create service
-    service = AssetCatalogService()
+    try:
+        # Create service with session
+        service = AssetCatalogService(session)
 
-    # Scan directory
-    scan_directory(
-        args.directory,
-        service,
-        exclude_dirs=args.exclude_dirs,
-        exclude_files=args.exclude_files
-    )
+        # Scan directory
+        scan_directory(
+            args.directory,
+            service,
+            exclude_dirs=args.exclude_dirs,
+            exclude_files=args.exclude_files
+        )
+        
+        # Commit changes
+        session.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 if __name__ == '__main__':
     main()

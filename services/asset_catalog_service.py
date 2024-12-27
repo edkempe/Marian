@@ -9,15 +9,14 @@ from models.asset_catalog import (
     AssetCatalogItem, AssetCatalogTag, AssetDependency, AssetType
 )
 from models.catalog import Tag
-from shared_lib.database_session_util import get_analysis_session
-from shared_lib.constants import CATALOG_CONFIG
+from shared_lib.database_session_util import get_catalog_session
 
 class AssetCatalogService:
     """Service for managing code and document assets."""
 
     def __init__(self, session: Optional[Session] = None):
         """Initialize the asset catalog service."""
-        self.session = session or get_analysis_session()
+        self.session = session or get_catalog_session()
 
     def add_asset(
         self,
@@ -188,39 +187,50 @@ class AssetCatalogService:
         self,
         query: str = None,
         asset_type: str = None,
+        language: str = None,
+        file_path: str = None,
         tags: List[str] = None,
-        language: str = None
     ) -> List[AssetCatalogItem]:
-        """Search for assets based on various criteria.
+        """Search for assets in the catalog.
         
         Args:
-            query: Search query for title/description
+            query: Search query to match against title and description
             asset_type: Filter by asset type
-            tags: Filter by tags
             language: Filter by programming language
-        
+            file_path: Filter by exact file path
+            tags: Filter by tags (all tags must match)
+            
         Returns:
             List of matching assets
         """
-        q = self.session.query(AssetCatalogItem).filter_by(deleted=False)
-
+        filters = []
+        
         if query:
-            q = q.filter(or_(
-                AssetCatalogItem.title.ilike(f"%{query}%"),
-                AssetCatalogItem.description.ilike(f"%{query}%")
-            ))
-
+            filters.append(
+                or_(
+                    AssetCatalogItem.title.ilike(f"%{query}%"),
+                    AssetCatalogItem.description.ilike(f"%{query}%")
+                )
+            )
+            
         if asset_type:
-            q = q.filter_by(asset_type=asset_type)
-
+            filters.append(AssetCatalogItem.asset_type == asset_type)
+            
         if language:
-            q = q.filter_by(language=language)
-
+            filters.append(AssetCatalogItem.language == language)
+            
+        if file_path:
+            filters.append(AssetCatalogItem.file_path == os.path.normpath(file_path))
+            
         if tags:
             for tag in tags:
-                q = q.filter(AssetCatalogItem.tags.any(Tag.name == tag))
-
-        return q.all()
+                filters.append(AssetCatalogItem.tags.any(AssetCatalogTag.name == tag))
+                
+        query = self.session.query(AssetCatalogItem)
+        if filters:
+            query = query.filter(and_(*filters))
+            
+        return query.all()
 
     def get_asset_dependencies(
         self,
