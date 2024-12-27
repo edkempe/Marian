@@ -3,6 +3,7 @@ import json
 import os
 from dotenv import load_dotenv
 from shared_lib.anthropic_lib import extract_json, clean_json_text, parse_claude_response
+from shared_lib.constants import API_CONFIG
 from anthropic import Anthropic
 
 # Load environment variables
@@ -14,7 +15,7 @@ def test_extract_json_with_real_response():
     
     # Get a real response from Claude with JSON
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model=API_CONFIG['TEST_MODEL'],
         max_tokens=1000,
         temperature=0,
         messages=[{
@@ -40,7 +41,7 @@ def test_parse_claude_response_with_array():
     client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
     
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model=API_CONFIG['TEST_MODEL'],
         max_tokens=1000,
         temperature=0,
         messages=[{
@@ -66,7 +67,7 @@ def test_parse_claude_response_with_nested_structure():
     client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
     
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model=API_CONFIG['TEST_MODEL'],
         max_tokens=1000,
         temperature=0,
         messages=[{
@@ -91,7 +92,7 @@ def test_error_handling_with_invalid_response():
     client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
     
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model=API_CONFIG['TEST_MODEL'],
         max_tokens=1000,
         temperature=0,
         messages=[{

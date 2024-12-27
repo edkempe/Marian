@@ -2,6 +2,7 @@
 
 import os
 import json
+from shared_lib.constants import DEFAULT_MODEL
 import anthropic
 
 class APIClient:
@@ -19,7 +20,7 @@ class APIClient:
         try:
             # Try to create a simple message to test the connection
             response = self.client.messages.create(
-                model="claude-3-opus-20240229",
+                model=DEFAULT_MODEL,
                 max_tokens=10,
                 messages=[{
                     "role": "user",
