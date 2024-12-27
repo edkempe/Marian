@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import Mapped
 from models.base import Base
+from shared_lib.constants import COLUMN_SIZES
 
 class GmailLabel(Base):
     """SQLAlchemy model for Gmail label storage.
@@ -26,8 +27,8 @@ class GmailLabel(Base):
     __tablename__ = 'gmail_labels'
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)  # Internal ID for history tracking
-    label_id: Mapped[str] = Column(String(30), nullable=False)  # Gmail's label ID
-    name: Mapped[str] = Column(String(100), nullable=False)  # Label display name
+    label_id: Mapped[str] = Column(String(COLUMN_SIZES['GMAIL_LABEL_ID']), nullable=False)  # Gmail's label ID
+    name: Mapped[str] = Column(String(COLUMN_SIZES['GMAIL_LABEL_NAME']), nullable=False)  # Label display name
     type: Mapped[str] = Column(String(50))  # 'system' or 'user'
     message_list_visibility: Mapped[str] = Column(String(50))  # Controls visibility in message list
     label_list_visibility: Mapped[str] = Column(String(50))  # Controls visibility in label list

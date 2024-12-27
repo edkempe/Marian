@@ -9,14 +9,15 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
+from shared_lib.constants import AssetTypes, DEFAULT_VALUES
 
 class AssetType:
     """Asset types for the catalog."""
-    CODE = 'code'
-    DOCUMENT = 'document'
-    TEST = 'test'
-    CONFIG = 'config'
-    SCRIPT = 'script'
+    CODE = AssetTypes.CODE
+    DOCUMENT = AssetTypes.DOCUMENT
+    TEST = AssetTypes.TEST
+    CONFIG = AssetTypes.CONFIG
+    SCRIPT = AssetTypes.SCRIPT
 
 class AssetCatalogItem(Base):
     """Model for code and document assets in the catalog."""

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, relationship
 from models.base import Base
 from typing import Optional
 from datetime import datetime
+from shared_lib.constants import COLUMN_SIZES, DEFAULT_VALUES
 
 class Email(Base):
     """SQLAlchemy model for email storage.
@@ -38,16 +39,16 @@ class Email(Base):
 
     id: Mapped[str] = Column(Text, primary_key=True)
     thread_id: Mapped[str] = Column(Text, nullable=False)
-    subject: Mapped[str] = Column(Text, server_default='No Subject')
+    subject: Mapped[str] = Column(Text, server_default=DEFAULT_VALUES['EMAIL_SUBJECT'])
     from_address: Mapped[str] = Column(Text, nullable=False)
     to_address: Mapped[str] = Column(Text, nullable=False)
-    cc_address: Mapped[str] = Column(Text, server_default='')
-    bcc_address: Mapped[str] = Column(Text, server_default='')
+    cc_address: Mapped[str] = Column(Text, server_default=DEFAULT_VALUES['EMPTY_STRING'])
+    bcc_address: Mapped[str] = Column(Text, server_default=DEFAULT_VALUES['EMPTY_STRING'])
     received_date: Mapped[datetime] = Column(DateTime(timezone=True), nullable=False)
-    content: Mapped[str] = Column(Text, server_default='')
-    labels: Mapped[str] = Column(String(150), server_default='')
-    has_attachments: Mapped[bool] = Column(Boolean, nullable=False, server_default='0')
-    full_api_response: Mapped[str] = Column(Text, server_default='{}')
+    content: Mapped[str] = Column(Text, server_default=DEFAULT_VALUES['EMPTY_STRING'])
+    labels: Mapped[str] = Column(String(COLUMN_SIZES['EMAIL_LABELS']), server_default=DEFAULT_VALUES['EMPTY_STRING'])
+    has_attachments: Mapped[bool] = Column(Boolean, nullable=False, server_default=DEFAULT_VALUES['HAS_ATTACHMENTS'])
+    full_api_response: Mapped[str] = Column(Text, server_default=DEFAULT_VALUES['API_RESPONSE'])
 
     # Relationships
     analysis = relationship("EmailAnalysis", back_populates="email", uselist=False)
