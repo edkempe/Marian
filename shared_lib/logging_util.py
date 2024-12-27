@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 import structlog
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import Counter, Histogram, start_http_server, REGISTRY
 
 from constants import LOGGING_CONFIG
 
@@ -31,6 +31,13 @@ def register_metrics():
     
     if _metrics_registered:
         return
+        
+    # First unregister any existing metrics to avoid duplicates
+    collectors_to_remove = []
+    for collector in REGISTRY._collector_to_names:
+        collectors_to_remove.append(collector)
+    for collector in collectors_to_remove:
+        REGISTRY.unregister(collector)
         
     EMAIL_ANALYSIS_COUNTER = Counter(
         'email_analysis_total',

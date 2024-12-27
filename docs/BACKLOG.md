@@ -1684,3 +1684,35 @@ Short-form matching isn't reliably handling compound concepts and technical abbr
 1. Create a mapping of common technical abbreviations and their expansions
 2. Implement token-based matching for compound queries
 3. Add test cases for common technical abbreviations
+
+### Prompt Version Tracking
+**Status**: Backlogged  
+**Priority**: Low  
+**Workstream**: Email Processing  
+**Description**: System for tracking and managing different versions of prompts used in email analysis.
+
+#### Technical Details
+- Track which prompt version was used for each email analysis
+- Enable comparison of analysis results between prompt versions
+- Support A/B testing of prompt improvements
+
+#### Implementation Notes
+- Initial prototype used mock testing (now archived)
+- Related archived files:
+  - `archive/ARCHIVED_20241226_1716_test_version_tracking.py`
+  - `archive/ARCHIVED_20241226_1712_test_util.py`
+  - `archive/ARCHIVED_20241225_1807_broken_test_util.py`
+
+#### Dependencies
+- Database schema changes
+- UI modifications for version management
+- Testing infrastructure for prompt comparison
+
+#### Action Items
+- [ ] Design prompt versioning schema
+- [ ] Implement version management system
+- [ ] Create UI for managing prompt versions
+- [ ] Add metrics for version comparison
+- [ ] Build A/B testing framework
+
+{{ ... }}

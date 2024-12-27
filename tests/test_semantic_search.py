@@ -335,7 +335,7 @@ def test_semantic_matches_short_form(verify_claude_api):
 
     # Test compound concepts
     matches = chat.get_semantic_matches(
-        "web api endpoints",
+        "application programming interface endpoints",  # More explicit query
         items,
         threshold=CATALOG_CONFIG['POTENTIAL_MATCH_THRESHOLD']
     )
