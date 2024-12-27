@@ -150,46 +150,47 @@ class EmailAnalytics:
                 for result in results:
                     if isinstance(analysis_session, sqlite3.Connection):
                         email_id = result['email_id']
-                        cursor = email_session.cursor()
-                        cursor.execute("""
-                            SELECT * FROM emails 
-                            WHERE id = ?
-                        """, (email_id,))
-                        email_row = cursor.fetchone()
-                        if email_row:
-                            email_columns = [description[0] for description in cursor.description]
-                            email = dict(zip(email_columns, email_row))
+                        with email_session as email_session:
+                            cursor = email_session.cursor()
+                            cursor.execute("""
+                                SELECT * FROM emails 
+                                WHERE id = ?
+                            """, (email_id,))
+                            email_row = cursor.fetchone()
+                            if email_row:
+                                email_columns = [description[0] for description in cursor.description]
+                                email = dict(zip(email_columns, email_row))
 
-                            analysis = {
-                                'email_id': result['email_id'],
-                                'thread_id': result['thread_id'],
-                                'analysis_date': result['analysis_date'],
-                                'subject': email['subject'],
-                                'sender': email['from_address'],
-                                'summary': result['summary'],
-                                'category': json.loads(result['category']) if result['category'] else [],
-                                'priority': {
-                                    'score': result['priority_score'],
-                                    'reason': result['priority_reason']
-                                },
-                                'action': {
-                                    'needed': bool(result['action_needed']),
-                                    'type': json.loads(result['action_type']) if result['action_type'] else [],
-                                    'deadline': result['action_deadline']
-                                },
-                                'key_points': json.loads(result['key_points']) if result['key_points'] else [],
-                                'people_mentioned': json.loads(result['people_mentioned']) if result['people_mentioned'] else [],
-                                'links': {
-                                    'found': json.loads(result['links_found']) if result['links_found'] else [],
-                                    'display': json.loads(result['links_display']) if result['links_display'] else []
-                                },
-                                'project': result['project'] or '',
-                                'topic': result['topic'] or '',
-                                'sentiment': result['sentiment'],
-                                'confidence_score': result['confidence_score'],
-                                'full_api_response': result['full_api_response']
-                            }
-                            analyses.append(analysis)
+                                analysis = {
+                                    'email_id': result['email_id'],
+                                    'thread_id': result['thread_id'],
+                                    'analysis_date': result['analysis_date'],
+                                    'subject': email['subject'],
+                                    'sender': email['from_address'],
+                                    'summary': result['summary'],
+                                    'category': json.loads(result['category']) if result['category'] else [],
+                                    'priority': {
+                                        'score': result['priority_score'],
+                                        'reason': result['priority_reason']
+                                    },
+                                    'action': {
+                                        'needed': bool(result['action_needed']),
+                                        'type': json.loads(result['action_type']) if result['action_type'] else [],
+                                        'deadline': result['action_deadline']
+                                    },
+                                    'key_points': json.loads(result['key_points']) if result['key_points'] else [],
+                                    'people_mentioned': json.loads(result['people_mentioned']) if result['people_mentioned'] else [],
+                                    'links': {
+                                        'found': json.loads(result['links_found']) if result['links_found'] else [],
+                                        'display': json.loads(result['links_display']) if result['links_display'] else []
+                                    },
+                                    'project': result['project'] or '',
+                                    'topic': result['topic'] or '',
+                                    'sentiment': result['sentiment'],
+                                    'confidence_score': result['confidence_score'],
+                                    'full_api_response': result['full_api_response']
+                                }
+                                analyses.append(analysis)
                     else:
                         email = email_session.query(Email).filter(Email.id == result.email_id).first()
                         if email:
@@ -418,93 +419,95 @@ class EmailAnalytics:
                     return None
 
                 # Get email details
-                email_cursor = self._get_email_session().cursor()
-                email_cursor.execute("""
-                    SELECT * FROM emails 
-                    WHERE id = ?
-                """, (email_id,))
-                email = email_cursor.fetchone()
-                if not email:
-                    return None
+                with self._get_email_session() as email_session:
+                    email_cursor = email_session.cursor()
+                    email_cursor.execute("""
+                        SELECT * FROM emails 
+                        WHERE id = ?
+                    """, (email_id,))
+                    email = email_cursor.fetchone()
+                    if not email:
+                        return None
 
-                # Map column indices to names
-                analysis_cols = [desc[0] for desc in cursor.description]
-                email_cols = [desc[0] for desc in email_cursor.description]
-                
-                # Create result object with column names
-                result_dict = dict(zip(analysis_cols, result))
-                email_dict = dict(zip(email_cols, email))
+                    # Map column indices to names
+                    analysis_cols = [desc[0] for desc in cursor.description]
+                    email_cols = [desc[0] for desc in email_cursor.description]
+                    
+                    # Create result object with column names
+                    result_dict = dict(zip(analysis_cols, result))
+                    email_dict = dict(zip(email_cols, email))
 
-                analysis = {
-                    'email_id': result_dict['email_id'],
-                    'thread_id': result_dict['thread_id'],
-                    'analysis_date': result_dict['analysis_date'],
-                    'subject': email_dict['subject'],
-                    'sender': email_dict['from_address'],
-                    'summary': result_dict['summary'],
-                    'category': json.loads(result_dict['category']) if result_dict['category'] else [],
-                    'priority': {
-                        'score': result_dict['priority_score'],
-                        'reason': result_dict['priority_reason']
-                    },
-                    'action': {
-                        'needed': bool(result_dict['action_needed']),
-                        'type': json.loads(result_dict['action_type']) if result_dict['action_type'] else [],
-                        'deadline': result_dict['action_deadline']
-                    },
-                    'key_points': json.loads(result_dict['key_points']) if result_dict['key_points'] else [],
-                    'people_mentioned': json.loads(result_dict['people_mentioned']) if result_dict['people_mentioned'] else [],
-                    'links': {
-                        'found': json.loads(result_dict['links_found']) if result_dict['links_found'] else [],
-                        'display': json.loads(result_dict['links_display']) if result_dict['links_display'] else []
-                    },
-                    'project': result_dict['project'] or '',
-                    'topic': result_dict['topic'] or '',
-                    'sentiment': result_dict['sentiment'],
-                    'confidence_score': result_dict['confidence_score'],
-                    'full_api_response': result_dict['full_api_response']
-                }
-                return analysis
+                    analysis = {
+                        'email_id': result_dict['email_id'],
+                        'thread_id': result_dict['thread_id'],
+                        'analysis_date': result_dict['analysis_date'],
+                        'subject': email_dict['subject'],
+                        'sender': email_dict['from_address'],
+                        'summary': result_dict['summary'],
+                        'category': json.loads(result_dict['category']) if result_dict['category'] else [],
+                        'priority': {
+                            'score': result_dict['priority_score'],
+                            'reason': result_dict['priority_reason']
+                        },
+                        'action': {
+                            'needed': bool(result_dict['action_needed']),
+                            'type': json.loads(result_dict['action_type']) if result_dict['action_type'] else [],
+                            'deadline': result_dict['action_deadline']
+                        },
+                        'key_points': json.loads(result_dict['key_points']) if result_dict['key_points'] else [],
+                        'people_mentioned': json.loads(result_dict['people_mentioned']) if result_dict['people_mentioned'] else [],
+                        'links': {
+                            'found': json.loads(result_dict['links_found']) if result_dict['links_found'] else [],
+                            'display': json.loads(result_dict['links_display']) if result_dict['links_display'] else []
+                        },
+                        'project': result_dict['project'] or '',
+                        'topic': result_dict['topic'] or '',
+                        'sentiment': result_dict['sentiment'],
+                        'confidence_score': result_dict['confidence_score'],
+                        'full_api_response': result_dict['full_api_response']
+                    }
+                    return analysis
             else:
                 # Handle SQLAlchemy session
                 result = analysis_session.query(EmailAnalysis).filter(EmailAnalysis.email_id == email_id).first()
                 if not result:
                     return None
                 
-                email = self._get_email_session().query(Email).filter(Email.id == email_id).first()
-                if not email:
-                    return None
+                with self._get_email_session() as email_session:
+                    email = email_session.query(Email).filter(Email.id == email_id).first()
+                    if not email:
+                        return None
                 
-                analysis = {
-                    'email_id': result.email_id,
-                    'thread_id': result.thread_id,
-                    'analysis_date': result.analysis_date,
-                    'subject': email.subject,
-                    'sender': email.sender,
-                    'summary': result.summary,
-                    'category': result.category if isinstance(result.category, list) else json.loads(result.category) if result.category else [],
-                    'priority': {
-                        'score': result.priority_score,
-                        'reason': result.priority_reason
-                    },
-                    'action': {
-                        'needed': bool(result.action_needed),
-                        'type': result.action_type if isinstance(result.action_type, list) else json.loads(result.action_type) if result.action_type else [],
-                        'deadline': result.action_deadline.isoformat() if result.action_deadline else ''
-                    },
-                    'key_points': result.key_points if isinstance(result.key_points, list) else json.loads(result.key_points) if result.key_points else [],
-                    'people_mentioned': result.people_mentioned if isinstance(result.people_mentioned, list) else json.loads(result.people_mentioned) if result.people_mentioned else [],
-                    'links': {
-                        'found': result.links_found if isinstance(result.links_found, list) else json.loads(result.links_found) if result.links_found else [],
-                        'display': result.links_display if isinstance(result.links_display, list) else json.loads(result.links_display) if result.links_display else []
-                    },
-                    'project': result.project or '',
-                    'topic': result.topic or '',
-                    'sentiment': result.sentiment,
-                    'confidence_score': result.confidence_score,
-                    'full_api_response': result.full_api_response
-                }
-                return analysis
+                    analysis = {
+                        'email_id': result.email_id,
+                        'thread_id': result.thread_id,
+                        'analysis_date': result.analysis_date,
+                        'subject': email.subject,
+                        'sender': email.sender,
+                        'summary': result.summary,
+                        'category': result.category if isinstance(result.category, list) else json.loads(result.category) if result.category else [],
+                        'priority': {
+                            'score': result.priority_score,
+                            'reason': result.priority_reason
+                        },
+                        'action': {
+                            'needed': bool(result.action_needed),
+                            'type': result.action_type if isinstance(result.action_type, list) else json.loads(result.action_type) if result.action_type else [],
+                            'deadline': result.action_deadline.isoformat() if result.action_deadline else ''
+                        },
+                        'key_points': result.key_points if isinstance(result.key_points, list) else json.loads(result.key_points) if result.key_points else [],
+                        'people_mentioned': result.people_mentioned if isinstance(result.people_mentioned, list) else json.loads(result.people_mentioned) if result.people_mentioned else [],
+                        'links': {
+                            'found': result.links_found if isinstance(result.links_found, list) else json.loads(result.links_found) if result.links_found else [],
+                            'display': result.links_display if isinstance(result.links_display, list) else json.loads(result.links_display) if result.links_display else []
+                        },
+                        'project': result.project or '',
+                        'topic': result.topic or '',
+                        'sentiment': result.sentiment,
+                        'confidence_score': result.confidence_score,
+                        'full_api_response': result.full_api_response
+                    }
+                    return analysis
 
     def get_analysis_by_category(self, category: str) -> List[Dict]:
         """Get all analyses with a specific category."""

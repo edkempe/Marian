@@ -14,9 +14,9 @@ from shared_lib.database_session_util import get_catalog_session
 class AssetCatalogService:
     """Service for managing code and document assets."""
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self):
         """Initialize the asset catalog service."""
-        self.session = session or get_catalog_session()
+        pass
 
     def add_asset(
         self,
@@ -29,117 +29,148 @@ class AssetCatalogService:
         metadata: Dict[str, Any] = None,
         tags: List[str] = None
     ) -> AssetCatalogItem:
-        """Add a new asset to the catalog.
-        
-        Args:
-            title: Title of the asset
-            file_path: Path to the asset file
-            asset_type: Type of asset (code, document, test, config, script)
-            description: Description of the asset
-            language: Programming language or document type
-            dependencies: List of file paths that this asset depends on
-            metadata: Additional metadata about the asset
-            tags: List of tags to apply to the asset
-        
-        Returns:
-            The created asset catalog item
-        """
-        # Normalize file path
-        file_path = os.path.normpath(file_path)
+        """Add a new asset to the catalog."""
+        with get_catalog_session() as session:
+            # Normalize file path
+            file_path = os.path.normpath(file_path)
 
-        # Check if asset already exists
-        existing = self.session.query(AssetCatalogItem).filter_by(
-            file_path=file_path,
-            deleted=False
-        ).first()
-        if existing:
-            raise ValueError(f"Asset with file path '{file_path}' already exists")
+            # Check if asset already exists
+            existing = session.query(AssetCatalogItem).filter_by(
+                file_path=file_path,
+                deleted=False
+            ).first()
+            if existing:
+                raise ValueError(f"Asset with file path '{file_path}' already exists")
 
-        # Create asset
-        asset = AssetCatalogItem(
-            title=title,
-            file_path=file_path,
-            asset_type=asset_type,
-            description=description,
-            language=language,
-            dependencies=dependencies or [],
-            metadata=metadata or {}
-        )
-        self.session.add(asset)
-
-        # Add tags
-        if tags:
-            for tag_name in tags:
-                tag = self.session.query(Tag).filter_by(name=tag_name).first()
-                if not tag:
-                    tag = Tag(name=tag_name)
-                    self.session.add(tag)
-                AssetCatalogTag.create(self.session, asset.id, tag.id)
-
-        self.session.commit()
-        return asset
+            # Create the asset
+            asset = AssetCatalogItem(
+                title=title,
+                file_path=file_path,
+                asset_type=asset_type,
+                description=description,
+                language=language,
+                metadata=metadata or {},
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            
+            session.add(asset)
+            session.flush()  # Get the asset ID
+            
+            # Add dependencies if provided
+            if dependencies:
+                for dep in dependencies:
+                    dependency = AssetDependency(
+                        source_id=asset.id,
+                        target_id=dep,
+                        dependency_type='imports'
+                    )
+                    session.add(dependency)
+            
+            # Add tags if provided
+            if tags:
+                for tag_name in tags:
+                    # Check if tag exists
+                    tag = session.query(Tag).filter(Tag.name == tag_name).first()
+                    if not tag:
+                        tag = Tag(name=tag_name)
+                        session.add(tag)
+                        session.flush()
+                    
+                    # Create asset-tag association
+                    asset_tag = AssetCatalogTag(
+                        asset_id=asset.id,
+                        tag_id=tag.id
+                    )
+                    session.add(asset_tag)
+            
+            session.commit()
+            return asset
 
     def update_asset(
         self,
         asset_id: int,
-        title: str = None,
-        description: str = None,
-        metadata: Dict[str, Any] = None,
-        tags: List[str] = None
-    ) -> AssetCatalogItem:
-        """Update an existing asset.
-        
-        Args:
-            asset_id: ID of the asset to update
-            title: New title (optional)
-            description: New description (optional)
-            metadata: New metadata (optional)
-            tags: New tags (optional)
-        
-        Returns:
-            The updated asset
-        """
-        asset = self.session.query(AssetCatalogItem).filter_by(
-            id=asset_id,
-            deleted=False
-        ).first()
-        if not asset:
-            raise ValueError(f"Asset with ID {asset_id} not found")
-
-        if title:
-            asset.title = title
-        if description:
-            asset.description = description
-        if metadata:
-            asset.metadata.update(metadata)
-
-        if tags is not None:
-            # Remove existing tags
-            self.session.query(AssetCatalogTag).filter_by(asset_id=asset_id).delete()
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        language: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        dependencies: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None
+    ) -> Optional[AssetCatalogItem]:
+        """Update an existing asset."""
+        with get_catalog_session() as session:
+            asset = session.query(AssetCatalogItem).filter_by(
+                id=asset_id,
+                deleted=False
+            ).first()
+            if not asset:
+                raise ValueError(f"Asset with ID {asset_id} not found")
             
-            # Add new tags
-            for tag_name in tags:
-                tag = self.session.query(Tag).filter_by(name=tag_name).first()
-                if not tag:
-                    tag = Tag(name=tag_name)
-                    self.session.add(tag)
-                AssetCatalogTag.create(self.session, asset.id, tag.id)
-
-        self.session.commit()
-        return asset
+            # Update basic fields
+            if title:
+                asset.title = title
+            if description:
+                asset.description = description
+            if language:
+                asset.language = language
+            if metadata:
+                asset.metadata.update(metadata)
+            
+            asset.updated_at = datetime.utcnow()
+            
+            # Update dependencies if provided
+            if dependencies is not None:
+                # Remove existing dependencies
+                session.query(AssetDependency).filter(
+                    AssetDependency.source_id == asset_id
+                ).delete()
+                
+                # Add new dependencies
+                for dep in dependencies:
+                    dependency = AssetDependency(
+                        source_id=asset_id,
+                        target_id=dep,
+                        dependency_type='imports'
+                    )
+                    session.add(dependency)
+            
+            # Update tags if provided
+            if tags is not None:
+                # Remove existing tags
+                session.query(AssetCatalogTag).filter(
+                    AssetCatalogTag.asset_id == asset_id
+                ).delete()
+                
+                # Add new tags
+                for tag_name in tags:
+                    tag = session.query(Tag).filter(Tag.name == tag_name).first()
+                    if not tag:
+                        tag = Tag(name=tag_name)
+                        session.add(tag)
+                        session.flush()
+                    
+                    asset_tag = AssetCatalogTag(
+                        asset_id=asset_id,
+                        tag_id=tag.id
+                    )
+                    session.add(asset_tag)
+            
+            session.commit()
+            return asset
 
     def delete_asset(self, asset_id: int):
         """Soft delete an asset."""
-        asset = self.session.query(AssetCatalogItem).filter_by(
-            id=asset_id,
-            deleted=False
-        ).first()
-        if not asset:
-            raise ValueError(f"Asset with ID {asset_id} not found")
+        with get_catalog_session() as session:
+            asset = session.query(AssetCatalogItem).filter_by(
+                id=asset_id,
+                deleted=False
+            ).first()
+            if not asset:
+                raise ValueError(f"Asset with ID {asset_id} not found")
 
-        asset.deleted = True
-        asset.status = 'deleted'
-        self.session.commit()
+            asset.deleted = True
+            asset.status = 'deleted'
+            session.commit()
 
     def add_dependency(
         self,
@@ -148,40 +179,31 @@ class AssetCatalogService:
         dependency_type: str,
         metadata: Dict[str, Any] = None
     ) -> AssetDependency:
-        """Add a dependency between two assets.
-        
-        Args:
-            source_id: ID of the dependent asset
-            target_id: ID of the asset being depended on
-            dependency_type: Type of dependency (e.g., 'imports', 'uses', 'tests')
-            metadata: Additional metadata about the dependency
-        
-        Returns:
-            The created dependency
-        """
-        # Verify assets exist
-        source = self.session.query(AssetCatalogItem).filter_by(
-            id=source_id,
-            deleted=False
-        ).first()
-        target = self.session.query(AssetCatalogItem).filter_by(
-            id=target_id,
-            deleted=False
-        ).first()
+        """Add a dependency between two assets."""
+        with get_catalog_session() as session:
+            # Verify assets exist
+            source = session.query(AssetCatalogItem).filter_by(
+                id=source_id,
+                deleted=False
+            ).first()
+            target = session.query(AssetCatalogItem).filter_by(
+                id=target_id,
+                deleted=False
+            ).first()
 
-        if not source or not target:
-            raise ValueError("Source or target asset not found")
+            if not source or not target:
+                raise ValueError("Source or target asset not found")
 
-        # Create dependency
-        dependency = AssetDependency(
-            source_id=source_id,
-            target_id=target_id,
-            dependency_type=dependency_type,
-            metadata=metadata or {}
-        )
-        self.session.add(dependency)
-        self.session.commit()
-        return dependency
+            # Create dependency
+            dependency = AssetDependency(
+                source_id=source_id,
+                target_id=target_id,
+                dependency_type=dependency_type,
+                metadata=metadata or {}
+            )
+            session.add(dependency)
+            session.commit()
+            return dependency
 
     def search_assets(
         self,
@@ -191,147 +213,123 @@ class AssetCatalogService:
         file_path: str = None,
         tags: List[str] = None,
     ) -> List[AssetCatalogItem]:
-        """Search for assets in the catalog.
-        
-        Args:
-            query: Search query to match against title and description
-            asset_type: Filter by asset type
-            language: Filter by programming language
-            file_path: Filter by exact file path
-            tags: Filter by tags (all tags must match)
+        """Search for assets in the catalog."""
+        with get_catalog_session() as session:
+            filters = []
             
-        Returns:
-            List of matching assets
-        """
-        filters = []
-        
-        if query:
-            filters.append(
-                or_(
-                    AssetCatalogItem.title.ilike(f"%{query}%"),
-                    AssetCatalogItem.description.ilike(f"%{query}%")
+            if query:
+                filters.append(
+                    or_(
+                        AssetCatalogItem.title.ilike(f"%{query}%"),
+                        AssetCatalogItem.description.ilike(f"%{query}%")
+                    )
                 )
-            )
-            
-        if asset_type:
-            filters.append(AssetCatalogItem.asset_type == asset_type)
-            
-        if language:
-            filters.append(AssetCatalogItem.language == language)
-            
-        if file_path:
-            filters.append(AssetCatalogItem.file_path == os.path.normpath(file_path))
-            
-        if tags:
-            for tag in tags:
-                filters.append(AssetCatalogItem.tags.any(AssetCatalogTag.name == tag))
                 
-        query = self.session.query(AssetCatalogItem)
-        if filters:
-            query = query.filter(and_(*filters))
-            
-        return query.all()
+            if asset_type:
+                filters.append(AssetCatalogItem.asset_type == asset_type)
+                
+            if language:
+                filters.append(AssetCatalogItem.language == language)
+                
+            if file_path:
+                filters.append(AssetCatalogItem.file_path == os.path.normpath(file_path))
+                
+            if tags:
+                for tag in tags:
+                    filters.append(AssetCatalogItem.tags.any(AssetCatalogTag.name == tag))
+                    
+            query = session.query(AssetCatalogItem)
+            if filters:
+                query = query.filter(and_(*filters))
+                
+            return query.all()
 
     def get_asset_dependencies(
         self,
         asset_id: int,
         include_indirect: bool = False
     ) -> List[Tuple[AssetCatalogItem, str]]:
-        """Get dependencies of an asset.
-        
-        Args:
-            asset_id: ID of the asset
-            include_indirect: Whether to include indirect dependencies
-        
-        Returns:
-            List of (asset, dependency_type) tuples
-        """
-        deps = self.session.query(
-            AssetCatalogItem,
-            AssetDependency.dependency_type
-        ).join(
-            AssetDependency,
-            and_(
-                AssetDependency.target_id == AssetCatalogItem.id,
-                AssetDependency.source_id == asset_id
-            )
-        ).filter(
-            AssetCatalogItem.deleted == False
-        ).all()
+        """Get dependencies of an asset."""
+        with get_catalog_session() as session:
+            deps = session.query(
+                AssetCatalogItem,
+                AssetDependency.dependency_type
+            ).join(
+                AssetDependency,
+                and_(
+                    AssetDependency.target_id == AssetCatalogItem.id,
+                    AssetDependency.source_id == asset_id
+                )
+            ).filter(
+                AssetCatalogItem.deleted == False
+            ).all()
 
-        if include_indirect:
-            seen = {asset_id}
-            to_check = [d[0].id for d in deps]
-            
-            while to_check:
-                current_id = to_check.pop(0)
-                if current_id not in seen:
-                    seen.add(current_id)
-                    indirect_deps = self.session.query(
-                        AssetCatalogItem,
-                        AssetDependency.dependency_type
-                    ).join(
-                        AssetDependency,
-                        and_(
-                            AssetDependency.target_id == AssetCatalogItem.id,
-                            AssetDependency.source_id == current_id
-                        )
-                    ).filter(
-                        AssetCatalogItem.deleted == False
-                    ).all()
-                    deps.extend(indirect_deps)
-                    to_check.extend(d[0].id for d in indirect_deps)
+            if include_indirect:
+                seen = {asset_id}
+                to_check = [d[0].id for d in deps]
+                
+                while to_check:
+                    current_id = to_check.pop(0)
+                    if current_id not in seen:
+                        seen.add(current_id)
+                        indirect_deps = session.query(
+                            AssetCatalogItem,
+                            AssetDependency.dependency_type
+                        ).join(
+                            AssetDependency,
+                            and_(
+                                AssetDependency.target_id == AssetCatalogItem.id,
+                                AssetDependency.source_id == current_id
+                            )
+                        ).filter(
+                            AssetCatalogItem.deleted == False
+                        ).all()
+                        deps.extend(indirect_deps)
+                        to_check.extend(d[0].id for d in indirect_deps)
 
-        return deps
+            return deps
 
     def get_asset_dependents(
         self,
         asset_id: int,
         include_indirect: bool = False
     ) -> List[Tuple[AssetCatalogItem, str]]:
-        """Get dependents of an asset.
-        
-        Args:
-            asset_id: ID of the asset
-            include_indirect: Whether to include indirect dependents
-        
-        Returns:
-            List of (asset, dependency_type) tuples
-        """
-        deps = self.session.query(
-            AssetCatalogItem,
-            AssetDependency.dependency_type
-        ).join(
-            AssetDependency,
-            and_(
-                AssetDependency.source_id == AssetCatalogItem.id,
-                AssetDependency.target_id == asset_id
-            )
-        ).filter(
-            AssetCatalogItem.deleted == False
-        ).all()
+        """Get dependents of an asset."""
+        with get_catalog_session() as session:
+            deps = session.query(
+                AssetCatalogItem,
+                AssetDependency.dependency_type
+            ).join(
+                AssetDependency,
+                and_(
+                    AssetDependency.source_id == AssetCatalogItem.id,
+                    AssetDependency.target_id == asset_id
+                )
+            ).filter(
+                AssetCatalogItem.deleted == False
+            ).all()
 
-        if include_indirect:
-            seen = {asset_id}
-            to_check = [d[0].id for d in deps]
-            
-            while to_check:
-                current_id = to_check.pop(0)
-                if current_id not in seen:
-                    seen.add(current_id)
-                    indirect_deps = self.session.query(
-                        AssetCatalogItem,
-                        AssetDependency.dependency_type
-                    ).join(
-                        AssetDependency,
-                        and_(
-                            AssetDependency.source_id == AssetCatalogItem.id,
-                            AssetDependency.target_id == current_id
-                        )
-                    ).filter(
-                        AssetCatalogItem.deleted == False
-                    ).all()
-                    deps.extend(indirect_deps)
-                    to_check.extend(d[0].id for d in indirect_deps)
+            if include_indirect:
+                seen = {asset_id}
+                to_check = [d[0].id for d in deps]
+                
+                while to_check:
+                    current_id = to_check.pop(0)
+                    if current_id not in seen:
+                        seen.add(current_id)
+                        indirect_deps = session.query(
+                            AssetCatalogItem,
+                            AssetDependency.dependency_type
+                        ).join(
+                            AssetDependency,
+                            and_(
+                                AssetDependency.source_id == AssetCatalogItem.id,
+                                AssetDependency.target_id == current_id
+                            )
+                        ).filter(
+                            AssetCatalogItem.deleted == False
+                        ).all()
+                        deps.extend(indirect_deps)
+                        to_check.extend(d[0].id for d in indirect_deps)
 
-        return deps
+            return deps
