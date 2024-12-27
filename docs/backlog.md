@@ -1472,6 +1472,42 @@ The chat logs are a critical system component that require careful management:
    - From: Session 2024-12-27
    - Context: Ensure long-term documentation quality
 
+### Documentation Review and Updates
+**Status**: Active
+**Focus**: Documentation quality and consistency
+**Current Priority**: Testing guide updates
+
+#### Tasks
+- [ ] Review archived testing guides
+  - Review ARCHIVED_20241227_1514_testing-guide.jexi.bak
+  - Review ARCHIVED_20241227_1512_testing-guide.md
+  - Compare with current testing-guide.md
+  - Identify any valuable content not carried forward
+  - Update current guide if needed
+  - Context: Ensure no critical testing information was lost during guide updates
+  - Priority: Medium
+  - Dependencies: None
+- [ ] Review Data Storage and Schema section for potential consolidation
+  - Context: Follow-up from documentation cleanup
+  - Consider merging implementation details with storage considerations
+- [ ] Add implementation examples for key features
+  - Context: Make documentation more practical
+  - Include code snippets for common operations
+- [ ] Review other documentation files for duplicate sections
+  - Context: Continue documentation cleanup effort
+  - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
+- [ ] Implement documentation directory structure reorganization
+  - Create new documentation sections:
+    - `/docs/guides/` for detailed how-to guides
+    - `/docs/reference/` for reference documentation
+    - `/docs/decisions/` for Architecture Decision Records (ADRs)
+  - Move existing files to appropriate sections
+  - Update all cross-references and links
+  - Verify documentation navigation remains intuitive
+  - Priority: Low
+  - Dependencies: None
+  - Context: Final phase of documentation standardization project
+
 ## Medium Priority
 
 ### Process Improvements

@@ -81,9 +81,10 @@
 ### Documentation Organization
 - Keep documentation in the `docs/` directory
 - Use subdirectories for specific types of documentation:
-  - `docs/sessions/`: AI pair programming session logs
-  - `docs/decisions/`: Architecture Decision Records (ADRs)
-  - `docs/api/`: Detailed API documentation
+  - `docs/`: Documentation root
+  - `docs/examples/`: Code examples
+  - `docs/session_logs/`: AI pair programming session logs
+  - `docs/reminders/`: Scheduled tasks and reminders
 - Link related documentation files using relative links
 - Keep paths short and descriptive
 

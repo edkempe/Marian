@@ -57,8 +57,8 @@ git log --oneline -n 5  # Review recent changes
 cat docs/BACKLOG.md     # Review current priorities
 
 # 5. Review previous session
-ls -lt docs/sessions/ | head -n 2  # Find most recent session log
-cat docs/sessions/[most_recent_session].md  # Review previous session details
+ls -lt docs/session_logs/ | head -n 2  # Find most recent session log
+cat docs/session_logs/[most_recent_session].md  # Review previous session details
 ```
 
 #### Pre-Development Checklist
@@ -179,7 +179,7 @@ git push origin main
 ```
 
 #### Session Log Template
-When creating `docs/sessions/session_YYYYMMDD_HHMM.md`:
+When creating `docs/session_logs/session_YYYYMMDD_HHMM.md`:
 ```markdown
 ## Session Summary YYYY-MM-DD HH:MM TZ
 
@@ -236,7 +236,7 @@ Session completed! Here's a summary:
    - Updated BACKLOG.md with current status
    - Added database schema documentation
    - Updated setup instructions in README.md
-   - Created session summary in docs/sessions/session_YYYYMMDD_HHMM.md
+   - Created session summary in docs/session_logs/session_YYYYMMDD_HHMM.md
 
 All changes have been committed and pushed. The project is ready for the next session.
 ```
