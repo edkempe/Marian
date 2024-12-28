@@ -62,11 +62,12 @@ See: `session_logs/README.md`
    - Never stage files without immediately committing them
 
 2. **Follow conventional commit format**
-   ```
-   type: brief description
+   ```bash
+   git commit -am "type: brief description
 
    - Detailed change 1
    - Detailed change 2
+   - Detailed change 3"
    ```
    Types:
    - feat: new feature
@@ -76,6 +77,30 @@ See: `session_logs/README.md`
    - refactor: code restructuring
    - test: adding tests
    - chore: maintenance tasks
+
+   Examples:
+   ```bash
+   # Adding a new feature
+   git commit -am "feat: Add email analysis caching
+
+   - Implement LRU cache for analysis results
+   - Add cache size configuration
+   - Add cache hit/miss metrics"
+
+   # Fixing a bug
+   git commit -am "fix: Handle empty API responses
+
+   - Add null check for API response
+   - Log warning on empty response
+   - Return default values instead of throwing"
+
+   # Adding tests
+   git commit -am "test: Add edge case tests for JSON parser
+
+   - Test unicode character handling
+   - Test empty object parsing
+   - Test whitespace normalization"
+   ```
 
 3. **Keep commits focused**
    - One logical change per commit
