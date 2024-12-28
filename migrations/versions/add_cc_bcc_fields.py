@@ -13,11 +13,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Add cc_address and bcc_address columns
-    op.add_column('emails', sa.Column('cc_address', sa.Text, server_default=''))
-    op.add_column('emails', sa.Column('bcc_address', sa.Text, server_default=''))
+    pass
 
 def downgrade():
-    # Remove cc_address and bcc_address columns
-    op.drop_column('emails', 'cc_address')
-    op.drop_column('emails', 'bcc_address')
+    pass

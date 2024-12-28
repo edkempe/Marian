@@ -1863,3 +1863,41 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
 - New format will be `session_log_YYYY-MM-DD.md`
 - Multiple sessions in a day will be separated by timestamps
 - Need to handle existing 2024-12-27.md format file
+
+### Testing
+1. Add schema validation tests:
+   ```python
+   def test_schema_matches_migrations():
+       """Ensure SQLAlchemy models match migration schema."""
+       # Create DB from migrations
+       migration_engine = create_engine('sqlite:///:memory:')
+       with migration_engine.connect() as conn:
+           for statement in latest_migration.upgrade():
+               conn.execute(statement)
+       
+       # Create DB from models
+       model_engine = create_engine('sqlite:///:memory:')
+       Base.metadata.create_all(model_engine)
+       
+       # Compare schemas
+       migration_inspector = inspect(migration_engine)
+       model_inspector = inspect(model_engine)
+       
+       # Compare tables
+       assert set(migration_inspector.get_table_names()) == \
+              set(model_inspector.get_table_names())
+       
+       # Compare columns, constraints, indexes
+       for table in migration_inspector.get_table_names():
+           migration_cols = {c['name']: c for c in 
+                           migration_inspector.get_columns(table)}
+           model_cols = {c['name']: c for c in 
+                        model_inspector.get_columns(table)}
+           assert migration_cols == model_cols
+   ```
+   - Rationale: Catch model-migration mismatches early
+   - Impact: Prevents schema drift and deployment issues
+   - Dependencies: None
+   - Priority: High
+
+{{ ... }}

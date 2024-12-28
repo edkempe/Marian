@@ -118,128 +118,53 @@ class EmailAnalysis(Base):
     __tablename__ = 'email_analysis'
     __table_args__ = {'extend_existing': True}
 
-    # Email identification
-    email_id: Mapped[str] = Column(Text, ForeignKey('emails.id'), primary_key=True)  # References emails.id
-    thread_id: Mapped[str] = Column(Text, nullable=True)  # Gmail thread ID for grouping related emails
-    
-    # Analysis metadata
-    analysis_date: Mapped[str] = Column(Text, nullable=False)  # When the analysis was performed
-    analyzed_date: Mapped[str] = Column(Text, nullable=False)  # When the email was analyzed
-    prompt_version: Mapped[Optional[str]] = Column(Text, nullable=True)  # Version of the prompt used
-    
-    # Core analysis
-    summary: Mapped[str] = Column(Text, nullable=False)  # Brief summary of the email
-    _category: Mapped[str] = Column('category', Text, nullable=True)  # List of categories (serialized)
-    priority_score: Mapped[int] = Column(Integer, nullable=False)  # Priority score from 1-5
-    priority_reason: Mapped[str] = Column(Text, nullable=False)  # Reason for priority score
-    
-    # Action items
-    action_needed: Mapped[bool] = Column(Boolean, nullable=False, default=ANALYSIS_DEFAULTS['ACTION_NEEDED'])  # Whether action is needed
-    _action_type: Mapped[str] = Column('action_type', Text, nullable=True)  # List of action types (serialized)
-    action_deadline: Mapped[Optional[str]] = Column(Text, nullable=True)  # When action is needed by
-    
-    # Extracted data
-    _key_points: Mapped[str] = Column('key_points', Text, nullable=True)  # List of key points (serialized)
-    _people_mentioned: Mapped[str] = Column('people_mentioned', Text, nullable=True)  # List of people (serialized)
-    _links_found: Mapped[str] = Column('links_found', Text, nullable=True)  # List of links (serialized)
-    _links_display: Mapped[str] = Column('links_display', Text, nullable=True)  # List of display links (serialized)
-    
-    # Classification
-    project: Mapped[str] = Column(Text, nullable=True)  # Project name
-    topic: Mapped[str] = Column(Text, nullable=True)  # Topic name
-    sentiment: Mapped[str] = Column(Text, nullable=False)  # Sentiment analysis
-    confidence_score: Mapped[float] = Column(Float, nullable=False)  # Analysis confidence
-    
-    # Raw response
-    full_api_response: Mapped[str] = Column(Text, nullable=True)  # Complete API response
+    email_id = Column(Integer, ForeignKey('emails.id'), primary_key=True)
+    analysis_date = Column(DateTime, nullable=True)
+    analyzed_date = Column(DateTime, nullable=False)
+    prompt_version = Column(Text, nullable=False)
+    summary = Column(Text, nullable=False)
+    category = Column(Text, nullable=False)
+    priority_score = Column(Integer, nullable=False)
+    priority_reason = Column(Text, nullable=False)
+    action_needed = Column(Boolean, nullable=False, default=ANALYSIS_DEFAULTS['ACTION_NEEDED'])
+    action_type = Column(Text, nullable=False)
+    action_deadline = Column(Text, nullable=True)
+    key_points = Column(Text, nullable=False)
+    people_mentioned = Column(Text, nullable=False)
+    links_found = Column(Text, nullable=False)
+    links_display = Column(Text, nullable=False)
+    project = Column(Text, nullable=True)
+    topic = Column(Text, nullable=True)
+    ref_docs = Column(Text, nullable=True)
+    sentiment = Column(Text, nullable=False)
+    confidence_score = Column(Float, nullable=False)
 
-    # Relationships
     email = relationship("Email", back_populates="analysis")
-
-    # List property getters and setters
-    @property
-    def category(self) -> List[str]:
-        """Get the category list."""
-        return json.loads(self._category) if self._category else []
-
-    @category.setter
-    def category(self, value: List[str]):
-        """Set the category list."""
-        self._category = json.dumps(value) if value else None
-
-    @property
-    def action_type(self) -> List[str]:
-        """Get the action type list."""
-        return json.loads(self._action_type) if self._action_type else []
-
-    @action_type.setter
-    def action_type(self, value: List[str]):
-        """Set the action type list."""
-        self._action_type = json.dumps(value) if value else None
-
-    @property
-    def key_points(self) -> List[str]:
-        """Get the key points list."""
-        return json.loads(self._key_points) if self._key_points else []
-
-    @key_points.setter
-    def key_points(self, value: List[str]):
-        """Set the key points list."""
-        self._key_points = json.dumps(value) if value else None
-
-    @property
-    def people_mentioned(self) -> List[str]:
-        """Get the people mentioned list."""
-        return json.loads(self._people_mentioned) if self._people_mentioned else []
-
-    @people_mentioned.setter
-    def people_mentioned(self, value: List[str]):
-        """Set the people mentioned list."""
-        self._people_mentioned = json.dumps(value) if value else None
-
-    @property
-    def links_found(self) -> List[str]:
-        """Get the links found list."""
-        return json.loads(self._links_found) if self._links_found else []
-
-    @links_found.setter
-    def links_found(self, value: List[str]):
-        """Set the links found list."""
-        self._links_found = json.dumps(value) if value else None
-
-    @property
-    def links_display(self) -> List[str]:
-        """Get the links display list."""
-        return json.loads(self._links_display) if self._links_display else []
-
-    @links_display.setter
-    def links_display(self, value: List[str]):
-        """Set the links display list."""
-        self._links_display = json.dumps(value) if value else None
 
     @classmethod
     def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse, 
                          links_found: List[str] = None, links_display: List[str] = None) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
+        now = datetime.now(UTC)
+        
         return cls(
             email_id=email_id,
-            thread_id=thread_id,
-            analysis_date=datetime.now(UTC).isoformat(),
-            prompt_version="1.0",  # TODO: Make this configurable
+            analysis_date=now,
+            analyzed_date=now,
+            prompt_version="1.0",  # TODO: Make configurable
             summary=response.summary,
-            category=response.category,
+            category=json.dumps(response.category),
             priority_score=response.priority_score,
             priority_reason=response.priority_reason,
             action_needed=response.action_needed,
-            action_type=response.action_type,
-            action_deadline=response.action_deadline or '',  # Store deadline as string
-            key_points=response.key_points,
-            people_mentioned=response.people_mentioned,
-            links_found=links_found or [],  # Use provided URLs or empty list
-            links_display=links_display or [],  # Use provided display URLs or empty list
+            action_type=json.dumps(response.action_type),
+            action_deadline=response.action_deadline,
+            key_points=json.dumps(response.key_points),
+            people_mentioned=json.dumps(response.people_mentioned),
+            links_found=json.dumps(links_found or []),
+            links_display=json.dumps(links_display or []),
             project=response.project,
             topic=response.topic,
             sentiment=response.sentiment,
-            confidence_score=response.confidence_score,
-            full_api_response=response.model_dump()
+            confidence_score=response.confidence_score
         )

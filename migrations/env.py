@@ -5,7 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from models.email_analysis import Base
+# Import Base from our models package
+from models.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

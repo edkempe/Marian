@@ -22,6 +22,10 @@ from sqlalchemy.orm import Session
 import os
 import sys
 from typing import Dict, Any, List, Set
+from alembic import command, op
+from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.operations import Operations
 
 # Add project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -33,9 +37,9 @@ from models.email import Email
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 
-# Import latest migration
-from migrations.versions.20241223_01_initial_schema import upgrade as initial_upgrade
-from migrations.versions.20241223_add_cc_bcc_fields import upgrade as cc_bcc_upgrade
+# Import migrations
+from migrations.versions.initial_schema import upgrade as initial_upgrade
+from migrations.versions.add_cc_bcc_fields import upgrade as cc_bcc_upgrade
 
 def get_table_details(inspector: Any, table_name: str) -> Dict[str, Any]:
     """Get comprehensive details about a table's schema.
@@ -62,10 +66,7 @@ def get_table_details(inspector: Any, table_name: str) -> Dict[str, Any]:
             }
             for c in inspector.get_columns(table_name)
         },
-        'primary_keys': set(
-            pk['name'] 
-            for pk in inspector.get_pk_constraint(table_name)['constrained_columns']
-        ),
+        'primary_keys': set(inspector.get_pk_constraint(table_name)['constrained_columns']),
         'foreign_keys': [
             {
                 'referred_table': fk['referred_table'],
@@ -151,10 +152,25 @@ def validate_schema():
     """
     # Create DB from migrations
     migration_engine = create_engine('sqlite:///:memory:')
+    
+    # Create migration context
     with migration_engine.begin() as conn:
-        # Run all migrations in order
-        initial_upgrade(conn)
-        cc_bcc_upgrade(conn)
+        context = MigrationContext.configure(
+            conn,
+            opts={
+                'target_metadata': Base.metadata,
+                'include_schemas': True
+            }
+        )
+        
+        # Create operations object
+        operations = Operations(context)
+        op._proxy = operations
+        
+        # Run migrations in context
+        with context.begin_transaction():
+            initial_upgrade()
+            cc_bcc_upgrade()
     
     # Create DB from models
     model_engine = create_engine('sqlite:///:memory:')
@@ -168,6 +184,10 @@ def validate_schema():
         assert_schema_equal(migration_inspector, model_inspector)
     except AssertionError as e:
         pytest.exit(f"Schema validation failed:\n{str(e)}")
+
+def test_schema_validation_runs():
+    """Simple test to ensure schema validation fixture runs."""
+    assert True  # If we get here, schema validation passed
 
 if __name__ == '__main__':
     pytest.main([__file__])

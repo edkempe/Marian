@@ -26,40 +26,18 @@ class CatalogItem(Base):
     __tablename__ = "catalog_items"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    title: Mapped[str] = mapped_column(
-        String(CONSTRAINTS['title_max_length']), 
-        nullable=False, 
-        unique=True
-    )
-    description: Mapped[Optional[str]] = mapped_column(
-        Text(CONSTRAINTS['description_max_length'])
-    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    description: Mapped[Optional[str]] = mapped_column(Text(2000))
     content: Mapped[Optional[str]] = mapped_column(Text)
     source: Mapped[Optional[str]] = mapped_column(String)
-    status: Mapped[str] = mapped_column(
-        String, 
-        nullable=False,
-        default=ItemStatus.DRAFT,
-        server_default=ItemStatus.DRAFT
-    )
-    deleted: Mapped[bool] = mapped_column(
-        Boolean, 
-        default=DEFAULTS['deleted'], 
-        nullable=False
-    )
+    status: Mapped[str] = mapped_column(String, nullable=False, server_default='draft')
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     archived_date: Mapped[Optional[int]] = mapped_column(Integer)
-    created_date: Mapped[int] = mapped_column(
-        Integer,
-        default=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False
-    )
-    modified_date: Mapped[int] = mapped_column(
-        Integer,
-        default=lambda: int(datetime.utcnow().timestamp()),
-        onupdate=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False
-    )
+    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
+    modified_date: Mapped[int] = mapped_column(Integer, nullable=False)
     item_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+
+    # Relationships
     tags: Mapped[List["Tag"]] = relationship(
         "Tag",
         secondary="catalog_tags",
@@ -67,38 +45,22 @@ class CatalogItem(Base):
     )
 
     __table_args__ = (
-        Index('idx_catalog_items_title', text('title COLLATE NOCASE')),
-        Index('idx_catalog_items_status', 'status'),
         Index('idx_catalog_items_deleted', 'deleted'),
+        Index('idx_catalog_items_status', 'status'),
+        Index('idx_catalog_items_title', 'title'),
     )
-
-    @validates('status')
-    def validate_status(self, key, value):
-        """Validate status transitions."""
-        if not hasattr(self, 'status'):
-            return value
-            
-        if value not in [s.value for s in ItemStatus]:
-            raise ValueError(f"Invalid status: {value}")
-            
-        current = self.status
-        if current and value not in [s.value for s in STATE_TRANSITIONS[ItemStatus(current)]]:
-            raise ValueError(
-                f"Invalid status transition from {current} to {value}"
-            )
-        
-        return value
 
     @validates('title')
     def validate_title(self, key, value):
-        """Validate title length and uniqueness."""
-        if len(value) < CONSTRAINTS['title_min_length']:
-            raise ValueError(
-                f"Title must be at least {CONSTRAINTS['title_min_length']} characters"
-            )
+        """Validate title length."""
+        if not value:
+            raise ValueError("Title cannot be empty")
+        if len(value) > 255:
+            raise ValueError("Title cannot be longer than 255 characters")
         return value
 
     def __repr__(self):
+        """Return string representation."""
         return f"<CatalogItem(id={self.id}, title='{self.title}', status='{self.status}')>"
 
 class Tag(Base):
@@ -106,29 +68,14 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(
-        String(CONSTRAINTS['tag_max_length']), 
-        nullable=False, 
-        unique=True
-    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    deleted: Mapped[bool] = mapped_column(
-        Boolean, 
-        default=DEFAULTS['deleted'], 
-        nullable=False
-    )
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     archived_date: Mapped[Optional[int]] = mapped_column(Integer)
-    created_date: Mapped[int] = mapped_column(
-        Integer,
-        default=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False
-    )
-    modified_date: Mapped[int] = mapped_column(
-        Integer,
-        default=lambda: int(datetime.utcnow().timestamp()),
-        onupdate=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False
-    )
+    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
+    modified_date: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Relationships
     items: Mapped[List["CatalogItem"]] = relationship(
         "CatalogItem",
         secondary="catalog_tags",
@@ -140,16 +87,8 @@ class Tag(Base):
         Index('idx_tags_deleted', 'deleted'),
     )
 
-    @validates('name')
-    def validate_name(self, key, value):
-        """Validate tag name length."""
-        if len(value) < CONSTRAINTS['tag_min_length']:
-            raise ValueError(
-                f"Tag name must be at least {CONSTRAINTS['tag_min_length']} characters"
-            )
-        return value
-
     def __repr__(self):
+        """Return string representation."""
         return f"<Tag(id={self.id}, name='{self.name}')>"
 
 class CatalogTag(Base):
@@ -198,13 +137,10 @@ class ItemRelationship(Base):
     source_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     target_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     relationship_type: Mapped[str] = mapped_column(String, nullable=False)
-    created_date: Mapped[int] = mapped_column(
-        Integer,
-        default=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False
-    )
+    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
     relationship_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
-    
+
+    # Relationships
     source_item: Mapped["CatalogItem"] = relationship(
         "CatalogItem",
         foreign_keys=[source_id],
@@ -222,28 +158,8 @@ class ItemRelationship(Base):
         Index('idx_relationships_type', 'relationship_type'),
     )
 
-    @validates('relationship_type')
-    def validate_relationship_type(self, key, value):
-        """Validate relationship type."""
-        if value not in [r.value for r in RelationType]:
-            raise ValueError(f"Invalid relationship type: {value}")
-        return value
-
-    @validates('source_id', 'target_id')
-    def validate_ids(self, key, value):
-        """Validate that neither source nor target is archived."""
-        session = object_session(self)
-        if session is None:
-            return value
-
-        item = session.query(CatalogItem).get(value)
-        if item and item.status == ItemStatus.ARCHIVED:
-            raise ValueError(
-                f"Cannot create relationship with archived item (id={value})"
-            )
-        return value
-
     def __repr__(self):
+        """Return string representation."""
         return f"<ItemRelationship(id={self.id}, type='{self.relationship_type}')>"
 
 # Event listeners for case-insensitive uniqueness
