@@ -9,18 +9,18 @@
 
 ### Project Standards
 Before starting any development work, you MUST:
-1. Review and understand ALL project guidelines in `docs/GUIDELINES.md`
+1. Review and understand ALL project guidelines in `docs/contributing.md`
 2. Acknowledge and commit to following these standards
 3. Ensure all work adheres to these guidelines throughout the session
 
 ### Key Documents
-1. `docs/GUIDELINES.md` (REQUIRED FIRST)
+1. `docs/contributing.md` (REQUIRED FIRST)
    - Project guidelines and constraints
    - Code style preferences
    - Security requirements
    - Development standards
 
-2. `docs/BACKLOG.md`
+2. `docs/backlog.md`
    - Source of truth for tasks and priorities
    - Implementation details
    - Dependencies between tasks
@@ -30,7 +30,7 @@ Before starting any development work, you MUST:
    - Core features and functionality
    - Tech stack and dependencies
 
-4. `SETUP_GUIDE.md`
+4. `setup.md`
    - Complete setup instructions
    - Environment configuration
    - Development workflow
@@ -54,11 +54,11 @@ python chat_session_manager.py start
 
 # 4. Review current state
 git log --oneline -n 5  # Review recent changes
-cat docs/BACKLOG.md     # Review current priorities
+cat docs/backlog.md     # Review current priorities
 
 # 5. Review previous session
-ls -lt docs/session_logs/ | head -n 2  # Find most recent session log
-cat docs/session_logs/[most_recent_session].md  # Review previous session details
+ls -lt docs/session-logs/ | head -n 2  # Find most recent session log
+cat docs/session-logs/[most_recent_session].md  # Review previous session details
 ```
 
 #### Pre-Development Checklist
@@ -85,7 +85,7 @@ cat docs/session_logs/[most_recent_session].md  # Review previous session detail
 Hi! Let's continue working on Marian. Here's what I'd like to focus on today:
 
 I want to implement the setup script for automating environment and database initialization.
-This corresponds to the "Setup Script Creation" task in BACKLOG.md under the Program Management workstream.
+This corresponds to the "Setup Script Creation" task in backlog.md under the Program Management workstream.
 Based on the previous session log, this will build on the database schema work that was completed.
 
 Please review the project documentation and perform the standard checks as outlined in dev-checklist.md.
@@ -137,7 +137,7 @@ git commit -m "docs: update API documentation
 1. Once the closing process begins:
    - DO NOT make any new code changes
    - DO NOT attempt to fix issues discovered during closing
-   - Document all issues in `docs/BACKLOG.md`
+   - Document all issues in `docs/backlog.md`
    - Revert any changes made during the closing process
 
 2. If issues are discovered:
@@ -164,8 +164,8 @@ pip freeze > requirements.txt.new
 diff requirements.txt requirements.txt.new
 
 # 5. Update documentation
-# Update BACKLOG.md with task status and new items
-vim docs/BACKLOG.md
+# Update backlog.md with task status and new items
+vim docs/backlog.md
 
 # 6. Generate session documentation
 python chat_session_manager.py close
@@ -179,7 +179,7 @@ git push origin main
 ```
 
 #### Session Log Template
-When creating `docs/session_logs/session_YYYYMMDD_HHMM.md`:
+When creating `docs/session-logs/session-YYYYMMDD-HHMM.md`:
 ```markdown
 ## Session Summary YYYY-MM-DD HH:MM TZ
 
@@ -233,10 +233,10 @@ Session completed! Here's a summary:
    - Added note about potential security improvements
 
 4. Updated Documentation:
-   - Updated BACKLOG.md with current status
+   - Updated backlog.md with current status
    - Added database schema documentation
    - Updated setup instructions in README.md
-   - Created session summary in docs/session_logs/session_YYYYMMDD_HHMM.md
+   - Created session summary in docs/session-logs/session-YYYYMMDD-HHMM.md
 
 All changes have been committed and pushed. The project is ready for the next session.
 ```
@@ -290,7 +290,7 @@ If you encounter issues during development:
 
 1. Check Common Resources:
    - `docs/troubleshooting.md` - Comprehensive guide
-   - `SETUP_GUIDE.md` - Environment issues
+   - `setup.md` - Environment issues
    - `.env.example` - Configuration reference
 
 2. Common Issues:
@@ -308,7 +308,7 @@ If you encounter issues during development:
 ## Best Practices
 
 1. **Documentation Updates**
-   - Keep BACKLOG.md current with task status
+   - Keep backlog.md current with task status
    - Update README.md for new features
    - Maintain clear commit messages
    - Link session work to backlog items

@@ -1,5 +1,7 @@
 # AI Guidelines and Session Management
 
+> **Documentation Role**: This is the authoritative source for AI development session management. For session log standards and procedures, see `session_logs/README.md`.
+
 ## Core Principles
 - Follow established guidelines and practices
 - Keep changes focused and atomic
@@ -29,6 +31,15 @@
 - Document follow-up tasks
 - Push session log and code changes
 - Review all changes for consistency
+
+### Session Documentation
+For specific details on session logs, including:
+- Naming conventions
+- Required structure
+- Templates
+- Directory organization
+
+See: `session_logs/README.md`
 
 ## Git Operations
 

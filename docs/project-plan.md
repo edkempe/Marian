@@ -704,15 +704,20 @@ src/catalog/
 ### Documentation Organization
 ```
 /
-├── README.md                     # Project overview and quick start
-├── librarian-guide.md           # Core catalog operations
-├── ai-session-guide.md          # AI interaction guidelines
-├── setup.md                     # Environment setup
-├── backup-guide.md              # Backup procedures
-├── archive-guide.md             # Archive standards
-├── code-standards.md            # Development standards
-├── testing-guide.md             # Testing procedures
-└── database-schema.md           # Data model reference
+├── README.md                     # Project overview
+├── docs/
+│   ├── ai-guidelines.md          # AI interaction guidelines
+│   ├── ai-architecture.md        # AI systems overview
+│   ├── contributing.md           # Development guidelines
+│   ├── code-standards.md         # Code standards
+│   ├── testing-guide.md         # Testing standards
+│   ├── setup.md                 # Setup instructions
+│   ├── design-decisions.md      # Architecture decisions
+│   ├── project-plan.md          # This file
+│   ├── backlog.md              # Project backlog
+│   ├── session-logs/           # Session logs
+│   │   └── README.md           # Session log guide
+{{ ... }}
 ```
 
 ### Documentation Priorities
@@ -777,3 +782,19 @@ src/catalog/
 - Development guidelines (contributing.md)
 - Session workflow (session-workflow.md)
 - Design decisions (design-decisions.md)
+
+```
+{{ ... }}
+├── docs/
+│   ├── ai-guidelines.md          # AI interaction guidelines
+│   ├── ai-architecture.md        # AI systems overview
+│   ├── contributing.md           # Development guidelines
+│   ├── code-standards.md         # Code standards
+│   ├── testing-guide.md         # Testing standards
+│   ├── setup.md                 # Setup instructions
+│   ├── design-decisions.md      # Architecture decisions
+│   ├── project-plan.md          # This file
+│   ├── backlog.md              # Project backlog
+│   ├── session-logs/           # Session logs
+│   │   └── README.md           # Session log guide
+{{ ... }}

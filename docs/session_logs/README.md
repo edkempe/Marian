@@ -1,62 +1,152 @@
-# Session Management Guide
+# Session Logs Guide
 
-## Session Documentation Standards
+**Version:** 1.0.1  
+**Status:** Authoritative
 
-### Naming Convention
-- Format: `session_log_YYYY-MM-DD.md`
-- Example: `session_log_2024-12-27.md`
-- Each day has a single log file
-- Multiple sessions on the same day are added chronologically with timestamps
+> Comprehensive guide for maintaining consistent, detailed session logs that track development progress and decisions.
 
-### Required Structure
-- Use the standard template from `SESSION_TEMPLATE.md`
-- All sessions must include:
-  1. Session Overview (date, time, focus)
-  2. Clear, measurable goals
-  3. Chronological progress log
-  4. Issues and blockers section
-  5. Next steps for future sessions
+## Quick Reference
+```bash
+# Create today's session log
+cp ../templates/session.md session_log_$(date +%Y-%m-%d).md
+
+# List today's changes
+grep "$(date +%H:%M)" session_log_$(date +%Y-%m-%d).md
+
+# Find sessions about a topic
+grep -r "topic" .
+
+# Count sessions this month
+ls -1 session_log_$(date +%Y-%m)*.md | wc -l
+```
+
+Common operations:
+- Create new session log
+- Add entry to existing log
+- Find related sessions
+- Review recent changes
+
+## Overview
+- **Purpose**: Track development progress
+- **Stability**: Stable
+- **Maintenance**: Active daily
+- **Format**: Markdown files
+
+---
+
+## Directory Structure
+```
+/docs/session_logs/
+├── README.md                     # This guide
+├── session_log_YYYY-MM-DD.md    # Daily session logs
+└── archive/                     # Archived logs
+```
+
+## Core Components
+
+1. **Session Log Files**
+   - Purpose: Daily development tracking
+   - Format: `session_log_YYYY-MM-DD.md`
+   - Example: `session_log_2024-12-28.md`
+
+2. **Session Structure**
+   ```markdown
+   # Session Log YYYY-MM-DD
+   
+   ## Session Overview
+   - Start: HH:MM [Timezone]
+   - Focus: Brief description
+   
+   ## Progress Log
+   1. HH:MM [Timezone]
+      - Action taken
+      - Implementation details
+      - File changes
+   ```
+
+---
+
+## Session Guidelines
+
+### Required Sections
+1. **Session Overview**
+   - Date and timezone
+   - Focus/Purpose
+   - Related backlog items
+
+2. **Progress Log**
+   - Timestamped entries
+   - Specific actions taken
+   - File changes made
+
+3. **Issues and Blockers**
+   - Current blockers
+   - Workarounds applied
+   - Dependencies needed
+
+4. **Next Steps**
+   - Future tasks
+   - Pending decisions
+   - Required follow-ups
 
 ### Best Practices
-1. **Real-time Updates**
-   - Update progress log as actions are taken
-   - Document issues as they are discovered
-   - Record decisions when they are made
 
-2. **Clarity and Context**
-   - Link to relevant documentation
-   - Reference specific file changes
-   - Include error messages and outcomes
+1. **Real-time Updates**
+   - Log changes as they happen
+   - Include error messages
+   - Document decisions made
+
+2. **Clear Context**
+   - Link to files changed
+   - Reference backlog items
+   - Note assumptions made
 
 3. **Future-proofing**
-   - Document assumptions made
-   - Note any temporary workarounds
-   - Link to related backlog items
+   - Document workarounds
+   - Note dependencies
+   - Link related sessions
 
-## Starting a Session
-1. Check if a log exists for today's date
-2. If no log exists, copy `SESSION_TEMPLATE.md` with today's date
-3. If log exists, append new session with timestamp separator
-4. Fill in session overview and initial goals
-5. Review previous session notes and backlog
-6. Update progress log as work begins
+---
 
-## During the Session
-- Keep progress log updated in chronological order
-- Document all significant actions and findings
-- Link to any new or modified files
-- Record blockers and issues immediately
+## Session Workflows
 
-## Closing a Session
-1. Ensure all sections are completed
-2. Update backlog with new items
-3. Document next steps clearly
-4. Link to any created documentation
-5. If multiple sessions in a day, ensure clear separation between sessions
+### Starting a Session
+1. Check for existing log
+   ```bash
+   ls session_log_$(date +%Y-%m-%d).md
+   ```
 
-## Session Directory Structure
-```
-└── session_logs/
-    ├── README.md           # This guide
-    ├── SESSION_TEMPLATE.md # Template for new sessions
-    └── session_log_YYYY-MM-DD.md  # Daily session logs
+2. Create if needed
+   ```bash
+   cp ../templates/session.md session_log_$(date +%Y-%m-%d).md
+   ```
+
+3. Add session header
+   ```markdown
+   ## Session N - HH:MM [Timezone]
+   - Focus: Brief description
+   - Goals: Clear objectives
+   ```
+
+### During Session
+1. Log changes promptly
+2. Include file links
+3. Note blockers
+4. Update backlog
+
+### Closing Session
+1. Summarize changes
+2. List next steps
+3. Update backlog
+4. Link new docs
+
+---
+
+## Related Documentation
+- Parent: `../README.md` - Documentation root
+- `../templates/session.md` - Session template
+- `../dev-checklist.md` - Development procedures
+
+## Version History
+- 1.0.1: Added quick reference, improved workflows
+- 1.0.0: Initial session log guide

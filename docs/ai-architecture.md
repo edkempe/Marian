@@ -62,10 +62,13 @@ This document explains the AI systems in the Jexi project and establishes the do
 
 ### Development AI (Cascade)
 1. **Primary Documentation**
-   - `dev-ai-workflow.md`: Development process and standards
+   - `README.md`: Project overview
+   - `session-workflow.md`: Development workflow
 2. **Supporting Documentation**
+   - `contributing.md`: Development guidelines and standards
    - `code-standards.md`: Implementation guidelines
    - `testing-guide.md`: Test development practices
+   - `troubleshooting.md`: Common issues
    - Session logs: Historical record
 
 ### Runtime AI (Jexi and Marian)
@@ -73,8 +76,9 @@ This document explains the AI systems in the Jexi project and establishes the do
    - `core-assistant.md`: Jexi's behavior and operations
    - `librarian.md`: Marian's behavior and operations
 2. **Supporting Documentation**
-   - `testing-guide.md`: Runtime AI testing
+   - `ai-guidelines.md`: AI interaction guidelines
    - `design-decisions.md`: Architecture decisions
+   - `backlog.md`: Project tasks and priorities
 
 ## Interaction Between Systems
 

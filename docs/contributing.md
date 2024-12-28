@@ -69,9 +69,10 @@
 - Use lowercase with hyphens (kebab-case) for all documentation files
   - Good: `setup.md`, `api-reference.md`
   - Avoid: `SETUP_GUIDE.md`, `API_REFERENCE.md`
+- Exception: `README.md` files are always uppercase
 - Avoid redundant suffixes like `_GUIDE` or `_MANUAL`
 - Use standard names for common documentation:
-  - `readme.md`: Project overview and getting started
+  - `README.md`: Project overview and getting started
   - `contributing.md`: Development guidelines and standards
   - `changelog.md`: Version history and changes
   - `license.md`: Project license

@@ -7,7 +7,7 @@ The backup system ensures data resilience through the 3-2-1 backup strategy:
 - 1 copy offsite
 
 ## Important Notes
-- The `/backup` directory is in `.gitignore` and cannot be accessed by the development AI copilot
+- The `/backup` directory contains sensitive data and should be handled with care
 - Temporary backups may be created in `/docs` when AI assistance is needed
 - Move temporary backups to `/backup` after AI-assisted changes are complete
 

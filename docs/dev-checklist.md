@@ -9,14 +9,14 @@
 
 ### Primary Documents
 - This checklist (`dev-checklist.md`) - Authoritative source for session procedures
-- `docs/BACKLOG.md` - Source of truth for tasks and priorities
+- `docs/backlog.md` - Source of truth for tasks and priorities
 - `docs/session_logs/session_log_YYYY-MM-DD.md` - Daily session logs
 
 ### Supporting Documents
-- `docs/SESSION_WORKFLOW.md` - Detailed explanations and examples for all session procedures
-- `docs/GUIDELINES.md` - Project guidelines and standards
-- `docs/BACKLOG.md` - Task tracking and prioritization
-- `docs/DESIGN_DECISIONS.md` - Architecture and design context
+- `docs/session-workflow.md` - Detailed explanations and examples for all session procedures
+- `docs/contributing.md` - Project guidelines and standards
+- `docs/backlog.md` - Task tracking and prioritization
+- `docs/design-decisions.md` - Architecture and design context
 
 ### Tools and Scripts
 - `chat_session_manager.py` - Automates session documentation
@@ -27,10 +27,10 @@
 
 ### 1. Initial Setup
 - [ ] Review this checklist completely
-- [ ] Review `docs/GUIDELINES.md` completely
+- [ ] Review `docs/contributing.md` completely
 - [ ] Review `README.md` for project overview
-- [ ] Check `SETUP_GUIDE.md` for environment requirements
-- [ ] Review `docs/BACKLOG.md` for current tasks and priorities
+- [ ] Check `setup.md` for environment requirements
+- [ ] Review `docs/backlog.md` for current tasks and priorities
 - [ ] Review most recent session log in `docs/session_logs/` for context
 - [ ] Review recent git history for context
 
@@ -45,7 +45,7 @@
 - [ ] Create or update session log: `docs/session_logs/session_log_YYYY-MM-DD.md`
 - [ ] Document session objectives
 - [ ] Start running log with timestamps
-- [ ] Reference relevant `BACKLOG.md` items being worked on
+- [ ] Reference relevant `docs/backlog.md` items being worked on
 
 ### 4. Code State Check
 - [ ] Check git status for pending changes
@@ -77,7 +77,7 @@
 - [ ] Document any API or schema changes
 
 ### 3. Documentation Updates
-- [ ] Update `docs/BACKLOG.md`
+- [ ] Update `docs/backlog.md`
   - Add incomplete tasks
   - Update completed task status
   - Add newly discovered tasks
