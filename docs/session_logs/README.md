@@ -3,8 +3,10 @@
 ## Session Documentation Standards
 
 ### Naming Convention
-- Format: `session_YYYYMMDD_HHMM.md`
-- Example: `session_20241225_1009.md`
+- Format: `YYYY-MM-DD.md`
+- Example: `2024-12-27.md`
+- Each day should have a single session log file
+- Multiple sessions on the same day are added chronologically to that day's file
 
 ### Required Structure
 - Use the standard template from `SESSION_TEMPLATE.md`
@@ -32,10 +34,12 @@
    - Link to related backlog items
 
 ## Starting a Session
-1. Copy `SESSION_TEMPLATE.md` with correct naming
-2. Fill in session overview and initial goals
-3. Review previous session notes and backlog
-4. Update progress log as work begins
+1. Check if a log exists for today's date
+2. If no log exists, copy `SESSION_TEMPLATE.md` with today's date
+3. If log exists, append new session with timestamp separator
+4. Fill in session overview and initial goals
+5. Review previous session notes and backlog
+6. Update progress log as work begins
 
 ## During the Session
 - Keep progress log updated in chronological order
@@ -48,6 +52,7 @@
 2. Update backlog with new items
 3. Document next steps clearly
 4. Link to any created documentation
+5. If multiple sessions in a day, ensure clear separation between sessions
 
 ## Session Directory Structure
 ```

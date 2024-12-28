@@ -96,6 +96,9 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 ### Quick Links
 - [Project Plan](PROJECT_PLAN.md) - Detailed development roadmap and project structure
 - [Documentation](docs/) - Guides and technical documentation
+  - [Development Session Logs](docs/session_logs/) - Detailed logs of all development sessions
+  - [Project Guidelines](docs/contributing.md) - Code standards and contribution guidelines
+  - [Design Decisions](docs/design-decisions.md) - Architecture and technical decisions
 - [Infrastructure](infrastructure/) - AWS deployment templates
 
 ### Getting Started

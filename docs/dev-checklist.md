@@ -10,7 +10,7 @@
 ### Primary Documents
 - This checklist (`dev-checklist.md`) - Authoritative source for session procedures
 - `docs/BACKLOG.md` - Source of truth for tasks and priorities
-- `docs/sessions/session_YYYYMMDD_HHMM.md` - Individual session logs
+- `docs/session_logs/YYYY-MM-DD.md` - Individual session logs
 
 ### Supporting Documents
 - `docs/SESSION_WORKFLOW.md` - Detailed explanations and examples for all session procedures
@@ -31,7 +31,7 @@
 - [ ] Review `README.md` for project overview
 - [ ] Check `SETUP_GUIDE.md` for environment requirements
 - [ ] Review `docs/BACKLOG.md` for current tasks and priorities
-- [ ] Review most recent session log in `docs/sessions/` for context
+- [ ] Review most recent session log in `docs/session_logs/` for context
 - [ ] Review recent git history for context
 
 ### 2. Environment Verification
@@ -42,7 +42,7 @@
 - [ ] Check Python version matches requirements (3.12.8+)
 
 ### 3. Session Documentation
-- [ ] Create new session log: `docs/sessions/YYYY-MM-DD-HH-MM.md`
+- [ ] Create new session log: `docs/session_logs/YYYY-MM-DD.md`
 - [ ] Document session objectives
 - [ ] Start running log with timestamps
 - [ ] Reference relevant `BACKLOG.md` items being worked on
@@ -83,7 +83,7 @@
   - Add newly discovered tasks
   - Update task priorities if needed
   - Document any blockers or dependencies
-- [ ] Create session log in `docs/sessions/session_YYYYMMDD_HHMM.md`
+- [ ] Create session log in `docs/session_logs/YYYY-MM-DD.md`
   - List completed tasks
   - Document code changes
   - Note environment changes
