@@ -50,9 +50,30 @@
 3. [ ] Set up proper test data module
    - Status: Not Started
    - Priority: High
-   - Description: Fix test_data package structure and semantic_test_data module
+   - Description: Create dedicated test data module with versioned test files, fix test_data package structure, and set up semantic_test_data module
    - Dependencies: None
-   - Estimated Time: 1 session
+   - Estimated Time: 1-2 sessions
+   - Subtasks:
+     - [ ] Add version tracking for test files
+     - [ ] Create test data documentation
+
+4. [ ] Regular Documentation Consistency Check
+   - Status: Not Started
+   - Priority: High
+   - Description: Set up recurring task to validate documentation consistency
+   - Dependencies: None
+   - Estimated Time: Recurring (Weekly)
+   - Subtasks:
+     - [ ] Run test_doc_hierarchy.py to validate documentation structure
+     - [ ] Check for content inconsistencies between related documents
+     - [ ] Verify cross-references are valid and up-to-date
+     - [ ] Review HTML reports in reports/testing/
+     - [ ] Update documentation if issues found
+   - Success Criteria:
+     - All documentation tests pass
+     - No content inconsistencies found
+     - Cross-references are valid
+     - HTML reports show no warnings
 
 ### Schema Validation and Testing
 **Status**: In Progress

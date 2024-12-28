@@ -92,12 +92,11 @@ data/chat_logs.jsonl
 
 # Reports
 reports/*
+!reports/README.md
 !reports/testing/
 reports/testing/*
-!reports/testing/.gitkeep
 !reports/testing/README.md
-reports/testing/*.md
-reports/testing/*.html
+!reports/testing/.gitkeep
 
 # Logs
 logs/*.log

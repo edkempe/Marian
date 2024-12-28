@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Test Reports Overview{% endblock %}
+{% block content %}
+    <h1>Test Reports Overview</h1>
+    <div class="report">
+        <h2>Latest Reports</h2>
+        <ul>
+            {% for report_type, data in reports.items() %}
+            <li>
+                <a href="{{ report_type }}.html">{{ report_type|title }}</a>
+                (Generated: {{ data.timestamp }})
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

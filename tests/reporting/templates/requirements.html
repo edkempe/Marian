@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Requirements Analysis Report{% endblock %}
+{% block content %}
+    <h1>Requirements Analysis Report</h1>
+    <div class="report">
+        <div class="section">
+            <h2>Statistics</h2>
+            <ul>
+                <li>{{ data.stats.installed_count }} installed packages</li>
+                <li>{{ data.stats.required_count }} required packages</li>
+                <li>{{ data.stats.imported_count }} imported packages</li>
+            </ul>
+        </div>
+        
+        {% if data.issues.unused_requirements %}
+        <div class="section">
+            <h2>Unused Requirements</h2>
+            <div class="warning">These packages are listed in requirements.txt but not imported in the code:</div>
+            <ul>
+                {% for pkg in data.issues.unused_requirements|sort %}
+                <li>{{ pkg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if data.issues.missing_requirements %}
+        <div class="section">
+            <h2>Missing Requirements</h2>
+            <div class="warning">These packages are imported in the code but not listed in requirements.txt:</div>
+            <ul>
+                {% for pkg in data.issues.missing_requirements|sort %}
+                <li>{{ pkg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if data.issues.version_mismatches %}
+        <div class="section">
+            <h2>Version Mismatches</h2>
+            <div class="warning">These packages have version mismatches between requirements.txt and installed versions:</div>
+            <ul>
+                {% for pkg in data.issues.version_mismatches|sort %}
+                <li>{{ pkg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="section">
+            <h2>Package Details</h2>
+            <table>
+                <tr>
+                    <th>Package</th>
+                    <th>Required Version</th>
+                    <th>Installed Version</th>
+                    <th>Status</th>
+                </tr>
+                {% for pkg in data.details.installed|sort %}
+                <tr>
+                    <td>{{ pkg }}</td>
+                    <td>{{ data.details.required.get(pkg, 'Not specified') }}</td>
+                    <td>{{ data.details.installed[pkg] }}</td>
+                    <td>
+                        {% if pkg in data.details.imported %}
+                        <span class="success">Used</span>
+                        {% else %}
+                        <span class="error">Unused</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

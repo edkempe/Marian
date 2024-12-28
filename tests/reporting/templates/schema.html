@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Schema Analysis Report{% endblock %}
+{% block content %}
+    <h1>Schema Analysis Report</h1>
+    <div class="report">
+        {% if data.unused_tables %}
+        <div class="section">
+            <h2>Unused Tables</h2>
+            <ul>
+                {% for table in data.unused_tables %}
+                <li>{{ table }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if data.unused_columns %}
+        <div class="section">
+            <h2>Unused Columns</h2>
+            {% for table, columns in data.unused_columns.items() %}
+            <h3>{{ table }}</h3>
+            <ul>
+                {% for column in columns %}
+                <li>{{ column }}</li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -104,6 +104,17 @@ Before running tests:
    - Tests use real emails from the last 7 days
    - Limited to small batches to prevent timeouts
 
+4. **Test Reports**
+   - HTML test reports are generated in `reports/testing/`
+   - Reports include:
+     - Documentation quality and versioning
+     - Import analysis (unused imports, style issues)
+     - File duplicates and similarities
+     - Test coverage
+   - View reports in browser for best experience
+   - Reports are generated automatically during test runs
+   - Issues are reported as warnings to avoid blocking tests
+
 ## Project Overview
 
 Marian is an AI-powered email analysis and cataloging system that helps organize and understand email content at scale.

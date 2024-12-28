@@ -72,6 +72,26 @@ Example: `test_email_processing.py`
        assert_schema_equal(migration_schema, model_schema)
    ```
 
+4. **HTML Reports**
+   - All test suites generate HTML reports in `reports/testing/`
+   - Reports use consistent styling and formatting
+   - Issues are reported as warnings to avoid blocking tests
+   - Common report types:
+     ```python
+     def generate_html_report(data, title):
+         """Generate HTML report with standard template."""
+         template = jinja2.Template(HTML_TEMPLATE)
+         return template.render(
+             title=title,
+             content=markdown.markdown(data)
+         )
+     ```
+   - Reports include:
+     - Documentation quality and versioning
+     - Import analysis and style
+     - Code duplication detection
+     - Test coverage metrics
+
 ## Common Test Patterns
 
 ### API Response Testing
@@ -94,6 +114,55 @@ def test_email_validation():
 def test_email_schema():
     assert Email.__table__.c.id.type.python_type == str
 ```
+
+### Report Generation
+```python
+def test_with_report():
+    """Test that generates an HTML report."""
+    # Run analysis
+    results = analyze_code()
+    
+    # Generate report
+    report = generate_html_report(
+        data=format_results(results),
+        title="Code Analysis Report"
+    )
+    
+    # Save report
+    save_report("code_analysis.html", report)
+    
+    # Report issues as warnings
+    for issue in results.issues:
+        pytest.warns(UserWarning, match=str(issue))
+```
+
+## Running Tests
+
+1. **Basic Test Run**
+   ```bash
+   python -m pytest
+   ```
+
+2. **Generate Reports**
+   ```bash
+   # Generate all reports
+   python -m pytest tests/
+   
+   # Generate specific report
+   python -m pytest tests/test_imports.py
+   ```
+
+3. **View Reports**
+   - Reports are generated in `reports/testing/`
+   - Open HTML reports in a browser for best viewing
+   - Reports are self-contained with embedded styles
+   - Each test run updates existing reports
+
+4. **Report Types**
+   - Documentation: `doc_versioning.html`
+   - Imports: `import_analysis.html`
+   - Duplicates: `file_duplicates.html`
+   - Coverage: `coverage.html`
 
 ## Version History
 - 1.0.0: Initial version with API-first testing hierarchy
