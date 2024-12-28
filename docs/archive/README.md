@@ -1,7 +1,8 @@
 # Documentation Archive
 
-**Version:** 1.0.0  
-**Status:** Authoritative
+**Version:** 1.0.1  
+**Status:** Authoritative  
+**Template:** [Archiving Guide](/docs/templates/ARCHIVING.md)
 
 > Archive of superseded documentation files, maintaining project history while keeping active documentation clear.
 
@@ -60,3 +61,4 @@ ls -lt | head
 
 ## Version History
 - 1.0.0: Initial version - Documentation archive setup
+- 1.0.1: Updated header to reference archiving template

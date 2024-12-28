@@ -34,19 +34,24 @@ Common operations:
 
 ---
 
-## Directory Structure
+## Project Structure
 ```
-/docs/
-├── README.md              # This file
-├── ai-architecture.md     # AI systems and doc hierarchy
-├── code-standards.md      # Coding standards
-├── testing-guide.md       # Testing practices
-├── session_logs/         # Development session logs
-├── templates/            # Document templates
-└── archive/             # Archived documentation
+/
+├── src/                    # Source code
+│   └── archive/           # Archived source code files
+├── tests/                  # Test files
+│   └── archive/           # Archived test files
+├── scripts/                # Utility scripts
+│   └── archive/           # Archived scripts
+├── config/                 # Configuration files
+│   └── archive/           # Archived configs
+├── docs/                   # Documentation
+│   ├── archive/           # Archived documentation
+│   ├── adr/               # Architecture Decision Records
+│   │   └── archive/       # Archived ADRs
+│   └── templates/         # Documentation templates
+└── backup/                # Backup files (not for archival)
 ```
-
-Note: Code and configuration archives are stored in the root `/archive` directory.
 
 ## Core Components
 
