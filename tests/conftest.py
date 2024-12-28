@@ -1,7 +1,7 @@
 """Shared pytest fixtures."""
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from config import EMAIL_CONFIG, CATALOG_CONFIG
@@ -59,6 +59,9 @@ def db_session(db_session_factory):
     """Create a new database session for a test."""
     session = db_session_factory()
     yield session
+    session.execute(text('DELETE FROM emails'))
+    session.execute(text('DELETE FROM gmail_labels'))
+    session.commit()
     session.rollback()
     session.close()
 

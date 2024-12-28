@@ -233,7 +233,9 @@ def validate_schema():
             
             op.create_table(
                 'email_analysis',
+                Column('id', Integer(), primary_key=True),
                 Column('email_id', String(100), nullable=False),
+                Column('thread_id', String(100)),
                 Column('analysis_date', DateTime(), nullable=True),
                 Column('analyzed_date', DateTime(), nullable=False),
                 Column('prompt_version', Text(), nullable=False),
@@ -253,8 +255,10 @@ def validate_schema():
                 Column('ref_docs', Text(), nullable=True),
                 Column('sentiment', Text(), nullable=False),
                 Column('confidence_score', Float(), nullable=False),
+                Column('created_at', DateTime(), nullable=False),
+                Column('updated_at', DateTime(), nullable=False),
                 ForeignKeyConstraint(['email_id'], ['emails.id']),
-                PrimaryKeyConstraint('email_id')
+                PrimaryKeyConstraint('id')
             )
             
             op.create_table(
@@ -262,8 +266,8 @@ def validate_schema():
                 Column('id', String(100), nullable=False),
                 Column('name', String(100), nullable=False),
                 Column('type', String(50), nullable=False),
-                Column('is_active', Boolean(), nullable=False, server_default='1'),
-                Column('first_seen_at', DateTime(), nullable=False, 
+                Column('is_active', Boolean(), nullable=False, default=True),
+                Column('first_seen_at', DateTime(), nullable=False,
                          server_default=func.current_timestamp()),
                 Column('last_seen_at', DateTime(), nullable=False,
                          server_default=func.current_timestamp()),
@@ -311,13 +315,14 @@ def validate_schema():
 
             op.create_table(
                 'item_relationships',
+                Column('id', Integer(), primary_key=True, autoincrement=True),
                 Column('source_id', Integer(), nullable=False),
                 Column('target_id', Integer(), nullable=False),
                 Column('relationship_type', String(50), nullable=False),
-                Column('metadata', Text(), nullable=True),
+                Column('created_date', Integer(), nullable=False),
+                Column('relationship_info', JSON(), nullable=True),
                 ForeignKeyConstraint(['source_id'], ['catalog_items.id']),
-                ForeignKeyConstraint(['target_id'], ['catalog_items.id']),
-                PrimaryKeyConstraint('source_id', 'target_id', 'relationship_type')
+                ForeignKeyConstraint(['target_id'], ['catalog_items.id'])
             )
 
             # Asset catalog tables
@@ -339,11 +344,11 @@ def validate_schema():
 
             op.create_table(
                 'asset_catalog_tags',
-                Column('asset_item_id', Integer(), nullable=False),
+                Column('asset_id', Integer(), nullable=False),
                 Column('tag_id', Integer(), nullable=False),
-                ForeignKeyConstraint(['asset_item_id'], ['asset_catalog_items.id']),
+                ForeignKeyConstraint(['asset_id'], ['asset_catalog_items.id']),
                 ForeignKeyConstraint(['tag_id'], ['tags.id']),
-                PrimaryKeyConstraint('asset_item_id', 'tag_id')
+                PrimaryKeyConstraint('asset_id', 'tag_id')
             )
 
             op.create_table(
@@ -352,8 +357,8 @@ def validate_schema():
                 Column('target_id', Integer(), nullable=False),
                 Column('dependency_type', String(50), nullable=False),
                 Column('metadata', Text(), nullable=True),
-                ForeignKeyConstraint(['source_id'], ['asset_catalog_items.id']),
-                ForeignKeyConstraint(['target_id'], ['asset_catalog_items.id']),
+                ForeignKeyConstraint(['source_id'], ['asset_catalog_items.id'], ondelete='CASCADE'),
+                ForeignKeyConstraint(['target_id'], ['asset_catalog_items.id'], ondelete='CASCADE'),
                 PrimaryKeyConstraint('source_id', 'target_id', 'dependency_type')
             )
     
