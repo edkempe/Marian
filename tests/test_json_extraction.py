@@ -129,3 +129,13 @@ def test_api_response_with_malformed_json():
     json_str, error = extract_json(mock_response)
     assert json_str == ""
     assert error is not None
+
+def test_api_response_with_empty_json():
+    """Test handling API response with empty JSON object."""
+    mock_response = '''Here's the empty analysis: {}'''
+    
+    json_str, error = extract_json(mock_response)
+    assert error is None
+    parsed = json.loads(json_str)
+    assert isinstance(parsed, dict)
+    assert len(parsed) == 0
