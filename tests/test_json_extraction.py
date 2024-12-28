@@ -139,3 +139,21 @@ def test_api_response_with_empty_json():
     parsed = json.loads(json_str)
     assert isinstance(parsed, dict)
     assert len(parsed) == 0
+
+def test_api_response_with_whitespace():
+    """Test handling API response with significant whitespace."""
+    mock_response = '''Here's the analysis with whitespace:
+    {
+        "key1":    "value1",
+        "key2": [   1,    2,    3   ],
+        "key3":   {
+            "nested":    "value"
+        }
+    }'''
+    
+    json_str, error = extract_json(mock_response)
+    assert error is None
+    parsed = json.loads(json_str)
+    assert parsed["key1"] == "value1"
+    assert parsed["key2"] == [1, 2, 3]
+    assert parsed["key3"]["nested"] == "value"
