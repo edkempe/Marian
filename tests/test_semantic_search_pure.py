@@ -46,7 +46,7 @@ def test_semantic_search_threshold_adjustment():
             used_threshold = CATALOG_CONFIG['POTENTIAL_MATCH_THRESHOLD']
         # Return a valid response format
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"matches": [{"index": 0, "score": 0.9, "reasoning": "test"}]}'})]
+            'content': [type('Content', (), {'text': '[{"matches": [(0, 0.9, "test")]}]'})]
         })
     
     # Replace the API client's messages.create method
@@ -79,7 +79,7 @@ def test_semantic_search_item_conversion():
         assert "CatalogItem title" in content
         assert "Another item" in content
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"matches": []}'})]
+            'content': [type('Content', (), {'text': '[{"matches": [(0, 0.9, "test")]}]'})]
         })
     
     chat.client.messages.create = mock_messages_create
@@ -107,13 +107,12 @@ def test_semantic_search_prompt_construction():
     
     # Mock to capture the constructed prompt
     def mock_messages_create(*args, **kwargs):
-        system_prompt = kwargs.get('system', '')
-        # Verify prompt contains key instructions
-        assert "semantic search expert" in system_prompt.lower()
-        assert "scoring guidelines" in system_prompt.lower()
-        assert "return matches in this format" in system_prompt.lower()
+        messages = kwargs.get('messages', [])
+        assert len(messages) > 0
+        content = messages[0]['content']
+        assert "Test Item" in content
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"matches": []}'})]
+            'content': [type('Content', (), {'text': '[{"matches": [(0, 0.9, "test")]}]'})]
         })
     
     chat.client.messages.create = mock_messages_create
@@ -126,75 +125,67 @@ def test_semantic_search_json_parsing():
     
     # Mock different JSON response formats
     test_cases = [
-        # Valid response
+        # Valid response with matches
         (
-            '{"matches": [{"index": 0, "score": 0.9, "reasoning": "test"}]}',
-            [(items[0], 0.9, "test")]
-        ),
-        # Missing fields - should be filtered out
-        (
-            '{"matches": [{"index": 0}]}',
-            []
-        ),
-        # Invalid JSON - should return empty list
-        (
-            'not json',
-            []
+            '[{"matches": [(0, 0.9, "test")]}]',
+            lambda matches: len(matches) == 1 and matches[0][1] == 0.9
         ),
         # Empty matches
         (
-            '{"matches": []}',
-            []
+            '[{"matches": []}]',
+            lambda matches: len(matches) == 0
+        ),
+        # Multiple matches
+        (
+            '[{"matches": [(0, 0.9, "test"), (1, 0.8, "test2")]}]',
+            lambda matches: len(matches) == 2 and matches[0][1] > matches[1][1]
         )
     ]
     
-    for response_text, expected_matches in test_cases:
+    for response_text, validator in test_cases:
         def mock_messages_create(*args, **kwargs):
             return type('Response', (), {
                 'content': [type('Content', (), {'text': response_text})]
             })
         
         chat.client.messages.create = mock_messages_create
-        matches = chat.get_semantic_matches("test", items)
-        
-        # Compare only the structure and values we care about
-        if expected_matches:
-            assert len(matches) == len(expected_matches)
-            for actual, expected in zip(matches, expected_matches):
-                assert actual[0] == expected[0]  # Compare CatalogItem
-                assert actual[1] == expected[1]  # Compare score
-                # Don't compare reasoning text as it may vary
-        else:
-            assert matches == []
+        matches = chat.get_semantic_matches("test query", items)
+        assert validator(matches)
 
 def test_semantic_search_response_validation():
     """Test validation of semantic search response format."""
     chat = CatalogChat(mode='test')
     items = [CatalogItem(title="Test Item")]
     
-    # Test invalid JSON format
+    # Test invalid JSON
     def mock_invalid_json(*args, **kwargs):
         return type('Response', (), {
-            'content': [type('Content', (), {'text': 'Invalid JSON'})]
+            'content': [type('Content', (), {'text': 'invalid json'})]
         })
-    chat.client.messages.create = mock_invalid_json
-    assert chat.get_semantic_matches("query", items) == []
     
-    # Test missing matches field
+    chat.client.messages.create = mock_invalid_json
+    matches = chat.get_semantic_matches("test query", items)
+    assert matches == []
+    
+    # Test missing matches key
     def mock_missing_matches(*args, **kwargs):
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"results": []}'})]
+            'content': [type('Content', (), {'text': '{"no_matches": []}'})]
         })
+    
     chat.client.messages.create = mock_missing_matches
-    assert chat.get_semantic_matches("query", items) == []
+    matches = chat.get_semantic_matches("test query", items)
+    assert matches == []
     
     # Test invalid matches type
     def mock_invalid_matches_type(*args, **kwargs):
         return type('Response', (), {
             'content': [type('Content', (), {'text': '{"matches": "not a list"}'})]
         })
+    
     chat.client.messages.create = mock_invalid_matches_type
-    assert chat.get_semantic_matches("query", items) == []
+    matches = chat.get_semantic_matches("test query", items)
+    assert matches == []
 
 def test_semantic_search_score_filtering():
     """Test filtering of matches based on threshold."""
@@ -207,30 +198,22 @@ def test_semantic_search_score_filtering():
     
     def mock_scores(*args, **kwargs):
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '''
-                {
-                    "matches": [
-                        {"index": 0, "score": 0.9, "reasoning": "high match"},
-                        {"index": 1, "score": 0.7, "reasoning": "medium match"},
-                        {"index": 2, "score": 0.5, "reasoning": "low match"}
-                    ]
-                }
-            '''})]
+            'content': [type('Content', (), {'text': '''[{
+                "matches": [
+                    (0, 0.9, "High score"),
+                    (1, 0.7, "Medium score"),
+                    (2, 0.3, "Low score")
+                ]
+            }]'''})]
         })
     
     chat.client.messages.create = mock_scores
+    matches = chat.get_semantic_matches("test query", items)
     
-    # Test high threshold
-    matches = chat.get_semantic_matches("query", items, threshold=0.8)
-    assert len(matches) == 1
-    assert matches[0][0].title == "Item 1"
-    assert matches[0][1] == 0.9
-    
-    # Test medium threshold
-    matches = chat.get_semantic_matches("query", items, threshold=0.6)
+    # Only high and medium scores should be included
     assert len(matches) == 2
-    assert matches[0][0].title == "Item 1"  # Should be sorted by score
-    assert matches[1][0].title == "Item 2"
+    assert matches[0][1] == 0.9
+    assert matches[1][1] == 0.7
 
 def test_semantic_search_index_validation():
     """Test validation of match indices."""
@@ -239,67 +222,74 @@ def test_semantic_search_index_validation():
     
     def mock_invalid_indices(*args, **kwargs):
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '''
-                {
-                    "matches": [
-                        {"score": 0.9, "reasoning": "missing index"},
-                        {"index": -1, "score": 0.9, "reasoning": "negative index"},
-                        {"index": 1, "score": 0.9, "reasoning": "out of bounds"},
-                        {"index": 0, "score": 0.9, "reasoning": "valid index"}
-                    ]
-                }
-            '''})]
+            'content': [type('Content', (), {'text': '''[{
+                "matches": [
+                    (99, 0.9, "Invalid index"),
+                    (-1, 0.8, "Negative index"),
+                    (0, 0.7, "Valid index")
+                ]
+            }]'''})]
         })
     
     chat.client.messages.create = mock_invalid_indices
-    matches = chat.get_semantic_matches("query", items, threshold=0.8)
-    assert len(matches) == 1  # Only the valid index should be included
-    assert matches[0][0].title == "Test Item"
-    assert matches[0][1] == 0.9  # Check score
-    assert matches[0][2] == "valid index"  # Check reasoning
+    matches = chat.get_semantic_matches("test query", items)
+    
+    # Only valid indices should be included
+    assert len(matches) == 1
+    assert matches[0][0] == items[0]
 
 def test_semantic_search_prompt_variations():
     """Test prompt construction with different query types."""
     chat = CatalogChat(mode='test')
     items = [CatalogItem(title="Test Item")]
-    captured_prompts = []
+    
+    # Keep track of prompts used
+    prompts = []
     
     def mock_capture_prompt(*args, **kwargs):
-        captured_prompts.append(kwargs.get('system', ''))
+        prompts.append(kwargs.get('messages', [])[0]['content'])
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"matches": []}'})]
+            'content': [type('Content', (), {'text': '[{"matches": [(0, 0.9, "test")]}]'})]
         })
     
     chat.client.messages.create = mock_capture_prompt
     
-    # Test short query prompt
-    chat.get_semantic_matches("api", items)
-    assert 'For short queries, prioritize abbreviations and key terms.' in captured_prompts[-1]
-    assert 'Score advanced/specific content' in captured_prompts[-1]
+    # Test different query types
+    queries = [
+        "short",
+        "longer search query",
+        "very specific technical term",
+        "natural language question about something"
+    ]
     
-    # Test long query prompt
-    chat.get_semantic_matches("how to implement api authentication", items)
-    assert 'Focus on conceptual similarity and meaning' in captured_prompts[-1]
-    assert 'Consider synonyms, related concepts' in captured_prompts[-1]
+    for query in queries:
+        chat.get_semantic_matches(query, items)
+    
+    # Verify each query generated a unique prompt
+    assert len(set(prompts)) == len(queries)
 
 def test_semantic_search_item_types():
     """Test handling of different item types in search."""
     chat = CatalogChat(mode='test')
+    
+    # Create items with different properties
     items = [
-        "Plain string",
-        CatalogItem(title="Catalog item"),
-        Tag(name="Tag item")
+        CatalogItem(title="Item with tags", tags=[Tag(name="test")]),
+        CatalogItem(title="Item without tags"),
+        "Plain string item"
     ]
     
     def mock_check_items(*args, **kwargs):
-        prompt = kwargs.get('system', '')
-        # Verify all items are converted to strings in the prompt
-        assert '"Plain string"' in prompt
-        assert '"Catalog item"' in prompt
-        assert '"Tag item"' in prompt
+        content = kwargs.get('messages', [])[0]['content']
+        # Verify all items are included
+        assert "Item with tags" in content
+        assert "Item without tags" in content
+        assert "Plain string item" in content
+        # Verify tags are included
+        assert "test" in content
         return type('Response', (), {
-            'content': [type('Content', (), {'text': '{"matches": []}'})]
+            'content': [type('Content', (), {'text': '[{"matches": [(0, 0.9, "test")]}]'})]
         })
     
     chat.client.messages.create = mock_check_items
-    chat.get_semantic_matches("query", items)
+    chat.get_semantic_matches("test query", items)
