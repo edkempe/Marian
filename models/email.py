@@ -50,20 +50,35 @@ class Email(Base):
 
     id: Mapped[str] = Column(Text, primary_key=True)
     thread_id: Mapped[str] = Column(Text, nullable=False)
-    subject: Mapped[str] = Column(Text, server_default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
-    from_address: Mapped[str] = Column(Text, nullable=False)
-    to_address: Mapped[str] = Column(Text, nullable=False)
-    cc_address: Mapped[str] = Column(Text, server_default=EMAIL_DEFAULTS['EMPTY_STRING'])
-    bcc_address: Mapped[str] = Column(Text, server_default=EMAIL_DEFAULTS['EMPTY_STRING'])
-    received_date: Mapped[datetime] = Column(DateTime(timezone=True), nullable=False)
-    content: Mapped[str] = Column(Text, server_default=EMAIL_DEFAULTS['EMPTY_STRING'])
-    labels: Mapped[str] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_LABELS']), server_default=EMAIL_DEFAULTS['EMPTY_STRING'])
-    has_attachments: Mapped[bool] = Column(Boolean, nullable=False, server_default=EMAIL_DEFAULTS['HAS_ATTACHMENTS'])
-    full_api_response: Mapped[str] = Column(Text, server_default=EMAIL_DEFAULTS['API_RESPONSE'])
+    subject: Mapped[Optional[str]] = Column(Text, nullable=True, default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
+    from_address: Mapped[Optional[str]] = Column(Text, nullable=True)
+    to_address: Mapped[Optional[str]] = Column(Text, nullable=True)
+    cc_address: Mapped[Optional[str]] = Column(Text, nullable=True)
+    bcc_address: Mapped[Optional[str]] = Column(Text, nullable=True)
+    received_date: Mapped[Optional[datetime]] = Column(DateTime, nullable=True)
+    content: Mapped[Optional[str]] = Column(Text, nullable=True)
+    labels: Mapped[Optional[str]] = Column(Text, nullable=True)  # Store as comma-separated string
+    has_attachments: Mapped[bool] = Column(Boolean, nullable=False, default=False)
+    full_api_response: Mapped[Optional[str]] = Column(Text, nullable=True, default=EMAIL_DEFAULTS['API_RESPONSE'])
 
     # Relationships
     analysis = relationship("EmailAnalysis", back_populates="email", uselist=False)
 
     def __repr__(self):
-        """Return string representation."""
-        return f"<Email(id={self.id}, subject='{self.subject}', from_address='{self.from_address}')>"
+        """Return string representation of email."""
+        return f"<Email(id='{self.id}', subject='{self.subject}', from='{self.from_address}')>"
+
+    @property
+    def label_list(self) -> list[str]:
+        """Get labels as a list."""
+        if not self.labels:
+            return []
+        return self.labels.split(',')
+
+    @label_list.setter
+    def label_list(self, labels: list[str]) -> None:
+        """Set labels from a list."""
+        if not labels:
+            self.labels = None
+        else:
+            self.labels = ','.join(labels)

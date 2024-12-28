@@ -57,6 +57,7 @@ class MetricsConfig(TypedDict):
     PORT: int
     HOST: str
     ENABLED: bool
+    METRICS_PORT: int
 
 class LoggingConfig(TypedDict):
     """Type hints for logging configuration."""
@@ -248,9 +249,10 @@ Example Response Format:
 
 # Metrics Configuration
 METRICS_CONFIG: MetricsConfig = {
-    'PORT': 8000,  # Port for metrics server
-    'HOST': 'localhost',  # Host for metrics server
-    'ENABLED': True  # Whether to enable metrics collection
+    'PORT': 8125,  # Default StatsD port
+    'HOST': 'localhost',
+    'ENABLED': True,
+    'METRICS_PORT': 8125  # Added for backward compatibility
 }
 
 # Logging Configuration

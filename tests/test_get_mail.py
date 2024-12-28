@@ -40,8 +40,8 @@ def test_init_database(db_session):
         to_address='to@test.com',
         content='Test content',
         received_date=datetime.utcnow(),
-        labels=['INBOX']
     )
+    email.label_list = ['INBOX']
     db_session.add(email)
     db_session.commit()
     
@@ -49,6 +49,7 @@ def test_init_database(db_session):
     result = db_session.query(Email).filter_by(id='test1').first()
     assert result is not None
     assert result.subject == 'Test Subject'
+    assert result.label_list == ['INBOX']
 
 @pytest.mark.parametrize("label_name,expected_id", [
     ('INBOX', 'INBOX'),
@@ -100,52 +101,53 @@ def test_process_email(gmail_service, db_session):
 
 def test_get_oldest_email_date(db_session):
     """Test getting oldest email date."""
-    # Insert test data
-    test_dates = [
-        datetime(2024, 1, 1),
-        datetime(2024, 1, 2),
-        datetime(2024, 1, 3)
-    ]
-    for i, date in enumerate(test_dates):
-        email = Email(
+    # Add test emails with different dates
+    emails = [
+        Email(
             id=f'test{i}',
-            received_date=date
-        )
-        db_session.add(email)
+            thread_id=f'thread{i}',
+            received_date=datetime.utcnow() + timedelta(days=i)
+        ) for i in range(3)
+    ]
+    db_session.add_all(emails)
     db_session.commit()
     
     oldest_date = get_oldest_email_date(db_session)
-    assert oldest_date == test_dates[0]
+    assert oldest_date is not None
+    assert oldest_date == emails[0].received_date
 
 def test_get_newest_email_date(db_session):
     """Test getting newest email date."""
-    # Insert test data
-    test_dates = [
-        datetime(2024, 1, 1),
-        datetime(2024, 1, 2),
-        datetime(2024, 1, 3)
-    ]
-    for i, date in enumerate(test_dates):
-        email = Email(
+    # Add test emails with different dates
+    emails = [
+        Email(
             id=f'test{i}',
-            received_date=date
-        )
-        db_session.add(email)
+            thread_id=f'thread{i}',
+            received_date=datetime.utcnow() + timedelta(days=i)
+        ) for i in range(3)
+    ]
+    db_session.add_all(emails)
     db_session.commit()
     
     newest_date = get_newest_email_date(db_session)
-    assert newest_date == test_dates[-1]
+    assert newest_date is not None
+    assert newest_date == emails[-1].received_date
 
 def test_count_emails(db_session):
     """Test email counting."""
-    # Insert test data
-    for i in range(5):
-        email = Email(id=f'test{i}')
-        db_session.add(email)
+    # Add test emails
+    emails = [
+        Email(
+            id=f'test{i}',
+            thread_id=f'thread{i}',
+            received_date=datetime.utcnow()
+        ) for i in range(3)
+    ]
+    db_session.add_all(emails)
     db_session.commit()
     
     count = count_emails(db_session)
-    assert count == 5
+    assert count == 3
 
 def test_list_labels(gmail_service):
     """Test listing Gmail labels."""
