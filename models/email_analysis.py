@@ -99,72 +99,46 @@ class EmailAnalysisResponse(BaseModel):
         return data
 
 class EmailAnalysis(Base):
-    """SQLAlchemy model for storing email analysis data.
-    
-    Maps to the 'email_analysis' table in the database. This model stores analysis data
-    for each email, including:
-    - Email identification (email_id, thread_id)
-    - Analysis metadata (dates, prompt version)
-    - Core analysis (summary, category, priority)
-    - Action items (needed, type, deadline)
-    - Extracted data (key points, people, links)
-    - Classification (project, topic, sentiment)
-    - Analysis quality (confidence score)
-    - full_api_response: Complete analysis response
-    
-    Note: This model is the source of truth for the database schema.
-    Any changes should be made here first, then migrated to the database.
-    """
+    """SQLAlchemy model for email analysis results."""
     __tablename__ = 'email_analysis'
-    __table_args__ = {'extend_existing': True}
-
-    email_id = Column(Integer, ForeignKey('emails.id'), primary_key=True)
-    analysis_date = Column(DateTime, nullable=True)
-    analyzed_date = Column(DateTime, nullable=False)
-    prompt_version = Column(Text, nullable=False)
-    summary = Column(Text, nullable=False)
-    category = Column(Text, nullable=False)
-    priority_score = Column(Integer, nullable=False)
-    priority_reason = Column(Text, nullable=False)
-    action_needed = Column(Boolean, nullable=False, default=ANALYSIS_DEFAULTS['ACTION_NEEDED'])
-    action_type = Column(Text, nullable=False)
-    action_deadline = Column(Text, nullable=True)
-    key_points = Column(Text, nullable=False)
-    people_mentioned = Column(Text, nullable=False)
-    links_found = Column(Text, nullable=False)
-    links_display = Column(Text, nullable=False)
-    project = Column(Text, nullable=True)
-    topic = Column(Text, nullable=True)
-    ref_docs = Column(Text, nullable=True)
-    sentiment = Column(Text, nullable=False)
-    confidence_score = Column(Float, nullable=False)
-
+    
+    id = Column(Integer, primary_key=True)
+    email_id = Column(String(100), ForeignKey('emails.id'), unique=True, nullable=False)
+    thread_id = Column(String(100))
+    summary = Column(String(500))
+    category = Column(String(100))
+    priority_score = Column(Integer)
+    priority_reason = Column(String(200))
+    action_needed = Column(Boolean)
+    action_type = Column(String(100))
+    key_points = Column(String(500))  # Stored as JSON
+    sentiment = Column(String(20))
+    links_found = Column(String(1000))  # Stored as JSON
+    links_display = Column(String(1000))  # Stored as JSON
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
     email = relationship("Email", back_populates="analysis")
 
     @classmethod
     def from_api_response(cls, email_id: str, thread_id: str, response: EmailAnalysisResponse, 
                          links_found: List[str] = None, links_display: List[str] = None) -> 'EmailAnalysis':
         """Create an EmailAnalysis instance from an API response."""
-        now = datetime.now(UTC)
+        now = datetime.utcnow()
         
         return cls(
             email_id=email_id,
-            analysis_date=now,
-            analyzed_date=now,
-            prompt_version="1.0",  # TODO: Make configurable
+            thread_id=thread_id,
             summary=response.summary,
             category=json.dumps(response.category),
             priority_score=response.priority_score,
             priority_reason=response.priority_reason,
             action_needed=response.action_needed,
             action_type=json.dumps(response.action_type),
-            action_deadline=response.action_deadline,
             key_points=json.dumps(response.key_points),
-            people_mentioned=json.dumps(response.people_mentioned),
+            sentiment=response.sentiment,
             links_found=json.dumps(links_found or []),
             links_display=json.dumps(links_display or []),
-            project=response.project,
-            topic=response.topic,
-            sentiment=response.sentiment,
-            confidence_score=response.confidence_score
+            created_at=now,
+            updated_at=now
         )

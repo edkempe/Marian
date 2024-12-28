@@ -62,15 +62,14 @@ class Email(Base):
     """
     __tablename__ = 'emails'
 
-    id: Mapped[str] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_ID']), primary_key=True)
-    subject: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_SUBJECT']), 
-                                          default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
+    id: Mapped[str] = Column(String(100), primary_key=True)
+    thread_id: Mapped[Optional[str]] = Column(String(100))
+    subject: Mapped[Optional[str]] = Column(String(500), default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
     body: Mapped[Optional[str]] = Column(Text)
-    from_: Mapped[Optional[str]] = Column('from', String(EMAIL_COLUMN_SIZES['EMAIL_SENDER']))
-    to: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_TO']))
     received_date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
-    labels: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_LABELS']))
-    threadId: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_THREAD']))
+    labels: Mapped[Optional[str]] = Column(String(500))  # Stored as JSON
+    from_: Mapped[Optional[str]] = Column(String(200))
+    to: Mapped[Optional[str]] = Column(String(500))
     has_attachments: Mapped[Optional[bool]] = Column(Boolean, default=EMAIL_DEFAULTS['HAS_ATTACHMENTS'])
     cc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
     bcc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
@@ -81,4 +80,4 @@ class Email(Base):
 
     def __repr__(self):
         """Return string representation."""
-        return f"<Email(id='{self.id}', subject='{self.subject}', threadId='{self.threadId}')>"
+        return f"<Email(id='{self.id}', subject='{self.subject}', thread_id='{self.thread_id}')>"

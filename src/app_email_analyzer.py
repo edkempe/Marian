@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from models.email import Email
-from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
+from models.email_analysis import EmailAnalysis
 from shared_lib.database_session_util import get_email_session, get_analysis_session
 import sqlalchemy.exc
 from structlog import get_logger
@@ -52,6 +52,20 @@ Environment Variables:
     - ANTHROPIC_API_KEY: Required for Claude API authentication
 """
 
+class EmailAnalysisResponse:
+    """Response from the email analysis API."""
+    def __init__(self, summary: str, category: str, priority_score: int,
+                 priority_reason: str, action_needed: bool, action_type: str,
+                 key_points: List[str], sentiment: str):
+        self.summary = summary
+        self.category = category
+        self.priority_score = priority_score
+        self.priority_reason = priority_reason
+        self.action_needed = action_needed
+        self.action_type = action_type
+        self.key_points = key_points
+        self.sentiment = sentiment
+
 class EmailAnalyzer:
     """Analyzes emails using Claude-3-Haiku with improved error handling and validation.
     
@@ -66,7 +80,7 @@ class EmailAnalyzer:
     Note: For known issues and solutions, see docs/troubleshooting.md
     """
 
-    def __init__(self, metrics_port: int = 8000):
+    def __init__(self, metrics_port: int = 8000, test_mode: bool = False):
         """Initialize the analyzer with API client and start metrics server."""
         load_dotenv(verbose=True)
         
@@ -84,10 +98,11 @@ class EmailAnalyzer:
             
         # Initialize API client
         self.client = anthropic.Client(api_key=api_key)
+        self.test_mode = test_mode
         
         # Start metrics server
         start_metrics_server(metrics_port)
-        logger.info("analyzer_initialized", metrics_port=metrics_port)
+        logger.info("analyzer_initialized", metrics_port=metrics_port, test_mode=test_mode)
 
     def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysis]:
         """Analyze a single email using Anthropic API.
@@ -111,7 +126,10 @@ class EmailAnalyzer:
             # Get analysis from API
             response = None
             try:
-                prompt = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
+                model = API_CONFIG['TEST_MODEL'] if self.test_mode else API_CONFIG['MODEL']
+                max_tokens = API_CONFIG['MAX_TOKENS_TEST'] if self.test_mode else API_CONFIG['MAX_TOKENS']
+                
+                prompt = API_CONFIG['EMAIL_ANALYSIS_PROMPT'][model].format(
                     email_content=f"Subject: {email_data.get('subject', '')}\n\n{email_data.get('body', '')}"
                 )
                 
@@ -122,8 +140,8 @@ class EmailAnalyzer:
                 )
                 
                 response = self.client.messages.create(
-                    model=API_CONFIG['MODEL'],
-                    max_tokens=API_CONFIG['MAX_TOKENS'],
+                    model=model,
+                    max_tokens=max_tokens,
                     temperature=API_CONFIG['TEMPERATURE'],
                     messages=[{
                         "role": "user",
@@ -176,25 +194,12 @@ class EmailAnalyzer:
                                     
                                     # Create EmailAnalysis object with extracted URLs
                                     analysis_response = EmailAnalysisResponse(**analysis_data)
-                                    return EmailAnalysis(
+                                    return EmailAnalysis.from_api_response(
                                         email_id=email_data['id'],
                                         thread_id=email_data.get('threadId', ''),
-                                        summary=analysis_response.summary,
-                                        category=analysis_response.category,
-                                        priority_score=analysis_response.priority_score,
-                                        priority_reason=analysis_response.priority_reason,
-                                        action_needed=analysis_response.action_needed,
-                                        action_type=analysis_response.action_type,
-                                        action_deadline=analysis_response.action_deadline,
-                                        key_points=analysis_response.key_points,
-                                        people_mentioned=analysis_response.people_mentioned,
-                                        project=analysis_response.project,
-                                        topic=analysis_response.topic,
-                                        sentiment=analysis_response.sentiment,
-                                        confidence_score=analysis_response.confidence_score,
+                                        response=analysis_response,
                                         links_found=full_urls,
-                                        links_display=display_urls,
-                                        analyzed_date=datetime.now(timezone.utc)
+                                        links_display=display_urls
                                     )
                                 except json.JSONDecodeError as e:
                                     logger.error(
@@ -281,13 +286,8 @@ class EmailAnalyzer:
                     priority_reason=analysis.priority_reason,
                     action_needed=analysis.action_needed,
                     action_type=analysis.action_type,
-                    action_deadline=analysis.action_deadline,
                     key_points=analysis.key_points,
-                    people_mentioned=analysis.people_mentioned,
-                    project=analysis.project,
-                    topic=analysis.topic,
                     sentiment=analysis.sentiment,
-                    confidence_score=analysis.confidence_score,
                     links_found=full_urls,
                     links_display=display_urls
                 )
@@ -445,8 +445,8 @@ Content: {email_request.truncated_body}"""
                                 )
                                 
                                 response = self.client.messages.create(
-                                    model=API_CONFIG['MODEL'],
-                                    max_tokens=API_CONFIG['MAX_TOKENS'],
+                                    model=API_CONFIG['TEST_MODEL'] if self.test_mode else API_CONFIG['MODEL'],
+                                    max_tokens=API_CONFIG['MAX_TOKENS_TEST'] if self.test_mode else API_CONFIG['MAX_TOKENS'],
                                     temperature=API_CONFIG['TEMPERATURE'],
                                     messages=[{
                                         "role": "user",
@@ -545,10 +545,11 @@ def main():
     parser = argparse.ArgumentParser(description='Email analyzer with configurable email count')
     parser.add_argument('--count', type=int, default=EMAIL_CONFIG['COUNT'],
                       help='Number of emails to process (default: {})'.format(EMAIL_CONFIG['COUNT']))
+    parser.add_argument('--test-mode', action='store_true', help='Run in test mode')
     args = parser.parse_args()
 
     try:
-        analyzer = EmailAnalyzer()
+        analyzer = EmailAnalyzer(test_mode=args.test_mode)
         analyzer.process_emails(count=args.count)
     except Exception as e:
         logger.error("main_error", error=str(e))

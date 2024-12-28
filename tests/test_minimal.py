@@ -8,8 +8,20 @@ from sqlalchemy.orm import sessionmaker
 from src import EmailAnalyzer, EmailSelfAnalyzer, EmailAnalytics
 from models.email import Email, Base as EmailBase
 from models.email_analysis import EmailAnalysis, Base as AnalysisBase
+from models.database_init import init_db, get_test_engines
 from .test_config import setup_test_env, cleanup_test_env, TEST_EMAIL_DB, TEST_ANALYSIS_DB
 from shared_lib.anthropic_client_lib import test_anthropic_connection
+from shared_lib.constants import API_CONFIG
+
+def setup_module():
+    """Set up test databases."""
+    init_db(testing=True)
+
+@pytest.fixture(scope="function")
+def test_db():
+    """Create test databases for each test."""
+    email_engine, analysis_engine, catalog_engine = get_test_engines()
+    yield email_engine, analysis_engine, catalog_engine
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_environment():
@@ -38,7 +50,7 @@ def verify_api_connection():
 
 def test_email_analysis(verify_api_connection):
     """Test email analysis with real API calls."""
-    analyzer = EmailAnalyzer(metrics_port=0)
+    analyzer = EmailAnalyzer(metrics_port=0, test_mode=True)
     
     test_email = {
         'id': f'test_{datetime.now().timestamp()}',
@@ -71,7 +83,7 @@ def test_email_fetching():
     with Session() as session:
         email = Email(
             id=f'test_{datetime.now().timestamp()}',
-            threadId='thread1',
+            thread_id='thread1',
             subject='Test Email',
             body='Test content',
             received_date=datetime.now(),
@@ -100,19 +112,16 @@ def test_email_analytics():
         analysis = EmailAnalysis(
             email_id=f'test_{datetime.now().timestamp()}',
             thread_id='thread1',
-            analysis_date=datetime.now(),
-            analyzed_date=datetime.now(),
             summary='Test summary',
             category=json.dumps(['work']),
             priority_score=3,
             priority_reason='Important work email',
             action_needed=True,
             action_type=json.dumps(['review']),
-            action_deadline='2024-12-31',
-            project='Test Project',
-            topic='Test Topic',
+            key_points=json.dumps(['Test point 1', 'Test point 2']),
             sentiment='neutral',
-            confidence_score=0.9
+            links_found=json.dumps([]),
+            links_display=json.dumps([])
         )
         session.add(analysis)
         session.commit()

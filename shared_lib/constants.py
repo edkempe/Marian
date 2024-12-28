@@ -48,7 +48,7 @@ class APIConfig(TypedDict):
     MAX_TOKENS_TEST: int
     TEMPERATURE: float
     REQUIRED_FIELDS: List[str]
-    EMAIL_ANALYSIS_PROMPT: str
+    EMAIL_ANALYSIS_PROMPT: Dict[str, str]
 
 class DatabaseConfig(TypedDict):
     """Type hints for database configuration."""
@@ -60,6 +60,7 @@ class DatabaseConfig(TypedDict):
     ANALYSIS_TABLE: str
     email: Dict[str, str]
     analysis: Dict[str, str]
+    catalog: Dict[str, str]
     session: Dict[str, str]
 
 class MetricsConfig(TypedDict):
@@ -208,26 +209,30 @@ EMAIL_CONFIG: EmailConfig = {
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
-    'EMAIL_DB_PATH': os.path.join(DATA_DIR, 'db_email_store.db'),
-    'ANALYSIS_DB_PATH': os.path.join(DATA_DIR, 'db_email_analysis.db'),
-    'EMAIL_DB_URL': f'sqlite:///{os.path.join(DATA_DIR, "db_email_store.db")}',
-    'ANALYSIS_DB_URL': f'sqlite:///{os.path.join(DATA_DIR, "db_email_analysis.db")}',
-    'EMAIL_TABLE': 'emails',
-    'ANALYSIS_TABLE': 'email_analysis',
-    'email': {'path': 'db_email_store.db', 'url': 'sqlite:///db_email_store.db'},
-    'analysis': {'path': 'db_email_analysis.db', 'url': 'sqlite:///db_email_analysis.db'},
-    'session': {'path': 'db_session.db', 'url': 'sqlite:///db_session.db'}
+    'email': {
+        'path': 'data/email.db',
+        'url': None
+    },
+    'analysis': {
+        'path': 'data/analysis.db',
+        'url': None
+    },
+    'catalog': {
+        'path': 'data/catalog.db',
+        'url': None
+    }
 }
 
 # API Configuration
 API_CONFIG: APIConfig = {
     'MODEL': 'claude-3-opus-20240229',  # Main production model
-    'TEST_MODEL': 'claude-3-haiku-20240307',  # Model used in tests
+    'TEST_MODEL': 'claude-3-haiku-20240307',  # Use Haiku for faster testing
     'MAX_TOKENS': 4000,
-    'MAX_TOKENS_TEST': 2000,  # Reduced tokens for testing
+    'MAX_TOKENS_TEST': 1000,  # Reduced tokens for testing
     'TEMPERATURE': 0.0,  # Zero temperature for consistent outputs
     'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
-    'EMAIL_ANALYSIS_PROMPT': '''Analyze the following email and provide a structured response in JSON format:
+    'EMAIL_ANALYSIS_PROMPT': {
+        'claude-3-opus-20240229': '''Analyze the following email and provide a structured response in JSON format:
 
 {email_content}
 
@@ -246,7 +251,21 @@ Provide a JSON response with the following fields:
     "topic": "Topic or empty string",
     "sentiment": "positive, negative, or neutral",
     "confidence_score": "Number between 0.0 and 1.0"
-}''',  # Email analysis prompt template
+}''',
+        'claude-3-haiku-20240307': '''Analyze this email and provide a simple JSON response:
+
+{email_content}
+
+Return a JSON object with these fields:
+- summary: Brief summary
+- category: Single most relevant category
+- priority_score: Number 1-5 (1=lowest)
+- priority_reason: Brief reason
+- action_needed: true/false
+- action_type: Main action needed
+- key_points: Top 2-3 points
+- sentiment: positive/negative/neutral'''
+    }
 }
 
 # Default model for API calls
