@@ -181,6 +181,15 @@ def test_valid_status():
 ```
 
 ## Version History
-- 1.0.0: Initial version
-- 1.1.0: Added domain-driven design with core constants
-- 1.2.0: Updated to API-first hierarchy
+- 1.2.0 (2024-12-28): Updated to API-first hierarchy
+  - Refactored models to follow API data structures
+  - Added domain-specific fields and validations
+  - Improved documentation and examples
+- 1.1.0 (2024-12-27): Added domain-driven design
+  - Introduced core constants for domain rules
+  - Added type-safe enums for valid values
+  - Enhanced validation and constraints
+- 1.0.0 (2024-12-26): Initial version
+  - Created base model structure
+  - Added SQLAlchemy integration
+  - Set up basic validation

@@ -1,40 +1,40 @@
-# [Directory Name]
+# My Directory
 
-**Version:** [Major].[Minor].[Patch]  
-**Status:** [Draft|Review|Authoritative|Deprecated]
+**Version:** 1.0.0  
+**Status:** Authoritative
 
 > Brief one-line description of the directory's purpose.
 
 ## Quick Reference
 ```python
 # Common usage example
-from [module] import [class]
-result = [class].[common_operation]()
+from my_module import MyClass
+result = MyClass.my_operation()
 ```
 
 Common operations:
-- `operation1`: Description
-- `operation2`: Description
+- `my_operation`: Description
+- `another_operation`: Description
 
 ## Overview
 - **Purpose**: Main functionality
-- **Stability**: [Stable|Beta|Experimental]
-- **Maintenance**: [Active|Maintenance|Legacy]
+- **Stability**: Stable
+- **Maintenance**: Active
 - **Python**: >= 3.12
 
 ---
 
 ## Directory Structure
 ```
-/[directory]/
+/my_directory/
 ├── README.md              # This file
-├── [subdirectory]/       # Description of subdirectory
-│   └── [files]          # Description of files
-└── [files]              # Description of root files
+├── my_subdirectory/       # Description of subdirectory
+│   └── my_files.py        # Description of files
+└── my_root_files.py      # Description of root files
 ```
 
 ## Core Components
-1. **[Component 1]**
+1. **MyComponent**
    - Purpose: What it does
    - When to use: Common scenarios
    - Example:
@@ -42,7 +42,7 @@ Common operations:
      # Usage example
      ```
 
-2. **[Component 2]**
+2. **AnotherComponent**
    - Purpose: What it does
    - When to use: Common scenarios
    - Example:
@@ -107,7 +107,7 @@ Common operations:
 ### Running Tests
 ```bash
 # Common test commands
-pytest tests/[directory]
+pytest tests/my_directory
 ```
 
 ### Test Coverage
@@ -143,3 +143,7 @@ pytest tests/[directory]
 
 ## Version History
 - 1.0.0: Initial version
+- 1.0.0 (2024-12-28): Initial template
+  - Created standard sections and format
+  - Added version tracking requirements
+  - Established status values
