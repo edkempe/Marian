@@ -42,74 +42,33 @@ from migrations.versions.initial_schema import upgrade as initial_upgrade
 from migrations.versions.add_cc_bcc_fields import upgrade as cc_bcc_upgrade
 
 def get_table_details(inspector: Any, table_name: str) -> Dict[str, Any]:
-    """Get comprehensive details about a table's schema.
+    """Get comprehensive details about a table's schema."""
+    columns = {}
+    for col in inspector.get_columns(table_name):
+        columns[col['name']] = {
+            'type': str(col['type']),
+            'nullable': col['nullable'],
+            'default': str(col['default']) if col['default'] is not None else None,
+            'primary_key': col.get('primary_key', False)
+        }
     
-    Args:
-        inspector: SQLAlchemy inspector instance
-        table_name: Name of the table to inspect
-        
-    Returns:
-        Dict containing table schema details:
-        - columns: List of column definitions
-        - primary_keys: Set of primary key column names
-        - foreign_keys: List of foreign key constraints
-        - indexes: List of index definitions
-        - unique_constraints: List of unique constraints
-    """
     return {
-        'columns': {
-            c['name']: {
-                'type': str(c['type']),
-                'nullable': c['nullable'],
-                'default': str(c['default']) if c['default'] is not None else None,
-                'primary_key': c.get('primary_key', False)
-            }
-            for c in inspector.get_columns(table_name)
-        },
-        'primary_keys': set(inspector.get_pk_constraint(table_name)['constrained_columns']),
-        'foreign_keys': [
-            {
-                'referred_table': fk['referred_table'],
-                'referred_columns': fk['referred_columns'],
-                'constrained_columns': fk['constrained_columns']
-            }
-            for fk in inspector.get_foreign_keys(table_name)
-        ],
-        'indexes': [
-            {
-                'name': idx['name'],
-                'unique': idx['unique'],
-                'columns': idx['column_names']
-            }
-            for idx in inspector.get_indexes(table_name)
-        ],
-        'unique_constraints': [
-            {
-                'name': uc['name'],
-                'columns': uc['column_names']
-            }
-            for uc in inspector.get_unique_constraints(table_name)
-        ]
+        'columns': columns,
+        'primary_keys': set(col['name'] for col in inspector.get_columns(table_name) 
+                          if col.get('primary_key')),
+        'foreign_keys': inspector.get_foreign_keys(table_name),
+        'indexes': inspector.get_indexes(table_name),
+        'unique_constraints': inspector.get_unique_constraints(table_name)
     }
 
 def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
-    """Assert that two database schemas are equivalent.
-    
-    Args:
-        migration_inspector: Inspector for migration-created schema
-        model_inspector: Inspector for model-created schema
-        
-    Raises:
-        AssertionError: If schemas don't match, with detailed diff
-    """
+    """Assert that two database schemas are equivalent."""
     migration_tables = set(migration_inspector.get_table_names())
     model_tables = set(model_inspector.get_table_names())
     
-    # Compare table names
     assert migration_tables == model_tables, \
         f"Table mismatch:\nMigration tables: {migration_tables}\nModel tables: {model_tables}"
     
-    # Compare table details
     for table in migration_tables:
         migration_details = get_table_details(migration_inspector, table)
         model_details = get_table_details(model_inspector, table)
@@ -122,29 +81,25 @@ def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
         assert migration_details['primary_keys'] == model_details['primary_keys'], \
             f"Primary key mismatch in table {table}:\nMigration: {migration_details['primary_keys']}\nModel: {model_details['primary_keys']}"
         
-        # Compare foreign keys (order independent)
-        assert len(migration_details['foreign_keys']) == len(model_details['foreign_keys']), \
-            f"Foreign key count mismatch in table {table}"
-        for mfk in migration_details['foreign_keys']:
-            assert any(
-                mfk['referred_table'] == fk['referred_table'] and
-                set(mfk['referred_columns']) == set(fk['referred_columns']) and
-                set(mfk['constrained_columns']) == set(fk['constrained_columns'])
-                for fk in model_details['foreign_keys']
-            ), f"Foreign key mismatch in table {table}:\nMigration FK: {mfk}\nModel FKs: {model_details['foreign_keys']}"
+        # Compare foreign keys (ignoring implementation-specific details)
+        mig_fks = [{k: v for k, v in fk.items() if k in ('referred_table', 'constrained_columns', 'referred_columns')}
+                   for fk in migration_details['foreign_keys']]
+        mod_fks = [{k: v for k, v in fk.items() if k in ('referred_table', 'constrained_columns', 'referred_columns')}
+                   for fk in model_details['foreign_keys']]
+        assert mig_fks == mod_fks, \
+            f"Foreign key mismatch in table {table}:\nMigration: {mig_fks}\nModel: {mod_fks}"
         
-        # Compare indexes (order independent)
-        assert len(migration_details['indexes']) == len(model_details['indexes']), \
-            f"Index count mismatch in table {table}"
+        # Compare indexes (ignoring implementation-specific details)
         for midx in migration_details['indexes']:
             assert any(
+                midx['name'] == idx['name'] and
                 midx['unique'] == idx['unique'] and
                 set(midx['columns']) == set(idx['columns'])
                 for idx in model_details['indexes']
             ), f"Index mismatch in table {table}:\nMigration index: {midx}\nModel indexes: {model_details['indexes']}"
 
 @pytest.fixture(scope="session", autouse=True)
-def validate_schema():
+def validate_schema(request):
     """Fixture to validate schema before any tests run.
     
     This fixture runs automatically before any tests and will cause all tests
@@ -184,6 +139,12 @@ def validate_schema():
         assert_schema_equal(migration_inspector, model_inspector)
     except AssertionError as e:
         pytest.exit(f"Schema validation failed:\n{str(e)}")
+        
+    def cleanup():
+        migration_engine.dispose()
+        model_engine.dispose()
+    
+    request.addfinalizer(cleanup)
 
 def test_schema_validation_runs():
     """Simple test to ensure schema validation fixture runs."""

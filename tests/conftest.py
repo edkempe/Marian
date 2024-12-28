@@ -1,53 +1,85 @@
-"""Database test fixtures for pytest.
+"""Test configuration and shared fixtures."""
 
-This module provides SQLAlchemy session fixtures for database testing. Following pytest
-convention, it's named 'conftest.py' to make fixtures automatically available to all tests.
-
-Database Fixtures:
-- test_db_session: Creates an in-memory SQLite database for testing email storage and analysis
-
-Components Using These Fixtures:
-- Email storage and retrieval tests
-- Email analysis persistence tests
-- Historical email data query tests
-
-Example Usage:
-    def test_email_storage(test_db_session):
-        email = Email(...)
-        test_db_session.add(email)
-        test_db_session.commit()
-        
-        stored = test_db_session.query(Email).first()
-        assert stored.id == email.id
-
-Note:
-    Uses SQLite in-memory database to ensure test isolation and avoid affecting
-    production data.
-"""
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from models.base import Base
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
+from models.catalog import CatalogItem, Tag, CatalogTag
+from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
+from models.gmail_label import GmailLabel
+from shared_lib.constants import (
+    API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, 
+    METRICS_CONFIG, CATALOG_CONFIG
+)
+from shared_lib.gmail_lib import GmailAPI
+from app_catalog import CatalogChat
 
-@pytest.fixture
-def test_db_session():
-    """Create an in-memory SQLite database session for testing email components.
+@pytest.fixture(scope="session", autouse=True)
+def validate_config():
+    """Validate all configuration values before any tests run."""
+    # Validate email config
+    assert 'DAYS_TO_FETCH' in EMAIL_CONFIG
+    assert 'BATCH_SIZE' in EMAIL_CONFIG
     
-    This fixture:
-    1. Creates an in-memory SQLite database
-    2. Sets up all database tables (Email, EmailAnalysis, etc.)
-    3. Provides a session for test operations
-    4. Automatically closes the session after the test
+    # Validate metrics config
+    assert 'METRICS_PORT' in METRICS_CONFIG
     
-    Returns:
-        SQLAlchemy session: Session connected to in-memory test database
+    # Validate API config
+    assert 'API_KEY' in API_CONFIG
+    
+    # Validate database config
+    assert 'DATABASE_URL' in DATABASE_CONFIG
+    
+    # Validate catalog config
+    assert 'MODEL' in CATALOG_CONFIG
+
+@pytest.fixture(scope="session", autouse=True)
+def gmail_api():
+    """Create and initialize Gmail API instance."""
+    gmail = GmailAPI()
+    gmail.setup_label_database()
+    gmail.sync_labels()
+    return gmail
+
+@pytest.fixture(scope="session")
+def catalog_chat():
+    """Create a CatalogChat instance for testing."""
+    return CatalogChat(mode='production')
+
+@pytest.fixture(scope="session")
+def db_engine(validate_schema):
+    """Create test database engine.
+    
+    This fixture depends on validate_schema to ensure schema is valid before
+    creating test database.
     """
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    yield session
-    session.close()
+    yield engine
+    engine.dispose()
+
+@pytest.fixture(scope="session")
+def db_session(db_engine):
+    """Create database session factory."""
+    Session = sessionmaker(bind=db_engine)
+    return Session
+
+@pytest.fixture(autouse=True)
+def setup_test_db(db_session):
+    """Set up clean test database before each test.
+    
+    This fixture:
+    1. Starts a transaction
+    2. Yields control to the test
+    3. Rolls back the transaction after the test
+    
+    This ensures each test has a clean database state.
+    """
+    session = db_session()
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()
