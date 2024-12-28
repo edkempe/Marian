@@ -1786,3 +1786,41 @@ Short-form matching isn't reliably handling compound concepts and technical abbr
 
 ## Version History
 - 1.0.0: Initial backlog covering Email Processing, Catalog/Librarian, and Program Management workstreams
+
+## Documentation Tasks
+
+### Session Log Format Migration
+**Priority**: Medium  
+**Status**: Not Started  
+**Added**: 2024-12-28  
+
+#### Description
+Create script to migrate existing session logs to new format (`session_log_YYYY-MM-DD.md`) and update all related documentation and scripts.
+
+#### Requirements
+1. Create migration script to:
+   - Rename existing files to new format
+   - Merge multiple sessions from same day
+   - Preserve all content and timestamps
+2. Update documentation:
+   - README.md
+   - dev-checklist.md
+   - SESSION_TEMPLATE.md
+   - Any other references
+3. Update scripts:
+   - chat_session_manager.py
+   - Any other related scripts
+4. Test all changes thoroughly
+
+#### Acceptance Criteria
+- [ ] All session logs follow new naming convention
+- [ ] Multiple sessions per day are properly merged
+- [ ] All documentation consistently references new format
+- [ ] chat_session_manager.py works with new format
+- [ ] No broken links or references
+
+#### Notes
+- Current format is inconsistent (mix of timestamps and dates)
+- New format will be `session_log_YYYY-MM-DD.md`
+- Multiple sessions in a day will be separated by timestamps
+- Need to handle existing 2024-12-27.md format file

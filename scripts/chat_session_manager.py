@@ -239,8 +239,9 @@ def main():
         print("Updated NEXT_SESSION.md")
         
         # Generate session summary
+        now = datetime.now()
         summary = [
-            f"## Session Summary {datetime.now().strftime('%Y-%m-%d')}",
+            f"## Session {now.strftime('%H:%M')} [{now.strftime('%Z')}]",
             "",
             "### Changes",
             changes['stats'],

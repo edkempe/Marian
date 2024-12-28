@@ -3,10 +3,10 @@
 ## Session Documentation Standards
 
 ### Naming Convention
-- Format: `YYYY-MM-DD.md`
-- Example: `2024-12-27.md`
-- Each day should have a single session log file
-- Multiple sessions on the same day are added chronologically to that day's file
+- Format: `session_log_YYYY-MM-DD.md`
+- Example: `session_log_2024-12-27.md`
+- Each day has a single log file
+- Multiple sessions on the same day are added chronologically with timestamps
 
 ### Required Structure
 - Use the standard template from `SESSION_TEMPLATE.md`
@@ -56,18 +56,7 @@
 
 ## Session Directory Structure
 ```
-docs/
-└── sessions/
+└── session_logs/
     ├── README.md           # This guide
-    ├── active/            # Current session notes
-    │   └── YYYY-MM-DD.md
-    └── archive/           # Past session summaries
-        └── YYYY-MM/
-            └── DD-HH-MM.md
-```
-
-## Best Practices
-1. Always create a new session file
-2. Keep real-time notes during session
-3. Complete the close-out checklist
-4. Archive session notes properly
+    ├── SESSION_TEMPLATE.md # Template for new sessions
+    └── session_log_YYYY-MM-DD.md  # Daily session logs
