@@ -157,3 +157,20 @@ def test_api_response_with_whitespace():
     assert parsed["key1"] == "value1"
     assert parsed["key2"] == [1, 2, 3]
     assert parsed["key3"]["nested"] == "value"
+
+def test_api_response_with_unicode():
+    """Test handling API response with unicode characters."""
+    mock_response = '''Analysis with unicode: {
+        "emoji": "🚀",
+        "chinese": "你好",
+        "russian": "привет",
+        "accents": "café"
+    }'''
+    
+    json_str, error = extract_json(mock_response)
+    assert error is None
+    parsed = json.loads(json_str)
+    assert parsed["emoji"] == "🚀"
+    assert parsed["chinese"] == "你好"
+    assert parsed["russian"] == "привет"
+    assert parsed["accents"] == "café"
