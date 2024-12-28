@@ -364,6 +364,45 @@ class DatabaseSessions:
   - Generate schema migrations from models using Alembic autogenerate
   - Priority: Medium
 
+### Domain Constants Refinement
+1. Move email analysis validation constants to domain_constants.py:
+   ```python
+   ANALYSIS_VALIDATION = {
+       'PRIORITY_SCORE': {'MIN': 1, 'MAX': 5},
+       'TEXT_LENGTH': {'MIN': 1, 'MAX': 10000},
+       'CONFIDENCE_SCORE': {'MIN': 0.0, 'MAX': 1.0}
+   }
+   ```
+   - Rationale: Consolidate domain rules in a single location
+   - Impact: Improves maintainability and consistency
+   - Dependencies: None
+   - Priority: Medium
+
+2. Move sentiment types to domain constants:
+   ```python
+   ANALYSIS_SENTIMENT_TYPES = {
+       'POSITIVE': 'positive',
+       'NEGATIVE': 'negative',
+       'NEUTRAL': 'neutral'
+   }
+   ```
+   - Rationale: Centralize all domain enums
+   - Impact: Better type safety and validation
+   - Dependencies: None
+   - Priority: Medium
+
+3. Add relationship validation in AssetDependency model:
+   ```python
+   @validates('relation_type')
+   def validate_relation_type(self, key, value):
+       # Validate relationship types based on source and target asset types
+       # using RELATIONSHIP_RULES from domain_constants
+   ```
+   - Rationale: Enforce relationship rules at the model level
+   - Impact: Prevents invalid relationships between assets
+   - Dependencies: None
+   - Priority: High
+
 ### Database
 - [x] Fix ID type mismatch (Completed 2024-12-23)
   - Changed to TEXT type for email_id and thread_id
