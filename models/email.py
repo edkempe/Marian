@@ -48,13 +48,14 @@ class Email(Base):
     
     Key Fields (types match Gmail API):
     - id: Gmail message ID (VARCHAR(100))
+    - threadId: Gmail thread ID (VARCHAR(100))
     - subject: Email subject (VARCHAR(500))
     - body: Email body (TEXT)
+    - date: When the email was received (DATETIME with timezone)
+    - labelIds: Comma-separated Gmail label IDs (VARCHAR(500))
+    - snippet: Email snippet (TEXT)
     - from_: Sender email address (VARCHAR(200))
     - to: Recipient email address (VARCHAR(200))
-    - received_date: When the email was received (DATETIME with timezone)
-    - labels: Comma-separated Gmail label IDs (VARCHAR(500))
-    - threadId: Gmail thread ID (VARCHAR(100))
     - has_attachments: Whether the email has attachments (BOOLEAN)
     - cc: CC recipient email address (TEXT)
     - bcc: BCC recipient email address (TEXT)
@@ -63,13 +64,14 @@ class Email(Base):
     __tablename__ = 'emails'
 
     id: Mapped[str] = Column(String(100), primary_key=True)
-    thread_id: Mapped[Optional[str]] = Column(String(100))
+    threadId: Mapped[Optional[str]] = Column(String(100))
     subject: Mapped[Optional[str]] = Column(String(500), default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
     body: Mapped[Optional[str]] = Column(Text)
-    received_date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
-    labels: Mapped[Optional[str]] = Column(String(500))  # Stored as JSON
-    from_: Mapped[Optional[str]] = Column(String(200))
-    to: Mapped[Optional[str]] = Column(String(500))
+    date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
+    labelIds: Mapped[Optional[str]] = Column(String(500))  # Stored as JSON
+    snippet: Mapped[Optional[str]] = Column(Text)
+    from_: Mapped[Optional[str]] = Column('from', String(200), nullable=True)
+    to: Mapped[Optional[str]] = Column(String(200), nullable=True)
     has_attachments: Mapped[Optional[bool]] = Column(Boolean, default=EMAIL_DEFAULTS['HAS_ATTACHMENTS'])
     cc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
     bcc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
@@ -80,4 +82,4 @@ class Email(Base):
 
     def __repr__(self):
         """Return string representation."""
-        return f"<Email(id='{self.id}', subject='{self.subject}', thread_id='{self.thread_id}')>"
+        return f"<Email(id='{self.id}', subject='{self.subject}', threadId='{self.threadId}')>"
