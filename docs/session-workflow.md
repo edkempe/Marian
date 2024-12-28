@@ -3,7 +3,7 @@
 **Version:** 1.0.0
 **Status:** Supporting documentation for development session procedures
 
-> **IMPORTANT**: The [Development Session Checklist](DEV_SESSION_CHECKLIST.md) is the authoritative source for development session procedures. This document provides detailed explanations, examples, and additional context.
+> **IMPORTANT**: The [Development Session Checklist](dev-checklist.md) is the authoritative source for development session procedures. This document provides detailed explanations, examples, and additional context.
 
 ## Critical Guidelines
 
@@ -88,7 +88,7 @@ I want to implement the setup script for automating environment and database ini
 This corresponds to the "Setup Script Creation" task in BACKLOG.md under the Program Management workstream.
 Based on the previous session log, this will build on the database schema work that was completed.
 
-Please review the project documentation and perform the standard checks as outlined in DEV_SESSION_CHECKLIST.md.
+Please review the project documentation and perform the standard checks as outlined in dev-checklist.md.
 ```
 
 ### 2. During Development

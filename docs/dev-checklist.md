@@ -8,7 +8,7 @@
 ## Related Documentation
 
 ### Primary Documents
-- This checklist (`DEV_SESSION_CHECKLIST.md`) - Authoritative source for session procedures
+- This checklist (`dev-checklist.md`) - Authoritative source for session procedures
 - `docs/BACKLOG.md` - Source of truth for tasks and priorities
 - `docs/sessions/session_YYYYMMDD_HHMM.md` - Individual session logs
 
