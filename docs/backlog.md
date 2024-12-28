@@ -24,6 +24,36 @@
 
 ## High Priority
 
+### Documentation and Standards
+1. [ ] Update component-specific README files
+   - Status: Not Started
+   - Priority: High
+   - Description: Each component directory needs a unique README that describes its specific purpose and contents
+   - Dependencies: None
+   - Estimated Time: 1-2 sessions
+
+### Testing and Quality
+1. [ ] Fix failing tests and dependencies
+   - Status: Not Started
+   - Priority: High
+   - Description: Resolve missing dependencies (bs4, networkx, pkg_resources) and DEFAULT_MODEL import issues
+   - Dependencies: None
+   - Estimated Time: 1 session
+
+2. [ ] Clean up Python package metadata
+   - Status: Not Started
+   - Priority: High
+   - Description: Resolve duplicate egg-info directories and ensure proper package structure
+   - Dependencies: None
+   - Estimated Time: 1 session
+
+3. [ ] Set up proper test data module
+   - Status: Not Started
+   - Priority: High
+   - Description: Fix test_data package structure and semantic_test_data module
+   - Dependencies: None
+   - Estimated Time: 1 session
+
 ### Schema Validation and Testing
 **Status**: In Progress
 **Priority**: Highest
@@ -1899,5 +1929,35 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
    - Impact: Prevents schema drift and deployment issues
    - Dependencies: None
    - Priority: High
+
+### Test Infrastructure Documentation
+**Status**: Not Started
+**Priority**: High
+**Workstream**: Program Management
+**Description**: Create comprehensive documentation for the test infrastructure.
+
+#### Technical Details
+1. Create tests/README.md
+   - [ ] Document test organization and structure
+   - [ ] Explain fixture hierarchy and usage
+   - [ ] Document test data fixtures
+   - [ ] Provide examples of common test patterns
+   - [ ] Include guidelines for adding new tests
+   - [ ] Document test database setup and teardown
+   - [ ] Explain schema validation approach
+   - [ ] List test categories (unit, integration, etc.)
+
+2. Benefits
+   - Easier onboarding for new developers
+   - Consistent test patterns across codebase
+   - Better test maintenance
+   - Clear guidelines for test creation
+
+3. Success Criteria
+   - README.md is created and comprehensive
+   - All test fixtures are documented
+   - Test patterns are clearly explained
+   - Documentation is reviewed and approved
+   - Existing tests follow documented patterns
 
 {{ ... }}

@@ -13,6 +13,14 @@ Configuration Sections:
     - LOGGING: Log file settings and formats
     - ERROR_MESSAGES: Standard error message templates
     - CATALOG: Catalog-specific settings
+    - EMAIL: Email processing parameters
+    - METRICS: Prometheus metrics settings
+
+Usage:
+    from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
+    
+    model = API_CONFIG['MODEL']
+    db_path = DATABASE_CONFIG['EMAIL_DB_PATH']
 """
 
 from typing import Dict, List, Union, TypedDict, Any
@@ -29,9 +37,6 @@ for dir_path in [DATA_DIR, LOGS_DIR, CACHE_DIR]:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-# Default API model
-DEFAULT_MODEL = 'claude-3-haiku-20240307'  # Using haiku model
-
 class APIConfig(TypedDict):
     """Type hints for API configuration."""
     MODEL: str
@@ -46,6 +51,8 @@ class DatabaseConfig(TypedDict):
     """Type hints for database configuration."""
     EMAIL_DB_PATH: str
     ANALYSIS_DB_PATH: str
+    EMAIL_DB_URL: str
+    ANALYSIS_DB_URL: str
     EMAIL_TABLE: str
     ANALYSIS_TABLE: str
     email: Dict[str, str]
@@ -99,6 +106,11 @@ class ErrorMessages(TypedDict):
     DUPLICATE_ERROR: str
     TAG_ERROR: str
     RELATIONSHIP_ERROR: str
+
+class TestingConfig(TypedDict):
+    """Type hints for testing configuration."""
+    EXCLUDED_DIRS: List[str]
+    REQUIRED_VERSIONING: List[str]
 
 # Database Column Sizes
 COLUMN_SIZES = {
@@ -180,71 +192,24 @@ EMAIL_CONFIG: EmailConfig = {
 DATABASE_CONFIG: DatabaseConfig = {
     'EMAIL_DB_PATH': os.path.join(DATA_DIR, 'db_email_store.db'),
     'ANALYSIS_DB_PATH': os.path.join(DATA_DIR, 'db_email_analysis.db'),
+    'EMAIL_DB_URL': f'sqlite:///{os.path.join(DATA_DIR, "db_email_store.db")}',
+    'ANALYSIS_DB_URL': f'sqlite:///{os.path.join(DATA_DIR, "db_email_analysis.db")}',
     'EMAIL_TABLE': 'emails',
     'ANALYSIS_TABLE': 'email_analysis',
-    'email': {
-        'path': os.path.join(DATA_DIR, 'db_email_store.db'),
-        'table': 'emails',
-        'test_path': ':memory:',
-        'url': f'sqlite:///{os.path.join(DATA_DIR, "db_email_store.db")}'
-    },
-    'analysis': {
-        'path': os.path.join(DATA_DIR, 'db_email_analysis.db'),
-        'table': 'email_analysis',
-        'test_path': ':memory:',
-        'url': f'sqlite:///{os.path.join(DATA_DIR, "db_email_analysis.db")}'
-    },
-    'session': {
-        'timeout': 300,  # Session timeout in seconds
-        'retry_count': 3,  # Number of retries for failed connections
-        'retry_delay': 5  # Delay between retries in seconds
-    }
+    'email': {'path': 'db_email_store.db', 'url': 'sqlite:///db_email_store.db'},
+    'analysis': {'path': 'db_email_analysis.db', 'url': 'sqlite:///db_email_analysis.db'},
+    'session': {'path': 'db_session.db', 'url': 'sqlite:///db_session.db'}
 }
 
 # API Configuration
 API_CONFIG: APIConfig = {
-    'MODEL': DEFAULT_MODEL,
+    'MODEL': 'claude-3-opus-20240229',  # Main production model
     'TEST_MODEL': 'claude-3-haiku-20240307',  # Model used in tests
     'MAX_TOKENS': 4000,
-    'MAX_TOKENS_TEST': 100,
+    'MAX_TOKENS_TEST': 2000,  # Reduced tokens for testing
     'TEMPERATURE': 0.0,  # Zero temperature for consistent outputs
     'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
-    'EMAIL_ANALYSIS_PROMPT': '''You are an AI assistant that analyzes emails and returns structured data in JSON format. Your task is to analyze the following email and return a valid JSON object.
-
-IMPORTANT: Your response must be a single, valid JSON object. Do not include any other text, explanations, or formatting.
-
-Required Fields:
-- summary (string): 2-3 sentence summary of the email
-- category (array of strings): ["work", "personal", "finance", etc]
-- priority_score (integer 1-5): urgency/importance score
-- priority_reason (string): explanation for priority score
-- action_needed (boolean): true if action required
-- action_type (array of strings): ["review", "respond", "schedule", etc]
-- action_deadline (string): "YYYY-MM-DD" or empty string
-- key_points (array of strings): main points from email
-- people_mentioned (array of strings): names mentioned
-- project (string): project name or empty string
-- topic (string): topic or empty string
-- sentiment (string): "positive", "negative", or "neutral"
-- confidence_score (float 0-1): confidence in analysis
-
-Example Response Format:
-{
-    "summary": "Brief summary of email content",
-    "category": ["work", "important"],
-    "priority_score": 4,
-    "priority_reason": "Urgent deadline approaching",
-    "action_needed": true,
-    "action_type": ["respond", "schedule"],
-    "action_deadline": "2024-12-31",
-    "key_points": ["Point 1", "Point 2"],
-    "people_mentioned": ["John Smith", "Jane Doe"],
-    "project": "Project Name",
-    "topic": "Meeting",
-    "sentiment": "positive",
-    "confidence_score": 0.95
-}
-'''
+    'EMAIL_ANALYSIS_PROMPT': 'Analyze the following email...'  # Default prompt
 }
 
 # Metrics Configuration
@@ -262,6 +227,35 @@ LOGGING_CONFIG: LoggingConfig = {
     'BACKUP_COUNT': 5,
     'LOG_FORMAT': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'LOG_LEVEL': 'INFO'
+}
+
+# Testing Configuration
+TESTING_CONFIG: TestingConfig = {
+    'EXCLUDED_DIRS': [
+        'docs/session_logs',
+        'packages',
+        'venv',
+        'docs/archive',
+        '.pytest_cache',
+        'reports/testing',  # Exclude generated test reports
+        '__pycache__',     # Exclude Python cache
+    ],
+    'REQUIRED_VERSIONING': [
+        'README.md',
+        'docs/api_mappings.md',
+        'docs/database_design.md',
+        'docs/testing_guide.md',
+        'docs/ai_architecture.md',
+        'docs/ai-guidelines.md',
+        'docs/backup.md',
+        'docs/code-standards.md',
+        'docs/design-decisions.md',
+        'docs/librarian.md',
+        'docs/project-checklist.md',
+        'docs/project-plan.md',
+        'docs/troubleshooting.md',
+        'reports/industry_standards.md',
+    ]
 }
 
 # Catalog Configuration
