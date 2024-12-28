@@ -1,6 +1,5 @@
 """Tests for email fetching functionality."""
 import pytest
-import sqlite3
 from datetime import datetime, timedelta
 from models.email import Email
 from app_get_mail import (
@@ -10,64 +9,46 @@ from app_get_mail import (
     list_labels
 )
 from shared_lib.gmail_lib import GmailAPI
+from shared_lib.database_session_util import get_email_session
 from shared_lib.constants import DATABASE_CONFIG, API_CONFIG
 
 @pytest.fixture
 def gmail_service():
     """Get real Gmail service."""
-    return GmailAPI().get_service()
+    return GmailAPI()._get_gmail_service()
 
 @pytest.fixture
-def mock_db():
-    """Create an in-memory SQLite database for testing."""
-    conn = sqlite3.connect(':memory:')
-    cursor = conn.cursor()
-    
-    # Create tables using the same schema as the real database
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS emails (
-            id TEXT PRIMARY KEY,
-            thread_id TEXT,
-            subject TEXT,
-            from_address TEXT,
-            to_address TEXT,
-            content TEXT,
-            received_date DATETIME,
-            labels TEXT
-        )
-    ''')
-    
-    conn.commit()
-    return conn
+def db_session():
+    """Create a test database session."""
+    with get_email_session(testing=True) as session:
+        init_database(session)
+        
+        # Clear any existing data
+        session.query(Email).delete()
+        session.commit()
+        
+        yield session
 
-def test_init_database():
+def test_init_database(db_session):
     """Test database initialization."""
-    db_path = ':memory:'  # Use in-memory database for testing
-    init_database(db_path)
+    # Verify emails table exists and has correct schema
+    email = Email(
+        id='test1',
+        thread_id='thread1',
+        subject='Test Subject',
+        from_address='from@test.com',
+        to_address='to@test.com',
+        content='Test content',
+        received_date=datetime.utcnow(),
+        labels=['INBOX']
+    )
+    db_session.add(email)
+    db_session.commit()
     
-    # Verify database was created with correct schema
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    # Check if emails table exists
-    cursor.execute("""
-        SELECT name FROM sqlite_master 
-        WHERE type='table' AND name='emails'
-    """)
-    assert cursor.fetchone() is not None
-    
-    # Check table schema
-    cursor.execute("PRAGMA table_info(emails)")
-    columns = cursor.fetchall()
-    
-    # Verify required columns exist
-    column_names = [col[1] for col in columns]
-    required_columns = [
-        'id', 'thread_id', 'subject', 'from_address',
-        'to_address', 'content', 'received_date', 'labels'
-    ]
-    for col in required_columns:
-        assert col in column_names
+    # Verify we can query the email
+    result = db_session.query(Email).filter_by(id='test1').first()
+    assert result is not None
+    assert result.subject == 'Test Subject'
 
 @pytest.mark.parametrize("label_name,expected_id", [
     ('INBOX', 'INBOX'),
@@ -103,7 +84,7 @@ def test_fetch_emails_with_label(gmail_service):
     assert len(messages) > 0
     assert 'id' in messages[0]
 
-def test_process_email(gmail_service, mock_db):
+def test_process_email(gmail_service, db_session):
     """Test email processing and storage."""
     # First fetch an email
     messages = fetch_emails(gmail_service, max_results=1)
@@ -111,67 +92,59 @@ def test_process_email(gmail_service, mock_db):
     
     # Process the email
     msg_id = messages[0]['id']
-    process_email(gmail_service, msg_id, mock_db)
+    process_email(gmail_service, msg_id, db_session)
     
     # Verify email was stored
-    cursor = mock_db.cursor()
-    cursor.execute("SELECT * FROM emails WHERE id = ?", (msg_id,))
-    result = cursor.fetchone()
+    result = db_session.query(Email).filter_by(id=msg_id).first()
     assert result is not None
 
-def test_get_oldest_email_date(mock_db):
+def test_get_oldest_email_date(db_session):
     """Test getting oldest email date."""
-    cursor = mock_db.cursor()
-    
     # Insert test data
     test_dates = [
-        '2024-01-01T00:00:00Z',
-        '2024-01-02T00:00:00Z',
-        '2024-01-03T00:00:00Z'
+        datetime(2024, 1, 1),
+        datetime(2024, 1, 2),
+        datetime(2024, 1, 3)
     ]
     for i, date in enumerate(test_dates):
-        cursor.execute(
-            "INSERT INTO emails (id, received_date) VALUES (?, ?)",
-            (f'test{i}', date)
+        email = Email(
+            id=f'test{i}',
+            received_date=date
         )
-    mock_db.commit()
+        db_session.add(email)
+    db_session.commit()
     
-    oldest_date = get_oldest_email_date(mock_db)
-    assert oldest_date == datetime.strptime(test_dates[0], '%Y-%m-%dT%H:%M:%SZ')
+    oldest_date = get_oldest_email_date(db_session)
+    assert oldest_date == test_dates[0]
 
-def test_get_newest_email_date(mock_db):
+def test_get_newest_email_date(db_session):
     """Test getting newest email date."""
-    cursor = mock_db.cursor()
-    
     # Insert test data
     test_dates = [
-        '2024-01-01T00:00:00Z',
-        '2024-01-02T00:00:00Z',
-        '2024-01-03T00:00:00Z'
+        datetime(2024, 1, 1),
+        datetime(2024, 1, 2),
+        datetime(2024, 1, 3)
     ]
     for i, date in enumerate(test_dates):
-        cursor.execute(
-            "INSERT INTO emails (id, received_date) VALUES (?, ?)",
-            (f'test{i}', date)
+        email = Email(
+            id=f'test{i}',
+            received_date=date
         )
-    mock_db.commit()
+        db_session.add(email)
+    db_session.commit()
     
-    newest_date = get_newest_email_date(mock_db)
-    assert newest_date == datetime.strptime(test_dates[-1], '%Y-%m-%dT%H:%M:%SZ')
+    newest_date = get_newest_email_date(db_session)
+    assert newest_date == test_dates[-1]
 
-def test_count_emails(mock_db):
+def test_count_emails(db_session):
     """Test email counting."""
-    cursor = mock_db.cursor()
-    
     # Insert test data
     for i in range(5):
-        cursor.execute(
-            "INSERT INTO emails (id) VALUES (?)",
-            (f'test{i}',)
-        )
-    mock_db.commit()
+        email = Email(id=f'test{i}')
+        db_session.add(email)
+    db_session.commit()
     
-    count = count_emails(mock_db)
+    count = count_emails(db_session)
     assert count == 5
 
 def test_list_labels(gmail_service):

@@ -48,9 +48,9 @@ def init_database(session: Session) -> Session:
         Session: The initialized database session
     """
     if not hasattr(session, 'bind') or session.bind is None:
-        engine = create_engine(DATABASE_CONFIG['EMAIL_DB_URL'])
-        session.bind = engine
-    Base.metadata.create_all(session.bind)
+        engine = create_engine(DATABASE_CONFIG['email']['url'])
+        session.configure(bind=engine)
+        Base.metadata.create_all(engine)
     return session
 
 def init_label_database(session: Session) -> Session:
@@ -135,14 +135,16 @@ def fetch_emails(service, start_date=None, end_date=None, label=None, max_result
                 return []
         
         # Build the request
-        request = service.users().messages().list(
-            userId='me',
-            q=' '.join(query) if query else '',
-            maxResults=min(max_results, 500) if max_results else 500  # Default to 500 max
-        )
+        request_params = {
+            'userId': 'me',
+            'q': ' '.join(query) if query else '',
+            'maxResults': min(max_results, 500) if max_results else 500
+        }
         
         if label_id:
-            request['labelIds'] = [label_id]
+            request_params['labelIds'] = [label_id]
+            
+        request = service.users().messages().list(**request_params)
         
         messages = []
         while request:
