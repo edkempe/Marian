@@ -73,7 +73,6 @@ chat_logs.jsonl
 check_unanalyzed.sql
 
 # Backup files
-backup/
 *.bak
 *.old
 

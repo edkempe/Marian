@@ -93,7 +93,7 @@ def get_email_session(config: Optional[Dict[str, str]] = None, testing: bool = F
         testing: If True, use in-memory SQLite database
     """
     if testing:
-        email_engine, _ = get_test_engines()
+        email_engine, _, _ = get_test_engines()
         session = sessionmaker(bind=email_engine)()
     elif config:
         engine = create_db_engine(config, 'EMAIL_DB_URL')
@@ -120,7 +120,7 @@ def get_analysis_session(config: Optional[Dict[str, str]] = None, testing: bool 
         testing: If True, use in-memory SQLite database
     """
     if testing:
-        _, analysis_engine = get_test_engines()
+        _, analysis_engine, _ = get_test_engines()
         session = sessionmaker(bind=analysis_engine)()
     elif config:
         engine = create_db_engine(config, 'ANALYSIS_DB_URL')
@@ -150,7 +150,7 @@ def get_catalog_session(config: Optional[Dict[str, str]] = None, testing: bool =
         _, _, catalog_engine = get_test_engines()
         session = sessionmaker(bind=catalog_engine)()
     elif config:
-        engine = create_engine(f"sqlite:///{config['DB_PATH']}", echo=False)
+        engine = create_db_engine(config, 'CATALOG_DB_URL')
         session = sessionmaker(bind=engine)()
     else:
         session = CatalogSession()

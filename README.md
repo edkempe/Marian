@@ -1,7 +1,26 @@
 # Marian Project
 
-**Version:** 1.0.0
-**Status:** Active Development
+**Version:** 1.0.0  
+**Status:** Authoritative
+
+## Document Version Guidelines
+All project documentation follows this version notation:
+- Format: `[Major].[Minor].[Patch]`
+- Example: `1.2.3`
+
+Version components:
+- Major: Breaking changes
+- Minor: New features, backward compatible
+- Patch: Bug fixes, clarifications
+
+Status levels:
+- Draft: Initial creation, not reviewed
+- Review: Under review/testing
+- Authoritative: Current source of truth
+- Deprecated: Superseded but preserved
+
+## Version History
+- 1.0.0: Initial project setup and core documentation
 
 ## Important Process Documents
 **REQUIRED**: Follow the authoritative [Development Session Checklist](docs/dev-checklist.md) for all development sessions.
@@ -508,6 +527,3 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 - Design decisions and architecture (docs/design-decisions.md)
 - Session workflow guide (docs/session-workflow.md)
 - Project guidelines (docs/contributing.md)
-
-## Version History
-- 1.0.0: Initial project setup and core documentation
