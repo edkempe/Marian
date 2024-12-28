@@ -25,13 +25,15 @@ Status levels:
 ## Important Process Documents
 **REQUIRED**: Follow the authoritative [Development Session Checklist](docs/dev-checklist.md) for all development sessions.
 
-**Supporting Documentation**:
-- [Session Workflow Guide](docs/session-workflow.md)
-- [Project Guidelines](docs/contributing.md)
-- [Setup Guide](docs/setup.md)
-- [Project Design Decisions](docs/design-decisions.md)
+**Core Documentation**:
+- [Development Session Logs](docs/session_logs/) - Daily development tracking (REQUIRED)
+- [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
+- [Session Workflow Guide](docs/session-workflow.md) - Development workflow
+- [Project Guidelines](docs/contributing.md) - Contribution standards
+- [Setup Guide](docs/setup.md) - Environment setup
+- [Project Design Decisions](docs/design-decisions.md) - Architecture choices
 
-The checklist must be followed for every development session, with the supporting documents providing additional context and details as needed.
+The checklist and session logs must be maintained for every development session, with the supporting documents providing additional context and details as needed.
 
 ## Critical Development Guidelines
 
@@ -73,7 +75,8 @@ The checklist must be followed for every development session, with the supportin
    - This policy ensures tests validate real-world behavior
 
 4. **Change Management Policy**
-   - Keep detailed session logs of all development work
+   - Keep detailed session logs of all development work in `docs/session_logs/`
+   - Follow the [Session Logs Guide](docs/session_logs/README.md) for format and naming
    - Make changes small and incremental
    - Ensure diffs are readable for review and approval
    - Document reasoning behind each change
@@ -115,7 +118,8 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 ### Quick Links
 - [Project Plan](PROJECT_PLAN.md) - Detailed development roadmap and project structure
 - [Documentation](docs/) - Guides and technical documentation
-  - [Development Session Logs](docs/session_logs/) - Detailed logs of all development sessions
+  - [Development Session Logs](docs/session_logs/) - Required daily development tracking
+  - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
   - [Project Guidelines](docs/contributing.md) - Code standards and contribution guidelines
   - [Design Decisions](docs/design-decisions.md) - Architecture and technical decisions
 - [Infrastructure](infrastructure/) - AWS deployment templates

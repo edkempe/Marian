@@ -14,13 +14,15 @@ Environment Variables:
                     Default: sqlite:///data/db_email_analysis.db
 """
 
-from sqlalchemy import create_engine, text, Engine, Connection, Row
+from sqlalchemy import create_engine, desc
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 import json
 import os
 import sys
 import logging
+from models.email_analysis import EmailAnalysis
 
 # Configure logging
 logging.basicConfig(
@@ -49,40 +51,48 @@ def check_database() -> None:
         SQLAlchemyError: If there's an error connecting to or querying the database
     """
     try:
-        # Use the same database URL as the main application
-        analysis_db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///data/db_email_analysis.db')
-        logger.info(f"Connecting to database at: {analysis_db_url}")
-        
-        engine = create_engine(analysis_db_url)
-        
-        with engine.connect() as conn:
-            try:
-                # Get total count
-                result = conn.execute(text("SELECT COUNT(*) as count FROM email_analysis"))
-                total = result.fetchone()[0]
-                print(f"\nTotal records: {total}")
-                
-                # Get latest 5 records
-                result = conn.execute(text("SELECT * FROM email_analysis ORDER BY analysis_date DESC LIMIT 5"))
-                
-                print("\nLatest 5 records:")
-                for row in result:
-                    print("\n-------------------")
-                    print(f"Email ID: {row.email_id}")
-                    print(f"Thread ID: {row.thread_id}")
-                    print(f"Analysis Date: {row.analysis_date}")
-                    print(f"Summary: {row.summary[:100]}...")
-                    print(f"Priority Score: {row.priority_score}")
-                    print(f"Action Needed: {row.action_needed}")
-                    print(f"Project: {row.project}")
-                    print(f"Topic: {row.topic}")
-                
-                logger.info("Database check completed successfully")
-                
-            except SQLAlchemyError as e:
-                logger.error(f"Error querying database: {str(e)}")
-                raise
-                
+        # Create database engine and session
+        db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///data/db_email_analysis.db')
+        engine = create_engine(db_url)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        try:
+            # Get total count using ORM
+            total_count = session.query(EmailAnalysis).count()
+            logger.info(f"Total analyzed emails: {total_count}")
+
+            # Get latest 5 records using ORM
+            latest_records = (
+                session.query(EmailAnalysis)
+                .order_by(desc(EmailAnalysis.analysis_date))
+                .limit(5)
+                .all()
+            )
+
+            if not latest_records:
+                logger.warning("No records found in database")
+                return
+
+            # Display latest records
+            logger.info("\nLatest analyzed emails:")
+            for record in latest_records:
+                # Format summary for display
+                summary = record.summary[:100] + "..." if record.summary and len(record.summary) > 100 else record.summary
+
+                logger.info("-" * 80)
+                logger.info(f"Email ID: {record.email_id}")
+                logger.info(f"Thread ID: {record.thread_id}")
+                logger.info(f"Analysis Date: {record.analysis_date}")
+                logger.info(f"Summary: {summary}")
+                logger.info(f"Priority Score: {record.priority_score}")
+                logger.info(f"Action Needed: {record.action_needed}")
+                logger.info(f"Project: {record.project}")
+                logger.info(f"Topic: {record.topic}")
+
+        finally:
+            session.close()
+
     except SQLAlchemyError as e:
         logger.error(f"Database error: {str(e)}")
         sys.exit(1)
