@@ -91,8 +91,13 @@ data/chat_logs.jsonl
 *.jsonl
 
 # Reports
-reports/*.html
-reports/
+reports/*
+!reports/testing/
+reports/testing/*
+!reports/testing/.gitkeep
+!reports/testing/README.md
+reports/testing/*.md
+reports/testing/*.html
 
 # Logs
 logs/*.log

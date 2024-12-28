@@ -10,6 +10,7 @@ pytz==2024.1
 pandas==2.1.4
 plotly==5.18.0
 jinja2==3.1.2
+markdown==3.7
 
 # Environment and utilities
 anthropic==0.18.1  # Using latest version for Claude-3 API support

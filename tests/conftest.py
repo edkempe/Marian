@@ -1,85 +1,135 @@
-"""Test configuration and shared fixtures."""
+"""Shared pytest fixtures."""
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from models.base import Base
-from models.email import Email
-from models.email_analysis import EmailAnalysis
-from models.catalog import CatalogItem, Tag, CatalogTag
-from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
-from models.gmail_label import GmailLabel
-from shared_lib.constants import (
-    API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, 
-    METRICS_CONFIG, CATALOG_CONFIG
-)
+from config import EMAIL_CONFIG, CATALOG_CONFIG
 from shared_lib.gmail_lib import GmailAPI
 from app_catalog import CatalogChat
+from models.email import Email
+from models.gmail_label import GmailLabel
+from datetime import datetime
+import json
+from typing import Generator
+import pytz
 
 @pytest.fixture(scope="session", autouse=True)
 def validate_config():
     """Validate all configuration values before any tests run."""
     # Validate email config
-    assert 'DAYS_TO_FETCH' in EMAIL_CONFIG
-    assert 'BATCH_SIZE' in EMAIL_CONFIG
-    
-    # Validate metrics config
-    assert 'METRICS_PORT' in METRICS_CONFIG
-    
-    # Validate API config
-    assert 'API_KEY' in API_CONFIG
-    
-    # Validate database config
-    assert 'DATABASE_URL' in DATABASE_CONFIG
-    
-    # Validate catalog config
-    assert 'MODEL' in CATALOG_CONFIG
+    required_email_config = {
+        'BATCH_SIZE', 'COUNT', 'LABELS', 'EXCLUDED_LABELS'
+    }
+    for key in required_email_config:
+        assert key in EMAIL_CONFIG, f"Missing required email config: {key}"
 
-@pytest.fixture(scope="session", autouse=True)
+    # Validate catalog config
+    required_catalog_config = {
+        'ENABLE_SEMANTIC', 'DB_PATH', 'CHAT_LOG'
+    }
+    for key in required_catalog_config:
+        assert key in CATALOG_CONFIG, f"Missing required catalog config: {key}"
+
+@pytest.fixture(scope="session")
 def gmail_api():
-    """Create and initialize Gmail API instance."""
-    gmail = GmailAPI()
-    gmail.setup_label_database()
-    gmail.sync_labels()
-    return gmail
+    """Create Gmail API client for tests."""
+    return GmailAPI()
 
 @pytest.fixture(scope="session")
 def catalog_chat():
-    """Create a CatalogChat instance for testing."""
-    return CatalogChat(mode='production')
+    """Create CatalogChat client for tests."""
+    return CatalogChat()
 
 @pytest.fixture(scope="session")
-def db_engine(validate_schema):
-    """Create test database engine.
-    
-    This fixture depends on validate_schema to ensure schema is valid before
-    creating test database.
-    """
+def db_engine():
+    """Create database engine for tests."""
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     yield engine
-    engine.dispose()
+    Base.metadata.drop_all(engine)
 
 @pytest.fixture(scope="session")
-def db_session(db_engine):
-    """Create database session factory."""
-    Session = sessionmaker(bind=db_engine)
-    return Session
+def db_session_factory(db_engine):
+    """Create a session factory."""
+    return sessionmaker(bind=db_engine)
 
-@pytest.fixture(autouse=True)
-def setup_test_db(db_session):
-    """Set up clean test database before each test.
-    
-    This fixture:
-    1. Starts a transaction
-    2. Yields control to the test
-    3. Rolls back the transaction after the test
-    
-    This ensures each test has a clean database state.
-    """
-    session = db_session()
-    try:
-        yield session
-    finally:
-        session.rollback()
-        session.close()
+@pytest.fixture
+def db_session(db_session_factory):
+    """Create a new database session for a test."""
+    session = db_session_factory()
+    yield session
+    session.rollback()
+    session.close()
+
+@pytest.fixture
+def sample_emails():
+    """Create a set of test emails."""
+    return [
+        Email(
+            id="msg1",
+            thread_id="thread1",
+            subject="Test Email 1",
+            body="This is a test email about Python programming.",
+            sender="sender1@example.com",
+            to_address="recipient1@example.com",
+            received_date=datetime.now(pytz.utc),
+            cc_address="cc1@example.com",
+            bcc_address="bcc1@example.com",
+            full_api_response=json.dumps({
+                "id": "msg1",
+                "threadId": "thread1",
+                "labelIds": ["INBOX", "UNREAD"],
+                "snippet": "This is a test email..."
+            })
+        ),
+        Email(
+            id="msg2",
+            thread_id="thread2",
+            subject="Test Email 2",
+            body="Another test email about JavaScript development.",
+            sender="sender2@example.com",
+            to_address="recipient2@example.com",
+            received_date=datetime.now(pytz.utc),
+            cc_address="cc2@example.com",
+            bcc_address="bcc2@example.com",
+            full_api_response=json.dumps({
+                "id": "msg2",
+                "threadId": "thread2",
+                "labelIds": ["INBOX", "IMPORTANT"],
+                "snippet": "Another test email..."
+            })
+        )
+    ]
+
+@pytest.fixture
+def sample_gmail_labels():
+    """Create a set of test Gmail labels."""
+    now = datetime.now(pytz.utc)
+    return [
+        GmailLabel(
+            id="INBOX",
+            name="Inbox",
+            type="system",
+            is_active=True,
+            first_seen_at=now,
+            last_seen_at=now
+        ),
+        GmailLabel(
+            id="SENT",
+            name="Sent",
+            type="system",
+            is_active=True,
+            first_seen_at=now,
+            last_seen_at=now
+        ),
+        GmailLabel(
+            id="Label_123",
+            name="Custom Label",
+            type="user",
+            is_active=False,
+            first_seen_at=now,
+            last_seen_at=now,
+            deleted_at=now
+        )
+    ]

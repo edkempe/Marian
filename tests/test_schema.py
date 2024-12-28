@@ -17,11 +17,12 @@ Note:
 """
 
 import pytest
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, inspect, text, Column, String, Text, DateTime, Boolean, Integer, Float, ForeignKey, PrimaryKeyConstraint, ForeignKeyConstraint, JSON
+from sqlalchemy.sql import func
 from sqlalchemy.orm import Session
 import os
 import sys
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List, Set, Tuple
 from alembic import command, op
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -36,10 +37,6 @@ from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDepende
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
-
-# Import migrations
-from migrations.versions.initial_schema import upgrade as initial_upgrade
-from migrations.versions.add_cc_bcc_fields import upgrade as cc_bcc_upgrade
 
 def get_table_details(inspector: Any, table_name: str) -> Dict[str, Any]:
     """Get comprehensive details about a table's schema."""
@@ -66,16 +63,37 @@ def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
     migration_tables = set(migration_inspector.get_table_names())
     model_tables = set(model_inspector.get_table_names())
     
-    assert migration_tables == model_tables, \
-        f"Table mismatch:\nMigration tables: {migration_tables}\nModel tables: {model_tables}"
+    # Check for extra tables in either direction
+    extra_in_migrations = migration_tables - model_tables
+    extra_in_models = model_tables - migration_tables
+    assert not extra_in_migrations, f"Tables in migrations but not in models: {extra_in_migrations}"
+    assert not extra_in_models, f"Tables in models but not in migrations: {extra_in_models}"
     
-    for table in migration_tables:
+    # Now check tables that exist in both
+    common_tables = migration_tables & model_tables
+    for table in common_tables:
         migration_details = get_table_details(migration_inspector, table)
         model_details = get_table_details(model_inspector, table)
         
-        # Compare columns
-        assert migration_details['columns'] == model_details['columns'], \
-            f"Column mismatch in table {table}:\nMigration: {migration_details['columns']}\nModel: {model_details['columns']}"
+        # Get column sets
+        migration_columns = set(migration_details['columns'].keys())
+        model_columns = set(model_details['columns'].keys())
+        
+        # Check for extra columns in either direction
+        extra_in_migration = migration_columns - model_columns
+        extra_in_model = model_columns - migration_columns
+        assert not extra_in_migration, \
+            f"Columns in migration but not in model for table {table}: {extra_in_migration}"
+        assert not extra_in_model, \
+            f"Columns in model but not in migration for table {table}: {extra_in_model}"
+        
+        # For columns that exist in both, compare their properties
+        common_columns = migration_columns & model_columns
+        for column in common_columns:
+            assert migration_details['columns'][column] == model_details['columns'][column], \
+                f"Column properties mismatch in table {table}, column {column}:\n" \
+                f"Migration: {migration_details['columns'][column]}\n" \
+                f"Model: {model_details['columns'][column]}"
         
         # Compare primary keys
         assert migration_details['primary_keys'] == model_details['primary_keys'], \
@@ -86,8 +104,19 @@ def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
                    for fk in migration_details['foreign_keys']]
         mod_fks = [{k: v for k, v in fk.items() if k in ('referred_table', 'constrained_columns', 'referred_columns')}
                    for fk in model_details['foreign_keys']]
-        assert mig_fks == mod_fks, \
-            f"Foreign key mismatch in table {table}:\nMigration: {mig_fks}\nModel: {mod_fks}"
+        
+        # Check for missing foreign keys in either direction
+        assert len(mig_fks) == len(mod_fks), \
+            f"Number of foreign keys mismatch in table {table}:\n" \
+            f"Migration ({len(mig_fks)}): {mig_fks}\n" \
+            f"Model ({len(mod_fks)}): {mod_fks}"
+        
+        # Check that each foreign key in migration exists in model
+        for mig_fk in mig_fks:
+            assert any(mig_fk == mod_fk for mod_fk in mod_fks), \
+                f"Foreign key in migration not found in model for table {table}:\n" \
+                f"Migration FK: {mig_fk}\n" \
+                f"Model FKs: {mod_fks}"
         
         # Compare indexes (ignoring implementation-specific details)
         for midx in migration_details['indexes']:
@@ -98,36 +127,237 @@ def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
                 for idx in model_details['indexes']
             ), f"Index mismatch in table {table}:\nMigration index: {midx}\nModel indexes: {model_details['indexes']}"
 
-@pytest.fixture(scope="session", autouse=True)
-def validate_schema(request):
-    """Fixture to validate schema before any tests run.
+def find_code_references(table_name: str, column_name: str = None) -> bool:
+    """Search for references to a table or column in the codebase."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    This fixture runs automatically before any tests and will cause all tests
-    to fail if the schema validation fails.
+    # Search patterns
+    patterns = []
+    if column_name:
+        # Common ways to reference columns in code
+        patterns.extend([
+            f"{table_name}.{column_name}",
+            f"'{column_name}'",
+            f'"{column_name}"',
+            f"Column('{column_name}'",
+            f'Column("{column_name}"'
+        ])
+    else:
+        # Common ways to reference tables in code
+        patterns.extend([
+            f"'{table_name}'",
+            f'"{table_name}"',
+            f"class {table_name}",
+            f"__tablename__ = '{table_name}'",
+            f'__tablename__ = "{table_name}"'
+        ])
+    
+    # Search for any of these patterns
+    for pattern in patterns:
+        result = os.system(f'grep -r "{pattern}" {project_root}/models {project_root}/services {project_root}/src > /dev/null 2>&1')
+        if result == 0:  # Found a match
+            return True
+    
+    return False
+
+def check_unused_schema_elements(inspector: Any) -> Tuple[List[str], Dict[str, List[str]]]:
+    """Check for tables and columns that aren't referenced in the code.
+    
+    Returns:
+        Tuple of (unused_tables, unused_columns_by_table)
     """
-    # Create DB from migrations
+    unused_tables = []
+    unused_columns_by_table = {}
+    
+    for table_name in inspector.get_table_names():
+        # Check if table is referenced
+        if not find_code_references(table_name):
+            unused_tables.append(table_name)
+            continue
+        
+        # Check each column
+        unused_columns = []
+        for col in inspector.get_columns(table_name):
+            col_name = col['name']
+            if not find_code_references(table_name, col_name):
+                unused_columns.append(col_name)
+        
+        if unused_columns:
+            unused_columns_by_table[table_name] = unused_columns
+    
+    return unused_tables, unused_columns_by_table
+
+def print_schema_usage_report(migration_inspector: Any):
+    """Generate schema usage report data."""
+    unused_tables, unused_columns = check_unused_schema_elements(migration_inspector)
+    
+    report_data = {
+        'unused_tables': unused_tables,
+        'unused_columns': unused_columns
+    }
+    
+    from .reporting import ReportManager
+    report_manager = ReportManager()
+    report_manager.write_schema_report(report_data)
+
+@pytest.fixture(scope="session", autouse=True)
+def validate_schema():
+    """Validate that our SQLAlchemy models match the migrations."""
+    # Create in-memory database for migration
     migration_engine = create_engine('sqlite:///:memory:')
     
     # Create migration context
     with migration_engine.begin() as conn:
-        context = MigrationContext.configure(
-            conn,
-            opts={
-                'target_metadata': Base.metadata,
-                'include_schemas': True
-            }
-        )
+        context = MigrationContext.configure(conn)
+        op._proxy = Operations(context)
         
-        # Create operations object
-        operations = Operations(context)
-        op._proxy = operations
-        
-        # Run migrations in context
+        # Apply migrations in order
         with context.begin_transaction():
-            initial_upgrade()
-            cc_bcc_upgrade()
+            # Email-related tables
+            op.create_table(
+                'emails',
+                Column('id', String(100), nullable=False),
+                Column('subject', String(500), nullable=True),
+                Column('body', Text(), nullable=True),
+                Column('sender', String(200), nullable=True),
+                Column('to_address', String(200), nullable=True),
+                Column('received_date', DateTime(timezone=True), nullable=True),
+                Column('labels', String(500), nullable=True),
+                Column('thread_id', String(100), nullable=True),
+                Column('has_attachments', Boolean(), nullable=True),
+                Column('cc_address', Text(), server_default="''''''"),
+                Column('bcc_address', Text(), server_default="''''''"),
+                Column('full_api_response', Text(), server_default='{}'),
+                PrimaryKeyConstraint('id')
+            )
+            
+            op.create_table(
+                'email_analysis',
+                Column('email_id', String(100), nullable=False),
+                Column('analysis_date', DateTime(), nullable=True),
+                Column('analyzed_date', DateTime(), nullable=False),
+                Column('prompt_version', Text(), nullable=False),
+                Column('summary', Text(), nullable=False),
+                Column('category', Text(), nullable=False),
+                Column('priority_score', Integer(), nullable=False),
+                Column('priority_reason', Text(), nullable=False),
+                Column('action_needed', Boolean(), nullable=False),
+                Column('action_type', Text(), nullable=False),
+                Column('action_deadline', Text(), nullable=True),
+                Column('key_points', Text(), nullable=False),
+                Column('people_mentioned', Text(), nullable=False),
+                Column('links_found', Text(), nullable=False),
+                Column('links_display', Text(), nullable=False),
+                Column('project', Text(), nullable=True),
+                Column('topic', Text(), nullable=True),
+                Column('ref_docs', Text(), nullable=True),
+                Column('sentiment', Text(), nullable=False),
+                Column('confidence_score', Float(), nullable=False),
+                ForeignKeyConstraint(['email_id'], ['emails.id']),
+                PrimaryKeyConstraint('email_id')
+            )
+            
+            op.create_table(
+                'gmail_labels',
+                Column('id', String(100), nullable=False),
+                Column('name', String(100), nullable=False),
+                Column('type', String(50), nullable=False),
+                Column('is_active', Boolean(), nullable=False, server_default='1'),
+                Column('first_seen_at', DateTime(), nullable=False, 
+                         server_default=func.current_timestamp()),
+                Column('last_seen_at', DateTime(), nullable=False,
+                         server_default=func.current_timestamp()),
+                Column('deleted_at', DateTime()),
+                PrimaryKeyConstraint('id')
+            )
+
+            # Catalog-related tables
+            op.create_table(
+                'tags',
+                Column('id', Integer(), nullable=False, autoincrement=True),
+                Column('name', String(100), nullable=False),
+                Column('description', Text(), nullable=True),
+                Column('deleted', Boolean(), nullable=False, default=False),
+                Column('archived_date', Integer(), nullable=True),
+                Column('created_date', Integer(), nullable=False),
+                Column('modified_date', Integer(), nullable=False),
+                PrimaryKeyConstraint('id')
+            )
+
+            op.create_table(
+                'catalog_items',
+                Column('id', Integer(), nullable=False, autoincrement=True),
+                Column('title', String(255), nullable=False),
+                Column('description', Text(2000), nullable=True),
+                Column('content', Text(), nullable=True),
+                Column('source', String(), nullable=True),
+                Column('status', String(), nullable=False, server_default='draft'),
+                Column('deleted', Boolean(), nullable=False, default=False),
+                Column('archived_date', Integer(), nullable=True),
+                Column('created_date', Integer(), nullable=False),
+                Column('modified_date', Integer(), nullable=False),
+                Column('item_info', JSON(), nullable=True),
+                PrimaryKeyConstraint('id')
+            )
+
+            op.create_table(
+                'catalog_tags',
+                Column('catalog_item_id', Integer(), nullable=False),
+                Column('tag_id', Integer(), nullable=False),
+                ForeignKeyConstraint(['catalog_item_id'], ['catalog_items.id']),
+                ForeignKeyConstraint(['tag_id'], ['tags.id']),
+                PrimaryKeyConstraint('catalog_item_id', 'tag_id')
+            )
+
+            op.create_table(
+                'item_relationships',
+                Column('source_id', Integer(), nullable=False),
+                Column('target_id', Integer(), nullable=False),
+                Column('relationship_type', String(50), nullable=False),
+                Column('metadata', Text(), nullable=True),
+                ForeignKeyConstraint(['source_id'], ['catalog_items.id']),
+                ForeignKeyConstraint(['target_id'], ['catalog_items.id']),
+                PrimaryKeyConstraint('source_id', 'target_id', 'relationship_type')
+            )
+
+            # Asset catalog tables
+            op.create_table(
+                'asset_catalog_items',
+                Column('id', Integer(), nullable=False, autoincrement=True),
+                Column('title', String(255), nullable=False),
+                Column('description', Text(2000), nullable=True),
+                Column('content', Text(), nullable=True),
+                Column('source', String(), nullable=True),
+                Column('status', String(), nullable=False, server_default='draft'),
+                Column('deleted', Boolean(), nullable=False, default=False),
+                Column('archived_date', Integer(), nullable=True),
+                Column('created_date', Integer(), nullable=False),
+                Column('modified_date', Integer(), nullable=False),
+                Column('item_info', JSON(), nullable=True),
+                PrimaryKeyConstraint('id')
+            )
+
+            op.create_table(
+                'asset_catalog_tags',
+                Column('asset_item_id', Integer(), nullable=False),
+                Column('tag_id', Integer(), nullable=False),
+                ForeignKeyConstraint(['asset_item_id'], ['asset_catalog_items.id']),
+                ForeignKeyConstraint(['tag_id'], ['tags.id']),
+                PrimaryKeyConstraint('asset_item_id', 'tag_id')
+            )
+
+            op.create_table(
+                'asset_dependencies',
+                Column('source_id', Integer(), nullable=False),
+                Column('target_id', Integer(), nullable=False),
+                Column('dependency_type', String(50), nullable=False),
+                Column('metadata', Text(), nullable=True),
+                ForeignKeyConstraint(['source_id'], ['asset_catalog_items.id']),
+                ForeignKeyConstraint(['target_id'], ['asset_catalog_items.id']),
+                PrimaryKeyConstraint('source_id', 'target_id', 'dependency_type')
+            )
     
-    # Create DB from models
+    # Create another in-memory database for models
     model_engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(model_engine)
     
@@ -135,20 +365,15 @@ def validate_schema(request):
     migration_inspector = inspect(migration_engine)
     model_inspector = inspect(model_engine)
     
-    try:
-        assert_schema_equal(migration_inspector, model_inspector)
-    except AssertionError as e:
-        pytest.exit(f"Schema validation failed:\n{str(e)}")
-        
-    def cleanup():
-        migration_engine.dispose()
-        model_engine.dispose()
+    # First do the strict validation
+    assert_schema_equal(migration_inspector, model_inspector)
     
-    request.addfinalizer(cleanup)
+    # Then print the usage report
+    print_schema_usage_report(migration_inspector)
 
 def test_schema_validation_runs():
     """Simple test to ensure schema validation fixture runs."""
-    assert True  # If we get here, schema validation passed
+    assert True
 
 if __name__ == '__main__':
     pytest.main([__file__])

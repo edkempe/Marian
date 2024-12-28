@@ -258,6 +258,46 @@ If you encounter any issues while running the application, please refer to our c
   - Copies of active files
   - Not for archival purposes
 
+## Data Flow Architecture
+
+Our project follows a strict data flow hierarchy to ensure consistency across all layers:
+
+1. **External APIs as Source of Truth**
+   - External APIs (e.g., Gmail API) define the canonical data formats
+   - API documentation is referenced in model docstrings
+   - API field types and constraints are preserved
+
+2. **SQLAlchemy Models Mirror APIs**
+   - Models strictly match API data types (e.g., string IDs from Gmail)
+   - Additional fields follow API patterns
+   - Models document their API alignment
+   - See `models/email.py` for an example
+
+3. **Database Schema Aligns to Models**
+   - Migrations ensure database matches model definitions
+   - Schema tests (`tests/test_schema.py`) verify alignment
+   - Type mismatches are fixed via migrations
+   - No direct database manipulation
+
+4. **Application Code Follows Schema**
+   - Code expects types defined in schema
+   - Type hints reflect database types
+   - Tests validate type consistency
+   - Schema changes require code updates
+
+This hierarchy ensures data consistency:
+```
+External APIs (source of truth) 
+  → SQLAlchemy Models 
+    → Database Migrations 
+      → Application Code
+```
+
+Each layer is validated:
+- Schema tests check model-database alignment
+- Model tests verify field types
+- Integration tests confirm API compatibility
+
 ## Documentation
 - [Database Design](docs/database-design.md): Complete database documentation
 - [API Usage](docs/api-usage.md): Guidelines for using external APIs

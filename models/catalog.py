@@ -95,21 +95,21 @@ class CatalogTag(Base):
     """Association model for the many-to-many relationship between CatalogItems and Tags."""
     __tablename__ = "catalog_tags"
 
-    catalog_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
+    catalog_item_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
     tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
 
-    def __init__(self, catalog_id: int, tag_id: int):
-        self.catalog_id = catalog_id
+    def __init__(self, catalog_item_id: int, tag_id: int):
+        self.catalog_item_id = catalog_item_id
         self.tag_id = tag_id
 
-    @validates('catalog_id', 'tag_id')
+    @validates('catalog_item_id', 'tag_id')
     def validate_ids(self, key, value):
         """Validate that neither item nor tag is archived."""
         session = object_session(self)
         if session is None:
             return value
 
-        if key == 'catalog_id':
+        if key == 'catalog_item_id':
             item = session.query(CatalogItem).get(value)
             if item and item.status == ItemStatus.ARCHIVED:
                 raise ValueError("Cannot tag an archived item")
@@ -120,14 +120,15 @@ class CatalogTag(Base):
         return value
 
     @classmethod
-    def create(cls, session: Session, catalog_id: int, tag_id: int) -> "CatalogTag":
+    def create(cls, session: Session, catalog_item_id: int, tag_id: int) -> "CatalogTag":
         """Create a new catalog tag with validation."""
-        tag = cls(catalog_id=catalog_id, tag_id=tag_id)
+        tag = cls(catalog_item_id=catalog_item_id, tag_id=tag_id)
         session.add(tag)
         return tag
 
     def __repr__(self):
-        return f"<CatalogTag(catalog_id={self.catalog_id}, tag_id={self.tag_id})>"
+        """Return string representation."""
+        return f"<CatalogTag(catalog_item_id={self.catalog_item_id}, tag_id={self.tag_id})>"
 
 class ItemRelationship(Base):
     """Model for relationships between catalog items."""
