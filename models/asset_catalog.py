@@ -9,35 +9,39 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from models.base import Base
 from models.catalog import CatalogItem, Tag, CatalogTag
-from shared_lib.constants import AssetTypes, DEFAULT_VALUES
-
-class AssetType:
-    """Asset types for the catalog."""
-    CODE = AssetTypes.CODE
-    DOCUMENT = AssetTypes.DOCUMENT
-    TEST = AssetTypes.TEST
-    CONFIG = AssetTypes.CONFIG
-    SCRIPT = AssetTypes.SCRIPT
+from models.domain_constants import (
+    AssetType, ItemStatus, RelationType, CONSTRAINTS, 
+    DEFAULTS, STATE_TRANSITIONS, RELATIONSHIP_RULES
+)
 
 class AssetCatalogItem(Base):
     """Model for code and document assets in the catalog."""
     __tablename__ = "asset_catalog_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    title: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(
+        String(CONSTRAINTS['title_max_length']), 
+        nullable=False
+    )
+    description: Mapped[Optional[str]] = mapped_column(
+        Text(CONSTRAINTS['description_max_length'])
+    )
     asset_type: Mapped[str] = mapped_column(String, nullable=False)
     file_path: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     language: Mapped[Optional[str]] = mapped_column(String)
-    dependencies: Mapped[Optional[List[str]]] = mapped_column(JSON)
-    asset_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    content: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(
-        String,
+        String, 
         nullable=False,
-        default='active',
-        server_default='active'
+        default=ItemStatus.DRAFT,
+        server_default=ItemStatus.DRAFT
     )
-    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted: Mapped[bool] = mapped_column(
+        Boolean, 
+        default=DEFAULTS['deleted'], 
+        nullable=False
+    )
+    archived_date: Mapped[Optional[int]] = mapped_column(Integer)
     created_date: Mapped[int] = mapped_column(
         Integer,
         default=lambda: int(datetime.utcnow().timestamp()),
@@ -46,18 +50,17 @@ class AssetCatalogItem(Base):
     modified_date: Mapped[int] = mapped_column(
         Integer,
         default=lambda: int(datetime.utcnow().timestamp()),
-        nullable=False,
-        onupdate=lambda: int(datetime.utcnow().timestamp())
+        onupdate=lambda: int(datetime.utcnow().timestamp()),
+        nullable=False
     )
-
+    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    
     # Relationships
     tags: Mapped[List["Tag"]] = relationship(
         "Tag",
         secondary="asset_catalog_tags",
         back_populates="asset_items"
     )
-
-    # Dependencies and dependents
     dependencies_rel: Mapped[List["AssetDependency"]] = relationship(
         "AssetDependency",
         foreign_keys="[AssetDependency.source_id]",
@@ -71,27 +74,49 @@ class AssetCatalogItem(Base):
         cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        Index('idx_asset_catalog_items_title', text('title COLLATE NOCASE')),
+        Index('idx_asset_catalog_items_file_path', text('file_path COLLATE NOCASE')),
+        Index('idx_asset_catalog_items_type', 'asset_type'),
+        Index('idx_asset_catalog_items_status', 'status'),
+        Index('idx_asset_catalog_items_deleted', 'deleted'),
+    )
+
+    @validates('title')
+    def validate_title(self, key, value):
+        """Validate title length."""
+        if len(value) < CONSTRAINTS['title_min_length']:
+            raise ValueError(
+                f"Title must be at least {CONSTRAINTS['title_min_length']} characters"
+            )
+        return value
+
+    @validates('status')
+    def validate_status(self, key, value):
+        """Validate status transitions."""
+        if not hasattr(self, 'status'):
+            return value
+            
+        if value not in [s.value for s in ItemStatus]:
+            raise ValueError(f"Invalid status: {value}")
+            
+        current = self.status
+        if current and value not in [s.value for s in STATE_TRANSITIONS[ItemStatus(current)]]:
+            raise ValueError(
+                f"Invalid status transition from {current} to {value}"
+            )
+        
+        return value
+
+    @validates('asset_type')
+    def validate_asset_type(self, key, value):
+        """Validate asset type."""
+        if value not in [t.value for t in AssetType]:
+            raise ValueError(f"Invalid asset type: {value}")
+        return value
+
     def __repr__(self):
         return f"<AssetCatalogItem(id={self.id}, title='{self.title}', type='{self.asset_type}')>"
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the asset catalog item to a dictionary."""
-        return {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'asset_type': self.asset_type,
-            'file_path': self.file_path,
-            'language': self.language,
-            'dependencies': self.dependencies,
-            'asset_metadata': self.asset_metadata,
-            'status': self.status,
-            'created_date': self.created_date,
-            'modified_date': self.modified_date,
-            'tags': [tag.name for tag in self.tags],
-            'dependencies_count': len(self.dependencies_rel),
-            'dependents_count': len(self.dependents_rel)
-        }
 
 class AssetCatalogTag(Base):
     """Association model for asset catalog items and tags."""
@@ -104,19 +129,32 @@ class AssetCatalogTag(Base):
         self.asset_id = asset_id
         self.tag_id = tag_id
 
+    @validates('asset_id', 'tag_id')
+    def validate_ids(self, key, value):
+        """Validate that neither asset nor tag is archived."""
+        session = object_session(self)
+        if session is None:
+            return value
+
+        if key == 'asset_id':
+            asset = session.query(AssetCatalogItem).get(value)
+            if asset and asset.status == ItemStatus.ARCHIVED:
+                raise ValueError("Cannot tag an archived asset")
+        elif key == 'tag_id':
+            tag = session.query(Tag).get(value)
+            if tag and tag.deleted:
+                raise ValueError("Cannot use a deleted tag")
+        return value
+
     @classmethod
     def create(cls, session: Session, asset_id: int, tag_id: int) -> "AssetCatalogTag":
         """Create a new asset catalog tag with validation."""
-        # Check if asset and tag exist and are not deleted
-        asset = session.query(AssetCatalogItem).filter_by(id=asset_id, deleted=False).first()
-        tag = session.query(Tag).filter_by(id=tag_id, deleted=False).first()
-
-        if not asset or not tag:
-            raise ValueError("Asset or tag not found or is deleted")
-
         tag = cls(asset_id=asset_id, tag_id=tag_id)
         session.add(tag)
         return tag
+
+    def __repr__(self):
+        return f"<AssetCatalogTag(asset_id={self.asset_id}, tag_id={self.tag_id})>"
 
 class AssetDependency(Base):
     """Model for dependencies between asset catalog items."""
@@ -133,7 +171,6 @@ class AssetDependency(Base):
         nullable=False
     )
 
-    # Relationships
     source_item: Mapped["AssetCatalogItem"] = relationship(
         "AssetCatalogItem",
         foreign_keys=[source_id],
@@ -148,10 +185,34 @@ class AssetDependency(Base):
     __table_args__ = (
         UniqueConstraint('source_id', 'target_id', 'dependency_type',
                         name='unique_asset_dependency'),
+        Index('idx_asset_dependencies_source', 'source_id'),
+        Index('idx_asset_dependencies_target', 'target_id'),
+        Index('idx_asset_dependencies_type', 'dependency_type'),
     )
 
+    @validates('dependency_type')
+    def validate_dependency_type(self, key, value):
+        """Validate dependency type."""
+        if value not in [r.value for r in RelationType]:
+            raise ValueError(f"Invalid dependency type: {value}")
+        return value
+
+    @validates('source_id', 'target_id')
+    def validate_ids(self, key, value):
+        """Validate that neither source nor target is archived."""
+        session = object_session(self)
+        if session is None:
+            return value
+
+        item = session.query(AssetCatalogItem).get(value)
+        if item and item.status == ItemStatus.ARCHIVED:
+            raise ValueError(
+                f"Cannot create dependency with archived item (id={value})"
+            )
+        return value
+
     def __repr__(self):
-        return f"<AssetDependency(id={self.id}, source={self.source_id}, target={self.target_id})>"
+        return f"<AssetDependency(id={self.id}, type='{self.dependency_type}')>"
 
 # Add Tag relationship to asset items
 Tag.asset_items = relationship(
