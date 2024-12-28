@@ -9,6 +9,7 @@ This module ensures that our requirements.txt is both necessary and sufficient:
 import os
 import ast
 import sys
+import pytest
 import pkg_resources
 import importlib.util
 from typing import Dict, Set, List, Tuple

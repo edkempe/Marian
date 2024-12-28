@@ -13,7 +13,6 @@ import os
 import base64
 import json
 import pickle
-import sqlite3
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -24,6 +23,9 @@ from googleapiclient.discovery import build
 from dateutil import parser
 from pytz import timezone
 import logging
+from sqlalchemy import create_engine, Column, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # Constants
 SCOPES = [
@@ -39,11 +41,27 @@ UTC_TZ = timezone('UTC')
 
 logger = logging.getLogger(__name__)
 
+# SQLAlchemy setup
+Base = declarative_base()
+
+class GmailLabel(Base):
+    """SQLAlchemy model for Gmail labels"""
+    __tablename__ = 'gmail_labels'
+    
+    label_id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    type = Column(String)
+    message_list_visibility = Column(String)
+    label_list_visibility = Column(String)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
 class GmailAPI:
     """Main class for Gmail API operations"""
     
     def __init__(self, label_db_path=DEFAULT_LABEL_DB):
         self.label_db_path = label_db_path
+        self.engine = create_engine(f'sqlite:///{label_db_path}')
+        self.Session = sessionmaker(bind=self.engine)
         self.service = self._get_gmail_service()
         
     def _get_gmail_service(self):
@@ -84,98 +102,63 @@ class GmailAPI:
 
     def setup_label_database(self):
         """Create and setup the labels database"""
-        conn = sqlite3.connect(self.label_db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS gmail_labels (
-                label_id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT,
-                message_list_visibility TEXT,
-                label_list_visibility TEXT,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        conn.commit()
-        return conn
+        Base.metadata.create_all(self.engine)
+        return self.Session()
 
     def sync_labels(self):
         """Sync Gmail labels with local database"""
-        conn = self.setup_label_database()
-        cursor = conn.cursor()
+        session = self.Session()
         
         try:
             # Get all labels from Gmail
             results = self.service.users().labels().list(userId='me').execute()
             labels = results.get('labels', [])
             
-            # Begin transaction
-            cursor.execute('BEGIN TRANSACTION')
-            
             # Store each label
-            for label in labels:
-                cursor.execute('''
-                    INSERT OR REPLACE INTO gmail_labels 
-                    (label_id, name, type, message_list_visibility, label_list_visibility)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (
-                    label['id'],
-                    label['name'],
-                    label.get('type'),
-                    label.get('messageListVisibility'),
-                    label.get('labelListVisibility')
-                ))
+            for label_data in labels:
+                label = GmailLabel(
+                    label_id=label_data['id'],
+                    name=label_data['name'],
+                    type=label_data.get('type'),
+                    message_list_visibility=label_data.get('messageListVisibility'),
+                    label_list_visibility=label_data.get('labelListVisibility'),
+                    updated_at=datetime.utcnow()
+                )
+                session.merge(label)
             
-            conn.commit()
+            session.commit()
             print(f"Successfully synced {len(labels)} labels")
             return True
             
         except Exception as e:
-            conn.rollback()
+            session.rollback()
             print(f"Error syncing labels: {str(e)}")
             return False
             
         finally:
-            conn.close()
+            session.close()
 
     def get_label_name(self, label_id):
         """Get label name from label ID"""
-        conn = sqlite3.connect(self.label_db_path)
-        cursor = conn.cursor()
+        session = self.Session()
         
         try:
-            cursor.execute('SELECT name FROM gmail_labels WHERE label_id = ?', (label_id,))
-            result = cursor.fetchone()
-            return result[0] if result else label_id
+            label = session.query(GmailLabel).filter_by(label_id=label_id).first()
+            return label.name if label else label_id
             
         finally:
-            conn.close()
-
+            session.close()
+            
     def get_label_id(self, label_name):
         """Get label ID from label name"""
-        conn = sqlite3.connect(self.label_db_path)
-        cursor = conn.cursor()
+        session = self.Session()
         
         try:
-            # Try exact match first
-            cursor.execute('SELECT label_id FROM gmail_labels WHERE name = ?', (label_name,))
-            result = cursor.fetchone()
-            
-            if result:
-                return result[0]
-            
-            # If no exact match, try case-insensitive match
-            cursor.execute('SELECT label_id FROM gmail_labels WHERE LOWER(name) = LOWER(?)', (label_name,))
-            result = cursor.fetchone()
-            
-            if result:
-                return result[0]
-            
-            return None
+            label = session.query(GmailLabel).filter_by(name=label_name).first()
+            return label.label_id if label else None
             
         finally:
-            conn.close()
+            session.close()
 
     def process_email(self, msg_id):
         """Process a single email message.

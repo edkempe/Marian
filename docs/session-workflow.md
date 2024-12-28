@@ -96,26 +96,35 @@ Please review the project documentation and perform the standard checks as outli
 #### Commit Message Examples
 ```bash
 # Feature addition
-git commit -m "feat: add database initialization to setup script
+git commit -am "feat: add database initialization to setup script
 
 - Add SQLite database creation
-- Add table schema initialization
-- Add test data population
-- Update documentation"
+- Add schema initialization
+- Add test database setup
+- Add environment variable handling"
 
 # Bug fix
-git commit -m "fix: correct session handling in email analyzer
+git commit -am "fix: correct session handling in email analyzer
 
-- Fix connection leak in get_analysis_session
+- Fix connection leak in session management
 - Add proper error handling
-- Add session cleanup"
+- Update tests to verify fix"
 
 # Documentation
-git commit -m "docs: update API documentation
+git commit -am "docs: update API documentation
 
 - Add endpoint descriptions
-- Update response formats
-- Add error handling details"
+- Update request/response examples
+- Document error codes
+- Add usage examples"
+
+# Multiple changes
+git commit -am "refactor: improve database operations
+
+- Replace raw SQL with SQLAlchemy
+- Add proper session management
+- Improve error handling
+- Update tests"
 ```
 
 #### Development Guidelines
@@ -168,13 +177,13 @@ diff requirements.txt requirements.txt.new
 vim docs/backlog.md
 
 # 6. Generate session documentation
-python chat_session_manager.py close
+python chat_session_manager.py end
 
 # 7. Final verification
 git status  # Check for uncommitted changes
 python -m pytest  # Verify tests still pass
 git add .
-git commit -m "chore: update session documentation"
+git commit -am "chore: update session documentation"
 git push origin main
 ```
 
@@ -281,7 +290,7 @@ git log --oneline -n 5
 # Changes
 git diff
 git add .
-git commit -m "type: description"
+git commit -am "type: description"
 git push origin main
 ```
 

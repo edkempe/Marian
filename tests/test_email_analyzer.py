@@ -21,11 +21,13 @@ def valid_email_data():
     """Valid email data for testing."""
     return {
         'id': f'test_{datetime.now().timestamp()}',
-        'thread_id': 'thread1',
+        'threadId': 'thread1',
         'subject': 'Test Email',
-        'content': 'This is an important work email that requires review by tomorrow.',
-        'date': datetime.now().isoformat(),
-        'labels': '["INBOX"]'
+        'body': 'This is an important work email that requires review by tomorrow.',
+        'received_date': datetime.now().isoformat(),
+        'labels': '["INBOX"]',
+        'from_': 'test@example.com',
+        'to': 'recipient@example.com'
     }
 
 def test_email_analysis_response_validation():
@@ -34,11 +36,13 @@ def test_email_analysis_response_validation():
     
     test_email = {
         'id': f'test_{datetime.now().timestamp()}',
-        'thread_id': 'thread1',
+        'threadId': 'thread1',
         'subject': 'Test Email',
-        'content': 'This is an important work email that requires review by tomorrow.',
-        'date': datetime.now().isoformat(),
-        'labels': '["INBOX"]'
+        'body': 'This is an important work email that requires review by tomorrow.',
+        'received_date': datetime.now().isoformat(),
+        'labels': '["INBOX"]',
+        'from_': 'test@example.com',
+        'to': 'recipient@example.com'
     }
     
     # Get real API response
@@ -67,11 +71,13 @@ def test_analyze_email_with_empty_fields(email_analyzer):
     """Test email analysis with minimal content."""
     minimal_email = {
         'id': f'test_{datetime.now().timestamp()}',
-        'thread_id': 'thread1',
+        'threadId': 'thread1',
         'subject': '',
-        'content': 'Short test.',
-        'date': datetime.now().isoformat(),
-        'labels': '["INBOX"]'
+        'body': 'Short test.',
+        'received_date': datetime.now().isoformat(),
+        'labels': '["INBOX"]',
+        'from_': 'test@example.com',
+        'to': 'recipient@example.com'
     }
     
     result = email_analyzer.analyze_email(minimal_email)
@@ -83,11 +89,13 @@ def test_analyze_email_api_error(email_analyzer):
     """Test handling of API errors with invalid content."""
     invalid_email = {
         'id': f'test_{datetime.now().timestamp()}',
-        'thread_id': 'thread1',
+        'threadId': 'thread1',
         'subject': 'Test Email',
-        'content': '\x00\x01\x02\x03',  # Invalid binary content
-        'date': datetime.now().isoformat(),
-        'labels': '["INBOX"]'
+        'body': '\x00\x01\x02\x03',  # Invalid binary content
+        'received_date': datetime.now().isoformat(),
+        'labels': '["INBOX"]',
+        'from_': 'test@example.com',
+        'to': 'recipient@example.com'
     }
     
     result = email_analyzer.analyze_email(invalid_email)
@@ -100,12 +108,13 @@ def test_process_emails_batch_handling(email_analyzer):
         for i in range(5):
             email = Email(
                 id=f'test_{i}_{datetime.now().timestamp()}',
-                thread_id=f'thread_{i}',
+                threadId=f'thread_{i}',
                 subject=f'Test Email {i}',
-                content=f'This is test email {i} that needs to be reviewed.',
+                from_='test@example.com',
+                to='recipient@example.com',
                 received_date=datetime.now(),
-                labels='["INBOX"]',
-                from_address='test@example.com'
+                body=f'This is test email {i} that needs to be reviewed.',
+                labels='["INBOX"]'
             )
             session.add(email)
         session.commit()
@@ -128,23 +137,25 @@ def test_process_emails_error_handling(email_analyzer):
     with get_email_session() as session:
         # Valid email
         email1 = Email(
-            id=f'test_valid_{datetime.now().timestamp()}',
-            thread_id='thread_valid',
-            subject='Valid Email',
-            content='This is a valid test email.',
+            id='test_valid_1',
+            threadId='thread_1',
+            subject='Test Email 1',
+            from_='test@example.com',
+            to='recipient@example.com',
             received_date=datetime.now(),
-            labels='["INBOX"]',
-            from_address='test@example.com'
+            body='This is a valid test email.',
+            labels='["INBOX"]'
         )
         # Invalid email
         email2 = Email(
-            id=f'test_invalid_{datetime.now().timestamp()}',
-            thread_id='thread_invalid',
-            subject='Invalid Email',
-            content='\x00\x01\x02\x03',  # Invalid binary content
+            id='test_invalid_1',
+            threadId='thread_2',
+            subject='Test Email 2',
+            from_='test@example.com',
+            to='recipient@example.com',
             received_date=datetime.now(),
-            labels='["INBOX"]',
-            from_address='test@example.com'
+            body='\x00\x01\x02\x03',  # Invalid binary content
+            labels='["INBOX"]'
         )
         session.add(email1)
         session.add(email2)

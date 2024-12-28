@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import sqlite3
 from datetime import datetime
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from jinja2 import Environment, BaseLoader
 import sys
 from constants import DATABASE_CONFIG
+from models.email import Email
+from models.email_analysis import EmailAnalysis
 
 def generate_html_report():
-    # Connect to the databases
+    # Create SQLAlchemy engine and session
     analysis_db_path = 'data/db_email_analysis.db'
     email_db_path = 'data/db_email_store.db'
     
@@ -17,31 +19,29 @@ def generate_html_report():
         print(f"Database files not found!")
         return
         
-    # Create connection to analysis database
-    analysis_conn = sqlite3.connect(analysis_db_path)
-    analysis_conn.row_factory = sqlite3.Row
+    # Create SQLAlchemy engine
+    engine = create_engine(f'sqlite:///{analysis_db_path}?check_same_thread=False')
+    Session = sessionmaker(bind=engine)
+    session = Session()
     
     try:
-        # Query the data from both databases
-        query = """
+        # Query the data using SQLAlchemy
+        query = text("""
         SELECT 
             e.subject,
-            e.from_address,
+            e.from_ as from_address,
             a.priority_score,
             a.priority_reason,
             a.analysis_date,
             a.sentiment
-        FROM db_email_store.emails e
-        JOIN db_email_analysis.email_analysis a ON e.id = a.email_id
+        FROM emails e
+        JOIN email_analysis a ON e.id = a.email_id
         ORDER BY a.analysis_date DESC, a.priority_score DESC
-        """
+        """)
         
-        # Execute query against analysis database
-        cursor = analysis_conn.cursor()
-        cursor.execute("ATTACH DATABASE 'data/db_email_store.db' AS db_email_store")
-        cursor.execute("ATTACH DATABASE 'data/db_email_analysis.db' AS db_email_analysis")
-        cursor.execute(query)
-        rows = cursor.fetchall()
+        # Execute query
+        result = session.execute(query)
+        rows = result.fetchall()
         
         if not rows:
             print("No analyzed emails found in the database!")
@@ -49,179 +49,165 @@ def generate_html_report():
         
         print(f"Found {len(rows)} analyzed emails")
         
-        # Generate HTML
-        html = f"""
-        <!DOCTYPE html>
+        # Convert rows to dictionaries for template rendering
+        emails = []
+        for row in rows:
+            email_dict = dict(row)
+            # Format dates
+            if email_dict['analysis_date']:
+                email_dict['analysis_date'] = email_dict['analysis_date'].strftime('%Y-%m-%d %H:%M:%S')
+            emails.append(email_dict)
+        
+        # Generate HTML report using template
+        template = Environment(loader=BaseLoader()).from_string("""
         <html>
         <head>
             <title>Email Analysis Report</title>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                h1 {{ color: #333; }}
-                table {{ 
-                    border-collapse: collapse; 
-                    width: 100%;
-                    margin-top: 20px;
-                }}
-                th, td {{ 
-                    padding: 12px; 
-                    text-align: left; 
-                    border-bottom: 1px solid #ddd; 
-                }}
-                th {{ 
-                    background-color: #f5f5f5;
-                    color: #333;
-                }}
-                tr:hover {{ background-color: #f9f9f9; }}
-                .priority-high {{ color: #d32f2f; }}
-                .priority-medium {{ color: #f57c00; }}
-                .priority-low {{ color: #388e3c; }}
-                .timestamp {{ color: #666; font-size: 0.9em; }}
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                .high { color: red; }
+                .medium { color: orange; }
+                .low { color: green; }
             </style>
         </head>
         <body>
             <h1>Email Analysis Report</h1>
-            <p class="timestamp">Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+            <p>Generated on: {{ generation_date }}</p>
             <table>
                 <tr>
                     <th>Subject</th>
-                    <th>Sender</th>
+                    <th>From</th>
                     <th>Priority</th>
                     <th>Reason</th>
                     <th>Sentiment</th>
+                    <th>Analysis Date</th>
                 </tr>
-        """
-        
-        for row in rows:
-            subject, sender, priority, reason, _, sentiment = row
-            
-            # Determine priority class
-            if priority >= 4:
-                priority_class = "priority-high"
-            elif priority >= 3:
-                priority_class = "priority-medium"
-            else:
-                priority_class = "priority-low"
-                
-            html += f"""
+                {% for email in emails %}
                 <tr>
-                    <td>{subject}</td>
-                    <td>{sender}</td>
-                    <td class="{priority_class}">{priority}</td>
-                    <td>{reason}</td>
-                    <td>{sentiment}</td>
+                    <td>{{ email.subject }}</td>
+                    <td>{{ email.from_address }}</td>
+                    <td class="{{ 'high' if email.priority_score > 0.7 else 'medium' if email.priority_score > 0.4 else 'low' }}">
+                        {{ "%.2f"|format(email.priority_score) }}
+                    </td>
+                    <td>{{ email.priority_reason }}</td>
+                    <td>{{ email.sentiment }}</td>
+                    <td>{{ email.analysis_date }}</td>
                 </tr>
-            """
-        
-        html += """
+                {% endfor %}
             </table>
         </body>
         </html>
-        """
+        """)
         
-        # Write to file
+        html = template.render(
+            emails=emails,
+            generation_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+        
+        # Write HTML report to file
         with open('reports/email_analysis_report.html', 'w') as f:
             f.write(html)
+            
+        print("Report generated successfully!")
         
-        print("Report generated: reports/email_analysis_report.html")
-    except sqlite3.Error as e:
-        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        
     finally:
-        analysis_conn.close()
+        session.close()
 
 def generate_sent_emails_report(output_file='reports/sent_emails_report.html'):
-    """Generate a report of emails sent by eddiekempe@gmail.com."""
-    # Connect to databases
-    email_store = create_engine(f'sqlite:///{DATABASE_CONFIG["EMAIL_DB_FILE"]}')
-    analysis_db = create_engine(f'sqlite:///{DATABASE_CONFIG["ANALYSIS_DB_FILE"]}')
+    """Generate a report of sent emails."""
+    # Create SQLAlchemy engine and session
+    email_db_path = 'data/db_email_store.db'
     
-    # Get sent emails and their analysis
-    query = """
-    SELECT 
-        e.id,
-        e.subject,
-        e.from_address,
-        e.received_date,
-        e.labels,
-        a.priority_score,
-        a.priority_reason,
-        a.action_needed,
-        a.action_deadline
-    FROM emails e
-    LEFT JOIN email_analysis a ON e.id = a.email_id
-    WHERE e.from_address LIKE '%eddiekempe@gmail.com%'
-    ORDER BY e.received_date DESC
-    """
-    
-    with email_store.connect() as conn:
-        results = pd.read_sql(query, conn, parse_dates=['received_date'])
-    
-    # Generate HTML report
-    template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Sent Emails Analysis Report</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            .header { background-color: #f8f9fa; padding: 20px; margin-bottom: 20px; }
-            .email-card { 
-                border: 1px solid #ddd; 
-                margin: 10px 0; 
-                padding: 15px;
-                border-radius: 5px;
-            }
-            .priority-5 { border-left: 5px solid #dc3545; }
-            .priority-4 { border-left: 5px solid #fd7e14; }
-            .priority-3 { border-left: 5px solid #ffc107; }
-            .priority-2 { border-left: 5px solid #20c997; }
-            .priority-1 { border-left: 5px solid #6c757d; }
-            .metadata { color: #666; font-size: 0.9em; }
-            .action { background-color: #e9ecef; padding: 10px; margin-top: 10px; }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Sent Emails Analysis Report</h1>
-            <p>Generated on: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
-            <p>Total Sent Emails: {{ len(results) }}</p>
-        </div>
+    if not os.path.exists(email_db_path):
+        print(f"Email database not found!")
+        return
         
-        {% for _, email in results.iterrows() %}
-        <div class="email-card priority-{{ email.priority_score if not pd.isna(email.priority_score) else '3' }}">
-            <h3>{{ email.subject }}</h3>
-            <div class="metadata">
-                <p>Date: {{ email.received_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                <p>Labels: {{ email.labels }}</p>
-                {% if not pd.isna(email.priority_score) %}
-                <p>Priority: {{ email.priority_score }}/5 - {{ email.priority_reason }}</p>
-                {% endif %}
-            </div>
-            {% if not pd.isna(email.action_needed) and email.action_needed %}
-            <div class="action">
-                <p><strong>Action Needed:</strong> {{ email.action_needed }}</p>
-                {% if not pd.isna(email.action_deadline) %}
-                <p><strong>Deadline:</strong> {{ email.action_deadline }}</p>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </body>
-    </html>
-    """
+    # Create SQLAlchemy engine
+    engine = create_engine(f'sqlite:///{email_db_path}?check_same_thread=False')
+    Session = sessionmaker(bind=engine)
+    session = Session()
     
-    # Render template
-    env = Environment(loader=BaseLoader())
-    template = env.from_string(template)
-    html = template.render(results=results, datetime=datetime, pd=pd, len=len)
-    
-    # Save report
-    with open(output_file, 'w') as f:
-        f.write(html)
-    
-    print(f"Found {len(results)} sent emails")
-    print(f"Report generated: {output_file}")
+    try:
+        # Query sent emails using SQLAlchemy
+        sent_emails = session.query(Email).filter(
+            Email.from_.like('%@gmail.com')
+        ).order_by(Email.received_date.desc()).all()
+        
+        if not sent_emails:
+            print("No sent emails found!")
+            return
+            
+        print(f"Found {len(sent_emails)} sent emails")
+        
+        # Convert to list of dictionaries for template
+        emails = []
+        for email in sent_emails:
+            emails.append({
+                'subject': email.subject,
+                'to': email.to,
+                'date': email.received_date.strftime('%Y-%m-%d %H:%M:%S') if email.received_date else '',
+                'body': email.body[:200] + '...' if len(email.body or '') > 200 else email.body
+            })
+        
+        # Generate HTML report
+        template = Environment(loader=BaseLoader()).from_string("""
+        <html>
+        <head>
+            <title>Sent Emails Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+            </style>
+        </head>
+        <body>
+            <h1>Sent Emails Report</h1>
+            <p>Generated on: {{ generation_date }}</p>
+            <table>
+                <tr>
+                    <th>Subject</th>
+                    <th>To</th>
+                    <th>Date</th>
+                    <th>Content Preview</th>
+                </tr>
+                {% for email in emails %}
+                <tr>
+                    <td>{{ email.subject }}</td>
+                    <td>{{ email.to }}</td>
+                    <td>{{ email.date }}</td>
+                    <td>{{ email.body }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </body>
+        </html>
+        """)
+        
+        html = template.render(
+            emails=emails,
+            generation_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+        
+        # Write report to file
+        with open(output_file, 'w') as f:
+            f.write(html)
+            
+        print(f"Report generated successfully at {output_file}")
+        
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        
+    finally:
+        session.close()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--sent':

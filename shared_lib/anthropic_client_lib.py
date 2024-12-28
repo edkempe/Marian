@@ -3,7 +3,7 @@ import os
 from typing import Optional, Dict, Any
 from anthropic import Anthropic
 import pytest
-from unittest.mock import patch, MagicMock
+from pytest_mock import MockerFixture
 from dotenv import load_dotenv
 from .constants import API_CONFIG
 
@@ -35,15 +35,23 @@ def test_anthropic_connection(client: Optional[Anthropic] = None) -> bool:
         print(f"Anthropic API test failed: {str(e)}")
         return False
 
-def mock_anthropic_client() -> MagicMock:
-    """Create a mock Anthropic client for testing."""
-    mock_client = MagicMock()
-    mock_messages = MagicMock()
+@pytest.fixture
+def mock_anthropic_client(mocker: MockerFixture) -> Anthropic:
+    """Create a mock Anthropic client for testing.
+    
+    Args:
+        mocker: pytest-mock fixture
+        
+    Returns:
+        Mock Anthropic client that returns "test response" for all messages
+    """
+    mock_client = mocker.Mock(spec=Anthropic)
+    mock_messages = mocker.Mock()
     mock_client.messages = mock_messages
     
     def mock_create(**kwargs):
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="test response")]
+        mock_response = mocker.Mock()
+        mock_response.content = [mocker.Mock(text="test response")]
         return mock_response
         
     mock_messages.create = mock_create
@@ -52,7 +60,7 @@ def mock_anthropic_client() -> MagicMock:
 @pytest.fixture
 def mock_anthropic():
     """Pytest fixture for mocking Anthropic API."""
-    with patch('anthropic.Anthropic') as mock_client_class:
+    with pytest.mock.patch('anthropic.Anthropic') as mock_client_class:
         mock_client = mock_anthropic_client()
         mock_client_class.return_value = mock_client
         yield mock_client

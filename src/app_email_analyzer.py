@@ -234,19 +234,27 @@ Content: {email_data.get('content', '')}"""
     def process_unanalyzed_emails(self):
         """Process all unanalyzed emails from the email store."""
         try:
-            with get_email_session() as email_session:
-                # Get unanalyzed emails
-                email_session.execute(text(f"ATTACH DATABASE '{DATABASE_CONFIG['ANALYSIS_DB_PATH']}' AS analysis_db"))
-                
-                unanalyzed = email_session.execute(text("""
-                    SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
-                           e.labels, e.full_api_response, e.thread_id
-                    FROM emails e
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM analysis_db.email_analysis a 
-                        WHERE a.email_id = e.id AND a.thread_id = e.thread_id
+            with get_email_session() as email_session, get_analysis_session() as analysis_session:
+                # Get unanalyzed emails using SQLAlchemy ORM
+                unanalyzed = (
+                    email_session.query(Email)
+                    .outerjoin(EmailAnalysis, and_(
+                        Email.id == EmailAnalysis.email_id,
+                        Email.thread_id == EmailAnalysis.thread_id
+                    ))
+                    .filter(EmailAnalysis.email_id == None)
+                    .with_entities(
+                        Email.id,
+                        Email.subject,
+                        Email.from_address.label('sender'),
+                        Email.received_date.label('date'),
+                        Email.content.label('body'),
+                        Email.labels,
+                        Email.full_api_response,
+                        Email.thread_id
                     )
-                """)).mappings().all()
+                    .all()
+                )
                 
                 if not unanalyzed:
                     logger.info("no_unanalyzed_emails_found")
@@ -284,19 +292,27 @@ Content: {email_data.get('content', '')}"""
                 return
 
             with get_email_session() as email_session, get_analysis_session() as analysis_session:
-                # Get unanalyzed emails
-                email_session.execute(text(f"ATTACH DATABASE '{DATABASE_CONFIG['ANALYSIS_DB_PATH']}' AS analysis_db"))
-                
-                unanalyzed = email_session.execute(text("""
-                    SELECT e.id, e.subject, e.from_address as sender, e.received_date as date, e.content as body,
-                           e.labels, e.full_api_response, e.thread_id
-                    FROM emails e
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM analysis_db.email_analysis a 
-                        WHERE a.email_id = e.id AND a.thread_id = e.thread_id
+                # Get unanalyzed emails using SQLAlchemy ORM
+                unanalyzed = (
+                    email_session.query(Email)
+                    .outerjoin(EmailAnalysis, and_(
+                        Email.id == EmailAnalysis.email_id,
+                        Email.thread_id == EmailAnalysis.thread_id
+                    ))
+                    .filter(EmailAnalysis.email_id == None)
+                    .with_entities(
+                        Email.id,
+                        Email.subject,
+                        Email.from_address.label('sender'),
+                        Email.received_date.label('date'),
+                        Email.content.label('body'),
+                        Email.labels,
+                        Email.full_api_response,
+                        Email.thread_id
                     )
-                    LIMIT :count
-                """), {"count": count}).mappings().all()
+                    .limit(count)
+                    .all()
+                )
                 
                 if not unanalyzed:
                     logger.info("no_unanalyzed_emails_found")
@@ -351,7 +367,7 @@ Content: {email_request.truncated_body}"""
                                     }]
                                 )
                                 # Extract URLs from email content
-                                links_found, links_display = self._extract_urls(email_data.get('content', ''))
+                                links_found, links_display = self._extract_urls(email_data.get('body', ''))
                                 
                                 # Parse response and validate
                                 analysis_data = parse_claude_response(response.content)
@@ -371,7 +387,7 @@ Content: {email_request.truncated_body}"""
                                     email_id=email_data.get('id', ''),
                                     thread_id=email_data.get('thread_id', email_data.get('id', '')),
                                     analysis=analysis_response,
-                                    raw_json=email_data.get('content', '')  # For URL extraction
+                                    raw_json=email_data.get('body', '')  # For URL extraction
                                 )
                                 
                                 logger.info(

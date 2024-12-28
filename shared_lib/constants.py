@@ -82,6 +82,7 @@ class EmailConfig(TypedDict):
     RETRY_DELAY: int
     LABELS: List[str]
     EXCLUDED_LABELS: List[str]
+    DAYS_TO_FETCH: int
 
 class CatalogConfig(TypedDict):
     """Type hints for catalog configuration."""
@@ -185,7 +186,8 @@ EMAIL_CONFIG: EmailConfig = {
     'MAX_RETRIES': 3,  # Maximum number of retries for failed requests
     'RETRY_DELAY': 5,  # Delay between retries in seconds
     'LABELS': ['INBOX', 'SENT'],  # Labels to process
-    'EXCLUDED_LABELS': ['SPAM', 'TRASH']  # Labels to exclude
+    'EXCLUDED_LABELS': ['SPAM', 'TRASH'],  # Labels to exclude
+    'DAYS_TO_FETCH': 30  # Number of days of emails to fetch
 }
 
 # Database Configuration
@@ -211,6 +213,9 @@ API_CONFIG: APIConfig = {
     'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
     'EMAIL_ANALYSIS_PROMPT': 'Analyze the following email...'  # Default prompt
 }
+
+# Default model for API calls
+DEFAULT_MODEL = API_CONFIG['MODEL']  # Use the same model as defined in API_CONFIG
 
 # Metrics Configuration
 METRICS_CONFIG: MetricsConfig = {

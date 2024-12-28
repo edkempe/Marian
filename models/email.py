@@ -50,14 +50,14 @@ class Email(Base):
     - id: Gmail message ID (VARCHAR(100))
     - subject: Email subject (VARCHAR(500))
     - body: Email body (TEXT)
-    - sender: Sender email address (VARCHAR(200))
-    - to_address: Recipient email address (VARCHAR(200))
+    - from_: Sender email address (VARCHAR(200))
+    - to: Recipient email address (VARCHAR(200))
     - received_date: When the email was received (DATETIME with timezone)
     - labels: Comma-separated Gmail label IDs (VARCHAR(500))
-    - thread_id: Gmail thread ID (VARCHAR(100))
+    - threadId: Gmail thread ID (VARCHAR(100))
     - has_attachments: Whether the email has attachments (BOOLEAN)
-    - cc_address: CC recipient email address (TEXT)
-    - bcc_address: BCC recipient email address (TEXT)
+    - cc: CC recipient email address (TEXT)
+    - bcc: BCC recipient email address (TEXT)
     - full_api_response: Complete Gmail API response (TEXT)
     """
     __tablename__ = 'emails'
@@ -66,14 +66,14 @@ class Email(Base):
     subject: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_SUBJECT']), 
                                           default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
     body: Mapped[Optional[str]] = Column(Text)
-    sender: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_SENDER']))
-    to_address: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_TO']))
+    from_: Mapped[Optional[str]] = Column('from', String(EMAIL_COLUMN_SIZES['EMAIL_SENDER']))
+    to: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_TO']))
     received_date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
     labels: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_LABELS']))
-    thread_id: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_THREAD']))
+    threadId: Mapped[Optional[str]] = Column(String(EMAIL_COLUMN_SIZES['EMAIL_THREAD']))
     has_attachments: Mapped[Optional[bool]] = Column(Boolean, default=EMAIL_DEFAULTS['HAS_ATTACHMENTS'])
-    cc_address: Mapped[Optional[str]] = Column(Text, server_default="''''''")
-    bcc_address: Mapped[Optional[str]] = Column(Text, server_default="''''''")
+    cc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
+    bcc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
     full_api_response: Mapped[Optional[str]] = Column(Text, server_default=EMAIL_DEFAULTS['API_RESPONSE'])
 
     # Relationships
@@ -81,4 +81,4 @@ class Email(Base):
 
     def __repr__(self):
         """Return string representation."""
-        return f"<Email(id='{self.id}', subject='{self.subject}', thread='{self.thread_id}')>"
+        return f"<Email(id='{self.id}', subject='{self.subject}', threadId='{self.threadId}')>"

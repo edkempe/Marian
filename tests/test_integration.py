@@ -134,13 +134,13 @@ def test_email_processing(gmail_api, test_db_session):
             # Create email object
             email = Email(
                 id=message['id'],
-                thread_id=message['threadId'],
+                threadId=message['threadId'],
                 subject=headers.get('Subject', '[No Subject]'),
-                from_address=headers.get('From', '[No Sender]'),
-                to_address=headers.get('To', '[No Recipient]'),
+                from_=headers.get('From', '[No Sender]'),
+                to=headers.get('To', '[No Recipient]'),
                 received_date=parsedate_to_datetime(headers.get('Date', '')),
                 labels=','.join(message.get('labelIds', [])),
-                content=''  # We'll add content processing later
+                body=message.get('snippet', '')
             )
             
             # Store in database
@@ -163,8 +163,8 @@ def test_email_processing(gmail_api, test_db_session):
     # Verify email structure (not specific content)
     latest_email = stored_emails[-1]
     assert isinstance(latest_email.subject, str)
-    assert isinstance(latest_email.from_address, str)
-    assert isinstance(latest_email.to_address, str)
+    assert isinstance(latest_email.from_, str)
+    assert isinstance(latest_email.to, str)
     assert isinstance(latest_email.labels, str)
     assert len(latest_email.labels) > 0  # Should have at least one label
 
@@ -193,13 +193,13 @@ def test_email_processing_error_handling(gmail_api, test_db_session):
         headers = {}
         email = Email(
             id=msg_with_missing_fields['id'],
-            thread_id=msg_with_missing_fields['threadId'],
+            threadId=msg_with_missing_fields['threadId'],
             subject=headers.get('Subject', '[No Subject]'),  # Provide default
-            from_address=headers.get('From', '[No Sender]'),  # Provide default
-            to_address=headers.get('To', '[No Recipient]'),  # Provide default
+            from_=headers.get('From', '[No Sender]'),  # Provide default
+            to=headers.get('To', '[No Recipient]'),  # Provide default
             received_date=datetime.now(),  # Use current time as fallback
             labels=','.join(msg_with_missing_fields.get('labelIds', [])),
-            content=''
+            body=msg_with_missing_fields.get('snippet', '')
         )
         test_db_session.add(email)
         test_db_session.commit()
@@ -211,8 +211,8 @@ def test_email_processing_error_handling(gmail_api, test_db_session):
         id=msg_with_missing_fields['id']).first()
     assert stored_email is not None
     assert stored_email.subject == '[No Subject]'
-    assert stored_email.from_address == '[No Sender]'
-    assert stored_email.to_address == '[No Recipient]'
+    assert stored_email.from_ == '[No Sender]'
+    assert stored_email.to == '[No Recipient]'
 
 def test_email_date_queries(gmail_api, test_db_session):
     """Test email date querying functionality."""
@@ -245,13 +245,13 @@ def test_email_date_queries(gmail_api, test_db_session):
             
             email = Email(
                 id=message['id'],
-                thread_id=message['threadId'],
+                threadId=message['threadId'],
                 subject=headers.get('Subject', '[No Subject]'),
-                from_address=headers.get('From', '[No Sender]'),
-                to_address=headers.get('To', '[No Recipient]'),
+                from_=headers.get('From', '[No Sender]'),
+                to=headers.get('To', '[No Recipient]'),
                 received_date=parsedate_to_datetime(headers.get('Date', '')),
                 labels=','.join(message.get('labelIds', [])),
-                content=''
+                body=message.get('snippet', '')
             )
             
             test_db_session.add(email)
@@ -303,13 +303,13 @@ def test_email_counting(gmail_api, test_db_session):
         
         email = Email(
             id=message['id'],
-            thread_id=message['threadId'],
+            threadId=message['threadId'],
             subject=headers.get('Subject', '[No Subject]'),
-            from_address=headers.get('From', '[No Sender]'),
-            to_address=headers.get('To', '[No Recipient]'),
+            from_=headers.get('From', '[No Sender]'),
+            to=headers.get('To', '[No Recipient]'),
             received_date=parsedate_to_datetime(headers.get('Date', '')),
             labels=','.join(message.get('labelIds', [])),
-            content=''
+            body=message.get('snippet', '')
         )
         test_db_session.add(email)
     

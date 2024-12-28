@@ -36,8 +36,36 @@ class ImportVisitor(ast.NodeVisitor):
 
 def get_module_imports(file_path: str) -> Tuple[Set[str], Dict[str, Set[str]]]:
     """Extract all imports from a Python file."""
-    with open(file_path, 'r') as f:
-        tree = ast.parse(f.read())
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Skip non-Python files that might have .py extension
+        if not content.strip() or content.startswith('<?xml') or content.startswith('<!DOCTYPE'):
+            return set(), defaultdict(set)
+            
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            print(f"Warning: Syntax error in {file_path}, skipping...")
+            return set(), defaultdict(set)
+            
+    except UnicodeDecodeError:
+        # Try alternate encodings if UTF-8 fails
+        for encoding in ['big5', 'latin1', 'cp1252']:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                try:
+                    tree = ast.parse(content)
+                    break
+                except SyntaxError:
+                    continue
+            except UnicodeDecodeError:
+                continue
+        else:
+            print(f"Warning: Could not parse {file_path} with any supported encoding")
+            return set(), defaultdict(set)
     
     visitor = ImportVisitor()
     visitor.visit(tree)
@@ -231,34 +259,95 @@ def test_service_patterns():
         message.extend(f"  - {issue}" for issue in issues)
         pytest.fail("\n".join(message))
 
+def test_no_deprecated_libraries():
+    """Test that deprecated or unwanted libraries are not used in the codebase.
+    
+    We should not use:
+    - unittest.mock (use pytest-mock instead)
+    - sqlite3 (use SQLAlchemy with proper database instead)
+    """
+    all_files = get_python_files(str(Path(__file__).parent.parent))
+    
+    mock_imports = set()
+    sqlite_imports = set()
+    
+    for file in all_files:
+        # Skip virtual environment and archived files
+        if '/venv/' in file or '/archive/' in file:
+            continue
+            
+        imports, from_imports = get_module_imports(file)
+        
+        # Check for unittest.mock imports (should use pytest-mock instead)
+        if 'mock' in imports or 'unittest.mock' in imports:
+            mock_imports.add(file)
+        for module, names in from_imports.items():
+            if 'mock' in module or 'unittest.mock' in module:
+                mock_imports.add(file)
+                
+        # Check for direct SQLite imports (should use SQLAlchemy instead)
+        if 'sqlite3' in imports:
+            sqlite_imports.add(file)
+        for module, names in from_imports.items():
+            if 'sqlite3' in module:
+                sqlite_imports.add(file)
+    
+    # Report any violations
+    violations = []
+    
+    if mock_imports:
+        violations.append("\nFiles using unittest.mock (should use pytest-mock instead):")
+        for file in sorted(mock_imports):
+            violations.append(f"  {file}")
+    
+    if sqlite_imports:
+        violations.append("\nFiles using sqlite3 directly (should use SQLAlchemy instead):")
+        for file in sorted(sqlite_imports):
+            violations.append(f"  {file}")
+    
+    if violations:
+        pytest.fail("\n".join(violations))
+
 def print_dependency_report():
     """Generate dependency analysis report."""
     graph = build_dependency_graph()
     
-    # Module statistics
-    module_types = defaultdict(int)
-    for _, attrs in graph.nodes(data=True):
-        module_types[attrs['type']] += 1
-    
-    # Get all analysis data
-    cycles = find_circular_dependencies(graph)
-    violations = check_layer_violations(graph)
-    unused = find_unused_shared_lib(graph)
-    script_issues = check_script_patterns(graph)
-    service_issues = check_service_patterns(graph)
-    
     report_data = {
-        'module_stats': dict(module_types),
-        'cycles': cycles,
-        'violations': violations,
-        'unused_libs': unused,
-        'script_issues': script_issues,
-        'service_issues': service_issues
+        "circular_dependencies": list(find_circular_dependencies(graph)),
+        "layer_violations": list(check_layer_violations(graph)),
+        "unused_shared_lib": list(find_unused_shared_lib(graph)),
+        "script_issues": list(check_script_patterns(graph)),
+        "service_issues": list(check_service_patterns(graph))
     }
     
-    from .reporting import ReportManager
-    report_manager = ReportManager()
-    report_manager.write_dependency_report(report_data)
+    # Print report
+    print("\nDependency Analysis Report")
+    print("=========================")
+    
+    if report_data["circular_dependencies"]:
+        print("\nCircular Dependencies:")
+        for cycle in report_data["circular_dependencies"]:
+            print(f"  {' -> '.join(cycle)}")
+            
+    if report_data["layer_violations"]:
+        print("\nLayer Violations:")
+        for violation in report_data["layer_violations"]:
+            print(f"  {violation}")
+            
+    if report_data["unused_shared_lib"]:
+        print("\nUnused Shared Library Modules:")
+        for module in report_data["unused_shared_lib"]:
+            print(f"  {module}")
+            
+    if report_data["script_issues"]:
+        print("\nScript Pattern Issues:")
+        for issue in report_data["script_issues"]:
+            print(f"  {issue}")
+            
+    if report_data["service_issues"]:
+        print("\nService Pattern Issues:")
+        for issue in report_data["service_issues"]:
+            print(f"  {issue}")
 
 @pytest.fixture(scope="session", autouse=True)
 def dependency_report():

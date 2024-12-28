@@ -42,11 +42,11 @@ def test_emails(gmail_api):
                 # Create Email object
                 email = Email(
                     id=message['id'],
-                    thread_id=message['threadId'],
+                    threadId=message['threadId'],
                     subject=next((h['value'] for h in message['payload']['headers'] 
                                 if h['name'].lower() == 'subject'), '[No Subject]'),
-                    content=message.get('snippet', ''),
-                    from_address=next((h['value'] for h in message['payload']['headers'] 
+                    body=message.get('snippet', ''),
+                    from_=next((h['value'] for h in message['payload']['headers'] 
                                      if h['name'].lower() == 'from'), '[No Sender]'),
                     received_date=datetime.now(timezone.utc),
                     labels=','.join(message.get('labelIds', []))
@@ -72,9 +72,9 @@ def test_email_analysis(email_analyzer, test_emails):
     email = test_emails[0]
     analysis = email_analyzer.analyze_email({
         'id': email.id,
-        'thread_id': email.thread_id,
+        'threadId': email.threadId,
         'subject': email.subject,
-        'content': email.content,
+        'body': email.body,
         'date': email.received_date.isoformat(),
         'labels': email.labels
     })
@@ -103,9 +103,9 @@ def test_batch_analysis(email_analyzer, test_emails):
     for email in test_emails:
         analysis = email_analyzer.analyze_email({
             'id': email.id,
-            'thread_id': email.thread_id,
+            'threadId': email.threadId,
             'subject': email.subject,
-            'content': email.content,
+            'body': email.body,
             'date': email.received_date.isoformat(),
             'labels': email.labels
         })
@@ -127,9 +127,9 @@ def test_analysis_storage(email_analyzer, test_emails):
     email = test_emails[0]
     analysis = email_analyzer.analyze_email({
         'id': email.id,
-        'thread_id': email.thread_id,
+        'threadId': email.threadId,
         'subject': email.subject,
-        'content': email.content,
+        'body': email.body,
         'date': email.received_date.isoformat(),
         'labels': email.labels
     })
@@ -140,7 +140,7 @@ def test_analysis_storage(email_analyzer, test_emails):
         # Store analysis
         db_analysis = EmailAnalysis(
             email_id=email.id,
-            thread_id=email.thread_id,
+            threadId=email.threadId,
             summary=analysis.summary,
             category=','.join(analysis.category),
             priority_score=analysis.priority_score,

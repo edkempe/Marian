@@ -18,12 +18,12 @@ def setup_test_data():
         for i in range(10):
             email = Email(
                 id=f'test_{i}_{datetime.now().timestamp()}',
-                thread_id=f'thread_{i}',
+                threadId=f'thread_{i}',
                 subject=f'Test Email {i}',
-                from_address=f'sender{i}@example.com',
-                to_address='recipient@example.com',
+                from_=f'sender{i}@example.com',
+                to='recipient@example.com',
                 received_date=datetime.now() - timedelta(days=i),
-                content=f'This is test email {i} content.',
+                body=f'This is test email {i} content.',
                 labels='["INBOX"]'
             )
             session.add(email)

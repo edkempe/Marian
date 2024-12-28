@@ -34,11 +34,11 @@ def test_init_database(db_session):
     # Verify emails table exists and has correct schema
     email = Email(
         id='test1',
-        thread_id='thread1',
+        threadId='thread1',
         subject='Test Subject',
-        from_address='from@test.com',
-        to_address='to@test.com',
-        content='Test content',
+        from_='from@test.com',
+        to='to@test.com',
+        body='Test content',
         received_date=datetime.utcnow(),
     )
     email.label_list = ['INBOX']
@@ -105,7 +105,7 @@ def test_get_oldest_email_date(db_session):
     emails = [
         Email(
             id=f'test{i}',
-            thread_id=f'thread{i}',
+            threadId=f'thread{i}',
             received_date=datetime.utcnow() + timedelta(days=i)
         ) for i in range(3)
     ]
@@ -122,7 +122,7 @@ def test_get_newest_email_date(db_session):
     emails = [
         Email(
             id=f'test{i}',
-            thread_id=f'thread{i}',
+            threadId=f'thread{i}',
             received_date=datetime.utcnow() + timedelta(days=i)
         ) for i in range(3)
     ]
@@ -139,7 +139,7 @@ def test_count_emails(db_session):
     emails = [
         Email(
             id=f'test{i}',
-            thread_id=f'thread{i}',
+            threadId=f'thread{i}',
             received_date=datetime.utcnow()
         ) for i in range(3)
     ]

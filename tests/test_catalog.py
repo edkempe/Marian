@@ -36,8 +36,8 @@ def db_session():
     """Create a test database session"""
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
-    Session = Session(bind=engine)
-    return Session
+    session = Session(bind=engine)
+    return session
 
 @pytest.fixture
 def catalog_chat():

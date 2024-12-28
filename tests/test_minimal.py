@@ -42,13 +42,13 @@ def test_email_analysis(verify_api_connection):
     
     test_email = {
         'id': f'test_{datetime.now().timestamp()}',
-        'thread_id': 'thread1',
+        'threadId': 'thread1',
         'subject': 'Test Email',
-        'content': 'This is an important work email that requires review by tomorrow.',
+        'body': 'This is an important work email that requires review by tomorrow.',
         'received_date': datetime.now().isoformat(),
         'labels': '["INBOX"]',
-        'from_address': 'test@example.com',
-        'to_address': 'recipient@example.com'
+        'from_': 'test@example.com',
+        'to': 'recipient@example.com'
     }
     
     try:
@@ -71,13 +71,13 @@ def test_email_fetching():
     with Session() as session:
         email = Email(
             id=f'test_{datetime.now().timestamp()}',
-            thread_id='thread1',
+            threadId='thread1',
             subject='Test Email',
-            content='Test content',
+            body='Test content',
             received_date=datetime.now(),
             labels=json.dumps(["INBOX"]),
-            from_address='test@example.com',
-            to_address='recipient@example.com'
+            from_='test@example.com',
+            to='recipient@example.com'
         )
         session.add(email)
         session.commit()
@@ -87,7 +87,7 @@ def test_email_fetching():
         email = session.query(Email).first()
         assert email is not None
         assert email.subject == 'Test Email'
-        assert email.content == 'Test content'
+        assert email.body == 'Test content'
 
 def test_email_analytics():
     """Test email analytics with real database."""
