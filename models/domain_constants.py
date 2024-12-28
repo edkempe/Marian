@@ -65,7 +65,7 @@ DEFAULTS = {
     'content': None,
     'description': None,
     'source': None,
-    'metadata': None,
+    'item_info': None,
 }
 
 # Valid state transitions (part of domain rules)

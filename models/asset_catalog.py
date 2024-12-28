@@ -53,7 +53,7 @@ class AssetCatalogItem(Base):
         onupdate=lambda: int(datetime.utcnow().timestamp()),
         nullable=False
     )
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    asset_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     
     # Relationships
     tags: Mapped[List["Tag"]] = relationship(
@@ -164,7 +164,7 @@ class AssetDependency(Base):
     source_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), nullable=False)
     target_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), nullable=False)
     dependency_type: Mapped[str] = mapped_column(String, nullable=False)
-    dependency_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    dependency_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     created_date: Mapped[int] = mapped_column(
         Integer,
         default=lambda: int(datetime.utcnow().timestamp()),

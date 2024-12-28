@@ -59,7 +59,7 @@ class CatalogItem(Base):
         onupdate=lambda: int(datetime.utcnow().timestamp()),
         nullable=False
     )
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    item_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     tags: Mapped[List["Tag"]] = relationship(
         "Tag",
         secondary="catalog_tags",
