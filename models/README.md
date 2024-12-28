@@ -1,29 +1,62 @@
 # Marian Models
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Status:** Authoritative
 
 > SQLAlchemy models and domain constants for the Marian project.
 
-## Overview
+## Data Flow Hierarchy
 
-This package defines the core domain models and business rules for Marian. It follows Domain-Driven Design principles with a clear hierarchy of truth:
+This package follows a strict data flow hierarchy to ensure consistency:
 
 ```
-core_constants.py  (Domain Rules)
-       ↓
-models/*.py       (Implementation)
-       ↓
-constants.py      (Configuration)
+External APIs (Gmail, etc.)
+         ↓
+    core_constants.py
+         ↓
+    models/*.py
+         ↓
+    Database Schema
 ```
+
+1. **External APIs are Source of Truth**
+   - API documentation referenced in model docstrings
+   - Field types match API specifications
+   - Constraints reflect API requirements
+   Example: `Email.id` uses string type to match Gmail API
+
+2. **Domain Constants Define Rules**
+   - Type-safe enums for valid values
+   - Business constraints and validations
+   - State transition rules
+   Example: `AssetType`, `ItemStatus` enums
+
+3. **Models Implement API Contracts**
+   - Match API data structures
+   - Add domain-specific fields
+   - Enforce data integrity
+   Example: `Email` model mirrors Gmail message format
+
+4. **Database Schema Follows Models**
+   - Generated from SQLAlchemy models
+   - Validated by schema tests
+   - Changes require migrations
+   Example: `emails` table matches `Email` model
 
 ## Quick Reference
 
 ```python
 from models.core_constants import AssetType, ItemStatus
-from models import CatalogItem, Tag
+from models import CatalogItem, Tag, Email
 
-# Create a new catalog item
+# Email model matches Gmail API
+email = Email(
+    id="msg123",  # String ID from Gmail
+    thread_id="thread123",
+    labels="INBOX,UNREAD"
+)
+
+# Catalog items use domain constants
 item = CatalogItem(
     title="Example Item",
     asset_type=AssetType.CODE,
@@ -81,25 +114,29 @@ class MyModel(Base, TimestampMixin):
 
 ## Model Guidelines
 
-1. **Domain Rules**
-   - Always use core constants for domain values
-   - Never hardcode status values or types
-   - Implement validation using domain constraints
+1. **API Alignment**
+   - Match external API types exactly
+   - Document API source in docstrings
+   - Preserve API field names
+   - Add domain fields thoughtfully
 
 2. **Type Safety**
-   - Use enums instead of strings for fixed values
-   - Add type hints to all properties
-   - Validate inputs against domain types
+   - Use API-specified types
+   - Add type hints matching API
+   - Validate against API constraints
+   - Use enums for domain values
 
 3. **Relationships**
-   - Define clear ownership of relationships
-   - Use appropriate cascade behaviors
-   - Document relationship constraints
+   - Define clear ownership
+   - Use appropriate cascades
+   - Document constraints
+   - Consider API relationships
 
 4. **Validation**
-   - Validate at the model level
-   - Use SQLAlchemy events for complex validation
-   - Reference domain constraints
+   - Validate at model level
+   - Use events for complex rules
+   - Check API constraints
+   - Preserve data integrity
 
 ## Common Tasks
 
@@ -146,3 +183,4 @@ def test_valid_status():
 ## Version History
 - 1.0.0: Initial version
 - 1.1.0: Added domain-driven design with core constants
+- 1.2.0: Updated to API-first hierarchy
