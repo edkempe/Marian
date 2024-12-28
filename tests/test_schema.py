@@ -27,6 +27,7 @@ from alembic import command, op
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.operations import Operations
+from models.email import EMAIL_DEFAULTS
 
 # Add project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -218,17 +219,17 @@ def validate_schema():
                 'emails',
                 Column('id', String(100), nullable=False),
                 Column('threadId', String(100), nullable=True),
-                Column('subject', String(500), nullable=True),
+                Column('subject', String(500), nullable=True, server_default=EMAIL_DEFAULTS['EMAIL_SUBJECT']),
                 Column('body', Text(), nullable=True),
                 Column('date', DateTime(timezone=True), nullable=True),
                 Column('labelIds', String(500), nullable=True),
                 Column('snippet', Text(), nullable=True),
                 Column('from', String(200), nullable=True),
                 Column('to', String(200), nullable=True),
-                Column('has_attachments', Boolean(), nullable=True),
+                Column('has_attachments', Boolean(), nullable=True, server_default=str(EMAIL_DEFAULTS['HAS_ATTACHMENTS'])),
                 Column('cc', Text(), server_default="''''''"),
                 Column('bcc', Text(), server_default="''''''"),
-                Column('full_api_response', Text(), server_default='{}'),
+                Column('full_api_response', Text(), server_default=EMAIL_DEFAULTS['API_RESPONSE']),
                 PrimaryKeyConstraint('id')
             )
             
