@@ -203,7 +203,7 @@ class ItemRelationship(Base):
         default=lambda: int(datetime.utcnow().timestamp()),
         nullable=False
     )
-    relationship_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
+    relationship_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     
     source_item: Mapped["CatalogItem"] = relationship(
         "CatalogItem",
