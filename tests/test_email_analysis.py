@@ -1,6 +1,5 @@
 """Integration tests for email analysis functionality."""
 import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from models.email import Email

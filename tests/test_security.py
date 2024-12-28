@@ -3,7 +3,6 @@ import pytest
 import os
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 from jose import jwt
 
 from shared_lib.security_util import (
