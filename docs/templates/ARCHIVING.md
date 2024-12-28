@@ -86,6 +86,10 @@ Each location maintains its own README following this template.
 
 ### What NOT to Archive
 - Backups (use `/backup`)
+  - Current file copies
+  - Active database snapshots
+  - System configurations
+  - Follow 3-2-1 backup strategy
 - Temporary files (delete these)
 - Generated files (regenerate when needed)
 - Database files (use `/backup`)
@@ -98,13 +102,18 @@ Each location maintains its own README following this template.
   - Past decisions
   - Manual process
   - No retention policy
+  - Purpose: Historical context and reference
 
 - **Backup**: Disaster recovery
   - Current file copies
   - Active database snapshots
   - System configurations
   - Automated process
-  - Follows retention policy
+  - Follows 3-2-1 backup strategy:
+    1. Keep 3 copies of data
+    2. Store on 2 different media types
+    3. Keep 1 copy offsite
+  - Purpose: Data recovery and business continuity
 
 ## Implementation
 
