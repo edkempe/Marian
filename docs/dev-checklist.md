@@ -1,22 +1,24 @@
 # Development Session Checklists
 
-**Version:** 1.0.2
+**Version:** 1.0.3
 **Status:** Authoritative source for all development session procedures
 
-> **IMPORTANT**: This document is the authoritative source for development session procedures. While other documentation may provide additional context and details, this checklist must be followed for all development sessions.
+> **IMPORTANT**: This document is the authoritative source for development session procedures. All other documentation provides supporting details and context. This checklist must be followed for all development sessions.
 
 ## Related Documentation
 
-### Primary Documents
+### Core Documents
 - This checklist (`dev-checklist.md`) - Authoritative source for session procedures
-- `docs/backlog.md` - Source of truth for tasks and priorities
-- `docs/session_logs/session_log_YYYY-MM-DD.md` - Daily session logs
+- [AI Guidelines](ai-guidelines.md) - AI-specific development guidelines
+- [Session Workflow Guide](session-workflow.md) - Detailed workflow examples
+- [Session Logs Guide](session_logs/README.md) - Session logging standards
 
-### Supporting Documents
-- `docs/session-workflow.md` - Detailed explanations and examples for all session procedures
-- `docs/contributing.md` - Project guidelines and standards
-- `docs/backlog.md` - Task tracking and prioritization
-- `docs/design-decisions.md` - Architecture and design context
+### Supporting Documentation
+- [Project Guidelines](contributing.md) - Code standards and contribution guidelines
+- [Setup Guide](setup.md) - Environment setup and configuration
+- [Project Design Decisions](design-decisions.md) - Architecture and technical decisions
+- [Backlog](backlog.md) - Task tracking and prioritization
+- [Tools and Scripts](#tools-and-scripts) - Automation and utility scripts
 
 ### Tools and Scripts
 - `chat_session_manager.py` - Automates session documentation
@@ -109,6 +111,7 @@
 - [ ] Verify no sensitive data in logs or temporary files
 
 ## Version History
+- 1.0.3: Update version, add clear references to all related docs, organize documentation into Core and Supporting categories
 - 1.0.2: Add review of previous session logs to initial setup
 - 1.0.1: Remove NEXT_SESSION.md references, strengthen backlog integration
 - 1.0.0: Initial authoritative checklist

@@ -1,9 +1,14 @@
 # Marian Development Session Workflow
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 **Status:** Supporting documentation for development session procedures
 
-> **IMPORTANT**: The [Development Session Checklist](dev-checklist.md) is the authoritative source for development session procedures. This document provides detailed explanations, examples, and additional context.
+> **Documentation Role**: This document provides detailed workflow examples and context. For authoritative session procedures, see [Development Session Checklist](dev-checklist.md). For AI-specific guidelines, see [AI Guidelines](ai-guidelines.md).
+
+## Related Documentation
+- [Development Session Checklist](dev-checklist.md) - Authoritative source for all development procedures
+- [AI Guidelines](ai-guidelines.md) - AI-specific development guidelines
+- [Session Logs Guide](session_logs/README.md) - Session logging standards
 
 ## Critical Guidelines
 
@@ -340,3 +345,4 @@ If you encounter issues during development:
 
 ## Version History
 - 1.0.0: Initial consolidated workflow documentation, merging content from CHAT_START.md and CHAT_CLOSE.md
+- 1.0.1: Updated version and status, added clear references to authoritative and related docs, added Related Documentation section

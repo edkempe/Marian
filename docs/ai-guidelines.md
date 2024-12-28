@@ -1,6 +1,14 @@
 # AI Guidelines and Session Management
 
-> **Documentation Role**: This is the authoritative source for AI development session management. For session log standards and procedures, see `session_logs/README.md`.
+**Version:** 1.0.1
+**Status:** Supporting documentation for AI development procedures
+
+> **Documentation Role**: This document provides AI-specific guidelines and procedures. For authoritative session procedures, see [Development Session Checklist](dev-checklist.md). For session log standards, see [Session Logs Guide](session_logs/README.md).
+
+## Related Documentation
+- [Development Session Checklist](dev-checklist.md) - Authoritative source for all development procedures
+- [Session Workflow Guide](session-workflow.md) - Detailed workflow examples and context
+- [Session Logs Guide](session_logs/README.md) - Session logging standards
 
 ## Core Principles
 - Follow established guidelines and practices
