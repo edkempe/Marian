@@ -59,74 +59,82 @@ def get_table_details(inspector: Any, table_name: str) -> Dict[str, Any]:
         'unique_constraints': inspector.get_unique_constraints(table_name)
     }
 
-def assert_schema_equal(migration_inspector: Any, model_inspector: Any):
-    """Assert that two database schemas are equivalent."""
+def assert_column_equal(mcol, col, table, col_name):
+    """Assert that two columns are equal."""
+    # Compare types by string representation to handle SQLAlchemy type objects
+    assert str(mcol['type']) == str(col['type']), \
+        f"Column type mismatch in table {table}, column {col_name}:\nMigration: {mcol['type']}\nModel: {col['type']}"
+    assert mcol['nullable'] == col['nullable'], \
+        f"Column nullable mismatch in table {table}, column {col_name}:\nMigration: {mcol['nullable']}\nModel: {col['nullable']}"
+    assert mcol['default'] == col['default'], \
+        f"Column default mismatch in table {table}, column {col_name}:\nMigration: {mcol['default']}\nModel: {col['default']}"
+
+def assert_schema_equal(migration_inspector, model_inspector):
+    """Assert that two schemas are equal."""
     migration_tables = set(migration_inspector.get_table_names())
     model_tables = set(model_inspector.get_table_names())
-    
-    # Check for extra tables in either direction
-    extra_in_migrations = migration_tables - model_tables
-    extra_in_models = model_tables - migration_tables
-    assert not extra_in_migrations, f"Tables in migrations but not in models: {extra_in_migrations}"
-    assert not extra_in_models, f"Tables in models but not in migrations: {extra_in_models}"
-    
-    # Now check tables that exist in both
-    common_tables = migration_tables & model_tables
-    for table in common_tables:
-        migration_details = get_table_details(migration_inspector, table)
-        model_details = get_table_details(model_inspector, table)
-        
-        # Get column sets
-        migration_columns = set(migration_details['columns'].keys())
-        model_columns = set(model_details['columns'].keys())
-        
-        # Check for extra columns in either direction
-        extra_in_migration = migration_columns - model_columns
-        extra_in_model = model_columns - migration_columns
-        assert not extra_in_migration, \
-            f"Columns in migration but not in model for table {table}: {extra_in_migration}"
-        assert not extra_in_model, \
-            f"Columns in model but not in migration for table {table}: {extra_in_model}"
-        
-        # For columns that exist in both, compare their properties
-        common_columns = migration_columns & model_columns
-        for column in common_columns:
-            assert migration_details['columns'][column] == model_details['columns'][column], \
-                f"Column properties mismatch in table {table}, column {column}:\n" \
-                f"Migration: {migration_details['columns'][column]}\n" \
-                f"Model: {model_details['columns'][column]}"
-        
-        # Compare primary keys
-        assert migration_details['primary_keys'] == model_details['primary_keys'], \
-            f"Primary key mismatch in table {table}:\nMigration: {migration_details['primary_keys']}\nModel: {model_details['primary_keys']}"
-        
-        # Compare foreign keys (ignoring implementation-specific details)
-        mig_fks = [{k: v for k, v in fk.items() if k in ('referred_table', 'constrained_columns', 'referred_columns')}
-                   for fk in migration_details['foreign_keys']]
-        mod_fks = [{k: v for k, v in fk.items() if k in ('referred_table', 'constrained_columns', 'referred_columns')}
-                   for fk in model_details['foreign_keys']]
-        
-        # Check for missing foreign keys in either direction
-        assert len(mig_fks) == len(mod_fks), \
-            f"Number of foreign keys mismatch in table {table}:\n" \
-            f"Migration ({len(mig_fks)}): {mig_fks}\n" \
-            f"Model ({len(mod_fks)}): {mod_fks}"
-        
-        # Check that each foreign key in migration exists in model
-        for mig_fk in mig_fks:
-            assert any(mig_fk == mod_fk for mod_fk in mod_fks), \
-                f"Foreign key in migration not found in model for table {table}:\n" \
-                f"Migration FK: {mig_fk}\n" \
-                f"Model FKs: {mod_fks}"
-        
-        # Compare indexes (ignoring implementation-specific details)
+
+    # Check tables match
+    assert migration_tables == model_tables, \
+        f"Tables don't match:\nMigration: {migration_tables}\nModel: {model_tables}"
+
+    # For each table, check columns and indexes match
+    for table in migration_tables:
+        migration_details = {
+            'columns': {c['name']: c for c in migration_inspector.get_columns(table)},
+            'indexes': migration_inspector.get_indexes(table),
+            'pk_constraint': migration_inspector.get_pk_constraint(table),
+            'fk_constraints': migration_inspector.get_foreign_keys(table)
+        }
+        model_details = {
+            'columns': {c['name']: c for c in model_inspector.get_columns(table)},
+            'indexes': model_inspector.get_indexes(table),
+            'pk_constraint': model_inspector.get_pk_constraint(table),
+            'fk_constraints': model_inspector.get_foreign_keys(table)
+        }
+
+        # Check columns match
+        assert migration_details['columns'].keys() == model_details['columns'].keys(), \
+            f"Column names don't match in table {table}"
+
+        for col_name, mcol in migration_details['columns'].items():
+            col = model_details['columns'][col_name]
+            assert_column_equal(mcol, col, table, col_name)
+
+        # Check indexes match
         for midx in migration_details['indexes']:
+            # SQLite may return column names in different order, so we need to sort them
+            midx['column_names'] = sorted(midx['column_names'])
             assert any(
-                midx['name'] == idx['name'] and
-                midx['unique'] == idx['unique'] and
-                set(midx['columns']) == set(idx['columns'])
+                idx['name'] == midx['name'] and
+                idx['unique'] == midx['unique'] and
+                sorted(idx['column_names']) == midx['column_names']
                 for idx in model_details['indexes']
             ), f"Index mismatch in table {table}:\nMigration index: {midx}\nModel indexes: {model_details['indexes']}"
+
+        # Check primary key matches
+        mpk = migration_details['pk_constraint']
+        pk = model_details['pk_constraint']
+        assert set(mpk['constrained_columns']) == set(pk['constrained_columns']), \
+            f"Primary key mismatch in table {table}:\nMigration: {mpk}\nModel: {pk}"
+
+        # Check foreign keys match
+        mfks = migration_details['fk_constraints']
+        fks = model_details['fk_constraints']
+        assert len(mfks) == len(fks), \
+            f"Number of foreign keys doesn't match in table {table}"
+        
+        # Sort by referred table and columns since names may be None
+        mfks = sorted(mfks, key=lambda x: (x['referred_table'], tuple(sorted(x['constrained_columns']))))
+        fks = sorted(fks, key=lambda x: (x['referred_table'], tuple(sorted(x['constrained_columns']))))
+        
+        for mfk, fk in zip(mfks, fks):
+            assert mfk['referred_table'] == fk['referred_table'], \
+                f"Foreign key referred table mismatch in table {table}"
+            assert set(mfk['constrained_columns']) == set(fk['constrained_columns']), \
+                f"Foreign key constrained columns mismatch in table {table}"
+            assert set(mfk['referred_columns']) == set(fk['referred_columns']), \
+                f"Foreign key referred columns mismatch in table {table}"
 
 def find_code_references(table_name: str, column_name: str = None) -> bool:
     """Search for references to a table or column in the codebase."""
@@ -237,7 +245,7 @@ def validate_schema():
                 'email_analysis',
                 Column('id', Integer(), primary_key=True),
                 Column('email_id', String(100), nullable=False),
-                Column('thread_id', String(100)),
+                Column('threadId', String(100)),
                 Column('analysis_date', DateTime(), nullable=True),
                 Column('analyzed_date', DateTime(), nullable=False),
                 Column('prompt_version', Text(), nullable=False),
@@ -289,6 +297,10 @@ def validate_schema():
                 Column('modified_date', Integer(), nullable=False),
                 PrimaryKeyConstraint('id')
             )
+            
+            # Add indexes for tags table
+            op.create_index('idx_tags_name', 'tags', [text('name COLLATE NOCASE')])
+            op.create_index('idx_tags_deleted', 'tags', ['deleted'])
 
             op.create_table(
                 'catalog_items',
@@ -305,6 +317,11 @@ def validate_schema():
                 Column('item_info', JSON(), nullable=True),
                 PrimaryKeyConstraint('id')
             )
+            
+            # Add indexes for catalog_items table
+            op.create_index('idx_catalog_items_deleted', 'catalog_items', ['deleted'])
+            op.create_index('idx_catalog_items_status', 'catalog_items', ['status'])
+            op.create_index('idx_catalog_items_title', 'catalog_items', ['title'])
 
             op.create_table(
                 'catalog_tags',
@@ -326,6 +343,11 @@ def validate_schema():
                 ForeignKeyConstraint(['source_id'], ['catalog_items.id']),
                 ForeignKeyConstraint(['target_id'], ['catalog_items.id'])
             )
+            
+            # Add indexes for item_relationships table
+            op.create_index('idx_relationships_source', 'item_relationships', ['source_id'])
+            op.create_index('idx_relationships_target', 'item_relationships', ['target_id'])
+            op.create_index('idx_relationships_type', 'item_relationships', ['relationship_type'])
 
             # Asset catalog tables
             op.create_table(

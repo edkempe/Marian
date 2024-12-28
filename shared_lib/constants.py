@@ -252,19 +252,24 @@ Provide a JSON response with the following fields:
     "sentiment": "positive, negative, or neutral",
     "confidence_score": "Number between 0.0 and 1.0"
 }''',
-        'claude-3-haiku-20240307': '''Analyze this email and provide a simple JSON response:
+        'claude-3-haiku-20240307': '''Analyze this email and provide a JSON response:
 
 {email_content}
 
 Return a JSON object with these fields:
 - summary: Brief summary
-- category: Single most relevant category
+- category: List of categories that apply
 - priority_score: Number 1-5 (1=lowest)
 - priority_reason: Brief reason
 - action_needed: true/false
-- action_type: Main action needed
+- action_type: List of required actions
+- action_deadline: YYYY-MM-DD or ASAP or null if no deadline
 - key_points: Top 2-3 points
-- sentiment: positive/negative/neutral'''
+- people_mentioned: List of people mentioned
+- project: Project name or empty string
+- topic: Topic or empty string
+- sentiment: positive/negative/neutral
+- confidence_score: Number between 0.0 and 1.0'''
     }
 }
 

@@ -137,7 +137,7 @@ class ItemRelationship(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     target_id: Mapped[int] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    relationship_type: Mapped[str] = mapped_column(String, nullable=False)
+    relationship_type: Mapped[str] = mapped_column(String(50), nullable=False)
     created_date: Mapped[int] = mapped_column(Integer, nullable=False)
     relationship_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
 

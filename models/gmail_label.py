@@ -31,9 +31,9 @@ class GmailLabel(Base):
     name: Mapped[str] = Column(String(100), nullable=False)  # Label display name
     type: Mapped[str] = Column(String(50), nullable=False)  # 'system' or 'user'
     is_active: Mapped[bool] = Column(Boolean, default=True, nullable=False)
-    first_seen_at: Mapped[datetime] = Column(DateTime, default=func.now(), nullable=False)
-    last_seen_at: Mapped[datetime] = Column(DateTime, default=func.now(), 
-                                          onupdate=func.now(), nullable=False)
+    first_seen_at: Mapped[datetime] = Column(DateTime, server_default=func.current_timestamp(), nullable=False)
+    last_seen_at: Mapped[datetime] = Column(DateTime, server_default=func.current_timestamp(),
+                                          onupdate=func.current_timestamp(), nullable=False)
     deleted_at: Mapped[Optional[datetime]] = Column(DateTime)
 
     def __repr__(self):

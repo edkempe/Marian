@@ -78,7 +78,7 @@ class AssetDependency(Base):
 
     source_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), primary_key=True)
     target_id: Mapped[int] = mapped_column(ForeignKey("asset_catalog_items.id"), primary_key=True)
-    dependency_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    dependency_type: Mapped[str] = mapped_column(String(50), primary_key=True, nullable=False)
     dependency_metadata: Mapped[Optional[str]] = mapped_column("metadata", Text, nullable=True)
 
     # Relationships
