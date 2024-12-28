@@ -57,8 +57,8 @@ def test_email_analysis(verify_api_connection):
         'threadId': 'thread1',
         'subject': 'Test Email',
         'body': 'This is an important work email that requires review by tomorrow.',
-        'received_date': datetime.now().isoformat(),
-        'labels': '["INBOX"]',
+        'date': datetime.now().isoformat(),
+        'labelIds': '["INBOX"]',
         'from_': 'test@example.com',
         'to': 'recipient@example.com'
     }
@@ -83,11 +83,11 @@ def test_email_fetching():
     with Session() as session:
         email = Email(
             id=f'test_{datetime.now().timestamp()}',
-            thread_id='thread1',
+            threadId='thread1',
             subject='Test Email',
             body='Test content',
-            received_date=datetime.now(),
-            labels=json.dumps(["INBOX"]),
+            date=datetime.now(),
+            labelIds=json.dumps(["INBOX"]),
             from_='test@example.com',
             to='recipient@example.com'
         )
@@ -111,7 +111,9 @@ def test_email_analytics():
     with Session() as session:
         analysis = EmailAnalysis(
             email_id=f'test_{datetime.now().timestamp()}',
-            thread_id='thread1',
+            threadId='thread1',
+            analyzed_date=datetime.now(),
+            prompt_version='1.0',
             summary='Test summary',
             category=json.dumps(['work']),
             priority_score=3,
@@ -119,9 +121,13 @@ def test_email_analytics():
             action_needed=True,
             action_type=json.dumps(['review']),
             key_points=json.dumps(['Test point 1', 'Test point 2']),
-            sentiment='neutral',
+            people_mentioned=json.dumps([]),
             links_found=json.dumps([]),
-            links_display=json.dumps([])
+            links_display=json.dumps([]),
+            sentiment='neutral',
+            confidence_score=0.8,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
         session.add(analysis)
         session.commit()
