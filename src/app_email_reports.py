@@ -327,7 +327,7 @@ class EmailAnalytics:
         """
         return {
             'email_id': analysis.email_id,
-            'thread_id': analysis.thread_id,
+            'threadId': analysis.threadId,
             'date': analysis.analysis_date.isoformat(),
             'summary': analysis.summary,
             'category': analysis.category if isinstance(analysis.category, list) else json.loads(analysis.category) if analysis.category else [],

@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column('sender', sa.String(200), nullable=True),
         sa.Column('received_date', sa.DateTime(), nullable=True),
         sa.Column('labels', sa.String(500), nullable=True),
-        sa.Column('thread_id', sa.String(100), nullable=True),
+        sa.Column('threadId', sa.String(100), nullable=True),
         sa.Column('has_attachments', sa.Boolean(), nullable=True),
         sa.Column('cc_address', sa.Text(), server_default="''''''"),
         sa.Column('bcc_address', sa.Text(), server_default="''''''"),

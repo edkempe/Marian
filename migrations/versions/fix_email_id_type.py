@@ -36,7 +36,7 @@ def upgrade():
         sa.Column('to_address', sa.String(200), nullable=True),
         sa.Column('received_date', sa.DateTime(), nullable=True),
         sa.Column('labels', sa.String(500), nullable=True),
-        sa.Column('thread_id', sa.String(100), nullable=True),
+        sa.Column('threadId', sa.String(100), nullable=True),
         sa.Column('has_attachments', sa.Boolean(), nullable=True),
         sa.Column('cc_address', sa.Text(), server_default="''''''"),
         sa.Column('bcc_address', sa.Text(), server_default="''''''"),
@@ -48,7 +48,7 @@ def upgrade():
     op.execute('''
         INSERT INTO emails_new 
         SELECT CAST(id AS VARCHAR), subject, body, sender, to_address, 
-               received_date, labels, thread_id, has_attachments, 
+               received_date, labels, threadId, has_attachments, 
                cc_address, bcc_address, full_api_response
         FROM emails
     ''')
@@ -89,7 +89,7 @@ def downgrade():
         sa.Column('to_address', sa.String(200), nullable=True),
         sa.Column('received_date', sa.DateTime(), nullable=True),
         sa.Column('labels', sa.String(500), nullable=True),
-        sa.Column('thread_id', sa.String(100), nullable=True),
+        sa.Column('threadId', sa.String(100), nullable=True),
         sa.Column('has_attachments', sa.Boolean(), nullable=True),
         sa.Column('cc_address', sa.Text(), server_default="''''''"),
         sa.Column('bcc_address', sa.Text(), server_default="''''''"),
@@ -101,7 +101,7 @@ def downgrade():
     op.execute('''
         INSERT INTO emails_new 
         SELECT CAST(id AS INTEGER), subject, body, sender, to_address, 
-               received_date, labels, thread_id, has_attachments, 
+               received_date, labels, threadId, has_attachments, 
                cc_address, bcc_address, full_api_response
         FROM emails
     ''')

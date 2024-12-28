@@ -54,17 +54,24 @@ Environment Variables:
 
 class EmailAnalysisResponse:
     """Response from the email analysis API."""
-    def __init__(self, summary: str, category: str, priority_score: int,
-                 priority_reason: str, action_needed: bool, action_type: str,
-                 key_points: List[str], sentiment: str):
+    def __init__(self, summary: str, category: List[str], priority_score: int,
+                 priority_reason: str, action_needed: bool, action_type: List[str],
+                 action_deadline: Optional[str], key_points: List[str],
+                 people_mentioned: List[str], project: str, topic: str,
+                 sentiment: str, confidence_score: float = 0.8):
         self.summary = summary
         self.category = category
         self.priority_score = priority_score
         self.priority_reason = priority_reason
         self.action_needed = action_needed
         self.action_type = action_type
+        self.action_deadline = action_deadline
         self.key_points = key_points
+        self.people_mentioned = people_mentioned
+        self.project = project
+        self.topic = topic
         self.sentiment = sentiment
+        self.confidence_score = confidence_score
 
 class EmailAnalyzer:
     """Analyzes emails using Claude-3-Haiku with improved error handling and validation.
@@ -110,7 +117,7 @@ class EmailAnalyzer:
         Args:
             email_data: Dictionary containing email data with fields:
                 - id: Email ID
-                - thread_id: Thread ID
+                - threadId: Thread ID
                 - subject: Email subject
                 - content: Email content
                 - date: Email received date
@@ -196,7 +203,7 @@ class EmailAnalyzer:
                                     analysis_response = EmailAnalysisResponse(**analysis_data)
                                     return EmailAnalysis.from_api_response(
                                         email_id=email_data['id'],
-                                        thread_id=email_data.get('threadId', ''),
+                                        threadId=email_data.get('threadId', ''),
                                         response=analysis_response,
                                         links_found=full_urls,
                                         links_display=display_urls
@@ -264,7 +271,7 @@ class EmailAnalyzer:
         
         return full_urls, display_urls
 
-    def save_analysis(self, email_id: str, thread_id: str, analysis: EmailAnalysisResponse, raw_json: str):
+    def save_analysis(self, email_id: str, threadId: str, analysis: EmailAnalysisResponse, raw_json: str):
         """Save the analysis to the database."""
         try:
             with get_analysis_session() as session:
@@ -273,13 +280,13 @@ class EmailAnalyzer:
                 
                 # Create or update analysis object
                 existing = session.query(EmailAnalysis).filter_by(
-                    email_id=email_id, thread_id=thread_id
+                    email_id=email_id, threadId=threadId
                 ).first()
                 
                 # Create new analysis object with URLs
                 analysis_obj = EmailAnalysis(
                     email_id=email_id,
-                    thread_id=thread_id,
+                    threadId=threadId,
                     summary=analysis.summary,
                     category=analysis.category,
                     priority_score=analysis.priority_score,
@@ -314,7 +321,7 @@ class EmailAnalyzer:
                 "Failed to save analysis",
                 error=str(e),
                 email_id=email_id,
-                thread_id=thread_id
+                threadId=threadId
             )
             raise
 
@@ -327,7 +334,7 @@ class EmailAnalyzer:
                     email_session.query(Email)
                     .outerjoin(EmailAnalysis, and_(
                         Email.id == EmailAnalysis.email_id,
-                        Email.thread_id == EmailAnalysis.thread_id
+                        Email.threadId == EmailAnalysis.threadId
                     ))
                     .filter(EmailAnalysis.email_id == None)
                     .with_entities(
@@ -338,7 +345,7 @@ class EmailAnalyzer:
                         Email.content.label('body'),
                         Email.labels,
                         Email.full_api_response,
-                        Email.thread_id
+                        Email.threadId
                     )
                     .all()
                 )
@@ -384,7 +391,7 @@ class EmailAnalyzer:
                     email_session.query(Email)
                     .outerjoin(EmailAnalysis, and_(
                         Email.id == EmailAnalysis.email_id,
-                        Email.thread_id == EmailAnalysis.thread_id
+                        Email.threadId == EmailAnalysis.threadId
                     ))
                     .filter(EmailAnalysis.email_id == None)
                     .with_entities(
@@ -395,7 +402,7 @@ class EmailAnalyzer:
                         Email.content.label('body'),
                         Email.labels,
                         Email.full_api_response,
-                        Email.thread_id
+                        Email.threadId
                     )
                     .limit(count)
                     .all()
@@ -473,7 +480,7 @@ Content: {email_request.truncated_body}"""
                                 # Save analysis with URLs
                                 self.save_analysis(
                                     email_id=email_data.get('id', ''),
-                                    thread_id=email_data.get('thread_id', email_data.get('id', '')),
+                                    threadId=email_data.get('threadId', email_data.get('id', '')),
                                     analysis=analysis_response,
                                     raw_json=email_data.get('body', '')  # For URL extraction
                                 )

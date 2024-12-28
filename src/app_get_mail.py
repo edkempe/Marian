@@ -192,7 +192,7 @@ def process_email(service, msg_id, session):
         # Get email data
         email_data = {
             'id': message['id'],
-            'thread_id': message['threadId'],
+            'threadId': message['threadId'],
             'subject': headers_lookup.get('subject', 'No Subject'),
             'from_address': headers_lookup.get('from', ''),
             'to_address': headers_lookup.get('to', ''),

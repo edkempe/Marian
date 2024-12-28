@@ -218,7 +218,7 @@ class GmailAPI:
 
             return {
                 'id': message['id'],
-                'thread_id': message['threadId'],
+                'threadId': message['threadId'],
                 'subject': subject,
                 'date': date,
                 'sender': from_email,
