@@ -151,23 +151,39 @@ def parse_claude_response(response_text: str, error_context: Optional[Dict[str, 
         # If response_text is a Message object, get its content
         if hasattr(response_text, 'content'):
             response_text = response_text.content
+            
+        # Clean the text first
+        cleaned_text = clean_json_text(response_text)
         
-        # Extract JSON from response
-        json_str, error_msg = extract_json(response_text)
+        # Find JSON object in text
+        json_str, error_msg = extract_json(cleaned_text)
         if not json_str:
             if error_context:
                 logger.error(
                     f"Failed to extract JSON: {error_msg}",
                     extra={
                         **(error_context or {}),
-                        'raw_response': response_text
+                        'raw_response': response_text,
+                        'cleaned_text': cleaned_text
                     }
                 )
             return None
         
         # Parse the cleaned JSON
         try:
-            return json.loads(json_str)
+            # Try to parse as is
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                # Try to fix common formatting issues
+                fixed_json = json_str.strip()
+                if fixed_json.startswith('"') and fixed_json.endswith('"'):
+                    fixed_json = fixed_json[1:-1]  # Remove quotes
+                if fixed_json.startswith('`') and fixed_json.endswith('`'):
+                    fixed_json = fixed_json[1:-1]  # Remove backticks
+                fixed_json = fixed_json.replace('\\"', '"')  # Fix escaped quotes
+                fixed_json = fixed_json.replace('\\n', '\n')  # Fix escaped newlines
+                return json.loads(fixed_json)
         except json.JSONDecodeError as e:
             if error_context:
                 logger.error(
@@ -175,7 +191,8 @@ def parse_claude_response(response_text: str, error_context: Optional[Dict[str, 
                     extra={
                         **(error_context or {}),
                         'extracted_json': json_str,
-                        'raw_response': response_text
+                        'raw_response': response_text,
+                        'cleaned_text': cleaned_text
                     }
                 )
             return None

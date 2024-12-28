@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Tuple
 import logging
 import os
-from shared_lib.anthropic_lib import parse_claude_response
+from shared_lib.anthropic_lib import parse_claude_response, clean_json_text, extract_json
 import json
 import time
 import argparse
@@ -106,47 +106,122 @@ class EmailAnalyzer:
         """
         try:
             # Extract URLs from content
-            full_urls, display_urls = self._extract_urls(email_data.get('content', ''))
+            full_urls, display_urls = self._extract_urls(email_data.get('body', ''))
             
-            # Create prompt using template
-            content = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
-                email_content=f"""Subject: {email_data.get('subject', '')}
-Content: {email_data.get('content', '')}"""
-            )
-
             # Get analysis from API
             response = None
             try:
+                prompt = API_CONFIG['EMAIL_ANALYSIS_PROMPT'].format(
+                    email_content=f"Subject: {email_data.get('subject', '')}\n\n{email_data.get('body', '')}"
+                )
+                
+                # Log the prompt
+                logger.info(
+                    "Sending prompt to API",
+                    prompt=prompt
+                )
+                
                 response = self.client.messages.create(
                     model=API_CONFIG['MODEL'],
                     max_tokens=API_CONFIG['MAX_TOKENS'],
                     temperature=API_CONFIG['TEMPERATURE'],
                     messages=[{
                         "role": "user",
-                        "content": content
-                    }]
+                        "content": prompt
+                    }],
+                    system="You are an email analysis assistant. Always respond with a valid JSON object containing all the requested fields exactly as specified in the prompt. Do not include any additional text before or after the JSON."
                 )
                 
-                # Extract and parse JSON from response
-                analysis_data = parse_claude_response(response.content)
-                if analysis_data is None:
-                    logger.error(
-                        ERROR_MESSAGES['API_ERROR'].format(error="Failed to parse API response"),
-                        error_type="parsing",
-                        response=response.content if response else None
-                    )
-                    return None
-                
-                # Create EmailAnalysis object with extracted URLs
-                analysis_response = EmailAnalysisResponse(**analysis_data)
-                return EmailAnalysis.from_api_response(
-                    email_id=email_data['id'],
-                    thread_id=email_data.get('thread_id', ''),
-                    response=analysis_response,
-                    links_found=full_urls,
-                    links_display=display_urls,
-                    analyzed_date=datetime.now()  # Add analyzed_date
+                # Log the raw response
+                logger.info(
+                    "Raw API response",
+                    response_type=type(response).__name__,
+                    has_content=hasattr(response, 'content'),
+                    content=response.content if hasattr(response, 'content') else None
                 )
+                
+                # Extract JSON from response
+                if response and hasattr(response, 'content'):
+                    for content_block in response.content:
+                        if hasattr(content_block, 'text'):
+                            # Log the content block
+                            logger.info(
+                                "Processing content block",
+                                block_type=type(content_block).__name__,
+                                has_text=hasattr(content_block, 'text'),
+                                text=content_block.text if hasattr(content_block, 'text') else None
+                            )
+                            
+                            # First clean and extract JSON
+                            cleaned_text = clean_json_text(content_block.text)
+                            json_str, error_msg = extract_json(cleaned_text)
+                            
+                            # Log the cleaned text and extracted JSON
+                            logger.info(
+                                "Cleaned text and extracted JSON",
+                                cleaned_text=cleaned_text,
+                                json_str=json_str,
+                                error_msg=error_msg
+                            )
+                            
+                            if json_str:
+                                try:
+                                    analysis_data = json.loads(json_str)
+                                    
+                                    # Log the parsed data
+                                    logger.info(
+                                        "Parsed JSON data",
+                                        analysis_data=analysis_data
+                                    )
+                                    
+                                    # Create EmailAnalysis object with extracted URLs
+                                    analysis_response = EmailAnalysisResponse(**analysis_data)
+                                    return EmailAnalysis(
+                                        email_id=email_data['id'],
+                                        thread_id=email_data.get('threadId', ''),
+                                        summary=analysis_response.summary,
+                                        category=analysis_response.category,
+                                        priority_score=analysis_response.priority_score,
+                                        priority_reason=analysis_response.priority_reason,
+                                        action_needed=analysis_response.action_needed,
+                                        action_type=analysis_response.action_type,
+                                        action_deadline=analysis_response.action_deadline,
+                                        key_points=analysis_response.key_points,
+                                        people_mentioned=analysis_response.people_mentioned,
+                                        project=analysis_response.project,
+                                        topic=analysis_response.topic,
+                                        sentiment=analysis_response.sentiment,
+                                        confidence_score=analysis_response.confidence_score,
+                                        links_found=full_urls,
+                                        links_display=display_urls,
+                                        analyzed_date=datetime.now(timezone.utc)
+                                    )
+                                except json.JSONDecodeError as e:
+                                    logger.error(
+                                        ERROR_MESSAGES['JSON_DECODE_ERROR'].format(error=str(e)),
+                                        error_type="json_decode",
+                                        json_str=json_str,
+                                        cleaned_text=cleaned_text
+                                    )
+                                except Exception as e:
+                                    logger.error(
+                                        ERROR_MESSAGES['VALIDATION_ERROR'].format(error=str(e)),
+                                        error_type="validation",
+                                        analysis_data=analysis_data if 'analysis_data' in locals() else None
+                                    )
+                            else:
+                                logger.error(
+                                    ERROR_MESSAGES['API_ERROR'].format(error=error_msg),
+                                    error_type="json_extract",
+                                    cleaned_text=cleaned_text
+                                )
+                
+                logger.error(
+                    ERROR_MESSAGES['API_ERROR'].format(error="No valid JSON found in response"),
+                    error_type="parsing",
+                    response=response.content if response else None
+                )
+                return None
             except Exception as e:
                 error_context = {
                     'error_type': "analysis",
@@ -197,10 +272,22 @@ Content: {email_data.get('content', '')}"""
                 ).first()
                 
                 # Create new analysis object with URLs
-                analysis_obj = EmailAnalysis.from_api_response(
+                analysis_obj = EmailAnalysis(
                     email_id=email_id,
                     thread_id=thread_id,
-                    response=analysis,
+                    summary=analysis.summary,
+                    category=analysis.category,
+                    priority_score=analysis.priority_score,
+                    priority_reason=analysis.priority_reason,
+                    action_needed=analysis.action_needed,
+                    action_type=analysis.action_type,
+                    action_deadline=analysis.action_deadline,
+                    key_points=analysis.key_points,
+                    people_mentioned=analysis.people_mentioned,
+                    project=analysis.project,
+                    topic=analysis.topic,
+                    sentiment=analysis.sentiment,
+                    confidence_score=analysis.confidence_score,
                     links_found=full_urls,
                     links_display=display_urls
                 )
@@ -364,7 +451,8 @@ Content: {email_request.truncated_body}"""
                                     messages=[{
                                         "role": "user",
                                         "content": prompt
-                                    }]
+                                    }],
+                                    system="You are an email analysis assistant. Always respond with a valid JSON object containing the requested fields."
                                 )
                                 # Extract URLs from email content
                                 links_found, links_display = self._extract_urls(email_data.get('body', ''))

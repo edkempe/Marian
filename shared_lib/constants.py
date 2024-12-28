@@ -227,7 +227,26 @@ API_CONFIG: APIConfig = {
     'MAX_TOKENS_TEST': 2000,  # Reduced tokens for testing
     'TEMPERATURE': 0.0,  # Zero temperature for consistent outputs
     'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
-    'EMAIL_ANALYSIS_PROMPT': 'Analyze the following email...'  # Default prompt
+    'EMAIL_ANALYSIS_PROMPT': '''Analyze the following email and provide a structured response in JSON format:
+
+{email_content}
+
+Provide a JSON response with the following fields:
+{
+    "summary": "Brief 1-2 sentence summary of the email",
+    "category": ["List of categories that apply"],
+    "priority_score": "Number from 1-5 indicating urgency/importance (1=lowest, 5=highest)",
+    "priority_reason": "Brief explanation of the priority score",
+    "action_needed": true/false,
+    "action_type": ["List of required actions"],
+    "action_deadline": "YYYY-MM-DD or ASAP or null if no deadline",
+    "key_points": ["List of main points from the email"],
+    "people_mentioned": ["List of people mentioned"],
+    "project": "Project name or empty string",
+    "topic": "Topic or empty string",
+    "sentiment": "positive, negative, or neutral",
+    "confidence_score": "Number between 0.0 and 1.0"
+}''',  # Email analysis prompt template
 }
 
 # Default model for API calls
