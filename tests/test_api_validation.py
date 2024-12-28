@@ -32,6 +32,10 @@ def parse_api_mappings(doc_path: str) -> Dict[str, Dict]:
         if elem.name == 'h2':
             # New API section
             current_api = elem.text.strip()
+            # Skip the Notes section as it's not an API
+            if current_api == 'Notes':
+                current_api = None
+                continue
             apis[current_api] = {
                 'version': None,
                 'documentation': None,
@@ -68,8 +72,8 @@ def find_api_imports(code_path: str) -> Set[str]:
         Set of API names found in imports
     """
     api_patterns = {
-        'Gmail API': r'googleapiclient.*gmail',
-        'Asset Catalog API': r'asset_catalog_api'  # Add actual import pattern
+        'Gmail API': [r'googleapiclient.*gmail', r'shared_lib\.gmail_lib'],
+        'Asset Catalog API': [r'app_catalog', r'models\.catalog']
     }
     
     apis_found = set()
@@ -84,9 +88,11 @@ def find_api_imports(code_path: str) -> Set[str]:
                 content = f.read()
             
             # Check each API's import pattern
-            for api_name, pattern in api_patterns.items():
-                if re.search(pattern, content):
-                    apis_found.add(api_name)
+            for api_name, patterns in api_patterns.items():
+                for pattern in patterns:
+                    if re.search(pattern, content):
+                        apis_found.add(api_name)
+                        break
     
     return apis_found
 
@@ -128,13 +134,18 @@ def test_api_documentation_completeness():
     # Paths
     base_dir = os.path.dirname(os.path.dirname(__file__))
     doc_path = os.path.join(base_dir, 'docs', 'api_mappings.md')
-    code_path = os.path.join(base_dir, 'models')
     
     # Get documented APIs
     documented_apis = parse_api_mappings(doc_path)
     
     # Get APIs actually used in code
-    used_apis = find_api_imports(code_path)
+    used_apis = set()
+    for code_path in [
+        os.path.join(base_dir, 'models'),
+        os.path.join(base_dir, 'shared_lib'),
+        os.path.join(base_dir, 'src')
+    ]:
+        used_apis.update(find_api_imports(code_path))
     
     # Check for undocumented APIs
     undocumented = used_apis - set(documented_apis.keys())

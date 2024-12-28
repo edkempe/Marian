@@ -12,6 +12,26 @@ from pathlib import Path
 import json
 from typing import List, Dict, Optional
 import re
+from shared_lib.constants import (
+    SESSION_LOGS_DIR,
+    ROOT_DIR,
+    TESTING_CONFIG,
+    SESSION_CONFIG
+)
+
+# Constants for documentation paths
+SESSION_LOGS_DIR = Path(SESSION_LOGS_DIR)
+ROOT_DIR = Path(ROOT_DIR)
+DOCS_DIR = ROOT_DIR / 'docs'
+REQUIRED_DOCS = {
+    'dev_checklist': DOCS_DIR / 'dev-checklist.md',
+    'session_workflow': DOCS_DIR / 'session-workflow.md',
+    'contributing': DOCS_DIR / 'contributing.md',
+    'ai_guidelines': DOCS_DIR / 'ai-guidelines.md',
+    'backlog': DOCS_DIR / 'backlog.md',
+    'setup': DOCS_DIR / 'setup.md',
+    'readme': ROOT_DIR / 'README.md'
+}
 
 def run_command(cmd: List[str]) -> str:
     """Run a shell command and return output."""
@@ -31,7 +51,7 @@ def get_python_command() -> str:
     Raises:
         RuntimeError: If no suitable Python command is found or version requirements not met
     """
-    min_version = (3, 12, 8)  # Minimum required version
+    min_version = SESSION_CONFIG['MIN_PYTHON_VERSION']
     version_pattern = re.compile(r'Python (\d+)\.(\d+)\.(\d+)')
     
     for cmd in ['python3', 'python']:
@@ -75,7 +95,7 @@ def run_pip_list() -> str:
     except subprocess.CalledProcessError as e:
         return f"Error listing packages: {e}"
 
-def get_recent_changes(num_commits: int = 5) -> Dict[str, List[str]]:
+def get_recent_changes(num_commits: int = SESSION_CONFIG['GIT_COMMITS_TO_CHECK']) -> Dict[str, List[str]]:
     """Get recent git changes."""
     changes = {
         'commits': [],
@@ -107,7 +127,7 @@ def get_test_status() -> Dict[str, str]:
     
     try:
         python_cmd = get_python_command()
-        result = run_command([python_cmd, '-m', 'pytest', 'tests/', '--quiet'])
+        result = run_command([python_cmd, '-m', 'pytest', SESSION_CONFIG['TEST_PATH'], '--quiet'])
         status['passing'] = 'all tests passing' if result else 'tests failing'
     except Exception as e:
         status['failures'].append(str(e))
@@ -123,23 +143,80 @@ def get_environment_changes() -> Dict[str, List[str]]:
     }
     
     # Check requirements.txt changes
-    if Path('requirements.txt').exists():
-        reqs = run_command(['git', 'diff', 'HEAD~5', '--', 'requirements.txt'])
+    reqs_file = Path(SESSION_CONFIG['REQUIREMENTS_FILE'])
+    if reqs_file.exists():
+        reqs = run_command(['git', 'diff', f'HEAD~{SESSION_CONFIG["GIT_COMMITS_TO_CHECK"]}', '--', str(reqs_file)])
         if reqs:
             changes['new_deps'] = [line for line in reqs.split('\n') 
                                  if line.startswith('+') and not line.startswith('++')]
     
     # Check config files
-    config_changes = run_command(['git', 'diff', 'HEAD~5', '--', '*.ini', '*.cfg', '*.conf'])
-    if config_changes:
-        changes['config'] = config_changes.split('\n')
+    for pattern in SESSION_CONFIG['CONFIG_FILE_PATTERNS']:
+        config_changes = run_command(['git', 'diff', f'HEAD~{SESSION_CONFIG["GIT_COMMITS_TO_CHECK"]}', '--', pattern])
+        if config_changes:
+            changes['config'].extend(config_changes.split('\n'))
     
     return changes
+
+def run_session_start_checks():
+    """
+    Run checks from session-workflow.md and dev-checklist.md
+    """
+    # Check virtual environment
+    if not sys.prefix.endswith(SESSION_CONFIG['VENV_DIR']):
+        print("\nWARNING: Virtual environment not activated!")
+        print(f"Please run: source {SESSION_CONFIG['VENV_DIR']}/bin/activate")
+        return False
+
+    # Run environment checks
+    python_cmd = get_python_command()
+    print("\nEnvironment:")
+    print(run_pip_list())
+
+    # Check required documentation exists
+    print("\nChecking required documentation...")
+    for doc_name, doc_path in REQUIRED_DOCS.items():
+        if not doc_path.exists():
+            print(f"ERROR: Required document not found: {doc_path}")
+            return False
+        print(f"✓ Found {doc_name}: {doc_path}")
+
+    # Create session log file
+    today = datetime.now().strftime(SESSION_CONFIG['DATE_FORMAT'])
+    session_log = SESSION_LOGS_DIR / f"{SESSION_CONFIG['SESSION_LOG_PREFIX']}{today}.md"
+    if not session_log.exists():
+        session_log.write_text(f"""# Development Session Log - {today}
+
+## Session Start
+- Time: {datetime.now().strftime(SESSION_CONFIG['TIME_ZONE_FORMAT'])}
+- Environment: Python {sys.version.split()[0]}
+- Virtual Environment: {sys.prefix}
+
+## Objectives
+[ ] Add session objectives here
+
+## Running Log
+- {datetime.now().strftime(SESSION_CONFIG['TIME_FORMAT'])} - Session started
+""")
+        print(f"\nCreated new session log: {session_log}")
+    else:
+        print(f"\nContinuing existing session log: {session_log}")
+
+    # Display key documentation sections
+    print("\nRequired Reading:")
+    print("1. Review contributing.md FIRST")
+    print("2. Check backlog.md for current tasks")
+    print("3. Verify setup.md requirements")
+    
+    return True
 
 def update_next_session(changes: Dict[str, List[str]], 
                        test_status: Dict[str, str],
                        env_changes: Dict[str, List[str]]) -> str:
     """Generate NEXT_SESSION.md content."""
+    today = datetime.now().strftime(SESSION_CONFIG['DATE_FORMAT'])
+    next_session = SESSION_LOGS_DIR / f'NEXT_SESSION_{today}.md'
+    
     now = datetime.now(pytz.UTC)
     
     content = [
@@ -196,27 +273,6 @@ def update_next_session(changes: Dict[str, List[str]],
                 content.append(f"- {task}")
     
     return '\n'.join(content)
-
-def run_session_start_checks():
-    """
-    Run checks from session-workflow.md and dev-checklist.md
-    """
-    # Run environment checks
-    python_cmd = get_python_command()
-    print("\nEnvironment:")
-    print(run_pip_list())
-
-    # Run checks from session-workflow.md
-    if Path('session-workflow.md').exists():
-        workflow = Path('session-workflow.md').read_text()
-        print("\nSession Workflow:")
-        print(workflow)
-
-    # Run checks from dev-checklist.md
-    if Path('dev-checklist.md').exists():
-        checklist = Path('dev-checklist.md').read_text()
-        print("\nDevelopment Session Checklist:")
-        print(checklist)
 
 def main():
     """Main function to update session documentation."""

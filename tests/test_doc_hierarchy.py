@@ -11,6 +11,11 @@ import os
 import re
 from typing import Dict, List, Set, Tuple
 from pathlib import Path
+from shared_lib.constants import SESSION_LOGS_DIR, DOCS_DIR
+
+# Get relative paths for documentation
+SESSION_LOGS_RELATIVE = os.path.relpath(SESSION_LOGS_DIR, DOCS_DIR)
+SESSION_LOGS_README = os.path.join(SESSION_LOGS_RELATIVE, 'README.md')
 
 # Documentation hierarchy
 DOC_HIERARCHY = {
@@ -20,7 +25,7 @@ DOC_HIERARCHY = {
         'scope': ['development procedures', 'development session procedures'],
         'must_reference': []
     },
-    'session_logs/README.md': {
+    SESSION_LOGS_README: {
         'role': 'Authoritative source for session log standards',
         'status': 'Authoritative source for session log standards and procedures',
         'scope': ['session log standards', 'session logging requirements'],
@@ -30,13 +35,13 @@ DOC_HIERARCHY = {
         'role': 'Supporting documentation for AI development procedures',
         'status': 'Supporting documentation for AI development procedures',
         'scope': ['AI development procedures', 'AI-specific guidelines'],
-        'must_reference': ['dev-checklist.md', 'session_logs/README.md']
+        'must_reference': ['dev-checklist.md', SESSION_LOGS_README]
     },
     'session-workflow.md': {
         'role': 'Supporting documentation for development session procedures',
         'status': 'Supporting documentation for development session procedures',
         'scope': ['workflow examples', 'detailed workflow'],
-        'must_reference': ['dev-checklist.md', 'session_logs/README.md']
+        'must_reference': ['dev-checklist.md', SESSION_LOGS_README]
     }
 }
 

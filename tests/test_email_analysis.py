@@ -1,13 +1,16 @@
-"""Integration tests for email analysis functionality."""
+"""Test suite for email analysis functionality."""
+
 import pytest
 from datetime import datetime, timedelta, timezone
+import json
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 from shared_lib.database_session_util import get_email_session, get_analysis_session
-from app_email_analyzer import EmailAnalyzer
+from src.app_email_analyzer import EmailAnalyzer
 from shared_lib.gmail_lib import GmailAPI
-from app_get_mail import fetch_emails
+from src.app_get_mail import fetch_emails
 from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
 
 @pytest.fixture(scope="session")

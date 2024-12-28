@@ -1,6 +1,6 @@
 """Integration tests for semantic search functionality with real API calls."""
 import pytest
-from app_catalog import CatalogChat
+from src.app_catalog import CatalogChat
 from models.catalog import CatalogItem, Tag
 from shared_lib.constants import CATALOG_CONFIG
 

@@ -13,14 +13,22 @@ Test data is limited to prevent timeouts:
 - Processing tests use only 3 messages at a time
 - Date ranges are kept to 1-7 days
 """
+import os
 import pytest
 from datetime import datetime, timedelta
-from shared_lib.gmail_lib import GmailAPI
-from app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
+import json
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+import pandas as pd
 from models.email import Email
+from models.email_analysis import EmailAnalysis
+from shared_lib.database_session_util import get_email_session, get_analysis_session
+from shared_lib.gmail_lib import GmailAPI
+from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG
+from src.app_get_mail import fetch_emails, process_email, list_labels, get_email_session, init_database
+from src.app_email_analyzer import EmailAnalyzer
+from src.app_email_reports import EmailAnalytics
 from email.utils import parsedate_to_datetime
-from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
-from sqlalchemy import func
 # test_db_session fixture is automatically available from conftest.py
 
 @pytest.fixture(scope="session")
@@ -338,7 +346,7 @@ def test_email_counting(gmail_api, test_db_session):
 
 def test_database_session_management():
     """Test database session management in real application context."""
-    from app_get_mail import get_email_session, init_database
+    from src.app_get_mail import get_email_session, init_database
     
     # Test session context manager
     with get_email_session() as session:

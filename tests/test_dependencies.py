@@ -121,24 +121,36 @@ def find_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:
         return []
 
 def check_layer_violations(graph: nx.DiGraph) -> List[Tuple[str, str]]:
-    """Check for violations of layering rules."""
+    """Check for violations of architectural rules.
+    
+    Rules:
+    1. No circular dependencies (checked separately)
+    2. shared_lib can only import from shared_lib (foundation layer)
+    3. models can import from models and shared_lib
+    4. services can import from models and shared_lib
+    5. scripts can import from services, models, and shared_lib
+       but cannot import from other scripts (no shared script code)
+    """
     violations = []
     
     for source, target in graph.edges():
         source_type = graph.nodes[source]['type']
         target_type = graph.nodes[target]['type']
         
-        # Models should only import from shared_lib
-        if source_type == 'models' and target_type not in ['shared_lib']:
+        # shared_lib is foundation - can only import from shared_lib
+        if source_type == 'shared_lib' and target_type != 'shared_lib':
             violations.append((source, target))
         
-        # Services can import from models and shared_lib
+        # models can use shared_lib and other models
+        if source_type == 'models' and target_type not in ['models', 'shared_lib']:
+            violations.append((source, target))
+        
+        # services can use models and shared_lib
         if source_type == 'services' and target_type not in ['models', 'shared_lib']:
             violations.append((source, target))
-        
-        # Scripts can import from anywhere
-        # shared_lib should not import from other layers
-        if source_type == 'shared_lib' and target_type != 'shared_lib':
+            
+        # scripts can use services, models, and shared_lib but not other scripts
+        if source_type == 'scripts' and target_type not in ['services', 'models', 'shared_lib']:
             violations.append((source, target))
     
     return violations

@@ -1,56 +1,37 @@
-# Marian Reports Directory
+# Reports Directory
 
 **Version:** 1.0.0  
-**Status:** Authoritative source for report locations and standards
+**Status:** Authoritative
+
+> Central location for all project reports and reporting standards.
 
 ## Overview
-
-This directory contains generated reports and analysis outputs from various parts of the Marian system. These reports are automatically generated and should not be manually edited.
+- **Purpose**: Store and standardize project reports
+- **Stability**: Stable
+- **Maintenance**: Active
+- **Python**: >= 3.12
 
 ## Directory Structure
+```
+/reports/
+├── README.md              # This file
+├── testing/              # Test reports and analysis
+└── coverage/            # Code coverage reports
+```
 
-- `/testing/` - Test analysis reports and quality metrics
-  - Documentation quality reports
-  - Import analysis
-  - Test coverage
-  - Code duplication analysis
-- `/analysis/` - Email analysis outputs (gitignored)
-- `/metrics/` - System performance metrics (gitignored)
+## Core Components
+1. **Test Reports**
+   - Purpose: Document test results and metrics
+   - When to use: After test runs
+   - Location: `testing/` directory
 
-## Report Guidelines
-
-1. **Report Generation**
-   - Reports are automatically generated
-   - Do not edit reports manually
-   - Reports should be regenerated as needed
-
-2. **Version Control**
-   - Most reports are gitignored
-   - Only README files and templates are tracked
-   - Generated files should not be committed
-
-3. **Viewing Reports**
-   - HTML reports should be viewed in a browser
-   - Markdown reports can be viewed in any text editor
-   - Reports are self-contained with embedded styles
-
-## Report Types
-
-### Test Reports
-- Documentation quality and versioning
-- Import analysis (unused imports, style issues)
-- File duplicates and similarities
-- Test coverage metrics
-
-### Analysis Reports
-- Email processing statistics
-- Label distribution analysis
-- Content classification results
-
-### Metric Reports
-- System performance metrics
-- API usage statistics
-- Processing time analysis
+2. **Coverage Reports**
+   - Purpose: Track code coverage
+   - When to use: After coverage analysis
+   - Location: `coverage/` directory
 
 ## Version History
-- 1.0.0: Initial documentation of report directory structure and standards
+- 1.0.0 (2024-12-28): Initial report structure
+  - Defined report types and locations
+  - Established reporting standards
+  - Added coverage tracking

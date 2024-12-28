@@ -1,25 +1,26 @@
 """Tests for email fetching functionality."""
 import pytest
 from datetime import datetime, timedelta
-from models.email import Email
-from app_get_mail import (
+from sqlalchemy.orm import Session
+from src.app_get_mail import (
     init_database, get_label_id, fetch_emails,
     process_email, get_oldest_email_date,
     get_newest_email_date, count_emails,
     list_labels
 )
+from models.email import Email
 from shared_lib.gmail_lib import GmailAPI
 from shared_lib.database_session_util import get_email_session
 from shared_lib.constants import DATABASE_CONFIG, API_CONFIG
 
 @pytest.fixture
 def gmail_service():
-    """Get real Gmail service."""
+    """Get Gmail service for testing."""
     return GmailAPI()._get_gmail_service()
 
 @pytest.fixture
 def db_session():
-    """Create a test database session."""
+    """Get database session for testing."""
     with get_email_session(testing=True) as session:
         init_database(session)
         

@@ -1,14 +1,16 @@
-"""Test email report generation."""
+"""Test suite for email analytics and reporting."""
+
 import pytest
 from datetime import datetime, timedelta
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+import pandas as pd
+from src.app_email_reports import EmailAnalytics
 from models.email import Email
 from models.email_analysis import EmailAnalysis
-from models.base import Base
-from app_email_reports import EmailAnalytics
 from shared_lib.database_session_util import get_email_session, get_analysis_session
-from shared_lib.constants import DATABASE_CONFIG
+from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 
 @pytest.fixture(autouse=True)
 def setup_test_data():

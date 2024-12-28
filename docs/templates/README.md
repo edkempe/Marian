@@ -1,54 +1,31 @@
-# Project Templates
+# Documentation Templates
 
-**Version:** 1.0.0
-**Status:** Active
+**Version:** 1.0.0  
+**Status:** Authoritative
 
-This directory contains standardized templates used throughout the project.
+> Standard templates for project documentation to ensure consistency.
 
-## Current Templates
-- `session.md` - Template for development session logs
-- `directory-readme.md` - Template for directory README files
+## Overview
+- **Purpose**: Maintain documentation standards
+- **Stability**: Stable
+- **Maintenance**: Active
+- **Python**: >= 3.12
 
-## Planned Templates
-- Documentation
-  - [ ] Pull Request template
-  - [ ] Report template
-  - [ ] Coverage report template
-  - [ ] Error message template
+## Directory Structure
+```
+/templates/
+├── README.md              # This file
+└── directory-readme.md    # Template for directory READMEs
+```
 
-- Infrastructure
-  - [ ] CloudFormation templates
+## Core Components
+1. **Directory README Template**
+   - Purpose: Standardize directory documentation
+   - When to use: Creating new directory READMEs
+   - Location: `directory-readme.md`
 
-## Template Standards
-1. All templates should:
-   - Include version and status
-   - Have clear instructions for use
-   - Document any required fields
-   - Include examples where helpful
-
-2. Naming Convention
-   - Use lowercase with hyphens
-   - End in `.md` for markdown templates
-   - Include purpose in name (e.g., `session.md`, `directory-readme.md`)
-
-## Template Details
-
-### directory-readme.md
-Used for creating consistent README files in project directories. Includes:
-- Directory purpose and scope
-- Structure documentation
-- Usage guidelines
-- Development standards
-- Security considerations
-
-### session.md
-Used for documenting development sessions. Includes:
-- Session metadata
-- Progress tracking
-- Issue documentation
-- Next steps
-
-## Related Documentation
-- Parent: `../README.md` - Project documentation root
-- `../session_logs/README.md` - Session log procedures
-- `../dev-checklist.md` - Development procedures
+## Version History
+- 1.0.0 (2024-12-28): Initial template structure
+  - Created directory README template
+  - Established standard sections
+  - Added version tracking requirements

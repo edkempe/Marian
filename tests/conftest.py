@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from models.base import Base
 from config import EMAIL_CONFIG, CATALOG_CONFIG
 from shared_lib.gmail_lib import GmailAPI
-from app_catalog import CatalogChat
+from src.app_catalog import CatalogChat
 from models.email import Email
 from models.gmail_label import GmailLabel
 from datetime import datetime

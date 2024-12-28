@@ -3,8 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="marian",
     version="0.1",
-    packages=find_packages(where='src'),
-    package_dir={'': 'src'},
+    packages=find_packages(exclude=['tests*', 'archive*']),
     package_data={'': ['*.json', '*.yaml', '*.yml']},
     include_package_data=True,
     install_requires=[

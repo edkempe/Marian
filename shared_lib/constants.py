@@ -15,6 +15,7 @@ Configuration Sections:
     - CATALOG: Catalog-specific settings
     - EMAIL: Email processing parameters
     - METRICS: Prometheus metrics settings
+    - SESSION: Session management settings
 
 Usage:
     from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
@@ -29,11 +30,13 @@ import os
 # Shared Constants
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
+DOCS_DIR = os.path.join(ROOT_DIR, 'docs')
+SESSION_LOGS_DIR = os.path.join(DOCS_DIR, 'session_logs')
 LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 CACHE_DIR = os.path.join(ROOT_DIR, 'cache')
 
 # Create directories if they don't exist
-for dir_path in [DATA_DIR, LOGS_DIR, CACHE_DIR]:
+for dir_path in [DATA_DIR, DOCS_DIR, SESSION_LOGS_DIR, LOGS_DIR, CACHE_DIR]:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
@@ -112,6 +115,19 @@ class TestingConfig(TypedDict):
     """Type hints for testing configuration."""
     EXCLUDED_DIRS: List[str]
     REQUIRED_VERSIONING: List[str]
+
+class SessionConfig(TypedDict):
+    """Type hints for session configuration."""
+    MIN_PYTHON_VERSION: tuple
+    DATE_FORMAT: str
+    TIME_FORMAT: str
+    TIME_ZONE_FORMAT: str
+    GIT_COMMITS_TO_CHECK: int
+    TEST_PATH: str
+    REQUIREMENTS_FILE: str
+    CONFIG_FILE_PATTERNS: List[str]
+    SESSION_LOG_PREFIX: str
+    VENV_DIR: str
 
 # Database Column Sizes
 COLUMN_SIZES = {
@@ -234,33 +250,24 @@ LOGGING_CONFIG: LoggingConfig = {
     'LOG_LEVEL': 'INFO'
 }
 
+# Session Management Constants
+SESSION_CONFIG: SessionConfig = {
+    'MIN_PYTHON_VERSION': (3, 12, 8),
+    'DATE_FORMAT': '%Y-%m-%d',
+    'TIME_FORMAT': '%H:%M',
+    'TIME_ZONE_FORMAT': '%H:%M %Z',
+    'GIT_COMMITS_TO_CHECK': 5,
+    'TEST_PATH': 'tests/',
+    'REQUIREMENTS_FILE': 'requirements.txt',
+    'CONFIG_FILE_PATTERNS': ['*.ini', '*.cfg', '*.conf'],
+    'SESSION_LOG_PREFIX': 'session_log_',
+    'VENV_DIR': 'venv',
+}
+
 # Testing Configuration
 TESTING_CONFIG: TestingConfig = {
-    'EXCLUDED_DIRS': [
-        'docs/session_logs',
-        'packages',
-        'venv',
-        'docs/archive',
-        '.pytest_cache',
-        'reports/testing',  # Exclude generated test reports
-        '__pycache__',     # Exclude Python cache
-    ],
-    'REQUIRED_VERSIONING': [
-        'README.md',
-        'docs/api_mappings.md',
-        'docs/database_design.md',
-        'docs/testing_guide.md',
-        'docs/ai_architecture.md',
-        'docs/ai-guidelines.md',
-        'docs/backup.md',
-        'docs/code-standards.md',
-        'docs/design-decisions.md',
-        'docs/librarian.md',
-        'docs/project-checklist.md',
-        'docs/project-plan.md',
-        'docs/troubleshooting.md',
-        'reports/industry_standards.md',
-    ]
+    'EXCLUDED_DIRS': ['venv', '.git', '__pycache__', '.pytest_cache', 'build', 'dist'],
+    'REQUIRED_VERSIONING': ['requirements.txt', 'setup.py']
 }
 
 # Catalog Configuration

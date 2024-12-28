@@ -1,40 +1,17 @@
 # Documentation Directory
 
-**Version:** 1.0.1  
+**Version:** 1.0.0  
 **Status:** Authoritative
 
-> Central location for all project documentation, following a structured hierarchy to maintain clarity and avoid duplication.
-
-## Quick Reference
-```bash
-# View documentation hierarchy
-cat ai-architecture.md
-
-# Find documentation by topic
-grep -r "topic" .
-
-# Create new documentation
-cp templates/directory-readme.md new-doc.md
-
-# Archive documentation
-mv old-doc.md archive/ARCHIVED_$(date +%Y%m%d_%H%M)_old-doc.md
-```
-
-Common operations:
-- View documentation hierarchy in `ai-architecture.md`
-- Find specific documentation using grep
-- Create new docs using templates
-- Archive old documentation in `/docs/archive`
+> Central location for all project documentation, including guides, ADRs, and templates.
 
 ## Overview
-- **Purpose**: Maintain project documentation
+- **Purpose**: Maintain comprehensive project documentation
 - **Stability**: Stable
 - **Maintenance**: Active
-- **Python**: N/A (Documentation only)
+- **Python**: >= 3.12
 
----
-
-## Project Structure
+## Directory Structure
 ```
 /
 ├── src/                    # Source code
@@ -49,23 +26,33 @@ Common operations:
 │   ├── archive/           # Archived documentation
 │   ├── adr/               # Architecture Decision Records
 │   │   └── archive/       # Archived ADRs
-│   └── templates/         # Documentation templates
+│   ├── templates/         # Documentation templates
+│   ├── testing-guide.md   # Testing standards and procedures
+│   ├── session_logs/      # AI pair programming logs
+│   └── README.md          # This file
 └── backup/                # Backup files (not for archival)
 ```
 
 ## Core Components
+1. **Architecture Decision Records**
+   - Purpose: Document key architectural decisions
+   - When to use: When making significant design choices
+   - Location: `adr/` directory
 
-1. **Documentation Hierarchy**
+2. **Document Templates**
+   - Purpose: Ensure consistent documentation
+   - When to use: When creating new documents
+   - Location: `templates/` directory
+
+3. **Documentation Hierarchy**
    - Purpose: Define structure and relationships
    - When to use: Understanding doc organization
    - Example: See `ai-architecture.md`
 
-2. **Documentation Standards**
+4. **Documentation Standards**
    - Purpose: Maintain consistency
    - When to use: Creating/updating docs
    - Example: See `code-standards.md`
-
----
 
 ## Development Guide
 
@@ -97,8 +84,6 @@ Common operations:
    - Update related docs
    - Verify hierarchy integrity
 
----
-
 ## File Naming Conventions
 - `README.md` - All uppercase (standard)
 - Other docs - Kebab-case (e.g., `ai-guidelines.md`)
@@ -123,8 +108,6 @@ Common operations:
    - Archive old versions in `/docs/archive`
    - Keep history in archive
 
----
-
 ## Related Documentation
 - Parent: `../README.md` - Project root
 - `ai-architecture.md` - Complete documentation hierarchy
@@ -133,5 +116,7 @@ Common operations:
 - `archive/README.md` - Documentation archive
 
 ## Version History
-- 1.0.1: Clarified archive structure and separation
-- 1.0.0: Initial authoritative version
+- 1.0.0 (2024-12-28): Initial documentation structure
+  - Defined core documentation types
+  - Added templates for consistency
+  - Established ADR process
