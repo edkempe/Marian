@@ -65,14 +65,14 @@ class Email(Base):
 
     id: Mapped[str] = Column(String(100), primary_key=True)
     threadId: Mapped[Optional[str]] = Column(String(100))
-    subject: Mapped[Optional[str]] = Column(String(500), default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
+    subject: Mapped[Optional[str]] = Column(String(500), server_default=EMAIL_DEFAULTS['EMAIL_SUBJECT'])
     body: Mapped[Optional[str]] = Column(Text)
     date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
     labelIds: Mapped[Optional[str]] = Column(String(500))  # Stored as JSON
     snippet: Mapped[Optional[str]] = Column(Text)
     from_: Mapped[Optional[str]] = Column('from', String(200), nullable=True)
     to: Mapped[Optional[str]] = Column(String(200), nullable=True)
-    has_attachments: Mapped[Optional[bool]] = Column(Boolean, default=EMAIL_DEFAULTS['HAS_ATTACHMENTS'])
+    has_attachments: Mapped[Optional[bool]] = Column(Boolean, server_default=str(EMAIL_DEFAULTS['HAS_ATTACHMENTS']))
     cc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
     bcc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
     full_api_response: Mapped[Optional[str]] = Column(Text, server_default=EMAIL_DEFAULTS['API_RESPONSE'])
