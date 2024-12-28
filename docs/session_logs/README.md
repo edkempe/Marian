@@ -1,14 +1,17 @@
 # Session Logs Guide
 
-**Version:** 1.0.1  
-**Status:** Authoritative
+**Version:** 1.0.2
+**Status:** Authoritative source for session log standards and procedures
 
-> Comprehensive guide for maintaining consistent, detailed session logs that track development progress and decisions.
+> This document is the authoritative source for session log standards and procedures. All other documentation defers to this guide for session logging requirements.
 
 ## Quick Reference
 ```bash
-# Create today's session log
-cp ../templates/session.md session_log_$(date +%Y-%m-%d).md
+# Start a new session
+python chat_session_manager.py start
+
+# End a session
+python chat_session_manager.py end
 
 # List today's changes
 grep "$(date +%H:%M)" session_log_$(date +%Y-%m-%d).md
@@ -27,9 +30,9 @@ Common operations:
 - Review recent changes
 
 ## Overview
-- **Purpose**: Track development progress
+- **Purpose**: Track development progress and decisions
 - **Stability**: Stable
-- **Maintenance**: Active daily
+- **Maintenance**: Required for every development session
 - **Format**: Markdown files
 
 ---
@@ -37,7 +40,7 @@ Common operations:
 ## Directory Structure
 ```
 /docs/session_logs/
-├── README.md                     # This guide
+├── README.md                     # This guide (authoritative)
 ├── session_log_YYYY-MM-DD.md    # Daily session logs
 └── archive/                     # Archived logs
 ```
@@ -52,16 +55,41 @@ Common operations:
 2. **Session Structure**
    ```markdown
    # Session Log YYYY-MM-DD
-   
+
    ## Session Overview
    - Start: HH:MM [Timezone]
    - Focus: Brief description
-   
+   - Related: [Backlog items, previous sessions]
+
    ## Progress Log
    1. HH:MM [Timezone]
-      - Action taken
-      - Implementation details
-      - File changes
+      - Action: What was done
+      - Files: What changed
+      - Details: Implementation notes
+      - Tests: Test changes/results
+      - Docs: Documentation updates
+
+   ## Issues and Blockers
+   - Current blockers
+   - Workarounds applied
+   - Dependencies needed
+
+   ## Technical Decisions
+   - Decision made
+   - Rationale
+   - Alternatives considered
+   - Impact and scope
+
+   ## Next Steps
+   - [ ] Future task (Priority)
+   - [ ] Required follow-up
+   - [ ] Pending decision
+
+   ## Summary
+   - Key changes made
+   - Progress on objectives
+   - Remaining work
+   - New issues discovered
    ```
 
 ---
@@ -75,19 +103,35 @@ Common operations:
    - Related backlog items
 
 2. **Progress Log**
-   - Timestamped entries
+   - Timestamped entries (HH:MM [Timezone])
    - Specific actions taken
    - File changes made
+   - Test results
+   - Documentation updates
 
 3. **Issues and Blockers**
    - Current blockers
    - Workarounds applied
    - Dependencies needed
+   - Security considerations
 
-4. **Next Steps**
+4. **Technical Decisions**
+   - Decisions made
+   - Rationale
+   - Alternatives
+   - Impact
+
+5. **Next Steps**
    - Future tasks
    - Pending decisions
    - Required follow-ups
+   - Priority levels
+
+6. **Summary**
+   - Key changes
+   - Progress
+   - Remaining work
+   - New issues
 
 ### Best Practices
 
@@ -95,37 +139,36 @@ Common operations:
    - Log changes as they happen
    - Include error messages
    - Document decisions made
+   - Note test results
 
 2. **Clear Context**
    - Link to files changed
    - Reference backlog items
    - Note assumptions made
+   - Include command outputs
 
 3. **Future-proofing**
    - Document workarounds
    - Note dependencies
    - Link related sessions
+   - Record environment details
 
 ---
 
 ## Session Workflows
 
 ### Starting a Session
-1. Check for existing log
+1. Start session manager:
    ```bash
-   ls session_log_$(date +%Y-%m-%d).md
+   python chat_session_manager.py start
    ```
 
-2. Create if needed
-   ```bash
-   cp ../templates/session.md session_log_$(date +%Y-%m-%d).md
-   ```
-
-3. Add session header
+2. Add session header:
    ```markdown
-   ## Session N - HH:MM [Timezone]
+   ## Session Overview
+   - Start: HH:MM [Timezone]
    - Focus: Brief description
-   - Goals: Clear objectives
+   - Related: [Backlog items]
    ```
 
 ### During Session
@@ -133,20 +176,35 @@ Common operations:
 2. Include file links
 3. Note blockers
 4. Update backlog
+5. Document decisions
+6. Record test results
 
 ### Closing Session
-1. Summarize changes
-2. List next steps
-3. Update backlog
-4. Link new docs
+1. Run session manager:
+   ```bash
+   python chat_session_manager.py end
+   ```
+
+2. Update:
+   - Summary of changes
+   - Next steps
+   - Backlog items
+   - Documentation
+
+3. Verify:
+   - All changes committed
+   - Tests passing
+   - Documentation updated
+   - No sensitive data
 
 ---
 
 ## Related Documentation
-- Parent: `../README.md` - Documentation root
-- `../templates/session.md` - Session template
-- `../dev-checklist.md` - Development procedures
+- [Development Session Checklist](../dev-checklist.md) - Development procedures
+- [AI Guidelines](../ai-guidelines.md) - AI development guidelines
+- [Session Workflow Guide](../session-workflow.md) - Workflow examples
 
 ## Version History
+- 1.0.2: Added comprehensive session structure, expanded guidelines, clarified authoritative status
 - 1.0.1: Added quick reference, improved workflows
 - 1.0.0: Initial session log guide

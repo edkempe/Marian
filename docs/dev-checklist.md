@@ -1,14 +1,15 @@
 # Development Session Checklists
 
-**Version:** 1.0.3
+**Version:** 1.0.4
 **Status:** Authoritative source for all development session procedures
 
-> **IMPORTANT**: This document is the authoritative source for development session procedures. All other documentation provides supporting details and context. This checklist must be followed for all development sessions.
+> **IMPORTANT**: This document is the authoritative source for development session procedures. For session log standards and procedures, see [Session Logs Guide](session_logs/README.md). All other documentation provides supporting details and context.
 
 ## Related Documentation
 
 ### Core Documents
 - This checklist (`dev-checklist.md`) - Authoritative source for session procedures
+- [Session Logs Guide](session_logs/README.md) - Authoritative source for session log standards
 - [AI Guidelines](ai-guidelines.md) - AI-specific development guidelines
 - [Session Workflow Guide](session-workflow.md) - Detailed workflow examples
 - [Session Logs Guide](session_logs/README.md) - Session logging standards
@@ -44,7 +45,7 @@
 - [ ] Check Python version matches requirements (3.12.8+)
 
 ### 3. Session Documentation
-- [ ] Create or update session log: `docs/session_logs/session_log_YYYY-MM-DD.md`
+- [ ] Follow [Session Logs Guide](session_logs/README.md) for all session logging
 - [ ] Document session objectives
 - [ ] Start running log with timestamps
 - [ ] Reference relevant `docs/backlog.md` items being worked on
@@ -111,6 +112,7 @@
 - [ ] Verify no sensitive data in logs or temporary files
 
 ## Version History
+- 1.0.4: Update version, clarify documentation hierarchy, point to session_logs/README.md as authoritative for session logging
 - 1.0.3: Update version, add clear references to all related docs, organize documentation into Core and Supporting categories
 - 1.0.2: Add review of previous session logs to initial setup
 - 1.0.1: Remove NEXT_SESSION.md references, strengthen backlog integration

@@ -1,12 +1,13 @@
 # AI Guidelines and Session Management
 
-**Version:** 1.0.1
+**Version:** 1.0.2
 **Status:** Supporting documentation for AI development procedures
 
-> **Documentation Role**: This document provides AI-specific guidelines and procedures. For authoritative session procedures, see [Development Session Checklist](dev-checklist.md). For session log standards, see [Session Logs Guide](session_logs/README.md).
+> **Documentation Role**: This document provides AI-specific guidelines and procedures. For authoritative session procedures, see [Development Session Checklist](dev-checklist.md). For authoritative session log standards, see [Session Logs Guide](session_logs/README.md).
 
 ## Related Documentation
 - [Development Session Checklist](dev-checklist.md) - Authoritative source for all development procedures
+- [Session Logs Guide](session_logs/README.md) - Authoritative source for session log standards
 - [Session Workflow Guide](session-workflow.md) - Detailed workflow examples and context
 - [Session Logs Guide](session_logs/README.md) - Session logging standards
 
@@ -41,7 +42,7 @@
 - Review all changes for consistency
 
 ### Session Documentation
-For specific details on session logs, including:
+Follow the [Session Logs Guide](session_logs/README.md) for all session logging requirements:
 - Naming conventions
 - Required structure
 - Templates
@@ -122,42 +123,18 @@ See: `session_logs/README.md`
 ### File Organization
 ```
 docs/
-├── sessions/
-│   ├── YYYY-MM-DD-HH-MM.md  # Current session
-│   └── README.md            # Session log index
-├── backlog.md              # Task tracking
-└── *.md                    # Technical documentation
+├── session_logs/
+│   ├── session_log_YYYY-MM-DD.md  # Daily session log
+│   └── README.md                  # Session log standards
+├── backlog.md                     # Task tracking
+└── *.md                          # Technical documentation
 ```
 
 ### Session Log Template
-```markdown
-# Session YYYY-MM-DD-HH-MM
-
-## Focus
-[Session objectives]
-
-## Running Log
-- HH:MM - Session started
-- HH:MM - [Action/decision]
-
-## Accomplished
-[Work completed]
-
-## Decisions
-[Key decisions]
-
-## Follow-up Tasks
-[New backlog items]
-```
+See [Session Logs Guide](session_logs/README.md) for the authoritative template.
 
 ### Task Template
-```markdown
-- [ ] Task Name (From: Session YYYY-MM-DD)
-  - Context: [Background]
-  - Priority: [Level]
-  - Dependencies: [Requirements]
-  - Added: YYYY-MM-DD
-```
+See [Development Session Checklist](dev-checklist.md) for the authoritative task format.
 
 ### Documentation Guidelines
 - Keep README.md high-level and user-focused
@@ -170,20 +147,7 @@ docs/
 ## Task Management
 
 ### Backlog Structure
-```markdown
-# Backlog
-
-## Immediate Priority
-- [ ] Task A (From: Session YYYY-MM-DD)
-  - Context: [Direct follow-up from previous work]
-  - Priority: [Immediate/High/Medium/Low]
-  - Dependencies: [Other tasks/requirements]
-
-## High Priority
-- [ ] Task B
-  - Context: [Background information]
-  - Added: YYYY-MM-DD
-```
+See [Development Session Checklist](dev-checklist.md) for the authoritative backlog format.
 
 ### Task Management Guidelines
 - Add new tasks with clear context
