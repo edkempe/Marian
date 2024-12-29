@@ -2,7 +2,7 @@
 
 **Version:** 1.0.1  
 **Status:** Authoritative  
-**Template:** [Archiving Guide](/docs/templates/ARCHIVING.md)
+**Template:** See [../templates/ARCHIVING.md](../templates/ARCHIVING.md) for archiving guidelines.
 
 > Archive of superseded documentation files, maintaining project history while keeping active documentation clear.
 

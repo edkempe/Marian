@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Status:** Authoritative  
-**Template:** [Archiving Guide](/docs/templates/ARCHIVING.md)
+**Template:** [../../templates/ARCHIVING.md](../../templates/ARCHIVING.md)
 
 > Archive of superseded Architecture Decision Records (ADRs), maintaining decision history while keeping active ADRs clear.
 

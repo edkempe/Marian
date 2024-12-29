@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Status:** Authoritative  
-**Template:** [Archiving Guide](/docs/templates/ARCHIVING.md)
+**Template:** [../../docs/templates/ARCHIVING.md](../../docs/templates/ARCHIVING.md)
 
 > Archive of superseded configuration files, maintaining configuration history while keeping active settings clear.
 
