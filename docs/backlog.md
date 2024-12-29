@@ -2,6 +2,30 @@
 
 **Version:** 1.0.0
 **Status:** Source of truth for project tasks and priorities
+**Note:** Prototype and experimental features have been moved to [backlog_prototypes.md](./backlog_prototypes.md)
+
+## Imported Libraries and Dependencies
+
+### Current Dependencies
+- **anthropic**: Anthropic API integration for Claude
+- **tenacity**: Retry logic for API calls (implemented)
+- **python-dotenv**: Environment variable management
+- **google-api-python-client**: Gmail API integration
+- **google-auth-oauthlib**: Google OAuth authentication
+- **google-auth-httplib2**: Google HTTP client library
+- **sqlalchemy**: Database ORM and management
+- **pytest**: Testing framework
+- **pytest-cov**: Test coverage reporting
+- **black**: Code formatting
+- **isort**: Import sorting
+- **mypy**: Static type checking
+- **ruff**: Fast Python linter
+
+### Planned Dependencies
+- **pydantic**: Data validation and settings management
+- **alembic**: Database migration management
+- **structlog**: Structured logging
+- **prometheus-client**: Metrics and monitoring
 
 ## Backlog Notes
 **Last Review**: 2024-12-29
@@ -104,6 +128,32 @@ Note: The identified duplicates should be consolidated during the next backlog c
      - Cross-references are valid
      - HTML reports show no warnings
 
+5. [ ] Standardize Path and File Operations
+   - Status: Not Started
+   - Priority: High
+   - Description: Refactor codebase to use consistent path and file operation libraries
+   - Dependencies: None
+   - Estimated Time: 2-3 sessions
+   - Subtasks:
+     - [ ] Audit current usage of os.path, open(), and file operations
+     - [ ] Convert file path operations to pathlib.Path
+     - [ ] Convert file operations to use shutil where appropriate
+     - [ ] Update documentation to reflect standardized approach
+     - [ ] Add utility functions for common file operations
+   - Files Needing Updates:
+     - app_email_self_log.py: file writing
+     - asset_catalog_service.py: path normalization
+     - scripts/init_db.py: path handling
+     - scripts/generate_report.py: file operations
+     - scripts/populate_asset_catalog.py: file operations
+     - tests/: multiple test files with file operations
+   - Success Criteria:
+     - All file paths use pathlib.Path
+     - File operations use appropriate shutil functions
+     - Consistent error handling across file operations
+     - Updated documentation reflecting best practices
+     - All tests pass with new implementations
+
 ### Schema Validation and Testing
 **Status**: In Progress
 **Priority**: Highest
@@ -126,47 +176,6 @@ Note: The identified duplicates should be consolidated during the next backlog c
    - Update documentation
    - Test CC/BCC handling in email analysis
    - Verify CC/BCC display in reports
-
-### Email Processing Prototype
-**Status**: In Progress
-**Priority**: Highest
-**Workstream**: Email Processing
-**Description**: Implement a working prototype for email retrieval and processing workflow.
-
-#### Technical Details
-1. Email Retrieval
-   - Implement Gmail API connection
-   - Add batch retrieval of messages
-   - Handle rate limiting
-   - Store raw messages in database
-
-2. Email Processing
-   - Parse email content and metadata
-   - Extract key fields (subject, sender, date, body)
-   - Handle different email formats
-   - Process attachments flag
-   - Basic error handling
-
-3. Testing & Validation
-   - Add integration tests
-   - Test with various email formats
-   - Validate data storage
-   - Monitor API usage
-
-#### Success Criteria
-- Can retrieve emails from Gmail
-- Successfully stores in database
-- Handles common email formats
-- Basic error handling in place
-- Reasonable performance with batches
-
-#### Implementation Steps
-1. Complete Gmail API integration
-2. Implement message retrieval
-3. Add database storage
-4. Add basic processing
-5. Add error handling
-6. Test with real data
 
 ### Email Processing Improvements
 **Status**: In Progress
@@ -295,49 +304,6 @@ Note: The identified duplicates should be consolidated during the next backlog c
 - Consistent schema design
 - Proper data type usage
 - Optimized performance
-
-### Code Quality and Standards
-**Status**: Planned
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Implement comprehensive code quality tools and standards
-
-#### Technical Details
-1. Code Formatting and Style
-   - [ ] Implement automated code formatting (black)
-   - [ ] Set up linting with Flake8
-   - [ ] Add pre-commit hooks
-   - [ ] Create .style.yapf configuration
-
-2. Static Analysis
-   - [ ] Implement mypy for type checking
-   - [ ] Add type hints to critical paths
-   - [ ] Set up CI/CD integration
-   - [ ] Configure error reporting
-
-3. Data Validation
-   - [ ] Add GmailMessageValidator for API responses
-   - [ ] Add GmailHeaderValidator for message headers
-   - [ ] Implement type validation for all fields
-   - [ ] Add size limits and content validation
-
-#### Implementation Strategy
-1. Tool Selection and Setup
-   - Choose between black (strict) vs flake8 (flexible)
-   - Configure mypy for gradual typing
-   - Set up pre-commit hooks
-
-2. Adoption Plan
-   - Start with new code
-   - Gradually add to existing code
-   - Focus on critical paths
-   - Add CI/CD integration
-
-#### Success Criteria
-- Consistent code style
-- Strong type safety
-- Automated validation
-- Clear error reporting
 
 ### Setup Script Creation
 **Status**: Planned  
@@ -637,6 +603,7 @@ class DatabaseSessions:
   - [ ] Update test database setup
   - [ ] Fix column name mismatches
   - [ ] Update mock data and API responses
+
 - [ ] Improve test data management
   - [ ] Create reusable test fixtures
   - [ ] Add database setup helpers
@@ -665,56 +632,6 @@ class DatabaseSessions:
   - Update lib_gmail.py to use validators
   - Add tests for validation
   - Priority: High
-
-### Code Quality Improvements
-**Status**: Planned
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Evaluate and implement code quality tools
-
-#### Code Quality Tool Options
-
-1. **Code Formatting**
-Consider implementing automated code formatting using black:
-- Consistent code style across the project
-- Eliminates style debates
-- Automated formatting during pre-commit
-- Most opinionated option, least configuration needed
-
-2. **Linting with Flake8**
-Alternative or complement to black:
-- Combines PyFlakes, pycodestyle, and Mccabe
-- More flexible than black (configurable rules)
-- Catches logical errors (unused imports, undefined variables)
-- Style checking (PEP 8 compliance)
-- Code complexity checks
-- Can be used alongside black or as an alternative
-
-3. **Static Type Checking**
-Consider implementing mypy for type checking:
-- Catch type-related errors before runtime
-- Better code documentation through type hints
-- Improved IDE support
-- Can be used with either formatting solution
-
-**Implementation Considerations**:
-1. Tool Selection:
-   - Choose between black (strict) vs flake8 (flexible) for style
-   - Can use flake8 with black if only using it for logical errors
-   - mypy is complementary to either choice
-
-2. Adoption Strategy:
-   - Start with new code only
-   - Gradually add to existing code
-   - Focus on critical paths first
-   - Add CI/CD integration later
-
-3. Dependencies:
-   - Complete code organization improvements first
-   - Align with necessary and sufficient principle
-   - Consider impact on development velocity
-
-**Session Reference**: 2024-12-25-10-02
 
 ### Implement 3-2-1 Backup Strategy
 **Status**: Planned
@@ -816,9 +733,6 @@ Consider implementing mypy for type checking:
 
 ### Catalog System
 The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat.
-
-### Email Processing
-{{ ... }}
 
 ### Catalog System Core Components
 **Status**: In Progress
@@ -1089,606 +1003,11 @@ The Catalog system is a dedicated sub-domain for managing and organizing informa
 
 **Session Reference**: 2024-12-25-08-57
 
-## Prototypes Status and Plans
-
-### Active Prototypes
-- [ ] proto_gmail_operations.py
-  - Status: Active, needed for future features
-  - Contains: Email creation, sending, draft management
-  - Next steps: Integrate into main app when email sending is needed
-  - Priority: Medium
-
-- [ ] proto_google_keep.py
-  - Status: Active, for future integration
-  - Contains: Google Keep API authentication and basic operations
-  - Next steps: Use as foundation for Keep integration
-  - Priority: Low
-
-- [ ] proto_inspect_prompts.py
-  - Status: Active, needs update
-  - Contains: Prompt performance monitoring and inspection
-  - Next steps: Update to work with new storage system
-  - Priority: Medium
-  - See monitoring section for detailed plans
-
-### Future Features from Prototypes
-- [ ] Prompt Version Management (from proto_prompt_manager.py)
-  - Version history tracking with active/inactive states
-  - Script/purpose/task organization
-  - Performance metrics tracking
-  - JSON schema validation for prompts
-  - Priority: Medium
-  - Dependencies: Updated storage system
-
-- [ ] Gmail Operations Integration
-  - Move operations from proto_gmail_operations.py to main app
-  - Features to add:
-    - Email composition and sending
-    - Draft management
-    - Rich text email support
-  - Priority: Medium
-  - Dependencies: None
-
-- [ ] Google Keep Integration
-  - Use proto_google_keep.py as foundation
-  - Features to add:
-    - Note creation and management
-    - Label synchronization
-    - Content search
-  - Priority: Low
-  - Dependencies: None
-
-## Medium Priority
-
-### Process Improvements
-**Status**: Planned
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Improve development workflow processes
-
-#### Session Types Classification
-Consider implementing different session types to optimize the development workflow:
-
-1. **Full Sessions**
-   - Major code changes
-   - Database changes
-   - New features
-   - Complex refactoring
-
-2. **Light Sessions**
-   - Documentation updates
-   - Minor bug fixes
-   - Simple refactoring
-   - Configuration changes
-
-3. **Emergency Sessions**
-   - Critical bug fixes
-   - Security patches
-   - Production issues
-
-Benefits:
-- More efficient use of development time
-- Clearer expectations for each type of change
-- Better handling of urgent issues
-
-**Session Reference**: 2024-12-25-09-51
-
-### Documentation Updates
-**Status**: Pending
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Update documentation to reflect recent schema changes.
-
-#### Areas to Update
-1. API Documentation
-   - Document new field names
-   - Update examples
-   - Add timezone handling guidelines
-
-2. Database Schema
-   - Document new schema
-   - Add migration guidelines
-   - Update field descriptions
-
-### Documentation Improvements
-**Status**: In Progress
-**Priority**: Medium
-**Workstream**: Program Management
-**Added**: 2024-12-24
-**Session**: 2024-12-24-22-42
-
-#### Tasks
-- [ ] Review Data Storage and Schema section for potential consolidation
-  - Context: Follow-up from documentation cleanup
-  - Consider merging implementation details with storage considerations
-- [ ] Add implementation examples for key features
-  - Context: Make documentation more practical
-  - Include code snippets for common operations
-- [ ] Review other documentation files for duplicate sections
-  - Context: Continue documentation cleanup effort
-  - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
-
-### Code Organization and Technical Debt
-**Status**: In Progress
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Address technical debt and improve code organization.
-
-#### Technical Details
-1. Review and Organize Prototype Files
-- **Status**: Not Started
-- **Priority**: Medium
-- **Description**: Review prototype files to determine which are still needed for future development and which are obsolete.
-- **Files to Review**:
-  - `proto_gmail_operations.py`: Gmail API operations prototypes
-  - `proto_google_keep.py`: Google Keep integration prototype
-  - `proto_inspect_prompts.py`: Prompt inspection utilities
-  - `proto_prompt_manager.py`: Prompt management system prototype
-  - `proto_read_gmail.py`: Gmail reading functionality prototype
-- **Action Items**:
-  - [ ] Review each file's functionality and current usage
-  - [ ] Identify which features have already been implemented in production code
-  - [ ] Document which prototypes are still needed for future features
-  - [ ] Create tasks for implementing needed features
-  - [ ] Archive obsolete prototypes
-- **Dependencies**: None
-- **Notes**: 
-  - Keep files that will be useful for upcoming features
-  - Document any valuable patterns or approaches before archiving files
-  - Consider moving active prototypes to a dedicated prototypes/ directory
-
-### Documentation and Process Management
-**Status**: New
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Improve documentation management and session workflows
-
-#### Session Management Improvements
-- [ ] Standardize Session Types
-  - Define criteria for Full, Light, and Emergency sessions
-  - Document requirements for each session type
-  - Create templates for each type
-  - Add validation checks for session type compliance
-
-- [ ] Session Log Integration
-  - [ ] Create automated validation for session log format
-  - [ ] Develop tools for extracting action items to backlog
-  - [ ] Implement cross-referencing between sessions and backlog
-  - [ ] Add session summary generation
-
-#### Documentation Management
-- [ ] Version Control and Review Process
-  - [ ] Establish version tracking for documentation files
-  - [ ] Define documentation review cycles
-  - [ ] Create changelog requirements
-  - [ ] Set up automated consistency checks
-
-- [ ] Archival Procedures
-  - [ ] Define standard process for deprecating files
-  - [ ] Create archival checklist
-  - [ ] Implement archival tracking system
-  - [ ] Add validation for proper archival execution
-
-#### Backlog Management
-- [ ] Create backlog item lifecycle process
-  - [ ] Define status transitions
-  - [ ] Add priority adjustment guidelines
-  - [ ] Create workstream assignment rules
-  - [ ] Implement regular backlog review schedule
-
-### Testing Infrastructure
-**Status**: New
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Enhance testing coverage and reporting
-
-#### Test Coverage Improvements
-- [ ] Implement test coverage reporting
-  - [ ] Set up coverage measurement tools
-  - [ ] Define coverage targets by component
-  - [ ] Create coverage report templates
-  - [ ] Add coverage tracking over time
-
-#### Test Expansion
-- [ ] Anthropic Library Testing
-  - [ ] Create comprehensive test plan for test_anthropic_lib.py
-  - [ ] Add integration tests
-  - [ ] Implement mock responses
-  - [ ] Add error condition testing
-
-- [ ] JSON Processing Testing
-  - [ ] Expand test_json_extraction.py coverage
-  - [ ] Add edge case tests
-  - [ ] Implement performance tests
-  - [ ] Add validation testing
-
-### Process Automation
-**Status**: New
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Automate routine development and documentation tasks
-
-#### Documentation Automation
-- [ ] Create automated documentation checks
-  - [ ] Link validation
-  - [ ] Format consistency
-  - [ ] File naming conventions
-  - [ ] Cross-reference verification
-
-#### Session Management Automation
-- [ ] Implement session tools
-  - [ ] Session creation automation
-  - [ ] Backlog item extraction
-  - [ ] Action item tracking
-  - [ ] Session summary generation
-
-#### Metrics and Reporting
-- [ ] Add development metrics tracking
-  - [ ] Session productivity metrics
-  - [ ] Documentation health metrics
-  - [ ] Backlog progress tracking
-  - [ ] Test coverage trends
-
-### Semantic Search Improvements
-
-#### 1. Improve Semantic Ranking for Advanced vs Basic Content
-**Priority**: High  
-**Complexity**: Medium  
-**Impact**: Better search results for tutorial/guide content  
-**Tag**: semantic-ranking
-
-**Problem**:
-Current semantic search doesn't reliably rank advanced content higher than basic content for the same topic.
-
-**Example**:
-- Query: "python class tutorial"
-- Expected: "Python OOP Guide" should rank higher than "Python Beginner's Class"
-
-**Attempted Solution**:
-- Used prompt engineering to guide Claude's scoring
-- Added explicit scoring guidelines in the prompt
-- Added examples of expected ranking
-
-**Key Learnings**:
-1. Simple prompt engineering isn't sufficient for reliable ranking
-2. Need explicit content level metadata
-3. May need separate scoring logic for tutorials/guides
-
-**Next Steps**:
-1. Add content level metadata to `CatalogItem` (e.g., "beginner", "advanced")
-2. Implement separate scoring logic for tutorial content
-3. Consider weighted scoring combining semantic and metadata factors
-
-#### 2. Improve Short-form Content Matching
-**Priority**: Medium  
-**Complexity**: Low  
-**Impact**: Better handling of abbreviations and compound concepts  
-**Tag**: semantic-short-form
-
-**Problem**:
-Short-form matching isn't reliably handling compound concepts and technical abbreviations.
-
-**Example**:
-- Query: "web api endpoints" should match item with title "api"
-- Current behavior: No match found
-
-**Potential Solutions**:
-1. Add special handling for common technical abbreviations
-2. Maintain a mapping of compound concepts to their components
-3. Consider token-based matching for short queries
-
-**Next Steps**:
-1. Create a mapping of common technical abbreviations and their expansions
-2. Implement token-based matching for compound queries
-3. Add test cases for common technical abbreviations
-
-### Chat Interface Implementation
-**Status**: New
-**Priority**: High
-**Workstream**: Catalog/Librarian
-**Description**: Implement the basic chat interface for the catalog system
-
-#### Core Components
-1. Natural Language Processing
-   - [ ] Implement intent detection
-     - Identify search queries
-     - Detect add/update/delete operations
-     - Handle system commands
-     - Parse complex queries
-   - [ ] Add entity extraction
-     - Extract dates and time ranges
-     - Identify tags and categories
-     - Parse item attributes
-     - Handle multiple entities per query
-
-2. Query Processing
-   - [ ] Enhance semantic search
-     - Implement relevance ranking
-     - Add fuzzy matching
-     - Handle synonyms and related terms
-     - Support compound queries
-   - [ ] Add result filtering
-     - Filter by date ranges
-     - Filter by tags
-     - Filter by status
-     - Support multiple filters
-
-3. Response Generation
-   - [ ] Implement structured responses
-     - Create consistent response format
-     - Add support for rich text
-     - Include metadata in responses
-     - Handle multi-item responses
-   - [ ] Add error handling
-     - Create user-friendly error messages
-     - Add suggestion for corrections
-     - Handle edge cases gracefully
-     - Provide clear next steps
-
-4. User Interface
-   - [ ] Enhance command-line interface
-     - Add command history
-     - Implement tab completion
-     - Add syntax highlighting
-     - Support multiline input
-   - [ ] Improve user experience
-     - Add progress indicators
-     - Implement pagination
-     - Add help system
-     - Support command aliases
-
-#### Integration Points
-1. Database Integration
-   - [ ] Optimize queries
-   - [ ] Add connection pooling
-   - [ ] Implement caching
-   - [ ] Add transaction management
-
-2. Logging System
-   - [ ] Add structured logging
-   - [ ] Implement query logging
-   - [ ] Add performance metrics
-   - [ ] Create debug logging
-
-3. Claude AI Integration
-   - [ ] Optimize prompt engineering
-   - [ ] Add response caching
-   - [ ] Implement rate limiting
-   - [ ] Add fallback handling
-
-#### Success Criteria
-- Natural language queries are correctly interpreted
-- Search results are relevant and ranked appropriately
-- Response times are under 2 seconds for most operations
-- Error messages are clear and actionable
-- User interface is intuitive and responsive
-
-#### Dependencies
-- Claude AI API access
-- Database schema implementation
-- Logging system setup
-- Configuration management
-
-#### Implementation Order
-1. Basic query processing
-2. Simple response generation
-3. Core UI improvements
-4. Enhanced NLP features
-5. Advanced filtering
-6. Performance optimizations
-
-### Critical Tasks
-
-### Chat Log Retention System [HIGH PRIORITY]
-**Due: 2024-01-08**
-The chat logs are a critical system component that require careful management:
-
-1. Storage Requirements Analysis:
-   - [ ] Analyze chat log growth rate over 2 weeks
-   - [ ] Calculate average log entry size
-   - [ ] Project storage needs for 1 year
-   - [ ] Define retention period requirements
-
-2. Retention Policy Implementation:
-   - [ ] Design tiered storage system:
-     - Hot storage: Recent logs (last 30 days)
-     - Warm storage: Medium-term logs (last 90 days)
-     - Cold storage: Archive (older than 90 days)
-   - [ ] Implement automatic archival system
-   - [ ] Add compression for archived logs
-   - [ ] Create cleanup policy for old archives
-
-3. Monitoring and Alerts:
-   - [ ] Add storage usage monitoring
-   - [ ] Implement early warning system for storage limits
-   - [ ] Create dashboard for log statistics
-   - [ ] Set up alerts for failed archival operations
-
-4. Backup Integration:
-   - [ ] Include chat logs in regular backup schedule
-   - [ ] Verify backup integrity
-   - [ ] Test restoration procedures
-   - [ ] Document recovery process
-
-### Immediate Actions
-- [ ] **URGENT: Review chat log storage on 2024-01-08**
-  - Check storage usage
-  - Analyze growth rate
-  - Assess immediate storage needs
-  - Report findings in session log
-
-### Testing Framework
-- [ ] **CRITICAL: Remove Mock Email Processor and Simplify Testing**
-  - Current Usage:
-    - `utils/util_test_data.py` contains mock data and processor
-    - Used only in `tests/test_version_tracking.py`
-    - Provides `EmailProcessor`, `load_test_fixtures`, `generate_test_data`
-  - Required Changes:
-    - Remove `utils/util_test_data.py` entirely
-    - Update `test_version_tracking.py` to use Gmail API test mode
-    - Replace mock `EmailProcessor` with real email processing
-    - Remove test data generation in favor of real test emails
-  - Benefits:
-    - More reliable tests that match production behavior
-    - Simpler test setup and maintenance
-    - Better test coverage of actual functionality
-  - Impact: Improves test reliability and maintainability
-  - Dependencies: None
-  - Estimated time: 1-2 days
-
-### Email Processing
-{{ ... }}
-
-### Documentation
-- [ ] **Standardize Session File Naming**
-  - Current inconsistent formats:
-    - `session_YYYYMMDD_HHMM.md`
-    - `YYYY-MM-DD-HH-MM.md`
-    - `YYYYMMDD_HHMM.md`
-  - Standardize on format: `session_YYYYMMDD_HHMM.md`
-  - Rename existing files to match standard
-  - Update SESSION_TEMPLATE.md to document naming convention
-  - Impact: Improves organization and searchability
-  - Dependencies: None
-  - Estimated time: 30 minutes
-
-### Email Processing
-{{ ... }}
-
-### Infrastructure
-- [ ] **CRITICAL: Implement Daily Backup System**
-  - Create automated backup script for:
-    - All database files (*.db)
-    - Email analysis data
-    - Configuration files
-  - Features needed:
-    - Daily scheduled runs
-    - Compression and encryption
-    - Version retention policy
-    - Error notification system
-    - Backup verification
-  - Store backups in dedicated backup/ directory
-  - Add backup status to monitoring
-  - Impact: Prevents data loss and enables recovery
-  - Dependencies: None
-  - Estimated time: 1 day
-
-### Monitoring and Debugging
-- [ ] Add logging for email processing failures
-- [ ] Create dashboard for system health metrics
-- [ ] Add monitoring for API rate limits
-- [ ] Update proto_inspect_prompts.py to work with new prompt storage system
-  - Currently uses SQLite but should be updated to current storage
-  - Keep existing functionality:
-    - Tabulated overview of all prompts
-    - Version history tracking
-    - Usage statistics (times used, confidence, response times)
-    - Failure rate monitoring
-  - Add new features:
-    - Export/import of prompt configurations
-    - Performance comparison between prompt versions
-    - Integration with logging system
-
-### Documentation Review Tasks
+## Documentation Review Tasks
 **Status**: New
 **Priority**: High
 **Workstream**: Program Management
 **Description**: Review and improve documentation for clarity, accuracy, and completeness.
-
-#### Technical Details
-1. **Documentation Review**
-   - Review all documentation files for clarity and accuracy
-   - Check for outdated information and update accordingly
-   - Ensure consistency in formatting and style
-
-2. **Documentation Improvements**
-   - Add implementation examples for key features
-   - Include code snippets for common operations
-   - Review other documentation files for duplicate sections
-   - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
-
-3. **Documentation Validation**
-   - Validate documentation against current codebase
-   - Ensure documentation covers all critical components
-   - Add documentation for new features and changes
-
-#### Success Criteria
-- All documentation reviewed and updated
-- No outdated information
-- Consistent formatting and style
-- Clear and accurate documentation
-- Complete coverage of critical components
-
-#### Dependencies
-- None
-
-#### Notes
-- Review all documentation files
-- Update documentation to reflect recent changes
-- Ensure documentation is accurate and complete
-- Follow documentation guidelines and principles
-
-### Code Organization and Technical Debt
-**Status**: In Progress
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Address technical debt and improve code organization.
-
-#### Technical Details
-1. Review and Organize Prototype Files
-- **Status**: Not Started
-- **Priority**: Medium
-- **Description**: Review prototype files to determine which are still needed for future development and which are obsolete.
-- **Files to Review**:
-  - `proto_gmail_operations.py`: Gmail API operations prototypes
-  - `proto_google_keep.py`: Google Keep integration prototype
-  - `proto_inspect_prompts.py`: Prompt inspection utilities
-  - `proto_prompt_manager.py`: Prompt management system prototype
-  - `proto_read_gmail.py`: Gmail reading functionality prototype
-- **Action Items**:
-  - [ ] Review each file's functionality and current usage
-  - [ ] Identify which features have already been implemented in production code
-  - [ ] Document which prototypes are still needed for future features
-  - [ ] Create tasks for implementing needed features
-  - [ ] Archive obsolete prototypes
-- **Dependencies**: None
-- **Notes**: 
-  - Keep files that will be useful for upcoming features
-  - Document any valuable patterns or approaches before archiving files
-  - Consider moving active prototypes to a dedicated prototypes/ directory
-
-### Documentation Improvements
-**Status**: Not Started
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Follow-up tasks from documentation reorganization.
-
-#### Tasks
-1. Documentation Cleanup
-   - [ ] Review remaining files for old filename references
-   - [ ] Check for duplicate content across documentation
-   - [ ] Update README.md with new documentation structure
-   - From: Session 2024-12-27
-   - Context: After renaming documentation files, need to ensure consistency
-
-2. Session Management Updates
-   - [ ] Update chat_session_manager.py for new format
-   - [ ] Implement standardized session templates
-   - [ ] Add timezone handling to timestamps
-   - From: Session 2024-12-27
-   - Context: Align with new guidelines in ai-guidelines.md
-
-3. Process Improvements
-   - [ ] Set up automated consistency checks
-   - [ ] Define documentation review cycles
-   - [ ] Create changelog requirements
-   - From: Session 2024-12-27
-   - Context: Ensure long-term documentation quality
-
-### Documentation Review and Updates
-**Status**: Active
-**Focus**: Documentation quality and consistency
-**Current Priority**: Testing guide updates
 
 #### Tasks
 - [ ] Review archived testing guides
@@ -1723,6 +1042,7 @@ The chat logs are a critical system component that require careful management:
 
 ## Medium Priority
 
+
 ### Process Improvements
 **Status**: Planned
 **Priority**: Medium
@@ -1772,118 +1092,6 @@ Benefits:
    - Document new schema
    - Add migration guidelines
    - Update field descriptions
-
-### Documentation Improvements
-**Status**: In Progress
-**Priority**: Medium
-**Workstream**: Program Management
-**Added**: 2024-12-24
-**Session**: 2024-12-24-22-42
-
-#### Tasks
-- [ ] Review Data Storage and Schema section for potential consolidation
-  - Context: Follow-up from documentation cleanup
-  - Consider merging implementation details with storage considerations
-- [ ] Add implementation examples for key features
-  - Context: Make documentation more practical
-  - Include code snippets for common operations
-- [ ] Review other documentation files for duplicate sections
-  - Context: Continue documentation cleanup effort
-  - Apply same principles used in MARIAN_DESIGN_AND_DECISIONS.md
-
-### Code Organization and Technical Debt
-**Status**: In Progress
-**Priority**: Medium
-**Workstream**: Program Management
-**Description**: Address technical debt and improve code organization.
-
-#### Technical Details
-1. Review and Organize Prototype Files
-- **Status**: Not Started
-- **Priority**: Medium
-- **Description**: Review prototype files to determine which are still needed for future development and which are obsolete.
-- **Files to Review**:
-  - `proto_gmail_operations.py`: Gmail API operations prototypes
-  - `proto_google_keep.py`: Google Keep integration prototype
-  - `proto_inspect_prompts.py`: Prompt inspection utilities
-  - `proto_prompt_manager.py`: Prompt management system prototype
-  - `proto_read_gmail.py`: Gmail reading functionality prototype
-- **Action Items**:
-  - [ ] Review each file's functionality and current usage
-  - [ ] Identify which features have already been implemented in production code
-  - [ ] Document which prototypes are still needed for future features
-  - [ ] Create tasks for implementing needed features
-  - [ ] Archive obsolete prototypes
-- **Dependencies**: None
-- **Notes**: 
-  - Keep files that will be useful for upcoming features
-  - Document any valuable patterns or approaches before archiving files
-  - Consider moving active prototypes to a dedicated prototypes/ directory
-
-### Documentation and Process Management
-**Status**: New
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Improve documentation management and session workflows
-
-#### Session Management Improvements
-- [ ] Standardize Session Types
-  - Define criteria for Full, Light, and Emergency sessions
-  - Document requirements for each session type
-  - Create templates for each type
-  - Add validation checks for session type compliance
-
-- [ ] Session Log Integration
-  - [ ] Create automated validation for session log format
-  - [ ] Develop tools for extracting action items to backlog
-  - [ ] Implement cross-referencing between sessions and backlog
-  - [ ] Add session summary generation
-
-#### Documentation Management
-- [ ] Version Control and Review Process
-  - [ ] Establish version tracking for documentation files
-  - [ ] Define documentation review cycles
-  - [ ] Create changelog requirements
-  - [ ] Set up automated consistency checks
-
-- [ ] Archival Procedures
-  - [ ] Define standard process for deprecating files
-  - [ ] Create archival checklist
-  - [ ] Implement archival tracking system
-  - [ ] Add validation for proper archival execution
-
-#### Backlog Management
-- [ ] Create backlog item lifecycle process
-  - [ ] Define status transitions
-  - [ ] Add priority adjustment guidelines
-  - [ ] Create workstream assignment rules
-  - [ ] Implement regular backlog review schedule
-
-### Testing Infrastructure
-**Status**: New
-**Priority**: High
-**Workstream**: Program Management
-**Description**: Enhance testing coverage and reporting
-
-#### Test Coverage Improvements
-- [ ] Implement test coverage reporting
-  - [ ] Set up coverage measurement tools
-  - [ ] Define coverage targets by component
-  - [ ] Create coverage report templates
-  - [ ] Add coverage tracking over time
-
-#### Test Expansion
-- [ ] Anthropic Library Testing
-  - [ ] Create comprehensive test plan for test_anthropic_lib.py
-  - [ ] Add integration tests
-  - [ ] Implement mock responses
-  - [ ] Add error condition testing
-
-- [ ] JSON Processing Testing
-  - [ ] Expand test_json_extraction.py coverage
-  - [ ] Add edge case tests
-  - [ ] Implement performance tests
-  - [ ] Add validation testing
 
 ### Process Automation
 **Status**: New

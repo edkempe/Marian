@@ -50,7 +50,7 @@ def verify_api_connection():
 
 def test_email_analysis(verify_api_connection):
     """Test email analysis with real API calls."""
-    analyzer = EmailAnalyzer(metrics_port=0, test_mode=True)
+    analyzer = EmailAnalyzer(test_mode=True)
     
     test_email = {
         'id': f'test_{datetime.now().timestamp()}',

@@ -16,9 +16,11 @@ def setup_env():
     """Set up test environment variables."""
     os.environ["JWT_SECRET_KEY"] = "test_secret_key"
     os.environ["ENCRYPTION_KEY"] = "test_encryption_key_must_be_32_bytes!"
+    os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"
     yield
     del os.environ["JWT_SECRET_KEY"]
     del os.environ["ENCRYPTION_KEY"]
+    del os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"]
 
 def test_password_hashing():
     """Test password hashing and verification."""

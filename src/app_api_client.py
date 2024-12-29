@@ -2,7 +2,8 @@
 
 import os
 import json
-from shared_lib.constants import DEFAULT_MODEL
+from tenacity import retry, stop_after_attempt, wait_exponential
+from shared_lib.constants import DEFAULT_MODEL, EMAIL_CONFIG
 import anthropic
 
 class APIClient:
@@ -15,6 +16,10 @@ class APIClient:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         self.client = anthropic.Anthropic(api_key=self.api_key)
     
+    @retry(
+        stop=stop_after_attempt(EMAIL_CONFIG['MAX_RETRIES']),
+        wait=wait_exponential(multiplier=EMAIL_CONFIG['RETRY_DELAY'])
+    )
     def echo_test(self):
         """Test the API connection with a simple echo request."""
         try:

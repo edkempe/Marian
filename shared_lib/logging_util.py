@@ -1,86 +1,80 @@
-"""Logging configuration for the Marian project.
+"""Utility for logging configuration and management.
 
-This module sets up structured logging with rotating file handler and consistent formatting.
-It also provides Prometheus metrics for monitoring.
+This module provides a consistent logging setup across the application.
+It configures logging with appropriate formatting and handlers.
 """
 
+import json
 import logging
 import logging.handlers
-import json
 import os
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict
-import structlog
-from prometheus_client import Counter, Histogram, start_http_server, REGISTRY
+from typing import Any, Dict, Optional
 
-from .constants import LOGGING_CONFIG
-
-# Track if metrics have been registered
-_metrics_registered = False
-
-# Prometheus metrics
-EMAIL_ANALYSIS_COUNTER = None
-API_ERROR_COUNTER = None
-VALIDATION_ERROR_COUNTER = None
-ANALYSIS_DURATION = None
-
-def register_metrics():
-    """Register Prometheus metrics if not already registered."""
-    global EMAIL_ANALYSIS_COUNTER, API_ERROR_COUNTER, VALIDATION_ERROR_COUNTER, ANALYSIS_DURATION, _metrics_registered
+def setup_logging(logger_name: str) -> logging.Logger:
+    """Set up a logger with consistent configuration.
     
-    if _metrics_registered:
-        return
+    Args:
+        logger_name: Name for the logger
         
-    # First unregister any existing metrics to avoid duplicates
-    collectors_to_remove = []
-    for collector in REGISTRY._collector_to_names:
-        collectors_to_remove.append(collector)
-    for collector in collectors_to_remove:
-        REGISTRY.unregister(collector)
+    Returns:
+        Configured logger instance
+    """
+    logger = logging.getLogger(logger_name)
+    
+    if not logger.handlers:
+        # Set up console handler
+        console = logging.StreamHandler()
+        console.setFormatter(JsonFormatter())
+        logger.addHandler(console)
         
-    EMAIL_ANALYSIS_COUNTER = Counter(
-        'email_analysis_total',
-        'Total number of email analyses performed',
-        ['status']
-    )
+        # Set default level
+        logger.setLevel(logging.INFO)
+        
+        # Don't propagate to root logger
+        logger.propagate = False
     
-    API_ERROR_COUNTER = Counter(
-        'api_error_total',
-        'Total number of API errors',
-        ['type']
-    )
-    
-    VALIDATION_ERROR_COUNTER = Counter(
-        'validation_error_total',
-        'Total number of validation errors',
-        ['field']
-    )
-    
-    ANALYSIS_DURATION = Histogram(
-        'email_analysis_duration_seconds',
-        'Time taken to analyze emails',
-        ['operation']
-    )
-    
-    _metrics_registered = True
+    return logger
 
-# Register metrics on module import
-register_metrics()
-
-# Configure structured logging
-structlog.configure(
-    processors=[
-        structlog.contextvars.merge_contextvars,
-        structlog.processors.add_log_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
-    ],
-    logger_factory=structlog.PrintLoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-structured_logger = structlog.get_logger()
+class JsonFormatter(logging.Formatter):
+    """Format log records as JSON."""
+    
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the log record as JSON.
+        
+        Args:
+            record: Log record to format
+            
+        Returns:
+            JSON formatted string
+        """
+        # Extract the log message
+        if isinstance(record.msg, str):
+            message = record.msg
+        else:
+            message = str(record.msg)
+            
+        # Build the base log entry
+        log_entry = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname.lower(),
+            "event": message
+        }
+        
+        # Add any extra fields
+        if hasattr(record, "__dict__"):
+            for key, value in record.__dict__.items():
+                if key not in ["msg", "args", "exc_info", "exc_text", "levelname", 
+                             "levelno", "pathname", "filename", "module", "stack_info",
+                             "lineno", "funcName", "created", "msecs", "relativeCreated",
+                             "thread", "threadName", "processName", "process", "message"]:
+                    log_entry[key] = value
+                    
+        # Add exception info if present
+        if record.exc_info:
+            log_entry["exception"] = self.formatException(record.exc_info)
+            
+        return json.dumps(log_entry)
 
 class TestFilter(logging.Filter):
     """Filter to mark or filter test log entries."""
@@ -101,50 +95,6 @@ class TestFormatter(logging.Formatter):
         if hasattr(record, 'is_test') and record.is_test:
             record.msg = f'[TEST] {record.msg}'
         return super().format(record)
-
-def setup_logging(name: str, log_dir: str = 'logs', is_test: bool = False) -> logging.Logger:
-    """Set up logging with both file and console handlers.
-    
-    Args:
-        name: The name of the logger, typically __name__
-        log_dir: Directory to store log files
-        is_test: Whether this logger is being used for tests
-        
-    Returns:
-        Configured logger instance
-    """
-    # Create logger
-    logger = logging.getLogger(name)
-    logger.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
-    
-    # Create logs directory if it doesn't exist
-    os.makedirs(log_dir, exist_ok=True)
-    
-    # Create rotating file handler
-    log_file = os.path.join(log_dir, LOGGING_CONFIG['LOG_FILE'])
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_file,
-        maxBytes=LOGGING_CONFIG['MAX_BYTES'],
-        backupCount=LOGGING_CONFIG['BACKUP_COUNT']
-    )
-    file_handler.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
-    
-    # Create console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(LOGGING_CONFIG['LOG_LEVEL'])
-    
-    # Create formatter
-    formatter = logging.Formatter(LOGGING_CONFIG['LOG_FORMAT'])
-    
-    # Add formatter to handlers
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    
-    # Add handlers to logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    
-    return logger
 
 def log_error(logger: logging.Logger, event: str, error: Exception, **kwargs: Any) -> None:
     """Log an error with consistent structure.
@@ -207,7 +157,6 @@ def log_performance(logger: logging.Logger, operation: str, start_time: datetime
     """
     duration = datetime.now() - start_time
     duration_seconds = duration.total_seconds()
-    ANALYSIS_DURATION.labels(operation=operation).observe(duration_seconds)
     logger.info(f"Performance: {operation} took {duration_seconds:.2f} seconds")
 
 def log_system_state(logger: logging.Logger, **kwargs: Any) -> None:
@@ -248,31 +197,3 @@ def is_test_entry(line: str) -> bool:
         True if the line is a test entry
     """
     return '[TEST]' in line
-
-def start_metrics_server(port: int = 8000) -> None:
-    """Start the Prometheus metrics server.
-    
-    Args:
-        port: Port to run the metrics server on
-    """
-    start_http_server(port)
-
-def log_api_error(error_type: str, details: Dict[str, Any]) -> None:
-    """Log an API error and increment the counter.
-    
-    Args:
-        error_type: Type of API error
-        details: Error details
-    """
-    API_ERROR_COUNTER.labels(type=error_type).inc()
-    structured_logger.error("api_error", error_type=error_type, **details)
-
-def log_validation_error(field: str, details: Dict[str, Any]) -> None:
-    """Log a validation error and increment the counter.
-    
-    Args:
-        field: Field that failed validation
-        details: Error details
-    """
-    VALIDATION_ERROR_COUNTER.labels(field=field).inc()
-    structured_logger.error("validation_error", field=field, **details)

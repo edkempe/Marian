@@ -8,6 +8,7 @@ from shared_lib.logging_util import setup_logging
 from shared_lib.anthropic_client_lib import get_anthropic_client
 from shared_lib.chat_log_util import ChatLogger
 from shared_lib.constants import CATALOG_CONFIG, API_CONFIG
+from shared_lib.file_constants import DATA_DIR
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.base import Base
@@ -17,6 +18,7 @@ import sys
 import logging
 from shared_lib.anthropic_lib import parse_claude_response
 import re
+from pathlib import Path
 
 class CatalogChat:
     """Interface for managing catalog items and tags with semantic search."""
@@ -36,7 +38,7 @@ class CatalogChat:
         
         # Initialize chat logger
         try:
-            self.chat_logger = ChatLogger(os.path.join('data', chat_log))
+            self.chat_logger = ChatLogger(str(Path(DATA_DIR) / chat_log))
         except Exception as e:
             self.test_logger.error(f"Failed to initialize chat logger: {str(e)}")
             raise RuntimeError("Chat logging is required but unavailable")

@@ -20,19 +20,18 @@ from shared_lib.gmail_lib import GmailAPI
 from shared_lib.security_util import validate_api_key, sanitize_email_content
 from shared_lib.chat_log_util import ChatLogger
 from shared_lib.constants import API_CONFIG, EMAIL_CONFIG, ERROR_MESSAGES, DEFAULT_MODEL, DATABASE_CONFIG
+from shared_lib.file_constants import LOGS_PATH, DEFAULT_CHAT_LOG
 import re
+from tenacity import retry, stop_after_attempt, wait_exponential
+from pathlib import Path
 
 # Set up structured logging
 logger = get_logger()
-chat_logger = ChatLogger('logs/api_interactions.jsonl')
+chat_logger = ChatLogger(str(LOGS_PATH / DEFAULT_CHAT_LOG))
 
-def start_metrics_server(port: int) -> None:
-    """Start Prometheus metrics server."""
-    try:
-        # Removed Prometheus metrics server code
-        pass
-    except Exception as e:
-        logger.error("metrics_server_error", error=str(e))
+def start_metrics_server(port: int = 8000) -> None:
+    """Start metrics server."""
+    pass  # Metrics server removed
 
 class EmailAnalysisResponse:
     """Response from the email analysis API."""
@@ -65,8 +64,10 @@ class EmailAnalyzer:
         
         # Initialize API clients
         self.client = get_anthropic_client()
-        self.gmail = GmailAPI()
         self.test_mode = test_mode
+        
+        # Only initialize Gmail API in non-test mode
+        self.gmail = None if test_mode else GmailAPI()
         
         # Test API connection
         if not test_anthropic_connection(self.client):
@@ -74,16 +75,22 @@ class EmailAnalyzer:
             
         logger.info("analyzer_initialized", test_mode=test_mode)
     
+    @retry(
+        stop=stop_after_attempt(EMAIL_CONFIG['MAX_RETRIES']),
+        wait=wait_exponential(multiplier=EMAIL_CONFIG['RETRY_DELAY'])
+    )
     def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysisResponse]:
         """Analyze a single email using Anthropic API."""
         try:
             # Sanitize email content
-            email_data['content'] = sanitize_email_content(email_data['content'])
+            email_data['body'] = sanitize_email_content(email_data['body'])
             
             # Log API request
             chat_logger.log_interaction(
+                user_input=f"Analyzing email: {email_data['id']}",
+                system_response="",
+                model=API_CONFIG['MODEL'],
                 role="user",
-                content=f"Analyzing email: {email_data['id']}",
                 metadata={"email_id": email_data['id']}
             )
             
@@ -111,14 +118,16 @@ class EmailAnalyzer:
                 max_tokens=API_CONFIG['MAX_TOKENS'],
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Subject: {email_data['subject']}\n\nContent: {email_data['content']}"}
+                    {"role": "user", "content": f"Subject: {email_data['subject']}\n\nContent: {email_data['body']}"}
                 ]
             )
             
             # Log API response
             chat_logger.log_interaction(
+                user_input="",
+                system_response=response.content[0].text,
+                model=API_CONFIG['MODEL'],
                 role="assistant",
-                content=response.content[0].text,
                 metadata={"email_id": email_data['id']}
             )
             
@@ -227,7 +236,7 @@ class EmailAnalyzer:
                         'id': email.id,
                         'threadId': email.thread_id,
                         'subject': email.subject,
-                        'content': email.content,
+                        'body': email.body,
                         'date': email.received_date.isoformat(),
                         'labels': email.labels.split(',') if email.labels else []
                     }
