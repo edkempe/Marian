@@ -57,6 +57,7 @@ def extract_doc_references(file_path: str) -> Set[str]:
     - Markdown links: [text](path)
     - Direct path references: '/path/to/doc.md'
     - Include statements: {% include "path/to/doc" %}
+    - Directory references: docs/, infrastructure/
     """
     references = set()
     
@@ -68,16 +69,20 @@ def extract_doc_references(file_path: str) -> Set[str]:
     references.update(ref for _, ref in markdown_links if not ref.startswith(('http', '#')))
     
     # Find quoted paths
-    quoted_paths = re.findall(r'[\'"]([^\'"\s]+\.(md|rst|txt))[\'"]', content)
+    quoted_paths = re.findall(r'[\'"]([^\'"\s]+(?:\.(md|rst|txt)|/))[\'"]', content)
     references.update(path for path, _ in quoted_paths)
     
     # Find include statements
     includes = re.findall(r'{%\s*include\s*[\'"]([^\'"]+)[\'"]', content)
     references.update(includes)
     
-    # Find direct path references
-    path_refs = re.findall(r'(?<=[\'"\s])/[^\s\'"]+\.(md|rst|txt)', content)
+    # Find direct path references (including directories)
+    path_refs = re.findall(r'(?<=[\'"\s])/[^\s\'"]+(?:\.(md|rst|txt)|/)', content)
     references.update(path_refs)
+    
+    # Find directory references
+    dir_refs = re.findall(r'(?<=[\'"\s])[^\s\'"\(\)]+/', content)
+    references.update(ref for ref in dir_refs if not ref.startswith(('http', 'git', 'ftp', '#')))
     
     return references
 
