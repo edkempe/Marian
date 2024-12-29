@@ -2,99 +2,78 @@
 
 import os
 import re
-import ast
-from typing import Dict, List, Set
+from typing import Dict, Set
 import pytest
 import markdown
 from bs4 import BeautifulSoup
+import ast
 
 def parse_api_mappings(doc_path: str) -> Dict[str, Dict]:
-    """Parse the API mappings markdown file.
+    """Parse API mappings from documentation.
     
+    Args:
+        doc_path: Path to the API mappings markdown file
+        
     Returns:
-        Dict mapping API names to their details including:
-        - version: API version
-        - documentation: Documentation URL
-        - models: List of models using this API
-        - endpoints: Set of documented endpoints
+        Dictionary of API names to their endpoints and models
     """
-    with open(doc_path, 'r') as f:
-        content = f.read()
-    
-    # Convert markdown to HTML for easier parsing
-    html = markdown.markdown(content)
-    soup = BeautifulSoup(html, 'html.parser')
-    
     apis = {}
     current_api = None
     
-    for elem in soup.find_all(['h2', 'p', 'table']):
-        if elem.name == 'h2':
-            # New API section
-            current_api = elem.text.strip()
-            # Skip the Notes section as it's not an API
-            if current_api == 'Notes':
-                current_api = None
-                continue
-            apis[current_api] = {
-                'version': None,
-                'documentation': None,
-                'models': [],
-                'endpoints': set()
-            }
-        elif elem.name == 'p' and current_api:
-            # Look for version and documentation
-            text = elem.text.strip()
-            if 'API Version:' in text:
-                apis[current_api]['version'] = text.split('API Version:')[1].strip()
-            elif 'Documentation:' in text:
-                apis[current_api]['documentation'] = text.split('Documentation:')[1].strip()
-        elif elem.name == 'table' and current_api:
-            # Add model name from preceding h3
-            model_header = elem.find_previous('h3')
-            if model_header:
-                model_name = model_header.text.strip().split(' Model')[0]
-                apis[current_api]['models'].append(model_name)
+    with open(doc_path, 'r') as f:
+        for line in f:
+            # Match API headers (## API Name)
+            if line.startswith('## '):
+                current_api = line.strip('# ').strip()
+                apis[current_api] = {
+                    'endpoints': set(),
+                    'models': set()
+                }
             
-            # Extract endpoints from table
-            for row in elem.find_all('tr'):
-                cells = row.find_all('td')
-                if cells and 'Source:' in cells[0].text:
-                    endpoint = cells[0].text.split('Source:')[1].strip()
-                    apis[current_api]['endpoints'].add(endpoint)
+            # Match endpoint headers (### Name)
+            elif current_api and line.startswith('### '):
+                endpoint = line.strip('# ').strip()
+                apis[current_api]['endpoints'].add(endpoint)
+            
+            # Match model mappings (table rows)
+            elif current_api and '|' in line and not line.startswith('|--'):
+                apis[current_api]['models'].add(line.strip())
     
     return apis
 
 def find_api_imports(code_path: str) -> Set[str]:
-    """Find all API imports and usages in Python code.
+    """Find API imports and usage in Python code.
     
+    Args:
+        code_path: Directory path to search for Python files
+        
     Returns:
-        Set of API names found in imports
+        Set of API names found in the code
     """
     api_patterns = {
-        'Gmail API': [r'googleapiclient.*gmail', r'shared_lib\.gmail_lib'],
-        'Asset Catalog API': [r'app_catalog', r'models\.catalog']
+        'Gmail API': r'(googleapiclient\.discovery|gmail_api|GmailAPI)',
+        'Asset Catalog API': r'(asset_catalog|CatalogAPI)',
+        'Anthropic API (Claude)': r'(anthropic\.Client|anthropic_client|APIClient)'
     }
     
-    apis_found = set()
+    found_apis = set()
     
     for root, _, files in os.walk(code_path):
         for file in files:
             if not file.endswith('.py'):
                 continue
-                
-            file_path = os.path.join(root, file)
-            with open(file_path, 'r') as f:
-                content = f.read()
             
-            # Check each API's import pattern
-            for api_name, patterns in api_patterns.items():
-                for pattern in patterns:
-                    if re.search(pattern, content):
-                        apis_found.add(api_name)
-                        break
+            try:
+                with open(os.path.join(root, file), 'r') as f:
+                    content = f.read()
+                
+                for api_name, pattern in api_patterns.items():
+                    if re.search(pattern, content, re.IGNORECASE):
+                        found_apis.add(api_name)
+            except Exception as e:
+                print(f"Error reading {file}: {e}")
     
-    return apis_found
+    return found_apis
 
 def find_model_fields(models_path: str) -> Dict[str, Set[str]]:
     """Extract field names from SQLAlchemy models.
@@ -131,14 +110,14 @@ def find_model_fields(models_path: str) -> Dict[str, Set[str]]:
 
 def test_api_documentation_completeness():
     """Test that all APIs are properly documented and used."""
-    # Paths
+    # Get project root directory
     base_dir = os.path.dirname(os.path.dirname(__file__))
-    doc_path = os.path.join(base_dir, 'docs', 'api_mappings.md')
     
-    # Get documented APIs
+    # Parse API documentation
+    doc_path = os.path.join(base_dir, 'docs', 'api_mappings.md')
     documented_apis = parse_api_mappings(doc_path)
     
-    # Get APIs actually used in code
+    # Find APIs used in code
     used_apis = set()
     for code_path in [
         os.path.join(base_dir, 'models'),
@@ -147,25 +126,25 @@ def test_api_documentation_completeness():
     ]:
         used_apis.update(find_api_imports(code_path))
     
-    # Check for undocumented APIs
+    # Validate documentation coverage
     undocumented = used_apis - set(documented_apis.keys())
     assert not undocumented, f"Found APIs in code that are not documented: {undocumented}"
     
-    # Check for unused APIs
+    # Validate API usage
     unused = set(documented_apis.keys()) - used_apis
     assert not unused, f"Found documented APIs that are not used in code: {unused}"
 
 def test_model_field_documentation():
     """Test that all model fields are documented in API mappings."""
-    # Paths
+    # Get project root directory
     base_dir = os.path.dirname(os.path.dirname(__file__))
-    doc_path = os.path.join(base_dir, 'docs', 'api_mappings.md')
-    models_path = os.path.join(base_dir, 'models')
     
-    # Get documented APIs and their models
+    # Parse API documentation
+    doc_path = os.path.join(base_dir, 'docs', 'api_mappings.md')
     documented_apis = parse_api_mappings(doc_path)
     
     # Get actual model fields
+    models_path = os.path.join(base_dir, 'models')
     model_fields = find_model_fields(models_path)
     
     # Check each documented API's models
