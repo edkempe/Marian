@@ -705,3 +705,73 @@ During this chat session, we continued the SQLAlchemy migration with the followi
    - [ ] Document model-schema alignment process
    - [ ] Update database design documentation
    - Priority: High
+
+## Documentation Updates
+
+### API Mappings Documentation
+
+1. **Added Anthropic API Documentation**
+   - Documented all API endpoints and field mappings
+   - Added configuration parameters and model versions
+   - Included field types and constraints
+   - Documented response parsing and validation
+
+2. **Updated Gmail API Documentation**
+   - Added missing endpoints:
+     - `users.getProfile`
+     - `users.drafts`
+   - Updated field mappings for all endpoints
+   - Added response types and constraints
+
+3. **Improved Documentation Format**
+   - Simplified table formatting for better readability
+   - Consistent structure across all API sections
+   - Removed redundant information
+   - Added clear section headers
+
+## Code Changes
+
+### Removed Prometheus and Redis Dependencies
+
+1. **Files Removed**
+   - `/shared_lib/performance_util.py`
+   - `/tests/test_performance.py`
+
+2. **Files Updated**
+   - `app_email_analyzer.py`:
+     - Removed Prometheus server initialization
+     - Removed metrics-related code
+     - Updated logging
+   - `constants.py`:
+     - Removed MetricsConfig
+     - Removed metrics-related constants
+   - `requirements.txt`:
+     - Removed prometheus-client dependency
+     - Removed redis dependency
+
+### Commits
+
+1. **[772218b]** refactor: remove unused Prometheus metrics and Redis
+   - Remove performance_util.py and associated tests
+   - Remove Prometheus metrics server from email analyzer
+   - Remove MetricsConfig from constants
+   - Remove prometheus-client and redis dependencies
+   - Clean up related imports and configurations
+
+2. **[da18a92]** docs: update API mappings with Anthropic and Gmail APIs
+   - Add complete Anthropic API documentation
+   - Update Gmail API with missing endpoints
+   - Simplify table formatting for better readability
+   - Remove redundant information
+
+## Next Steps
+
+1. **Documentation**
+   - Consider moving Asset Catalog section to database schema documentation
+   - Add examples for common API usage patterns
+   - Add error handling documentation
+
+2. **Code**
+   - Consider implementing alternative caching solution if needed
+   - Review other dependencies for unused components
+   - Add integration tests for Gmail API endpoints
