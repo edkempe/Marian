@@ -19,25 +19,31 @@ def parse_api_mappings(doc_path: str) -> Dict[str, Dict]:
     """
     apis = {}
     current_api = None
+    skip_sections = {'Notes'}  # Sections to skip
     
     with open(doc_path, 'r') as f:
         for line in f:
             # Match API headers (## API Name)
             if line.startswith('## '):
                 current_api = line.strip('# ').strip()
-                apis[current_api] = {
-                    'endpoints': set(),
-                    'models': set()
-                }
+                if current_api not in skip_sections:
+                    apis[current_api] = {
+                        'endpoints': set(),
+                        'models': set()
+                    }
+                else:
+                    current_api = None
             
-            # Match endpoint headers (### Name)
-            elif current_api and line.startswith('### '):
-                endpoint = line.strip('# ').strip()
-                apis[current_api]['endpoints'].add(endpoint)
-            
-            # Match model mappings (table rows)
-            elif current_api and '|' in line and not line.startswith('|--'):
-                apis[current_api]['models'].add(line.strip())
+            # Only process if we're in a valid API section
+            elif current_api:
+                # Match endpoint headers (### Name)
+                if line.startswith('### '):
+                    endpoint = line.strip('# ').strip()
+                    apis[current_api]['endpoints'].add(endpoint)
+                
+                # Match model mappings (table rows)
+                elif '|' in line and not line.startswith('|--'):
+                    apis[current_api]['models'].add(line.strip())
     
     return apis
 
