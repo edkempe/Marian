@@ -11,12 +11,12 @@ from shared_lib.database_session_util import get_email_session, get_analysis_ses
 from src.app_email_analyzer import EmailAnalyzer
 from shared_lib.gmail_lib import GmailAPI
 from src.app_get_mail import fetch_emails
-from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG, METRICS_CONFIG
+from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG
 
 @pytest.fixture(scope="session")
 def email_analyzer():
     """Create and initialize EmailAnalyzer instance."""
-    analyzer = EmailAnalyzer(metrics_port=METRICS_CONFIG['METRICS_PORT'])
+    analyzer = EmailAnalyzer()
     return analyzer
 
 @pytest.fixture(scope="session")
