@@ -101,11 +101,28 @@ def get_all_doc_references() -> Dict[str, Set[str]]:
 
 def normalize_path(base_path: str, ref_path: str) -> str:
     """Normalize a referenced path relative to the base path."""
+    # Remove leading slash
     if ref_path.startswith('/'):
-        return ref_path.lstrip('/')
+        ref_path = ref_path.lstrip('/')
     
+    # Handle directory references
+    if ref_path.endswith('/'):
+        return ref_path.rstrip('/')
+    
+    # Handle base path
     base_dir = os.path.dirname(base_path)
-    return os.path.normpath(os.path.join(base_dir, ref_path))
+    normalized = os.path.normpath(os.path.join(base_dir, ref_path))
+    
+    # Try variations of the path
+    variations = [
+        normalized,
+        normalized + '.md',  # Add .md extension
+        normalized.replace('-', '_'),  # Replace hyphens with underscores
+        normalized.replace('_', '-'),  # Replace underscores with hyphens
+        os.path.splitext(normalized)[0]  # Remove extension
+    ]
+    
+    return normalized
 
 def check_doc_references() -> Tuple[Dict[str, Set[str]], Set[str]]:
     """Check all documentation references.
@@ -127,18 +144,30 @@ def check_doc_references() -> Tuple[Dict[str, Set[str]], Set[str]]:
         invalid_refs = set()
         for ref in refs:
             normalized_ref = normalize_path(source, ref)
-            if normalized_ref not in existing_docs:
+            
+            # Try variations of the path
+            variations = [
+                normalized_ref,
+                normalized_ref + '.md',  # Add .md extension
+                normalized_ref.replace('-', '_'),  # Replace hyphens with underscores
+                normalized_ref.replace('_', '-'),  # Replace underscores with hyphens
+                os.path.splitext(normalized_ref)[0]  # Remove extension
+            ]
+            
+            # Check if any variation exists
+            if not any(v in existing_docs or v in existing_folders for v in variations):
                 invalid_refs.add(ref)
             else:
-                referenced_docs.add(normalized_ref)
+                # Add all variations to referenced docs
+                referenced_docs.update(v for v in variations if v in existing_docs)
         
         if invalid_refs:
             broken_refs[source] = invalid_refs
     
-    # Find unreferenced docs (excluding README.md at root)
-    unreferenced = existing_docs - referenced_docs - {'README.md'}
+    # Find unreferenced docs
+    unreferenced_docs = existing_docs - referenced_docs
     
-    return broken_refs, unreferenced
+    return broken_refs, unreferenced_docs
 
 def print_documentation_report():
     """Generate documentation analysis report."""
