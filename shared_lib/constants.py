@@ -14,7 +14,6 @@ Configuration Sections:
     - ERROR_MESSAGES: Standard error message templates
     - CATALOG: Catalog-specific settings
     - EMAIL: Email processing parameters
-    - METRICS: Prometheus metrics settings
     - SESSION: Session management settings
 
 Usage:
@@ -62,13 +61,6 @@ class DatabaseConfig(TypedDict):
     analysis: Dict[str, str]
     catalog: Dict[str, str]
     session: Dict[str, str]
-
-class MetricsConfig(TypedDict):
-    """Type hints for metrics configuration."""
-    PORT: int
-    HOST: str
-    ENABLED: bool
-    METRICS_PORT: int
 
 class LoggingConfig(TypedDict):
     """Type hints for logging configuration."""
@@ -275,14 +267,6 @@ Return a JSON object with these fields:
 
 # Default model for API calls
 DEFAULT_MODEL = API_CONFIG['MODEL']  # Use the same model as defined in API_CONFIG
-
-# Metrics Configuration
-METRICS_CONFIG: MetricsConfig = {
-    'PORT': 8125,  # Default StatsD port
-    'HOST': 'localhost',
-    'ENABLED': True,
-    'METRICS_PORT': 8125  # Added for backward compatibility
-}
 
 # Logging Configuration
 LOGGING_CONFIG: LoggingConfig = {

@@ -16,8 +16,6 @@ from models.email_analysis import EmailAnalysis
 from shared_lib.database_session_util import get_email_session, get_analysis_session
 import sqlalchemy.exc
 from structlog import get_logger
-from prometheus_client import start_http_server as start_prometheus_server
-from shared_lib.constants import API_CONFIG, EMAIL_CONFIG, METRICS_CONFIG, ERROR_MESSAGES, DEFAULT_MODEL, DATABASE_CONFIG
 import anthropic  # <--- Added missing anthropic import
 import re
 
@@ -27,8 +25,8 @@ logger = get_logger()
 def start_metrics_server(port: int) -> None:
     """Start Prometheus metrics server."""
     try:
-        start_prometheus_server(port)
-        logger.info("metrics_server_started", port=port)
+        # Removed Prometheus metrics server code
+        pass
     except Exception as e:
         logger.error("metrics_server_error", error=str(e))
 
@@ -87,8 +85,8 @@ class EmailAnalyzer:
     Note: For known issues and solutions, see docs/troubleshooting.md
     """
 
-    def __init__(self, metrics_port: int = 8000, test_mode: bool = False):
-        """Initialize the analyzer with API client and start metrics server."""
+    def __init__(self, test_mode: bool = False):
+        """Initialize the analyzer with API client."""
         load_dotenv(verbose=True)
         
         # Verify environment
@@ -107,9 +105,7 @@ class EmailAnalyzer:
         self.client = anthropic.Client(api_key=api_key)
         self.test_mode = test_mode
         
-        # Start metrics server
-        start_metrics_server(metrics_port)
-        logger.info("analyzer_initialized", metrics_port=metrics_port, test_mode=test_mode)
+        logger.info("analyzer_initialized", test_mode=test_mode)
 
     def analyze_email(self, email_data: Dict[str, Any]) -> Optional[EmailAnalysis]:
         """Analyze a single email using Anthropic API.
