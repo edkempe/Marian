@@ -26,17 +26,22 @@ def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
     
     # Files to exclude from documentation checks
     excluded_patterns = [
-        '*.egg-info/*',  # Package metadata
-        'reports/*',     # Generated reports
-        'archive/*',     # Archived files
-        '**/archive/*',  # Nested archive directories
-        'backup/*',      # Backup files
-        'session_logs/*' # Session logs
+        '*.egg-info/**/*',      # Package metadata
+        'reports/**/*',         # Generated reports
+        'reports/*.md',         # Root reports directory files
+        'venv/**/*',           # Virtual environment
+        '.git/**/*',           # Git files
+        '.pytest_cache/**/*',   # Pytest cache
+        '.pytest_cache/*.md',   # Pytest cache root markdown files
+        '**/__pycache__/**/*',    # Python cache
+        'backup/YYYYMMDD/**/*', # Backup files with date format
+        '**/archive/ARCHIVED_*.md', # Archived files
+        '**/archive/README.md'   # Archive directory READMEs
     ]
     
     for root, dirs, files in os.walk(project_root):
         # Skip excluded directories
-        dirs[:] = [d for d in dirs if not any(fnmatch.fnmatch(d, p.split('/')[0]) for p in excluded_patterns)]
+        dirs[:] = [d for d in dirs if not any(fnmatch.fnmatch(os.path.join(root, d), p) for p in excluded_patterns)]
         
         rel_root = os.path.relpath(root, project_root)
         if rel_root != '.' and not any(fnmatch.fnmatch(rel_root, p) for p in excluded_patterns):
@@ -45,6 +50,8 @@ def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
         for file in files:
             if file.endswith('.md'):
                 rel_path = os.path.join(rel_root, file)
+                if rel_root == '.':
+                    rel_path = file  # Don't add ./ prefix for root files
                 if not any(fnmatch.fnmatch(rel_path, p) for p in excluded_patterns):
                     docs.add(rel_path)
     
@@ -128,22 +135,19 @@ def normalize_path(base_path: str, ref_path: str) -> str:
         return ref_path.rstrip('/')
     
     # Handle base path
+    if base_path.startswith('./'):
+        base_path = base_path[2:]  # Remove ./ prefix
     base_dir = os.path.dirname(os.path.join(project_root, base_path))
     normalized = os.path.normpath(os.path.join(base_dir, ref_path))
     normalized = os.path.relpath(normalized, project_root)
     
-    # Try variations of the path
-    variations = [
-        normalized,
-        normalized + '.md',  # Add .md extension
-        normalized.replace('-', '_'),  # Replace hyphens with underscores
-        normalized.replace('_', '-'),  # Replace underscores with hyphens
-        os.path.splitext(normalized)[0]  # Remove extension
-    ]
+    # Handle fragment identifiers
+    if '#' in normalized:
+        normalized = normalized.split('#')[0]
     
     return normalized
 
-def check_doc_references() -> Tuple[Dict[str, Set[str]], Set[str]]:
+def check_doc_references():
     """Check all documentation references.
     
     Returns:
@@ -154,15 +158,26 @@ def check_doc_references() -> Tuple[Dict[str, Set[str]], Set[str]]:
     existing_docs, existing_folders = get_all_docs_and_folders()
     all_references = get_all_doc_references()
     
+    print("\nDebug - Existing docs:")
+    for doc in sorted(existing_docs):
+        print(f"  - {doc}")
+    
+    print("\nDebug - Existing folders:")
+    for folder in sorted(existing_folders):
+        print(f"  - {folder}")
+    
     # Track broken and valid references
     broken_refs: Dict[str, Set[str]] = {}
     referenced_docs: Set[str] = set()
     
     # Check each reference
     for source, refs in all_references.items():
+        print(f"\nDebug - Checking references in {source}:")
         invalid_refs = set()
         for ref in refs:
             normalized_ref = normalize_path(source, ref)
+            print(f"  Reference: {ref}")
+            print(f"  Normalized: {normalized_ref}")
             
             # Try variations of the path
             variations = [
@@ -172,13 +187,16 @@ def check_doc_references() -> Tuple[Dict[str, Set[str]], Set[str]]:
                 normalized_ref.replace('_', '-'),  # Replace underscores with hyphens
                 os.path.splitext(normalized_ref)[0]  # Remove extension
             ]
+            print(f"  Variations: {variations}")
             
             # Check if any variation exists
             if not any(v in existing_docs or v in existing_folders for v in variations):
                 invalid_refs.add(ref)
+                print(f"  Result: Invalid - no variation exists")
             else:
                 # Add all variations to referenced docs
                 referenced_docs.update(v for v in variations if v in existing_docs)
+                print(f"  Result: Valid - found matching variation")
         
         if invalid_refs:
             broken_refs[source] = invalid_refs
