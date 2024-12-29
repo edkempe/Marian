@@ -141,14 +141,18 @@ def print_documentation_report():
     all_references = get_all_doc_references()
     broken_refs, unreferenced = check_doc_references()
     
+    # Convert sets to lists for JSON serialization
+    broken_refs_json = {src: sorted(list(refs)) for src, refs in broken_refs.items()}
+    unreferenced_json = sorted(list(unreferenced))
+    
     report_data = {
         'stats': {
             'doc_count': len(docs),
             'folder_count': len(folders),
             'ref_count': sum(len(refs) for refs in all_references.values())
         },
-        'broken_refs': broken_refs,
-        'unreferenced': unreferenced
+        'broken_refs': broken_refs_json,
+        'unreferenced': unreferenced_json
     }
     
     from .reporting import ReportManager
