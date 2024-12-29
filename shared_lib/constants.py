@@ -294,7 +294,7 @@ SESSION_CONFIG: SessionConfig = {
 # Testing Configuration
 TESTING_CONFIG: TestingConfig = {
     'EXCLUDED_DIRS': ['venv', '.git', '__pycache__', '.pytest_cache', 'build', 'dist'],
-    'REQUIRED_VERSIONING': ['requirements.txt', 'setup.py']
+    'REQUIRED_VERSIONING': []  # Version info is in package versions and setup() function
 }
 
 # Catalog Configuration

@@ -53,7 +53,33 @@ class GmailLabel(Base):
     type = Column(String)
     message_list_visibility = Column(String)
     label_list_visibility = Column(String)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    last_sync = Column(DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<GmailLabel(id={self.label_id}, name={self.name})>"
+        
+    def to_dict(self):
+        """Convert label to dictionary format"""
+        return {
+            'id': self.label_id,
+            'name': self.name,
+            'type': self.type,
+            'messageListVisibility': self.message_list_visibility,
+            'labelListVisibility': self.label_list_visibility,
+            'lastSync': self.last_sync.isoformat() if self.last_sync else None
+        }
+        
+    @classmethod
+    def from_gmail_dict(cls, gmail_label):
+        """Create label from Gmail API response"""
+        return cls(
+            label_id=gmail_label['id'],
+            name=gmail_label['name'],
+            type=gmail_label.get('type'),
+            message_list_visibility=gmail_label.get('messageListVisibility'),
+            label_list_visibility=gmail_label.get('labelListVisibility'),
+            last_sync=datetime.utcnow()
+        )
 
 class GmailAPI:
     """Main class for Gmail API operations"""
@@ -116,14 +142,7 @@ class GmailAPI:
             
             # Store each label
             for label_data in labels:
-                label = GmailLabel(
-                    label_id=label_data['id'],
-                    name=label_data['name'],
-                    type=label_data.get('type'),
-                    message_list_visibility=label_data.get('messageListVisibility'),
-                    label_list_visibility=label_data.get('labelListVisibility'),
-                    updated_at=datetime.utcnow()
-                )
+                label = GmailLabel.from_gmail_dict(label_data)
                 session.merge(label)
             
             session.commit()

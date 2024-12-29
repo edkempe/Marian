@@ -1,3 +1,6 @@
+# Marian Email Analysis System
+# Last Updated: 2024-12-28
+
 # Core dependencies
 google-api-python-client==2.120.0
 google-auth-oauthlib==1.2.0
