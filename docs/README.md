@@ -54,6 +54,86 @@
    - When to use: Creating/updating docs
    - Example: See `code-standards.md`
 
+5. **Project Overview**
+   - Purpose: High-level project introduction and setup
+   - When to use: Starting point for new developers
+   - Location: [Project README](../README.md)
+
+## Documentation Index
+
+### Core Documentation
+- [AI Architecture](ai-architecture.md) - System architecture and AI components
+- [AI Guidelines](ai-guidelines.md) - Guidelines for AI interaction
+- [API Mappings](api_mappings.md) - API integration documentation
+- [Backlog](backlog.md) - Project backlog and future work
+- [Backup Guide](backup.md) - Backup procedures and policies
+- [Code Standards](code-standards.md) - Coding standards and practices
+- [Contributing Guide](contributing.md) - Contribution guidelines
+- [Database Design](database-design.md) - Database schema and design
+- [Design Decisions](design-decisions.md) - Key design decisions
+- [Development Checklist](dev-checklist.md) - Development workflow checklist
+- [Librarian](librarian.md) - Librarian component documentation
+- [Project Checklist](project-checklist.md) - Project management checklist
+- [Project Plan](project-plan.md) - Project roadmap and planning
+- [Session Workflow](session-workflow.md) - AI session workflow guide
+- [Setup Guide](setup.md) - Project setup instructions
+- [Testing Guide](testing-guide.md) - Testing standards and procedures
+- [Troubleshooting](troubleshooting.md) - Common issues and solutions
+
+### Component Documentation
+- [Models README](../models/README.md) - Database models documentation
+- [Services README](../services/README.md) - Service layer documentation
+- [Shared Library README](../shared_lib/README.md) - Shared utilities documentation
+- [Tests README](../tests/README.md) - Testing documentation
+- [Migrations README](../migrations/README.md) - Database migrations documentation
+- [Source README](../src/README.md) - Source code documentation
+- [Backup README](../backup/README.md) - Backup procedures
+
+### Architecture Decision Records
+- [ADR Index](adr/README.md) - Index of architecture decisions
+- [ADR001: Layered Architecture](adr/001-layered-architecture.md) - Core architecture decision
+
+### Session Logs
+- [Session Log Index](session_logs/README.md) - Index of AI pair programming sessions
+- [2024-12-27 Session](session_logs/2024-12-27.md)
+- [2024-12-28 Session](session_logs/2024-12-28_session.md)
+- [2024-12-28 Log](session_logs/session_log_2024-12-28.md)
+- [Session 20241223_0916](session_logs/session_20241223_0916.md)
+- [Session 20241223_0925](session_logs/session_20241223_0925.md)
+- [Session 20241223_1148](session_logs/session_20241223_1148.md)
+- [Session 20241223_1204](session_logs/session_20241223_1204.md)
+- [Session 20241223_1258](session_logs/session_20241223_1258.md)
+- [Session 20241223_1413](session_logs/session_20241223_1413.md)
+- [Session 20241224_1210](session_logs/session_20241224_1210.md)
+- [Session 20241224_1954](session_logs/session_20241224_1954.md)
+- [Session 20241224_2042](session_logs/session_20241224_2042.md)
+- [Session 20241224_2242](session_logs/session_20241224_2242.md)
+- [Session 20241225_0846](session_logs/session_20241225_0846.md)
+- [Session 20241225_0922](session_logs/session_20241225_0922.md)
+- [Session 20241225_1005](session_logs/session_20241225_1005.md)
+- [Session 20241225_1009](session_logs/session_20241225_1009.md)
+- [Session 20241225_1236](session_logs/session_20241225_1236.md)
+- [Session 20241225_2116](session_logs/session_20241225_2116.md)
+- [Session 20241226_1236](session_logs/session_20241226_1236.md)
+- [Session 20241226_1414](session_logs/session_20241226_1414.md)
+- [Session 20241226_1614](session_logs/session_20241226_1614.md)
+- [Session 20241226_1655](session_logs/session_20241226_1655.md)
+- [Session 20241226_1823](session_logs/session_20241226_1823.md)
+- [Session 20241226_2120](session_logs/session_20241226_2120.md)
+- [Session 20241227_0607](session_logs/session_20241227_0607.md)
+- [Session 20241227_1231](session_logs/session_20241227_1231.md)
+- [Session 20241227_1235](session_logs/session_20241227_1235.md)
+- [Session 20241227_1550](session_logs/session_20241227_1550.md)
+
+### Templates
+- [Templates Index](templates/README.md) - Documentation templates
+- [Archiving Guide](templates/ARCHIVING.md) - File archival procedures
+- [Directory README](templates/directory-readme.md) - Template for directory documentation
+- [Session Template](templates/session.md) - Template for session logs
+
+### Reminders
+- [Storage Check](reminders/20240108_STORAGE_CHECK.md) - Storage usage monitoring
+
 ## Development Guide
 
 ### Adding New Documentation
