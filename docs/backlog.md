@@ -691,8 +691,7 @@ Consider implementing mypy for type checking:
 - Factor in pre-change backups
 
 ### Catalog System
-The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat. 
-All tasks and features related to the Catalog system are tracked in [CATALOG_BACKLOG.md](CATALOG_BACKLOG.md).
+The Catalog system is a dedicated sub-domain for managing and organizing information through interactive chat.
 
 ### Email Processing
 {{ ... }}

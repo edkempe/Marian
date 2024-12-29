@@ -3,7 +3,7 @@
 ## Core Development Principles
 
 ### Data Model as Single Source of Truth
-The SQLAlchemy models in `models/` serve as the authoritative source of truth for all development (see [ADR001](archive/ARCHIVED_20241225_1105_ADR001_SQLAlchemy_Models.md)):
+The SQLAlchemy models in `models/` serve as the authoritative source of truth for all development:
 
 #### Source of Truth Hierarchy
 1. **SQLAlchemy Models**: Primary source for schema
