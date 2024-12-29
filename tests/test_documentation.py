@@ -10,6 +10,7 @@ import os
 import re
 import pytest
 from typing import Set, Dict, List, Tuple
+import fnmatch
 
 def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
     """Get all documentation files and folders in the project.
@@ -17,30 +18,34 @@ def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
     Returns:
         Tuple of (doc_paths, folder_paths) relative to project root
     """
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    doc_paths = set()
-    folder_paths = set()
+    docs = set()
+    folders = set()
     
-    for root, dirs, files in os.walk(project_root):
-        rel_root = os.path.relpath(root, project_root)
-        if rel_root == '.':
-            rel_root = ''
-            
-        # Skip certain directories
-        dirs[:] = [d for d in dirs if not d.startswith('.') 
-                  and d not in {'.git', '__pycache__', 'venv', 'env'}]
+    # Files to exclude from documentation checks
+    excluded_patterns = [
+        '*.egg-info/*',  # Package metadata
+        'reports/*',     # Generated reports
+        'archive/*',     # Archived files
+        '**/archive/*',  # Nested archive directories
+        'backup/*',      # Backup files
+        'session_logs/*' # Session logs
+    ]
+    
+    for root, dirs, files in os.walk('.'):
+        # Skip excluded directories
+        dirs[:] = [d for d in dirs if not any(fnmatch.fnmatch(d, p.split('/')[0]) for p in excluded_patterns)]
         
-        # Add folder path
-        if rel_root:
-            folder_paths.add(rel_root)
+        rel_root = os.path.relpath(root, '.')
+        if rel_root != '.' and not any(fnmatch.fnmatch(rel_root, p) for p in excluded_patterns):
+            folders.add(rel_root)
         
-        # Add documentation files
         for file in files:
-            if file.lower().endswith(('.md', '.rst', '.txt')):
-                doc_path = os.path.join(rel_root, file) if rel_root else file
-                doc_paths.add(doc_path)
+            if file.endswith('.md'):
+                rel_path = os.path.join(rel_root, file)
+                if not any(fnmatch.fnmatch(rel_path, p) for p in excluded_patterns):
+                    docs.add(rel_path)
     
-    return doc_paths, folder_paths
+    return docs, folders
 
 def extract_doc_references(file_path: str) -> Set[str]:
     """Extract references to other documents from a file.
