@@ -29,9 +29,10 @@ Status levels:
 - [Development Session Logs](docs/session_logs/) - Daily development tracking (REQUIRED)
 - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
 - [Session Workflow Guide](docs/session-workflow.md) - Development workflow
-- [Project Guidelines](docs/contributing.md) - Contribution standards
+- [Project Guidelines](docs/adr/README.md) - Project architecture and decisions
 - [Setup Guide](docs/setup.md) - Environment setup
 - [Design Decisions](docs/design-decisions.md) - Architecture choices
+- [Contributing Guide](docs/contributing.md) - Development guidelines
 
 The checklist and session logs must be maintained for every development session, with the supporting documents providing additional context and details as needed.
 
@@ -127,15 +128,13 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 - Extensible analysis framework
 
 ### Quick Links
-- [Project Plan](docs/project-plan.md) - Project roadmap and milestones
-- [API Documentation](docs/api_mappings.md) - API reference and usage
-- [Database Design](docs/database-design.md) - Data model and schema
+- [Project Checklist](docs/dev-checklist.md) - Development checklist
 - [Testing Guide](docs/testing-guide.md) - Testing standards and procedures
 - [Code Standards](docs/code-standards.md) - Coding conventions
 - [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and solutions
 - [Session Logs](docs/session_logs/) - Development tracking
   - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
-- [Infrastructure](infrastructure/) - AWS deployment templates
+- [Contributing Guide](docs/contributing.md) - Development guidelines
 
 ### Getting Started
 1. Clone the repository
@@ -143,7 +142,7 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 3. Configure environment variables (see [Setup Guide](docs/setup.md))
 4. Run tests: `python -m pytest tests/`
 
-For detailed setup instructions and development guidelines, see the [Setup Guide](docs/setup.md).
+For detailed setup instructions, see the [Setup Guide](docs/setup.md).
 
 ## Key Components
 - **Email Fetcher** (`app_get_mail.py`): Fetches emails from Gmail and stores them in SQLite
@@ -263,7 +262,7 @@ If you encounter any issues while running the application, please refer to our c
   - Living documentation
 
 ### Historical Reference
-- `/archive` - Historical content (see [Archiving Guide](docs/archiving.md))
+- `/archive` - Historical content
   - Past versions
   - Superseded content
   - Clear naming convention
@@ -316,13 +315,26 @@ Each layer is validated:
 - Integration tests confirm API compatibility
 
 ## Documentation
-- [Database Design](docs/database-design.md): Complete database documentation
-- [API Usage](docs/api-usage.md): Guidelines for using external APIs
-- [Development Guide](docs/development.md): Setup and development practices
+The complete documentation is available in the [docs/](docs/) directory. Key documents include:
+
+- [Setup Guide](docs/setup.md)
+- [Development Standards](docs/code-standards.md)
+- [Testing Guide](docs/testing-guide.md)
+- [Database Design](docs/database-design.md)
+- [Design Decisions](docs/design-decisions.md)
+- [Contribution Guidelines](docs/contributing.md)
+- [Development Checklist](docs/dev-checklist.md)
+- [Session Workflow](docs/session-workflow.md)
+- [Architecture Decisions](docs/adr/README.md)
+- [Backup Guide](docs/backup.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Session Logs](docs/session_logs/)
+
+See the [Documentation Index](docs/README.md) for a complete list of available documentation.
 
 ## Development Standards
 
-- Follow the code standards in `docs/code-standards.md`
+- Follow the code standards in [Code Standards](docs/code-standards.md)
 - Pay special attention to SQLAlchemy model standards to avoid common issues:
   - Use absolute imports for models (`from models.email import Email`)
   - Use fully qualified paths in relationships (`relationship("models.email.Email", ...)`)
@@ -467,7 +479,7 @@ We use integration tests that validate functionality against the actual Gmail AP
 - Email fetching and filtering
 - Email processing and storage
 
-For detailed testing information, see [Testing Documentation](docs/testing.md).
+For detailed testing information, see [Testing Guide](docs/testing-guide.md).
 
 ## Known Issues and Solutions
 
@@ -577,10 +589,3 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 2. **Database Files**
    - Main database: `db_email_store.db`
    - Never use generic names like `emails.db`
-
-## Documentation
-- Project overview and quick start (README.md)
-- Development roadmap (PROJECT_PLAN.md)
-- Design decisions and architecture (docs/design-decisions.md)
-- Session workflow guide (docs/session-workflow.md)
-- Project guidelines (docs/contributing.md)
