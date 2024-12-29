@@ -19,31 +19,49 @@ def parse_api_mappings(doc_path: str) -> Dict[str, Dict]:
     """
     apis = {}
     current_api = None
+    current_model = None
     skip_sections = {'Notes'}  # Sections to skip
     
     with open(doc_path, 'r') as f:
         for line in f:
+            line = line.strip()
+            if not line:
+                continue
+                
             # Match API headers (## API Name)
             if line.startswith('## '):
                 current_api = line.strip('# ').strip()
+                current_model = None
                 if current_api not in skip_sections:
                     apis[current_api] = {
                         'endpoints': set(),
-                        'models': set()
+                        'models': {}
                     }
                 else:
                     current_api = None
             
             # Only process if we're in a valid API section
             elif current_api:
-                # Match endpoint headers (### Name)
+                # Match model headers (### Name)
                 if line.startswith('### '):
-                    endpoint = line.strip('# ').strip()
-                    apis[current_api]['endpoints'].add(endpoint)
+                    current_model = line.strip('# ').strip()
+                    if current_model.endswith(' Model'):
+                        current_model = current_model[:-6]
+                    apis[current_api]['models'][current_model] = []
                 
-                # Match model mappings (table rows)
-                elif '|' in line and not line.startswith('|--'):
-                    apis[current_api]['models'].add(line.strip())
+                # Match model fields (table rows)
+                elif current_model and '|' in line:
+                    # Skip table headers and dividers
+                    if not line.startswith('|--') and not line.startswith('API Field'):
+                        # Parse table row into field mapping
+                        fields = [f.strip() for f in line.split('|')[1:-1]]
+                        if len(fields) >= 2:  # At least API field and Model field
+                            apis[current_api]['models'][current_model].append({
+                                'api_field': fields[0],
+                                'model_field': fields[1],
+                                'type': fields[2] if len(fields) > 2 else None,
+                                'notes': fields[3] if len(fields) > 3 else None
+                            })
     
     return apis
 
@@ -84,8 +102,11 @@ def find_api_imports(code_path: str) -> Set[str]:
 def find_model_fields(models_path: str) -> Dict[str, Set[str]]:
     """Extract field names from SQLAlchemy models.
     
+    Args:
+        models_path: Path to models directory
+        
     Returns:
-        Dict mapping model names to sets of field names
+        Dictionary mapping model names to sets of field names
     """
     model_fields = {}
     
@@ -96,21 +117,22 @@ def find_model_fields(models_path: str) -> Dict[str, Set[str]]:
                 
             file_path = os.path.join(root, file)
             with open(file_path, 'r') as f:
-                tree = ast.parse(f.read())
+                tree = ast.parse(f.read(), filename=file_path)
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    # Check if it's a SQLAlchemy model
-                    if any(base.id == 'Base' for base in node.bases 
-                          if isinstance(base, ast.Name)):
-                        fields = set()
-                        for child in node.body:
-                            if isinstance(child, ast.AnnAssign):
-                                # Get field name from type annotation
-                                if isinstance(child.target, ast.Name):
-                                    fields.add(child.target.id)
-                        if fields:
-                            model_fields[node.name] = fields
+                    fields = set()
+                    for child in node.body:
+                        # Get column definitions
+                        if isinstance(child, ast.AnnAssign):
+                            fields.add(child.target.id)
+                        elif isinstance(child, ast.Assign):
+                            for target in child.targets:
+                                if isinstance(target, ast.Name):
+                                    fields.add(target.id)
+                    
+                    if fields:  # Only add if fields were found
+                        model_fields[node.name] = fields
     
     return model_fields
 
@@ -155,24 +177,24 @@ def test_model_field_documentation():
     
     # Check each documented API's models
     for api_name, api_info in documented_apis.items():
-        for model_name in api_info['models']:
-            # Skip if model doesn't exist
+        for model_name, field_mappings in api_info['models'].items():
+            # Skip if model doesn't exist (might be response model)
             if model_name not in model_fields:
-                pytest.fail(f"Documented model {model_name} not found in code")
                 continue
             
+            # Get documented model fields
+            documented_fields = {mapping['model_field'] for mapping in field_mappings}
+            
+            # Get actual model fields
             actual_fields = model_fields[model_name]
-            documented_fields = set()  # TODO: Extract fields from markdown tables
             
-            # Check for undocumented fields
-            undocumented = actual_fields - documented_fields
-            assert not undocumented, \
-                f"Model {model_name} has fields that are not documented: {undocumented}"
+            # Check for missing fields in documentation
+            missing_fields = actual_fields - documented_fields
+            assert not missing_fields, f"Model {model_name} has undocumented fields: {missing_fields}"
             
-            # Check for documented fields that don't exist
-            nonexistent = documented_fields - actual_fields
-            assert not nonexistent, \
-                f"API documentation mentions non-existent fields for {model_name}: {nonexistent}"
+            # Check for extra fields in documentation
+            extra_fields = documented_fields - actual_fields
+            assert not extra_fields, f"Model {model_name} documentation has extra fields: {extra_fields}"
 
 if __name__ == '__main__':
     pytest.main([__file__])
