@@ -23,7 +23,7 @@ Status levels:
 - 1.0.0: Initial project setup and core documentation
 
 ## Important Process Documents
-**REQUIRED**: Follow the authoritative [Development Session Checklist](docs/dev-checklist.md) for all development sessions.
+**REQUIRED**: Follow the authoritative [Development Checklist](docs/dev-checklist.md) for all development sessions.
 
 **Core Documentation**:
 - [Development Session Logs](docs/session_logs/) - Daily development tracking (REQUIRED)
@@ -31,7 +31,7 @@ Status levels:
 - [Session Workflow Guide](docs/session-workflow.md) - Development workflow
 - [Project Guidelines](docs/contributing.md) - Contribution standards
 - [Setup Guide](docs/setup.md) - Environment setup
-- [Project Design Decisions](docs/design-decisions.md) - Architecture choices
+- [Design Decisions](docs/design-decisions.md) - Architecture choices
 
 The checklist and session logs must be maintained for every development session, with the supporting documents providing additional context and details as needed.
 
@@ -127,12 +127,14 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
 - Extensible analysis framework
 
 ### Quick Links
-- [Project Plan](PROJECT_PLAN.md) - Detailed development roadmap and project structure
-- [Documentation](docs/) - Guides and technical documentation
-  - [Development Session Logs](docs/session_logs/) - Required daily development tracking
+- [Project Plan](docs/project-plan.md) - Project roadmap and milestones
+- [API Documentation](docs/api_mappings.md) - API reference and usage
+- [Database Design](docs/database-design.md) - Data model and schema
+- [Testing Guide](docs/testing-guide.md) - Testing standards and procedures
+- [Code Standards](docs/code-standards.md) - Coding conventions
+- [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and solutions
+- [Session Logs](docs/session_logs/) - Development tracking
   - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
-  - [Project Guidelines](docs/contributing.md) - Code standards and contribution guidelines
-  - [Design Decisions](docs/design-decisions.md) - Architecture and technical decisions
 - [Infrastructure](infrastructure/) - AWS deployment templates
 
 ### Getting Started
