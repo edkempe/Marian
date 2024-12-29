@@ -21,6 +21,9 @@ def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
     docs = set()
     folders = set()
     
+    # Get project root
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
     # Files to exclude from documentation checks
     excluded_patterns = [
         '*.egg-info/*',  # Package metadata
@@ -31,11 +34,11 @@ def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
         'session_logs/*' # Session logs
     ]
     
-    for root, dirs, files in os.walk('.'):
+    for root, dirs, files in os.walk(project_root):
         # Skip excluded directories
         dirs[:] = [d for d in dirs if not any(fnmatch.fnmatch(d, p.split('/')[0]) for p in excluded_patterns)]
         
-        rel_root = os.path.relpath(root, '.')
+        rel_root = os.path.relpath(root, project_root)
         if rel_root != '.' and not any(fnmatch.fnmatch(rel_root, p) for p in excluded_patterns):
             folders.add(rel_root)
         
@@ -101,7 +104,10 @@ def get_all_doc_references() -> Dict[str, Set[str]]:
 
 def normalize_path(base_path: str, ref_path: str) -> str:
     """Normalize a referenced path relative to the base path."""
-    # Remove leading slash
+    # Get project root
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # Remove leading slash and normalize path
     if ref_path.startswith('/'):
         ref_path = ref_path.lstrip('/')
     
@@ -110,8 +116,9 @@ def normalize_path(base_path: str, ref_path: str) -> str:
         return ref_path.rstrip('/')
     
     # Handle base path
-    base_dir = os.path.dirname(base_path)
+    base_dir = os.path.dirname(os.path.join(project_root, base_path))
     normalized = os.path.normpath(os.path.join(base_dir, ref_path))
+    normalized = os.path.relpath(normalized, project_root)
     
     # Try variations of the path
     variations = [
