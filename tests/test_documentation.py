@@ -80,9 +80,16 @@ def extract_doc_references(file_path: str) -> Set[str]:
     path_refs = re.findall(r'(?<=[\'"\s])/[^\s\'"]+(?:\.(md|rst|txt)|/)', content)
     references.update(path_refs)
     
-    # Find directory references
-    dir_refs = re.findall(r'(?<=[\'"\s])[^\s\'"\(\)]+/', content)
-    references.update(ref for ref in dir_refs if not ref.startswith(('http', 'git', 'ftp', '#')))
+    # Find directory references in markdown links only
+    dir_refs = re.findall(r'\[([^\]]+)\]\(([^)]+/)\)', content)
+    references.update(ref for _, ref in dir_refs if not ref.startswith(('http', 'git', 'ftp', '#')))
+    
+    # Clean up references
+    references = {
+        ref.strip('`').lstrip('/') for ref in references
+        if not any(ref.startswith(p) for p in ['http', 'git', 'ftp', '#', 'venv', '.git'])
+        and not ref.startswith('`/')  # Skip backtick-quoted absolute paths
+    }
     
     return references
 
