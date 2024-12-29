@@ -17,6 +17,7 @@ from shared_lib.database_session_util import get_email_session, get_analysis_ses
 import sqlalchemy.exc
 from structlog import get_logger
 import anthropic  # <--- Added missing anthropic import
+from shared_lib.constants import API_CONFIG, EMAIL_CONFIG, ERROR_MESSAGES, DEFAULT_MODEL, DATABASE_CONFIG
 import re
 
 # Set up structured logging
