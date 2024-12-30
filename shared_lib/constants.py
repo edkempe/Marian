@@ -16,6 +16,7 @@ Configuration Sections:
     - EMAIL: Email processing parameters
     - SESSION: Session management settings
     - PACKAGE_ALIASES: Package aliases and dependencies
+    - TEST_CONFIG: Testing configuration
 
 Usage:
     from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
@@ -144,6 +145,12 @@ class SessionConfig(TypedDict):
     CONFIG_FILE_PATTERNS: List[str]
     SESSION_LOG_PREFIX: str
     VENV_DIR: str
+
+
+class TestConfig(TypedDict):
+    """Type hints for test configuration."""
+
+    gmail: Dict[str, Any]
 
 
 # Database Column Sizes
@@ -346,18 +353,27 @@ SESSION_CONFIG: SessionConfig = {
 
 # Testing Configuration
 TESTING_CONFIG: TestingConfig = {
-    "EXCLUDED_DIRS": ["venv", ".git", "__pycache__", ".pytest_cache", "build", "dist"],
-    "REQUIRED_VERSIONING": [],  # Version info is in package versions and setup() function
-    "TEST_DB_PATH": os.path.join(ROOT_DIR, "data", "test_email.db"),
-    "TEST_EMAIL_DATA": {
-        "id": "test1",
-        "thread_id": "thread1",
-        "subject": "Test Subject",
-        "from_": "from@test.com",
-        "to": "to@test.com",
-        "body": "Test content",
-    },
-    "TEST_EMAIL_COUNT": 3,
+    "gmail": {
+        "test_account": os.getenv("GMAIL_TEST_ACCOUNT"),
+        "test_labels": ["TEST_INBOX", "TEST_SENT", "TEST_DRAFT"],
+        "max_test_messages": 10,
+        "cleanup_delay": 5,  # seconds to wait before cleanup
+        "mock": {
+            "service_account": "test@example.com",
+            "credentials_file": os.path.join(ROOT_DIR, "data", "test_credentials.json"),
+            "token_file": os.path.join(ROOT_DIR, "data", "test_token.pickle"),
+        }
+    }
+}
+
+# Test Configuration
+TEST_CONFIG: TestConfig = {
+    "gmail": {
+        "test_account": os.getenv("GMAIL_TEST_ACCOUNT"),
+        "test_labels": ["TEST_INBOX", "TEST_SENT", "TEST_DRAFT"],
+        "max_test_messages": 10,
+        "cleanup_delay": 5,  # seconds to wait before cleanup
+    }
 }
 
 # Catalog Configuration

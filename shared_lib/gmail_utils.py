@@ -71,7 +71,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from shared_lib.constants import TEST_CONFIG
+from shared_lib.constants import TESTING_CONFIG
 from shared_lib.gmail_lib import GmailAPI
 
 class TestTransaction:

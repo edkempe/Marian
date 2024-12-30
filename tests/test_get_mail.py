@@ -1,9 +1,9 @@
 """Tests for email fetching functionality."""
 
+import pytest
 from datetime import datetime
 from pathlib import Path
 import os
-import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -11,43 +11,33 @@ from models.base import Base
 from shared_lib.constants import DATABASE_CONFIG, ROOT_DIR, TESTING_CONFIG
 from shared_lib.gmail_lib import GmailAPI
 from shared_lib.api_version_utils import verify_gmail_version, check_api_changelog
-from shared_lib.api_utils import GmailTestManager, validate_response_schema
+from shared_lib.api_utils import GmailTestManager, validate_response_schema, build_gmail_service
 from shared_lib.gmail_utils import (
     create_test_email,
     setup_test_labels,
-    cleanup_test_labels
+    cleanup_test_labels,
+    create_mock_gmail_service,
+    setup_mock_message,
+    setup_mock_messages
 )
+
 from src.app_get_mail import (
     count_emails,
     fetch_emails,
     get_label_id,
-    get_newest_email_date,
-    get_oldest_email_date,
-    init_database,
-    list_labels,
     process_email,
 )
+
 from tests.utils.db_test_utils import create_test_db_session
 from tests.utils.email_test_utils import create_test_message
-from tests.utils.gmail_test_utils import (
-    create_mock_gmail_service,
-    setup_mock_message,
-    setup_mock_messages,
-)
 from tests.utils.test_constants import (
-    TEST_DATES,
     TEST_EMAIL,
-    TEST_ERROR_PREFIX,
-    TEST_INVALID_ID,
-    TEST_PLAIN_TEXT,
-    TEST_HTML_CONTENT,
-    TEST_UNICODE_TEXT,
-    TEST_MESSAGE_IDS,
     TEST_LABELS,
+    TEST_MESSAGE,
+    TEST_MESSAGES,
     TEST_ATTACHMENTS,
     API_ERROR_MESSAGE,
 )
-from tests.utils.api_test_utils import build_gmail_service
 
 # Gmail API response schemas
 MESSAGE_SCHEMA = {
