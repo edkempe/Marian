@@ -59,6 +59,15 @@ def setup_argparse() -> argparse.ArgumentParser:
         "apply",
         help="Apply pending migrations"
     )
+    apply.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Simulate migration without applying changes"
+    )
+    apply.add_argument(
+        "--target",
+        help="Target revision to migrate to"
+    )
     
     # validate command
     validate = subparsers.add_parser(
@@ -98,6 +107,11 @@ def setup_argparse() -> argparse.ArgumentParser:
         "--revision",
         help="Target revision to roll back to"
     )
+    rollback.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Simulate rollback without applying changes"
+    )
     
     return parser
 
@@ -112,9 +126,45 @@ def handle_generate(args) -> int:
 def handle_apply(args) -> int:
     """Handle apply command."""
     success = True
+    
     for engine in [email_engine, analysis_engine]:
-        if not apply_migrations(engine):
-            success = False
+        logger.info(f"\nApplying migrations for {engine.url.database}:")
+        
+        if args.dry_run:
+            results = apply_migrations(
+                engine,
+                dry_run=True,
+                target_revision=args.target
+            )
+            
+            if not results["success"]:
+                logger.error(f"Migration simulation failed: {results['error']}")
+                success = False
+                continue
+                
+            logger.info(f"Current revision: {results['current_revision']}")
+            logger.info(f"Target revision: {results['target_revision']}")
+            
+            if not results["changes"]:
+                logger.info("No changes to apply")
+                continue
+                
+            logger.info("\nChanges to apply:")
+            for change in results["changes"]:
+                logger.info(f"\nRevision {change['revision']}: {change['message']}")
+                for op in change["operations"]:
+                    logger.info(f"  - {op['type']}: {op['args']} {op['kwargs']}")
+                    
+        else:
+            result = apply_migrations(
+                engine,
+                dry_run=False,
+                target_revision=args.target
+            )
+            if not result:
+                logger.error(f"Failed to apply migrations to {engine.url.database}")
+                success = False
+                
     return 0 if success else 1
 
 def handle_validate(args) -> int:

@@ -8,7 +8,7 @@ This module provides utilities for:
 
 import logging
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 from alembic import command
 from alembic.config import Config
@@ -152,19 +152,92 @@ def generate_migration(message: str, autogenerate: bool = True) -> Optional[str]
         logger.error(f"Failed to generate migration: {str(e)}")
         return None
 
-def apply_migrations(engine) -> bool:
+def simulate_migration(engine, target_revision: Optional[str] = None) -> Dict[str, Any]:
+    """Simulate migration without applying changes.
+    
+    Args:
+        engine: SQLAlchemy engine
+        target_revision: Optional target revision
+        
+    Returns:
+        Simulation results
+    """
+    try:
+        config = get_alembic_config(engine)
+        script = ScriptDirectory.from_config(config)
+        
+        # Get current and target revisions
+        current = get_current_revision(engine)
+        if not target_revision:
+            target_revision = script.get_current_head()
+            
+        # Get revisions to apply
+        revisions = []
+        for rev in script.walk_revisions(current, target_revision):
+            revisions.append({
+                "revision": rev.revision,
+                "down_revision": rev.down_revision,
+                "message": rev.doc,
+                "module": rev.module.__file__,
+                "dependencies": rev.dependencies,
+                "branch_labels": rev.branch_labels,
+            })
+            
+        # Analyze changes
+        changes = []
+        for rev in revisions:
+            module = script.get_revision(rev["revision"]).module
+            
+            # Extract upgrade operations
+            upgrade_ops = []
+            for op in getattr(module, "upgrade"):
+                if hasattr(op, "_orig_args"):
+                    upgrade_ops.append({
+                        "type": op.__class__.__name__,
+                        "args": op._orig_args,
+                        "kwargs": op._orig_kwargs,
+                    })
+            
+            changes.append({
+                "revision": rev["revision"],
+                "message": rev["message"],
+                "operations": upgrade_ops,
+            })
+            
+        return {
+            "current_revision": current,
+            "target_revision": target_revision,
+            "revisions": revisions,
+            "changes": changes,
+            "success": True,
+        }
+        
+    except Exception as e:
+        logger.error(f"Migration simulation failed: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+        }
+
+def apply_migrations(engine, dry_run: bool = False, target_revision: Optional[str] = None) -> Union[bool, Dict[str, Any]]:
     """Apply pending migrations.
     
     Args:
         engine: SQLAlchemy engine
+        dry_run: If True, simulate migration without applying changes
+        target_revision: Optional target revision
         
     Returns:
-        True if successful, False otherwise
+        True if successful, False if failed, or simulation results if dry_run
     """
     try:
+        if dry_run:
+            return simulate_migration(engine, target_revision)
+            
         config = get_alembic_config(engine)
-        command.upgrade(config, "head")
+        command.upgrade(config, target_revision or "head")
         return True
+        
     except Exception as e:
         logger.error(f"Failed to apply migrations: {str(e)}")
         return False
