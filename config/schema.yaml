@@ -1,0 +1,106 @@
+# Database schema configuration
+# This file defines database schema constants used across the application
+
+email:
+  columns:
+    id:
+      size: 100
+      type: string
+      description: "Gmail message ID"
+    thread_id:
+      size: 100
+      type: string
+      description: "Gmail thread ID"
+    message_id:
+      size: 100
+      type: string
+      description: "Email message ID"
+    subject:
+      size: 500
+      type: string
+      description: "Email subject line"
+    snippet:
+      size: 500
+      type: string
+      description: "Email snippet/preview"
+    sender:
+      size: 200
+      type: string
+      description: "Sender email address"
+    recipient:
+      size: 200
+      type: string
+      description: "Recipient email address"
+    cc:
+      size: 200
+      type: string
+      description: "CC recipients"
+    bcc:
+      size: 200
+      type: string
+      description: "BCC recipients"
+  defaults:
+    subject: ""
+    has_attachments: false
+    is_read: false
+    is_important: false
+    api_response: "{}"
+  validation:
+    max_subject_length: 500
+    max_snippet_length: 500
+
+analysis:
+  columns:
+    sentiment:
+      size: 50
+      type: string
+      description: "Sentiment classification"
+    category:
+      size: 100
+      type: string
+      description: "Email category"
+    summary:
+      size: 1000
+      type: string
+      description: "Email summary"
+  defaults:
+    sentiment: "neutral"
+    category: "uncategorized"
+  validation:
+    valid_sentiments:
+      - "positive"
+      - "negative"
+      - "neutral"
+      - "mixed"
+    valid_priorities:
+      - "high"
+      - "medium"
+      - "low"
+    max_summary_length: 1000
+
+label:
+  columns:
+    id:
+      size: 100
+      type: string
+      description: "Gmail label ID"
+    name:
+      size: 100
+      type: string
+      description: "Label display name"
+    type:
+      size: 50
+      type: string
+      description: "Label type (system/user)"
+    visibility:
+      size: 50
+      type: string
+      description: "Label visibility settings"
+  defaults:
+    type: "user"
+    is_system: false
+  validation:
+    valid_types:
+      - "system"
+      - "user"
+    max_name_length: 100
