@@ -7,6 +7,20 @@ repos:
     -   id: check-merge-conflict
     -   id: debug-statements
 
+# Documentation validation
+-   repo: local
+    hooks:
+    -   id: doc-validator
+        name: Documentation Standards Validator
+        entry: python tools/doc_validator.py
+        language: python
+        files: ^docs/.*\.md$
+        pass_filenames: false
+        types: [markdown]
+        # Lenient mode for pre-commit
+        args: []
+        verbose: true
+
 # Temporarily disabled style checks
 # -   repo: https://github.com/psf/black
 #     rev: 24.3.0
