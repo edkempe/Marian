@@ -403,11 +403,11 @@ Focus: Database Schema-Model Alignment Validation
      - Removed DEFAULT_MODEL
      - Added comprehensive docstrings
      - Organized constants into logical sections
-   
+
    - shared_lib/anthropic_client_lib.py:
      - Updated imports to use new constants structure
      - Removed DEFAULT_MODEL dependency
-   
+
    - tests/test_file_duplicates.py:
      - Created new test for detecting duplicates
      - Added rules for allowed duplicates
@@ -418,7 +418,7 @@ Focus: Database Schema-Model Alignment Validation
    - config/archive/ARCHIVED_20241228_1033_constants.py:
      - Archived original constants file
      - Added timestamp to filename
-   
+
    - tests/test_file_duplicates.py:
      - New test suite for duplicate detection
      - Includes filename and content checks

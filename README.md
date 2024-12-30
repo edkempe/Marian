@@ -1,6 +1,6 @@
 # Marian Project
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 ## Document Version Guidelines
@@ -303,9 +303,9 @@ Our project follows a strict data flow hierarchy to ensure consistency across al
 
 This hierarchy ensures data consistency:
 ```
-External APIs (source of truth) 
-  → SQLAlchemy Models 
-    → Database Migrations 
+External APIs (source of truth)
+  → SQLAlchemy Models
+    → Database Migrations
       → Application Code
 ```
 
@@ -423,7 +423,7 @@ The SQLAlchemy models in `models/` are the SINGLE SOURCE OF TRUTH for data struc
    # models/email.py - Source of truth for email structure
    class Email(Base):
        __tablename__ = 'emails'
-       
+
        id = Column(Integer, primary_key=True)
        subject = Column(String, nullable=False)
        body = Column(Text, nullable=False)
@@ -502,7 +502,7 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
 
 ### 1. API Response Handling
 - **Issue**: Claude API may return responses with extra text around JSON
-- **Solution**: 
+- **Solution**:
   - Use robust JSON extraction
   - Validate response structure
   - Handle missing fields gracefully

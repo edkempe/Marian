@@ -1,6 +1,6 @@
 # Marian Models
 
-**Version:** 1.2.0  
+**Version:** 1.2.0
 **Status:** Authoritative
 
 > SQLAlchemy models and domain constants for the Marian project.
@@ -175,7 +175,7 @@ class NewModel(Base, TimestampMixin):
 def test_valid_status():
     item = CatalogItem(title="Test")
     assert item.status == ItemStatus.DRAFT
-    
+
     with pytest.raises(ValueError):
         item.status = "invalid_status"
 ```

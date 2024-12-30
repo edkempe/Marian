@@ -156,7 +156,7 @@ def test_semantic_search_score_filtering():
         CatalogItem(title="Item 2"),
         CatalogItem(title="Item 3")
     ]
-    
+
     # Mock API response with various scores
     def mock_scores(*args, **kwargs):
         return type('Response', (), {
@@ -170,9 +170,9 @@ def test_semantic_search_score_filtering():
                 }
             '''})]
         })
-    
+
     chat.client.messages.create = mock_scores
-    
+
     # Test high threshold
     matches = chat.get_semantic_matches("query", items, threshold=0.8)
     assert len(matches) == 1
@@ -257,12 +257,12 @@ def test_catalog():
 ```python
 class TestCatalogOperations:
     """Test catalog CRUD operations."""
-    
+
     def test_create_entry(self, test_catalog):
         """Test creating new catalog entry."""
         entry = test_catalog.create_entry(...)
         assert entry.id is not None
-        
+
     def test_update_entry(self, test_catalog):
         """Test updating existing entry."""
         entry = test_catalog.update_entry(...)

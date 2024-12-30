@@ -1,6 +1,6 @@
 # Services Directory
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Business logic and application services for the Marian project.

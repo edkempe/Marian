@@ -2,15 +2,15 @@
 Marian Email Analysis System - AI-powered email analysis and organization system
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="marian",
     version="1.0.0",
     description="AI-powered email analysis and organization system",
     author="Eddie Kempe",
-    packages=find_packages(exclude=['tests*', 'archive*']),
-    package_data={'': ['*.json', '*.yaml', '*.yml']},
+    packages=find_packages(exclude=["tests*", "archive*"]),
+    package_data={"": ["*.json", "*.yaml", "*.yml"]},
     include_package_data=True,
     install_requires=[
         "sqlalchemy",
@@ -19,5 +19,5 @@ setup(
         "google-auth-httplib2",
         "google-auth-oauthlib",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
 )

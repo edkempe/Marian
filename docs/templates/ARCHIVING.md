@@ -1,6 +1,6 @@
 # Archiving Guide
 
-**Version:** 1.0.1  
+**Version:** 1.0.1
 **Status:** Authoritative
 
 > Master template and guidelines for archiving content in the Marian project.

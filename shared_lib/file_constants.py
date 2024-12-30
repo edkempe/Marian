@@ -7,10 +7,10 @@ Constants are configured via environment variables where appropriate, with secur
 defaults if environment variables are not set.
 """
 
-import os
 import logging
-from typing import Set, Dict, List
+import os
 from pathlib import Path
+from typing import Dict, List, Set
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -22,15 +22,17 @@ try:
 except ValueError as e:
     logger.error(f"Invalid permission values in environment: {str(e)}")
     DEFAULT_FILE_PERMISSIONS = 0o644  # rw-r--r--
-    DEFAULT_DIR_PERMISSIONS = 0o755   # rwxr-xr-x
+    DEFAULT_DIR_PERMISSIONS = 0o755  # rwxr-xr-x
 
 # Permission enforcement
-ENFORCE_PERMISSIONS = os.getenv("FILE_PERMISSION_ENFORCE", "1") == "1"  # Enable by default
+ENFORCE_PERMISSIONS = (
+    os.getenv("FILE_PERMISSION_ENFORCE", "1") == "1"
+)  # Enable by default
 
 # Permission limits
 MAX_PERMISSION_MODE = 0o777  # rwxrwxrwx - maximum allowed permissions
 REQUIRED_FILE_MODES = 0o600  # Minimum required: rw------- (owner read/write)
-REQUIRED_DIR_MODES = 0o700   # Minimum required: rwx------ (owner read/write/execute)
+REQUIRED_DIR_MODES = 0o700  # Minimum required: rwx------ (owner read/write/execute)
 
 # File operation constants
 FILE_ENCODING = "utf-8"  # Default file encoding for all operations
@@ -38,11 +40,17 @@ TEMP_SUFFIX = ".tmp"  # Suffix for temporary files
 ROTATION_TIMESTAMP_FORMAT = "%Y%m%d_%H%M%S"  # Format for rotated file timestamps
 
 # File size limits
-MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "100"))  # Default max file size in MB
-MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "1000000"))  # Default max input length (1MB)
+MAX_FILE_SIZE_MB = int(
+    os.getenv("MAX_FILE_SIZE_MB", "100")
+)  # Default max file size in MB
+MAX_INPUT_LENGTH = int(
+    os.getenv("MAX_INPUT_LENGTH", "1000000")
+)  # Default max input length (1MB)
 
 # Similarity threshold for file name comparison
-SIMILARITY_THRESHOLD = float(os.getenv("FILE_SIMILARITY_THRESHOLD", "0.92"))  # Only flag extremely similar names
+SIMILARITY_THRESHOLD = float(
+    os.getenv("FILE_SIMILARITY_THRESHOLD", "0.92")
+)  # Only flag extremely similar names
 
 # File extensions
 JSONL_EXT = ".jsonl"  # JSON Lines file extension
@@ -120,7 +128,10 @@ DEFAULT_LOG_DIR = str(Path.home() / "logs")  # Default directory for logs
 
 # Chat log constants
 ALLOWED_ROLES: Set[str] = {"user", "assistant", "system"}  # Valid chat roles
-REQUIRED_METADATA_KEYS: Set[str] = {"session_id", "timestamp"}  # Required chat metadata keys
+REQUIRED_METADATA_KEYS: Set[str] = {
+    "session_id",
+    "timestamp",
+}  # Required chat metadata keys
 
 # Environment variable names (for documentation and reference)
 ENV_VARS: Dict[str, str] = {
@@ -129,5 +140,5 @@ ENV_VARS: Dict[str, str] = {
     "FILE_PERMISSION_ENFORCE": "Whether to enforce exact permissions (0 or 1)",
     "FILE_PERMISSION_LOG_LEVEL": "Logging level for permission events",
     "MAX_FILE_SIZE_MB": "Maximum file size in MB before rotation",
-    "MAX_INPUT_LENGTH": "Maximum length for input strings"
+    "MAX_INPUT_LENGTH": "Maximum length for input strings",
 }

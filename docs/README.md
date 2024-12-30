@@ -1,6 +1,6 @@
 # Documentation Directory
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Central location for all project documentation, including guides, ADRs, and templates.

@@ -1,6 +1,6 @@
 # Shared Library
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Core utilities and shared functionality for the Marian project.

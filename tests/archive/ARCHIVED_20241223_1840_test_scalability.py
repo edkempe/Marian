@@ -1,24 +1,27 @@
 """Tests for scalability utilities."""
-import pytest
+
 import time
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
+import pytest
 from utils.util_scalability import (
     cache,
-    rate_limit,
     circuit_breaker,
     measure_time,
+    rate_limit,
+    redis_client,
     retry_operation,
-    redis_client
 )
+
 
 @pytest.fixture
 def mock_redis():
     """Mock Redis client."""
-    with patch('utils.util_scalability.redis_client') as mock:
+    with patch("utils.util_scalability.redis_client") as mock:
         mock.get.return_value = None
         yield mock
+
 
 def test_cache_decorator(mock_redis):
     """Test cache decorator functionality."""
@@ -38,6 +41,7 @@ def test_cache_decorator(mock_redis):
     result2 = expensive_operation(5)
     assert int(result2) == 10  # Compare as integers
 
+
 def test_rate_limit_decorator(mock_redis):
     """Test rate limit decorator functionality."""
     mock_redis.pipeline.return_value = mock_redis
@@ -56,6 +60,7 @@ def test_rate_limit_decorator(mock_redis):
     with pytest.raises(Exception, match="Rate limit exceeded"):
         limited_operation()
 
+
 def test_circuit_breaker_decorator(mock_redis):
     """Test circuit breaker decorator functionality."""
     failure_count = 0
@@ -63,11 +68,11 @@ def test_circuit_breaker_decorator(mock_redis):
 
     def get_side_effect(key):
         nonlocal failure_count, last_failure_time
-        if key.endswith(':failures'):
+        if key.endswith(":failures"):
             return str(failure_count)
-        elif key.endswith(':last_failure'):
-            return str(last_failure_time) if last_failure_time else '0'
-        return '0'
+        elif key.endswith(":last_failure"):
+            return str(last_failure_time) if last_failure_time else "0"
+        return "0"
 
     mock_redis.get.side_effect = get_side_effect
     mock_redis.pipeline.return_value = mock_redis
@@ -97,8 +102,10 @@ def test_circuit_breaker_decorator(mock_redis):
     with pytest.raises(Exception, match="Circuit breaker is open"):
         failing_operation()
 
+
 def test_measure_time_decorator():
     """Test time measurement decorator."""
+
     @measure_time("test_operation")
     def slow_operation():
         time.sleep(0.1)
@@ -107,21 +114,24 @@ def test_measure_time_decorator():
     result = slow_operation()
     assert result == "done"
 
+
 def test_retry_operation():
     """Test retry operation."""
     mock_func = Mock(side_effect=[ValueError, ValueError, "success"])
-    
+
     result = retry_operation(mock_func)
     assert result == "success"
     assert mock_func.call_count == 3
 
+
 def test_retry_operation_max_attempts():
     """Test retry operation max attempts."""
     mock_func = Mock(side_effect=ValueError("Test error"))
-    
+
     with pytest.raises(Exception):
         retry_operation(mock_func)
     assert mock_func.call_count == 3
+
 
 def test_cache_ttl(mock_redis):
     """Test cache TTL setting."""
@@ -137,6 +147,7 @@ def test_cache_ttl(mock_redis):
     assert args[1] == 30  # Check TTL value
     assert args[2] == "result"  # Check cached value
 
+
 def test_rate_limit_window(mock_redis):
     """Test rate limit window setting."""
     mock_redis.pipeline.return_value = mock_redis
@@ -147,7 +158,4 @@ def test_rate_limit_window(mock_redis):
         return "success"
 
     limited_operation()
-    mock_redis.expire.assert_called_once_with(
-        "rate_limit:limited_operation",
-        60
-    )
+    mock_redis.expire.assert_called_once_with("rate_limit:limited_operation", 60)

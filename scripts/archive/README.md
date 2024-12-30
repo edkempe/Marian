@@ -1,7 +1,7 @@
 # Scripts Archive
 
-**Version:** 1.0.0  
-**Status:** Authoritative  
+**Version:** 1.0.0
+**Status:** Authoritative
 **Template:** See [../../docs/templates/ARCHIVING.md](../../docs/templates/ARCHIVING.md) for archiving guidelines.
 
 > Archive of superseded scripts and utilities, maintaining script history while keeping active tools clear.

@@ -174,7 +174,7 @@ def test_ai_error_recovery():
     """Test AI error handling and recovery."""
     with pytest.raises(AITemporaryError):
         ai.process_with_retry(invalid_input)
-    
+
     # Should recover after temporary error
     result = ai.process_with_retry(valid_input)
     assert result.status == "success"
@@ -186,10 +186,10 @@ def test_jexi_marian_integration():
     """Test interaction between Jexi and Marian."""
     # Jexi requests information
     query = jexi.create_catalog_query("test query")
-    
+
     # Marian processes request
     result = marian.process_catalog_query(query)
-    
+
     # Jexi handles response
     response = jexi.handle_catalog_response(result)
     assert response.is_valid()

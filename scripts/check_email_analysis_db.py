@@ -14,27 +14,29 @@ Environment Variables:
                     Default: sqlite:///data/db_email_analysis.db
 """
 
-from sqlalchemy import create_engine, desc
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import SQLAlchemyError
-from typing import List
 import json
+import logging
 import os
 import sys
-import logging
+from typing import List
+
+from sqlalchemy import create_engine, desc
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
+
 from models.email_analysis import EmailAnalysis
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def check_database() -> None:
     """
     Check and display the contents of the email analysis database.
-    
+
     Displays:
     - Total number of records
     - Latest 5 records with their details including:
@@ -46,13 +48,13 @@ def check_database() -> None:
         - Action Needed flag
         - Project
         - Topic
-    
+
     Raises:
         SQLAlchemyError: If there's an error connecting to or querying the database
     """
     try:
         # Create database engine and session
-        db_url = os.getenv('ANALYSIS_DB_URL', 'sqlite:///data/db_email_analysis.db')
+        db_url = os.getenv("ANALYSIS_DB_URL", "sqlite:///data/db_email_analysis.db")
         engine = create_engine(db_url)
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -78,7 +80,11 @@ def check_database() -> None:
             logger.info("\nLatest analyzed emails:")
             for record in latest_records:
                 # Format summary for display
-                summary = record.summary[:100] + "..." if record.summary and len(record.summary) > 100 else record.summary
+                summary = (
+                    record.summary[:100] + "..."
+                    if record.summary and len(record.summary) > 100
+                    else record.summary
+                )
 
                 logger.info("-" * 80)
                 logger.info(f"Email ID: {record.email_id}")
@@ -99,6 +105,7 @@ def check_database() -> None:
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     check_database()

@@ -9,30 +9,30 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    
+
     -- Parameters
     required_parameters JSON NOT NULL,
     optional_parameters JSON,
     max_input_tokens INTEGER,
     expected_output_format JSON,
-    
+
     -- Model Configuration
     model_name TEXT NOT NULL,
     max_tokens INTEGER,
     temperature REAL,
     other_model_params JSON,
-    
+
     -- Usage Statistics
     last_used_at TIMESTAMP,
     total_uses INTEGER DEFAULT 0,
     average_response_time REAL,
     error_rate REAL,
-    
+
     -- Validation and Fallback
     validation_rules JSON,
     success_criteria JSON,
     fallback_prompt_id TEXT,
-    
+
     FOREIGN KEY (fallback_prompt_id) REFERENCES prompt_versions (prompt_id)
 );
 
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS email_prompt_usage (
     response_time_ms INTEGER,
     was_successful BOOLEAN,
     error_message TEXT,
-    
+
     FOREIGN KEY (email_id) REFERENCES emails (id),
     FOREIGN KEY (prompt_id) REFERENCES prompt_versions (prompt_id)
 );
@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_email_prompt_usage_prompt ON email_prompt_usage(p
 
 -- View for prompt usage analytics
 CREATE VIEW IF NOT EXISTS prompt_usage_analytics AS
-SELECT 
+SELECT
     pv.prompt_name,
     pv.prompt_version,
     COUNT(epu.usage_id) as total_uses,

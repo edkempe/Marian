@@ -1,6 +1,6 @@
 # ADR 001: Layered Architecture Design
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative (2024-12-28)
 
 ## Context

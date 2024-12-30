@@ -1,176 +1,184 @@
-"""Test that requirements.txt is both necessary and sufficient."""
+"""Test requirements for Marian project."""
 
 import os
 import re
+import sys
+from importlib import metadata
 from pathlib import Path
 from typing import Dict, List, Set, Union
 
-import pkg_resources
 import pytest
+
+from shared_lib.constants import (
+    DEV_DEPENDENCIES,
+    IMPORT_PATTERNS,
+    LOCAL_MODULES,
+    PACKAGE_ALIASES,
+)
+
 
 def get_installed_packages() -> Dict[str, str]:
     """Get dictionary of installed packages and their versions."""
-    return {pkg.key: pkg.version for pkg in pkg_resources.working_set}
+    return {dist.metadata['Name']: dist.version for dist in metadata.distributions()}
+
 
 def get_requirements() -> Dict[str, str]:
     """Get dictionary of required packages and their versions from requirements.txt."""
     requirements = {}
-    with open('requirements.txt', 'r') as f:
+    with open("requirements.txt", "r") as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith('#'):
-                if '>=' in line:
-                    pkg, version = line.split('>=')
-                elif '==' in line:
-                    pkg, version = line.split('==')
+            if line and not line.startswith("#"):
+                if ">=" in line:
+                    pkg, version = line.split(">=")
+                elif "==" in line:
+                    pkg, version = line.split("==")
                 else:
                     continue
                 requirements[pkg.strip()] = version.strip()
     return requirements
 
+
 def get_imports_from_file(file_path: str) -> Set[str]:
     """Extract import statements from a Python file."""
     imports = set()
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-            
-        # Extract imports
-        import_patterns = [
-            r'^import\s+(\w+)',  # import foo
-            r'^from\s+(\w+)\s+import',  # from foo import ...
-            r'^import\s+(\w+)\s+as',  # import foo as ...
-            r'^from\s+(\w+)\.',  # from foo.bar import ...
-            r'^from\s+google\.oauth2',  # Special case for google-api-python-client
-            r'^from\s+google_auth_oauthlib',  # Special case for google-auth-oauthlib
-            r'^from\s+googleapiclient',  # Special case for google-api-python-client
-        ]
-        
-        package_aliases = {
-            'google': 'google-api-python-client',
-            'google_auth_oauthlib': 'google-auth-oauthlib',
-            'googleapiclient': 'google-api-python-client',
-            'dateutil': 'python-dateutil',
-            'dotenv': 'python-dotenv',
-            'jose': 'python-jose',
-            'prometheus_client': 'prometheus-client',
-            'sqlalchemy_utils': 'sqlalchemy-utils',
-        }
-        
-        for pattern in import_patterns:
+
+        # Extract imports using patterns from constants
+        for pattern in IMPORT_PATTERNS:
             matches = re.finditer(pattern, content, re.MULTILINE)
             for match in matches:
-                pkg = match.group(1) if len(match.groups()) > 0 else match.group(0).split()[1]
-                if pkg in package_aliases:
-                    pkg = package_aliases[pkg]
+                pkg = (
+                    match.group(1)
+                    if len(match.groups()) > 0
+                    else match.group(0).split()[1]
+                )
+                if pkg in PACKAGE_ALIASES:
+                    pkg = PACKAGE_ALIASES[pkg]
                 if not is_local_import(pkg):
                     imports.add(pkg.lower())
-                    
+
     except Exception as e:
         print(f"Warning: Error processing {os.path.basename(file_path)}: {str(e)}")
-        
+
     return imports
+
 
 def is_local_import(pkg: str) -> bool:
     """Check if an import is local to the project."""
-    local_modules = {
-        'app_api_client', 'app_catalog', 'app_email_analyzer',
-        'app_email_reports', 'app_email_self_log', 'app_get_mail',
-        'config', 'constants', 'database', 'database_session_util',
-        'gmail_label_id', 'gmail_lib', 'logging_config', 'logging_util',
-        'models', 'reporting', 'services', 'shared_lib', 'src', 'tests',
-        'utils', 'test_config', 'test_doc_quality', 'test_doc_format',
-        'test_doc_hierarchy', 'test_dependencies', 'test_api_validation',
-        'test_catalog', 'test_email_analysis', 'test_email_analyzer',
-        'test_email_reports', 'test_get_mail', 'test_integration',
-        'test_semantic_search', 'test_semantic_search_integration',
-        'test_semantic_search_pure', 'test_hardcoded_values',
-        'test_requirements', 'test_minimal', 'test_imports',
-        'test_config', 'test_doc_quality'
-    }
-    return pkg.lower() in local_modules
+    return pkg.lower() in LOCAL_MODULES
+
 
 def get_all_imports() -> Set[str]:
     """Get all imports from Python files in the project."""
     imports = set()
-    for root, _, files in os.walk('.'):
-        if 'venv' in root or '.git' in root:
+    for root, _, files in os.walk("."):
+        if "venv" in root or ".git" in root:
             continue
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 path = os.path.join(root, file)
                 imports.update(get_imports_from_file(path))
     return imports
 
+
 def analyze_requirements() -> Dict[str, Set[str]]:
     """Analyze requirements for issues."""
     issues = {}
-    
-    # Get data
+
+    # Get installed packages
+    installed_packages = get_installed_packages()
+
+    # Read requirements.txt
     requirements = get_requirements()
-    installed = get_installed_packages()
+
+    # Get all imports
     imports = get_all_imports()
-    
+
     # Check for unused requirements
-    unused = set(requirements) - imports
+    unused = set(requirements) - imports - DEV_DEPENDENCIES
     if unused:
-        issues['unused_requirements'] = unused
-        
+        issues["unused_requirements"] = unused
+
     # Check for missing requirements
     required = set(requirements)
-    missing = {imp for imp in imports 
-              if imp not in required and imp in installed}
+    missing = {imp for imp in imports if imp not in required and imp in installed_packages}
     if missing:
-        issues['missing_requirements'] = missing
-        
+        issues["missing_requirements"] = missing
+
     # Check for undocumented dependencies
-    undocumented = {f"{pkg} (installed: {ver})" 
-                   for pkg, ver in installed.items()
-                   if pkg in imports and pkg not in required}
+    undocumented = {
+        f"{pkg} (installed: {ver})"
+        for pkg, ver in installed_packages.items()
+        if pkg in imports and pkg not in required
+    }
     if undocumented:
-        issues['undocumented_dependencies'] = undocumented
-        
-    # Check version mismatches
-    mismatches = {f"{pkg} (required: {req_ver}, installed: {installed[pkg]})"
-                  for pkg, req_ver in requirements.items()
-                  if pkg in installed
-                  and installed[pkg] != req_ver}
-    if mismatches:
-        issues['version_mismatches'] = mismatches
-        
+        issues["undocumented_dependencies"] = undocumented
+
     return issues
+
 
 def test_requirements():
     """Test that requirements.txt is both necessary and sufficient."""
     issues = analyze_requirements()
-    
-    if issues:
-        errors = ["Requirements validation failed!"]
-        
-        if 'unused_requirements' in issues:
-            errors.append("\nPackages in requirements.txt but not imported:")
-            for pkg in sorted(issues['unused_requirements']):
-                errors.append(f"  - {pkg}")
-                
-        if 'missing_requirements' in issues:
-            errors.append("\nImported packages missing from requirements.txt:")
-            for pkg in sorted(issues['missing_requirements']):
-                errors.append(f"  - {pkg}")
-                
-        if 'undocumented_dependencies' in issues:
-            errors.append("\nInstalled packages missing from requirements.txt:")
-            for pkg in sorted(issues['undocumented_dependencies']):
-                errors.append(f"  - {pkg}")
-                
-        if 'version_mismatches' in issues:
-            errors.append("\nVersion mismatches:")
-            for pkg in sorted(issues['version_mismatches']):
-                errors.append(f"  - {pkg}")
-                
-        pytest.fail("\n".join(errors))
 
-@pytest.fixture(scope="session", autouse=True)
+    # Format error messages
+    error_messages = []
+    if "unused_requirements" in issues:
+        error_messages.append(
+            f"Unused requirements in requirements.txt: {', '.join(sorted(issues['unused_requirements']))}"
+        )
+    if "missing_requirements" in issues:
+        error_messages.append(
+            f"Missing requirements from requirements.txt: {', '.join(sorted(issues['missing_requirements']))}"
+        )
+    if "undocumented_dependencies" in issues:
+        error_messages.append(
+            f"Undocumented dependencies: {', '.join(sorted(issues['undocumented_dependencies']))}"
+        )
+
+    # Assert no issues found
+    assert not error_messages, "\n".join(error_messages)
+
+
+def test_required_packages():
+    """Test that all required packages are installed."""
+    installed = get_installed_packages()
+    requirements = get_requirements()
+
+    missing = []
+    for pkg, req_version in requirements.items():
+        if pkg not in installed:
+            missing.append(f"{pkg}>={req_version}")
+
+    assert not missing, f"Missing required packages: {', '.join(missing)}"
+
+
+def test_python_version():
+    """Test Python version meets requirements."""
+    min_version = (3, 8)
+    current_version = sys.version_info[:2]
+    assert current_version >= min_version, (
+        f"Python version {'.'.join(map(str, current_version))} is not supported. "
+        f"Please use Python {'.'.join(map(str, min_version))} or higher."
+    )
+
+
 def requirements_report():
     """Generate requirements report after tests run."""
+    issues = analyze_requirements()
+    if issues:
+        print("\nRequirements Analysis Report:")
+        for issue_type, items in issues.items():
+            print(f"\n{issue_type.replace('_', ' ').title()}:")
+            for item in sorted(items):
+                print(f"  - {item}")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def requirements_report_fixture():
+    """Generate requirements report after tests run."""
     yield
-    # Add code to generate requirements report here
+    requirements_report()

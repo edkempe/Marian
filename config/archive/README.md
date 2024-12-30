@@ -1,7 +1,7 @@
 # Configuration Archive
 
-**Version:** 1.0.0  
-**Status:** Authoritative  
+**Version:** 1.0.0
+**Status:** Authoritative
 **Template:** [../../docs/templates/ARCHIVING.md](../../docs/templates/ARCHIVING.md)
 
 > Archive of superseded configuration files, maintaining configuration history while keeping active settings clear.

@@ -1,6 +1,6 @@
 # Reports Directory
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Central location for all project reports and reporting standards.

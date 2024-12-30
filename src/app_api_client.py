@@ -1,24 +1,27 @@
 """API client for making requests to the Anthropic API."""
 
-import os
 import json
-from tenacity import retry, stop_after_attempt, wait_exponential
-from shared_lib.constants import DEFAULT_MODEL, EMAIL_CONFIG
+import os
+
 import anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+from shared_lib.constants import DEFAULT_MODEL, EMAIL_CONFIG
+
 
 class APIClient:
     """Client for making API requests."""
-    
+
     def __init__(self):
         """Initialize the API client."""
-        self.api_key = os.environ.get('ANTHROPIC_API_KEY')
+        self.api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         self.client = anthropic.Anthropic(api_key=self.api_key)
-    
+
     @retry(
-        stop=stop_after_attempt(EMAIL_CONFIG['MAX_RETRIES']),
-        wait=wait_exponential(multiplier=EMAIL_CONFIG['RETRY_DELAY'])
+        stop=stop_after_attempt(EMAIL_CONFIG["MAX_RETRIES"]),
+        wait=wait_exponential(multiplier=EMAIL_CONFIG["RETRY_DELAY"]),
     )
     def echo_test(self):
         """Test the API connection with a simple echo request."""
@@ -27,10 +30,7 @@ class APIClient:
             response = self.client.messages.create(
                 model=DEFAULT_MODEL,
                 max_tokens=10,
-                messages=[{
-                    "role": "user",
-                    "content": "Echo test"
-                }]
+                messages=[{"role": "user", "content": "Echo test"}],
             )
             return {"success": True, "response": response}
         except Exception as e:

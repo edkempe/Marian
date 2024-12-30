@@ -1,6 +1,6 @@
 # Database Design Documentation
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 ## Design Principles

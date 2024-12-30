@@ -15,32 +15,35 @@ Configuration Sections:
     - CATALOG: Catalog-specific settings
     - EMAIL: Email processing parameters
     - SESSION: Session management settings
+    - PACKAGE_ALIASES: Package aliases and dependencies
 
 Usage:
     from shared_lib.constants import API_CONFIG, DATABASE_CONFIG
-    
+
     model = API_CONFIG['MODEL']
     db_path = DATABASE_CONFIG['EMAIL_DB_PATH']
 """
 
-from typing import Dict, List, Union, TypedDict, Any
 import os
+from typing import Any, Dict, List, TypedDict, Union
 
 # Shared Constants
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(ROOT_DIR, 'data')
-DOCS_DIR = os.path.join(ROOT_DIR, 'docs')
-SESSION_LOGS_DIR = os.path.join(DOCS_DIR, 'session_logs')
-LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
-CACHE_DIR = os.path.join(ROOT_DIR, 'cache')
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+DOCS_DIR = os.path.join(ROOT_DIR, "docs")
+SESSION_LOGS_DIR = os.path.join(DOCS_DIR, "session_logs")
+LOGS_DIR = os.path.join(ROOT_DIR, "logs")
+CACHE_DIR = os.path.join(ROOT_DIR, "cache")
 
 # Create directories if they don't exist
 for dir_path in [DATA_DIR, DOCS_DIR, SESSION_LOGS_DIR, LOGS_DIR, CACHE_DIR]:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
+
 class APIConfig(TypedDict):
     """Type hints for API configuration."""
+
     MODEL: str
     TEST_MODEL: str
     MAX_TOKENS: int
@@ -49,8 +52,10 @@ class APIConfig(TypedDict):
     REQUIRED_FIELDS: List[str]
     EMAIL_ANALYSIS_PROMPT: Dict[str, str]
 
+
 class DatabaseConfig(TypedDict):
     """Type hints for database configuration."""
+
     EMAIL_DB_PATH: str
     ANALYSIS_DB_PATH: str
     EMAIL_DB_URL: str
@@ -62,16 +67,20 @@ class DatabaseConfig(TypedDict):
     catalog: Dict[str, str]
     session: Dict[str, str]
 
+
 class LoggingConfig(TypedDict):
     """Type hints for logging configuration."""
+
     LOG_FILE: str
     MAX_BYTES: int
     BACKUP_COUNT: int
     LOG_FORMAT: str
     LOG_LEVEL: str
 
+
 class EmailConfig(TypedDict):
     """Type hints for email configuration."""
+
     COUNT: int
     BATCH_SIZE: int
     MAX_RETRIES: int
@@ -80,8 +89,10 @@ class EmailConfig(TypedDict):
     EXCLUDED_LABELS: List[str]
     DAYS_TO_FETCH: int
 
+
 class CatalogConfig(TypedDict):
     """Type hints for catalog configuration."""
+
     DB_PATH: str
     CHAT_LOG: str
     MATCH_THRESHOLD: float  # Threshold for semantic matching (0-1)
@@ -93,8 +104,10 @@ class CatalogConfig(TypedDict):
     ENABLE_SEMANTIC: bool  # Toggle for semantic matching
     ERROR_MESSAGES: Dict[str, str]
 
+
 class ErrorMessages(TypedDict):
     """Type hints for error message templates."""
+
     API_ERROR: str
     DATABASE_ERROR: str
     VALIDATION_ERROR: str
@@ -104,13 +117,17 @@ class ErrorMessages(TypedDict):
     TAG_ERROR: str
     RELATIONSHIP_ERROR: str
 
+
 class TestingConfig(TypedDict):
     """Type hints for testing configuration."""
+
     EXCLUDED_DIRS: List[str]
     REQUIRED_VERSIONING: List[str]
 
+
 class SessionConfig(TypedDict):
     """Type hints for session configuration."""
+
     MIN_PYTHON_VERSION: tuple
     DATE_FORMAT: str
     TIME_FORMAT: str
@@ -122,129 +139,110 @@ class SessionConfig(TypedDict):
     SESSION_LOG_PREFIX: str
     VENV_DIR: str
 
+
 # Database Column Sizes
 COLUMN_SIZES = {
-    'EMAIL_LABELS': 150,
-    'GMAIL_LABEL_ID': 30,
-    'GMAIL_LABEL_NAME': 100,
+    "EMAIL_LABELS": 150,
+    "GMAIL_LABEL_ID": 30,
+    "GMAIL_LABEL_NAME": 100,
 }
 
 # Default Values
 DEFAULT_VALUES = {
-    'EMAIL_SUBJECT': 'No Subject',
-    'API_RESPONSE': '{}',
-    'HAS_ATTACHMENTS': '0',
-    'EMPTY_STRING': '',
-    'ACTION_NEEDED': False,
-    'CONFIDENCE_SCORE': 0.9,
+    "EMAIL_SUBJECT": "No Subject",
+    "API_RESPONSE": "{}",
+    "HAS_ATTACHMENTS": "0",
+    "EMPTY_STRING": "",
+    "ACTION_NEEDED": False,
+    "CONFIDENCE_SCORE": 0.9,
 }
 
 # Validation Constraints
 VALIDATION = {
-    'PRIORITY_SCORE': {
-        'MIN': 1,
-        'MAX': 5,
+    "PRIORITY_SCORE": {
+        "MIN": 1,
+        "MAX": 5,
     },
-    'CONFIDENCE_SCORE': {
-        'MIN': 0.0,
-        'MAX': 1.0,
+    "CONFIDENCE_SCORE": {
+        "MIN": 0.0,
+        "MAX": 1.0,
     },
-    'TEXT_LENGTH': {
-        'MIN': 1,
-        'MAX': 500,
+    "TEXT_LENGTH": {
+        "MIN": 1,
+        "MAX": 500,
     },
 }
+
 
 # Asset Types
 class AssetTypes:
     """Valid asset types for the catalog."""
-    CODE = 'code'
-    DOCUMENT = 'document'
-    TEST = 'test'
-    CONFIG = 'config'
-    SCRIPT = 'script'
-    
+
+    CODE = "code"
+    DOCUMENT = "document"
+    TEST = "test"
+    CONFIG = "config"
+    SCRIPT = "script"
+
     @classmethod
     def values(cls) -> List[str]:
         """Return all valid asset types."""
         return [cls.CODE, cls.DOCUMENT, cls.TEST, cls.CONFIG, cls.SCRIPT]
 
+
 # Sentiment Values
 class SentimentTypes:
     """Valid sentiment types for analysis."""
-    POSITIVE = 'positive'
-    NEGATIVE = 'negative'
-    NEUTRAL = 'neutral'
-    
+
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+
     @classmethod
     def values(cls) -> List[str]:
         """Return all valid sentiment types."""
         return [cls.POSITIVE, cls.NEGATIVE, cls.NEUTRAL]
 
-# Date Patterns
-DATE_PATTERNS = {
-    'ISO_DATE': r'^\d{4}-\d{2}-\d{2}$',
-    'ISO_DATE_OR_EMPTY': r'^\d{4}-\d{2}-\d{2}$|^$',
-    'ISO_DATE_OR_EMPTY_OR_ASAP': r'^\d{4}-\d{2}-\d{2}$|^$|^ASAP$',
+
+# Regex Patterns
+REGEX_PATTERNS = {
+    "URL": r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+    "ISO_DATE": r"^\d{4}-\d{2}-\d{2}$",
+    "ISO_DATE_OR_EMPTY": r"^\d{4}-\d{2}-\d{2}$|^$",
+    "ISO_DATE_OR_EMPTY_OR_ASAP": r"^\d{4}-\d{2}-\d{2}$|^$|^ASAP$",
 }
+
+# Date Patterns
+DATE_PATTERNS = REGEX_PATTERNS
 
 # Email Configuration
 EMAIL_CONFIG: EmailConfig = {
-    'COUNT': 100,  # Number of emails to process at once
-    'BATCH_SIZE': 10,  # Number of emails per API batch request
-    'MAX_RETRIES': 3,  # Maximum number of retries for failed requests
-    'RETRY_DELAY': 5,  # Delay between retries in seconds
-    'LABELS': ['INBOX', 'SENT'],  # Labels to process
-    'EXCLUDED_LABELS': ['SPAM', 'TRASH'],  # Labels to exclude
-    'DAYS_TO_FETCH': 30  # Number of days of emails to fetch
+    "COUNT": 100,  # Number of emails to process at once
+    "BATCH_SIZE": 10,  # Number of emails per API batch request
+    "MAX_RETRIES": 3,  # Maximum number of retries for failed requests
+    "RETRY_DELAY": 5,  # Delay between retries in seconds
+    "LABELS": ["INBOX", "SENT"],  # Labels to process
+    "EXCLUDED_LABELS": ["SPAM", "TRASH"],  # Labels to exclude
+    "DAYS_TO_FETCH": 30,  # Number of days of emails to fetch
 }
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
-    'email': {
-        'path': 'data/email.db',
-        'url': None
-    },
-    'analysis': {
-        'path': 'data/analysis.db',
-        'url': None
-    },
-    'catalog': {
-        'path': 'data/catalog.db',
-        'url': None
-    }
+    "email": {"path": "data/email.db", "url": None},
+    "analysis": {"path": "data/analysis.db", "url": None},
+    "catalog": {"path": "data/catalog.db", "url": None},
 }
 
 # API Configuration
 API_CONFIG: APIConfig = {
-    'MODEL': 'claude-3-opus-20240229',  # Main production model
-    'TEST_MODEL': 'claude-3-haiku-20240307',  # Use Haiku for faster testing
-    'MAX_TOKENS': 4000,
-    'MAX_TOKENS_TEST': 1000,  # Reduced tokens for testing
-    'TEMPERATURE': 0.0,  # Zero temperature for consistent outputs
-    'REQUIRED_FIELDS': ['model', 'max_tokens', 'messages'],
-    'EMAIL_ANALYSIS_PROMPT': {
-        'claude-3-opus-20240229': '''Analyze the following email and provide a structured response in JSON format:
-
-{email_content}
-
-Provide a JSON response with the following fields:
-{
-    "summary": "Brief 1-2 sentence summary of the email",
-    "category": ["List of categories that apply"],
-    "priority_score": "Number from 1-5 indicating urgency/importance (1=lowest, 5=highest)",
-    "priority_reason": "Brief explanation of the priority score",
-    "action_needed": true/false,
-    "action_type": ["List of required actions"],
-    "action_deadline": "YYYY-MM-DD or ASAP or null if no deadline",
-    "key_points": ["List of main points from the email"],
-    "people_mentioned": ["List of people mentioned"],
-    "project": "Project name or empty string",
-    "topic": "Topic or empty string",
-    "sentiment": "positive, negative, or neutral",
-    "confidence_score": "Number between 0.0 and 1.0"
-}''',
-        'claude-3-haiku-20240307': '''Analyze this email and provide a JSON response:
+    "MODEL": "claude-3-haiku-20240307",  # Temporarily using Haiku for both
+    "TEST_MODEL": "claude-3-haiku-20240307",  # Use Haiku for faster testing
+    "MAX_TOKENS": 4000,
+    "MAX_TOKENS_TEST": 1000,  # Reduced tokens for testing
+    "TEMPERATURE": 0.0,  # Zero temperature for consistent outputs
+    "REQUIRED_FIELDS": ["model", "max_tokens", "messages"],
+    "EMAIL_ANALYSIS_PROMPT": {
+        "claude-3-haiku-20240307": """Analyze this email and provide a JSON response:
 
 {email_content}
 
@@ -261,77 +259,170 @@ Return a JSON object with these fields:
 - project: Project name or empty string
 - topic: Topic or empty string
 - sentiment: positive/negative/neutral
-- confidence_score: Number between 0.0 and 1.0'''
-    }
+- confidence_score: Number between 0.0 and 1.0
+
+IMPORTANT: Return ONLY the JSON object without any additional text or explanation.""",
+    },
 }
 
 # Default model for API calls
-DEFAULT_MODEL = API_CONFIG['MODEL']  # Use the same model as defined in API_CONFIG
+DEFAULT_MODEL = API_CONFIG["MODEL"]  # Use the same model as defined in API_CONFIG
 
 # Logging Configuration
 LOGGING_CONFIG: LoggingConfig = {
-    'LOG_FILE': os.path.join(LOGS_DIR, 'marian.log'),
-    'MAX_BYTES': 10485760,  # 10MB
-    'BACKUP_COUNT': 5,
-    'LOG_FORMAT': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    'LOG_LEVEL': 'INFO'
+    "LOG_FILE": os.path.join(LOGS_DIR, "marian.log"),
+    "MAX_BYTES": 10485760,  # 10MB
+    "BACKUP_COUNT": 5,
+    "LOG_FORMAT": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "LOG_LEVEL": "INFO",
 }
 
 # Session Management Constants
 SESSION_CONFIG: SessionConfig = {
-    'MIN_PYTHON_VERSION': (3, 12, 8),
-    'DATE_FORMAT': '%Y-%m-%d',
-    'TIME_FORMAT': '%H:%M',
-    'TIME_ZONE_FORMAT': '%H:%M %Z',
-    'GIT_COMMITS_TO_CHECK': 5,
-    'TEST_PATH': 'tests/',
-    'REQUIREMENTS_FILE': 'requirements.txt',
-    'CONFIG_FILE_PATTERNS': ['*.ini', '*.cfg', '*.conf'],
-    'SESSION_LOG_PREFIX': 'session_log_',
-    'VENV_DIR': 'venv',
+    "MIN_PYTHON_VERSION": (3, 12, 8),
+    "DATE_FORMAT": "%Y-%m-%d",
+    "TIME_FORMAT": "%H:%M",
+    "TIME_ZONE_FORMAT": "%H:%M %Z",
+    "GIT_COMMITS_TO_CHECK": 5,
+    "TEST_PATH": "tests/",
+    "REQUIREMENTS_FILE": "requirements.txt",
+    "CONFIG_FILE_PATTERNS": ["*.ini", "*.cfg", "*.conf"],
+    "SESSION_LOG_PREFIX": "session_log_",
+    "VENV_DIR": "venv",
 }
 
 # Testing Configuration
 TESTING_CONFIG: TestingConfig = {
-    'EXCLUDED_DIRS': ['venv', '.git', '__pycache__', '.pytest_cache', 'build', 'dist'],
-    'REQUIRED_VERSIONING': []  # Version info is in package versions and setup() function
+    "EXCLUDED_DIRS": ["venv", ".git", "__pycache__", ".pytest_cache", "build", "dist"],
+    "REQUIRED_VERSIONING": [],  # Version info is in package versions and setup() function
 }
 
 # Catalog Configuration
 CATALOG_CONFIG: CatalogConfig = {
-    'DB_PATH': os.path.join(DATA_DIR, 'db_catalog.db'),
-    'CHAT_LOG': 'chat_logs.jsonl',
-    'MATCH_THRESHOLD': 0.85,  # High threshold for near-identical content
-    'POTENTIAL_MATCH_THRESHOLD': 0.70,  # Lower threshold for potential matches
-    'TAG_MATCH_THRESHOLD': 0.60,  # Threshold for tag matching
-    'RESULTS_PER_PAGE': 10,
-    'RELATIONSHIP_TYPES': ['similar', 'related', 'parent', 'child'],
-    'TABLES': {
-        'ENTRIES': 'catalog_entries',
-        'RELATIONSHIPS': 'catalog_relationships',
-        'TAGS': 'catalog_tags'
+    "DB_PATH": os.path.join(DATA_DIR, "db_catalog.db"),
+    "CHAT_LOG": "chat_logs.jsonl",
+    "MATCH_THRESHOLD": 0.85,  # High threshold for near-identical content
+    "POTENTIAL_MATCH_THRESHOLD": 0.70,  # Lower threshold for potential matches
+    "TAG_MATCH_THRESHOLD": 0.60,  # Threshold for tag matching
+    "RESULTS_PER_PAGE": 10,
+    "RELATIONSHIP_TYPES": ["similar", "related", "parent", "child"],
+    "TABLES": {
+        "ENTRIES": "catalog_entries",
+        "RELATIONSHIPS": "catalog_relationships",
+        "TAGS": "catalog_tags",
     },
-    'ENABLE_SEMANTIC': True,
-    'ERROR_MESSAGES': {
-        'API_ERROR': 'Failed to get API response: {}',
-        'DATABASE_ERROR': 'Database error: {}',
-        'VALIDATION_ERROR': 'Invalid data: {}',
-        'JSON_DECODE_ERROR': 'Failed to decode JSON: {}',
-        'SEMANTIC_ERROR': 'Semantic matching error: {}',
-        'DUPLICATE_ERROR': 'Duplicate entry: {}',
-        'TAG_ERROR': 'Invalid tag: {}',
-        'RELATIONSHIP_ERROR': 'Invalid relationship: {}'
-    }
+    "ENABLE_SEMANTIC": True,
+    "ERROR_MESSAGES": {
+        "API_ERROR": "Failed to get API response: {}",
+        "DATABASE_ERROR": "Database error: {}",
+        "VALIDATION_ERROR": "Invalid data: {}",
+        "JSON_DECODE_ERROR": "Failed to decode JSON: {}",
+        "SEMANTIC_ERROR": "Semantic matching error: {}",
+        "DUPLICATE_ERROR": "Duplicate entry: {}",
+        "TAG_ERROR": "Invalid tag: {}",
+        "RELATIONSHIP_ERROR": "Invalid relationship: {}",
+    },
 }
 
 # Error Messages
 ERROR_MESSAGES: ErrorMessages = {
-    'API_ERROR': 'Error calling Anthropic API: {error}',
-    'DATABASE_ERROR': 'Error accessing database: {error}',
-    'VALIDATION_ERROR': 'Error validating response: {error}',
-    'JSON_DECODE_ERROR': 'Error decoding JSON response: {error}',
-    'SEMANTIC_ERROR': 'Error in semantic analysis: {error}',
-    'DUPLICATE_ERROR': 'Item with similar title already exists: {title}',
-    'TAG_ERROR': 'Error managing tags: {error}',
-    'RELATIONSHIP_ERROR': 'Error managing relationships: {error}'
+    "API_ERROR": "Error calling Anthropic API: {error}",
+    "DATABASE_ERROR": "Error accessing database: {error}",
+    "VALIDATION_ERROR": "Error validating response: {error}",
+    "JSON_DECODE_ERROR": "Error decoding JSON response: {error}",
+    "SEMANTIC_ERROR": "Error in semantic analysis: {error}",
+    "DUPLICATE_ERROR": "Item with similar title already exists: {title}",
+    "TAG_ERROR": "Error managing tags: {error}",
+    "RELATIONSHIP_ERROR": "Error managing relationships: {error}",
 }
+
+# Package Aliases and Dependencies
+PACKAGE_ALIASES = {
+    "google": "google-api-python-client",
+    "google_auth_oauthlib": "google-auth-oauthlib",
+    "googleapiclient": "google-api-python-client",
+    "dateutil": "python-dateutil",
+    "dotenv": "python-dotenv",
+    "jose": "python-jose",
+    "pandas": "pandas",
+    "plotly": "plotly",
+    "pre_commit": "pre-commit",
+    "pytest": "pytest",
+    "pytest_cov": "pytest-cov",
+    "pytest_mock": "pytest-mock",
+    "python_dateutil": "python-dateutil",
+    "python_dotenv": "python-dotenv",
+    "python_jose": "python-jose",
+    "pytz": "pytz",
+    "setuptools": "setuptools",
+    "sqlalchemy": "sqlalchemy",
+    "structlog": "structlog",
+    "tabulate": "tabulate",
+    "tenacity": "tenacity",
+    "textblob": "textblob",
+    "tqdm": "tqdm",
+}
+
+DEV_DEPENDENCIES = {
+    "bandit",  # Security testing
+    "pre-commit",  # Pre-commit hooks
+    "pytest-cov",  # Test coverage
+    "pytest-asyncio",  # Async test support
+    "pytest-mock",  # Test mocking
+    "google-auth-httplib2",  # Required by google-api-python-client
+}
+
+LOCAL_MODULES = {
+    "app_api_client",
+    "app_catalog",
+    "app_email_analyzer",
+    "app_email_reports",
+    "app_email_self_log",
+    "app_get_mail",
+    "config",
+    "constants",
+    "database",
+    "database_session_util",
+    "gmail_label_id",
+    "gmail_lib",
+    "logging_config",
+    "logging_util",
+    "models",
+    "reporting",
+    "services",
+    "shared_lib",
+    "src",
+    "tests",
+    "utils",
+    "test_config",
+    "test_doc_quality",
+    "test_doc_format",
+    "test_doc_hierarchy",
+    "test_dependencies",
+    "test_api_validation",
+    "test_catalog",
+    "test_email_analysis",
+    "test_email_analyzer",
+    "test_email_reports",
+    "test_get_mail",
+    "test_integration",
+    "test_semantic_search",
+    "test_semantic_search_integration",
+    "test_semantic_search_pure",
+    "test_hardcoded_values",
+    "test_requirements",
+    "test_minimal",
+    "test_imports",
+    "test_config",
+    "test_doc_quality",
+}
+
+IMPORT_PATTERNS = [
+    r"^import\s+(\w+)",  # import foo
+    r"^from\s+(\w+)\s+import",  # from foo import ...
+    r"^import\s+(\w+)\s+as",  # import foo as ...
+    r"^from\s+(\w+)\.",  # from foo.bar import ...
+    r"^from\s+google\.oauth2",  # Special case for google-api-python-client
+    r"^from\s+google_auth_oauthlib",  # Special case for google-auth-oauthlib
+    r"^from\s+googleapiclient",  # Special case for google-api-python-client
+]

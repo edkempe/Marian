@@ -10,7 +10,7 @@ The SQLAlchemy models in `models/` serve as the authoritative source of truth fo
    - `models/email.py`: Email and thread schema
    - `models/catalog.py`: Catalog item schema
    - `models/email_analysis.py`: Analysis schema
-   
+
 2. **Configuration**: Source for runtime values
    - `constants.py`: Global configuration
    - `catalog_constants.py`: Catalog-specific settings

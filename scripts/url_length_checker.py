@@ -21,93 +21,106 @@ This is useful for:
 - Monitoring URL patterns in analyzed emails
 """
 
-import json
 import argparse
+import json
 import logging
 from typing import List, Tuple
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from models.email_analysis import EmailAnalysis
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def check_long_urls(threshold: int = 100) -> List[Tuple[str, str, int]]:
     """
     Check for URLs longer than the specified threshold.
-    
+
     Args:
         threshold: Maximum acceptable URL length (default: 100)
-        
+
     Returns:
         List of tuples containing (email_id, url, length) for long URLs
     """
     try:
         # Create SQLAlchemy engine and session
-        engine = create_engine('sqlite:///email_analysis.db')
+        engine = create_engine("sqlite:///email_analysis.db")
         Session = sessionmaker(bind=engine)
         session = Session()
-        
+
         long_urls = []
-        
+
         # Query all email analyses with links
-        analyses = session.query(EmailAnalysis).filter(
-            EmailAnalysis.links_found.isnot(None)
-        ).all()
-        
+        analyses = (
+            session.query(EmailAnalysis)
+            .filter(EmailAnalysis.links_found.isnot(None))
+            .all()
+        )
+
         for analysis in analyses:
             try:
                 # Parse links_found JSON
                 if not analysis.links_found:
                     continue
-                    
+
                 links = json.loads(analysis.links_found)
                 if not isinstance(links, list):
-                    logger.warning(f"Invalid links format for email {analysis.email_id}")
+                    logger.warning(
+                        f"Invalid links format for email {analysis.email_id}"
+                    )
                     continue
-                
+
                 # Check each URL's length
                 for url in links:
                     url_length = len(url)
                     if url_length > threshold:
                         long_urls.append((analysis.email_id, url, url_length))
-                        
+
             except json.JSONDecodeError:
-                logger.error(f"Failed to parse links JSON for email {analysis.email_id}")
+                logger.error(
+                    f"Failed to parse links JSON for email {analysis.email_id}"
+                )
                 continue
-                
+
         return sorted(long_urls, key=lambda x: x[2], reverse=True)
-        
+
     except Exception as e:
         logger.error(f"Database error: {str(e)}")
         return []
-        
+
     finally:
         session.close()
 
+
 def main():
     """Main entry point for the URL checker utility."""
-    parser = argparse.ArgumentParser(description='Check for long URLs in email analysis database')
-    parser.add_argument('--threshold', type=int, default=100,
-                      help='URL length threshold (default: 100)')
+    parser = argparse.ArgumentParser(
+        description="Check for long URLs in email analysis database"
+    )
+    parser.add_argument(
+        "--threshold", type=int, default=100, help="URL length threshold (default: 100)"
+    )
     args = parser.parse_args()
-    
+
     logger.info(f"Checking for URLs longer than {args.threshold} characters...")
-    
+
     long_urls = check_long_urls(args.threshold)
-    
+
     if not long_urls:
         logger.info("No URLs found exceeding the length threshold.")
         return
-        
+
     logger.info(f"Found {len(long_urls)} URLs exceeding threshold:")
     for email_id, url, length in long_urls:
         logger.info(f"Email {email_id}: URL length {length}")
         logger.info(f"URL: {url}\n")
+
 
 if __name__ == "__main__":
     main()

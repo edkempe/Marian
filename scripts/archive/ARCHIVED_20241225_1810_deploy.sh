@@ -10,7 +10,7 @@ LAYER_NAME="marian_dependencies"
 cleanup_stack() {
     local stack_name=$1
     local stack_status=$(aws cloudformation describe-stacks --stack-name $stack_name --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DOES_NOT_EXIST")
-    
+
     if [ "$stack_status" = "ROLLBACK_COMPLETE" ]; then
         echo "Cleaning up failed stack: $stack_name"
         aws cloudformation delete-stack --stack-name $stack_name

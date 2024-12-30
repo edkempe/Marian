@@ -135,7 +135,7 @@ See [Code Standards](code_standards.md) for complete guidelines. Key points:
 ### Soft Delete
 ```python
 deleted: Mapped[bool] = mapped_column(
-    Boolean, 
+    Boolean,
     default=False,
     nullable=False
 )

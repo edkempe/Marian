@@ -1,6 +1,6 @@
 # Tests Directory
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Test suite for the Marian project, including unit tests, integration tests, and test utilities.

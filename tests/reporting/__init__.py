@@ -1,50 +1,58 @@
 """Reporting module for test analysis and validation results."""
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, TextIO, Dict, Any
-import json
+from typing import Any, Dict, Optional, TextIO
+
 from jinja2 import Environment, FileSystemLoader
+
 
 class ReportManager:
     """Manages report generation and output."""
-    
+
     def __init__(self, base_dir: Optional[str] = None):
         if base_dir is None:
             project_root = Path(__file__).parent.parent.parent
-            base_dir = project_root / 'reports'
-        
+            base_dir = project_root / "reports"
+
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(exist_ok=True)
-        
+
         # Create subdirectories for different report types
-        self.schema_dir = self.base_dir / 'schema'
-        self.docs_dir = self.base_dir / 'documentation'
-        self.deps_dir = self.base_dir / 'dependencies'
-        self.reqs_dir = self.base_dir / 'requirements'
-        self.html_dir = self.base_dir / 'html'
-        
-        for directory in [self.schema_dir, self.docs_dir, self.deps_dir, 
-                         self.reqs_dir, self.html_dir]:
+        self.schema_dir = self.base_dir / "schema"
+        self.docs_dir = self.base_dir / "documentation"
+        self.deps_dir = self.base_dir / "dependencies"
+        self.reqs_dir = self.base_dir / "requirements"
+        self.html_dir = self.base_dir / "html"
+
+        for directory in [
+            self.schema_dir,
+            self.docs_dir,
+            self.deps_dir,
+            self.reqs_dir,
+            self.html_dir,
+        ]:
             directory.mkdir(exist_ok=True)
-        
+
         # Set up Jinja2 environment
-        template_dir = Path(__file__).parent / 'templates'
+        template_dir = Path(__file__).parent / "templates"
         template_dir.mkdir(exist_ok=True)
         self.jinja_env = Environment(loader=FileSystemLoader(str(template_dir)))
-        
+
         # Create HTML templates if they don't exist
         self._ensure_templates_exist()
-    
+
     def _ensure_templates_exist(self):
         """Create HTML templates if they don't exist."""
-        template_dir = Path(__file__).parent / 'templates'
-        
+        template_dir = Path(__file__).parent / "templates"
+
         # Base template
-        base_template = template_dir / 'base.html'
+        base_template = template_dir / "base.html"
         if not base_template.exists():
-            base_template.write_text('''
+            base_template.write_text(
+                """
 <!DOCTYPE html>
 <html>
 <head>
@@ -78,11 +86,12 @@ class ReportManager:
     </div>
 </body>
 </html>
-            ''')
-        
+            """
+            )
+
         # Report-specific templates
         templates = {
-            'index.html': '''
+            "index.html": """
 {% extends "base.html" %}
 {% block title %}Test Reports Overview{% endblock %}
 {% block content %}
@@ -99,8 +108,8 @@ class ReportManager:
         </ul>
     </div>
 {% endblock %}
-            ''',
-            'schema.html': '''
+            """,
+            "schema.html": """
 {% extends "base.html" %}
 {% block title %}Schema Analysis Report{% endblock %}
 {% block content %}
@@ -116,7 +125,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         {% if data.unused_columns %}
         <div class="section">
             <h2>Unused Columns</h2>
@@ -132,8 +141,8 @@ class ReportManager:
         {% endif %}
     </div>
 {% endblock %}
-            ''',
-            'documentation.html': '''
+            """,
+            "documentation.html": """
 {% extends "base.html" %}
 {% block title %}Documentation Analysis Report{% endblock %}
 {% block content %}
@@ -147,7 +156,7 @@ class ReportManager:
                 <li>{{ data.stats.ref_count }} total references</li>
             </ul>
         </div>
-        
+
         {% if data.broken_refs %}
         <div class="section">
             <h2>Broken References</h2>
@@ -161,7 +170,7 @@ class ReportManager:
             {% endfor %}
         </div>
         {% endif %}
-        
+
         {% if data.unreferenced %}
         <div class="section">
             <h2>Unreferenced Files</h2>
@@ -174,8 +183,8 @@ class ReportManager:
         {% endif %}
     </div>
 {% endblock %}
-            ''',
-            'dependencies.html': '''
+            """,
+            "dependencies.html": """
 {% extends "base.html" %}
 {% block title %}Dependency Analysis Report{% endblock %}
 {% block content %}
@@ -189,7 +198,7 @@ class ReportManager:
                 {% endfor %}
             </ul>
         </div>
-        
+
         {% if data.cycles %}
         <div class="section">
             <h2>Circular Dependencies</h2>
@@ -200,7 +209,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         {% if data.violations %}
         <div class="section">
             <h2>Layer Violations</h2>
@@ -211,7 +220,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         {% if data.unused_libs %}
         <div class="section">
             <h2>Unused Shared Library Modules</h2>
@@ -224,8 +233,8 @@ class ReportManager:
         {% endif %}
     </div>
 {% endblock %}
-            ''',
-            'requirements.html': '''
+            """,
+            "requirements.html": """
 {% extends "base.html" %}
 {% block title %}Requirements Analysis Report{% endblock %}
 {% block content %}
@@ -239,7 +248,7 @@ class ReportManager:
                 <li>{{ data.stats.imported_count }} imported packages</li>
             </ul>
         </div>
-        
+
         {% if data.issues.unused_requirements %}
         <div class="section">
             <h2>Unused Requirements</h2>
@@ -251,7 +260,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         {% if data.issues.missing_requirements %}
         <div class="section">
             <h2>Missing Requirements</h2>
@@ -263,7 +272,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         {% if data.issues.version_mismatches %}
         <div class="section">
             <h2>Version Mismatches</h2>
@@ -275,7 +284,7 @@ class ReportManager:
             </ul>
         </div>
         {% endif %}
-        
+
         <div class="section">
             <h2>Package Details</h2>
             <table>
@@ -303,101 +312,103 @@ class ReportManager:
         </div>
     </div>
 {% endblock %}
-            '''
+            """,
         }
-        
+
         for name, content in templates.items():
             template_path = template_dir / name
             if not template_path.exists():
                 template_path.write_text(content.strip())
-    
-    def _get_report_file(self, subdir: Path, prefix: str, suffix: str = 'txt') -> TextIO:
+
+    def _get_report_file(
+        self, subdir: Path, prefix: str, suffix: str = "txt"
+    ) -> TextIO:
         """Get a file handle for writing a report."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{prefix}_{timestamp}.{suffix}"
         filepath = subdir / filename
-        return open(filepath, 'w')
-    
+        return open(filepath, "w")
+
     def _write_html_report(self, template_name: str, data: Dict[str, Any]):
         """Write an HTML report using a template."""
         template = self.jinja_env.get_template(template_name)
         output = template.render(data=data)
-        
-        with open(self.html_dir / template_name, 'w') as f:
+
+        with open(self.html_dir / template_name, "w") as f:
             f.write(output)
-    
+
     def write_schema_report(self, report_data: Dict[str, Any]):
         """Write schema validation report."""
         # Write text report
-        with self._get_report_file(self.schema_dir, 'schema_analysis') as f:
+        with self._get_report_file(self.schema_dir, "schema_analysis") as f:
             json.dump(report_data, f, indent=2)
-        
+
         # Write HTML report
-        self._write_html_report('schema.html', report_data)
-    
+        self._write_html_report("schema.html", report_data)
+
     def write_documentation_report(self, report_data: Dict[str, Any]):
         """Write documentation analysis report."""
         # Write text report
-        with self._get_report_file(self.docs_dir, 'documentation_analysis') as f:
+        with self._get_report_file(self.docs_dir, "documentation_analysis") as f:
             json.dump(report_data, f, indent=2)
-        
+
         # Write HTML report
-        self._write_html_report('documentation.html', report_data)
-    
+        self._write_html_report("documentation.html", report_data)
+
     def write_dependency_report(self, report_data: Dict[str, Any]):
         """Write dependency analysis report."""
         # Write text report
-        with self._get_report_file(self.deps_dir, 'dependency_analysis') as f:
+        with self._get_report_file(self.deps_dir, "dependency_analysis") as f:
             json.dump(report_data, f, indent=2)
-        
+
         # Write HTML report
-        self._write_html_report('dependencies.html', report_data)
-    
+        self._write_html_report("dependencies.html", report_data)
+
     def write_requirements_report(self, report_data: Dict[str, Any]):
         """Write requirements analysis report."""
         # Write text report
-        with self._get_report_file(self.reqs_dir, 'requirements_analysis') as f:
+        with self._get_report_file(self.reqs_dir, "requirements_analysis") as f:
             json.dump(report_data, f, indent=2)
-        
+
         # Write HTML report
-        self._write_html_report('requirements.html', report_data)
-    
+        self._write_html_report("requirements.html", report_data)
+
     def generate_index(self):
         """Generate index page linking to all reports."""
         latest_reports = {}
-        
+
         for report_type, directory in [
-            ('schema', self.schema_dir),
-            ('documentation', self.docs_dir),
-            ('dependencies', self.deps_dir),
-            ('requirements', self.reqs_dir)
+            ("schema", self.schema_dir),
+            ("documentation", self.docs_dir),
+            ("dependencies", self.deps_dir),
+            ("requirements", self.reqs_dir),
         ]:
-            reports = sorted(directory.glob('*_analysis_*.txt'))
+            reports = sorted(directory.glob("*_analysis_*.txt"))
             if reports:
                 latest = reports[-1]
                 timestamp = datetime.strptime(
-                    latest.stem.split('_')[-2] + latest.stem.split('_')[-1],
-                    '%Y%m%d%H%M%S'
+                    latest.stem.split("_")[-2] + latest.stem.split("_")[-1],
+                    "%Y%m%d%H%M%S",
                 )
                 latest_reports[report_type] = {
-                    'path': latest,
-                    'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    "path": latest,
+                    "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 }
-        
-        self._write_html_report('index.html', {'reports': latest_reports})
-    
+
+        self._write_html_report("index.html", {"reports": latest_reports})
+
     def get_latest_reports(self) -> Dict[str, Path]:
         """Get paths to the most recent reports of each type."""
         latest_reports = {}
-        
+
         for report_type, directory in [
-            ('schema', self.schema_dir),
-            ('documentation', self.docs_dir),
-            ('dependencies', self.deps_dir),
-            ('requirements', self.reqs_dir)
+            ("schema", self.schema_dir),
+            ("documentation", self.docs_dir),
+            ("dependencies", self.deps_dir),
+            ("requirements", self.reqs_dir),
         ]:
-            reports = sorted(directory.glob('*_analysis_*.txt'))
+            reports = sorted(directory.glob("*_analysis_*.txt"))
             if reports:
                 latest_reports[report_type] = reports[-1]
-        
+
         return latest_reports

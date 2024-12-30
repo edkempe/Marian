@@ -2,4 +2,4 @@
 
 from models.mixins.timestamp import TimestampMixin
 
-__all__ = ['TimestampMixin']
+__all__ = ["TimestampMixin"]

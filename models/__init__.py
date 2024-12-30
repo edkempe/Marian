@@ -5,41 +5,44 @@ Always use absolute imports (from models.email import Email) rather than relativ
 to prevent SQLAlchemy model resolution issues.
 """
 
+from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
 from models.base import Base
+from models.catalog import CatalogItem, CatalogTag, ItemRelationship, Tag
+from models.domain_constants import (
+    CONSTRAINTS,
+    DEFAULTS,
+    RELATIONSHIP_RULES,
+    STATE_TRANSITIONS,
+    AssetType,
+    ItemStatus,
+    RelationType,
+)
 from models.email import Email
 from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
-from models.catalog import CatalogItem, Tag, CatalogTag, ItemRelationship
-from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
 from models.gmail_label import GmailLabel
 from models.mixins import TimestampMixin
-from models.domain_constants import (
-    AssetType, ItemStatus, RelationType,
-    CONSTRAINTS, DEFAULTS, STATE_TRANSITIONS,
-    RELATIONSHIP_RULES
-)
 
 __all__ = [
     # Models
-    'Base',
-    'Email',
-    'EmailAnalysis',
-    'EmailAnalysisResponse',
-    'CatalogItem',
-    'Tag',
-    'CatalogTag',
-    'ItemRelationship',
-    'AssetCatalogItem',
-    'AssetCatalogTag',
-    'AssetDependency',
-    'GmailLabel',
-    'TimestampMixin',
-    
+    "Base",
+    "Email",
+    "EmailAnalysis",
+    "EmailAnalysisResponse",
+    "CatalogItem",
+    "Tag",
+    "CatalogTag",
+    "ItemRelationship",
+    "AssetCatalogItem",
+    "AssetCatalogTag",
+    "AssetDependency",
+    "GmailLabel",
+    "TimestampMixin",
     # Domain Constants
-    'AssetType',
-    'ItemStatus',
-    'RelationType',
-    'CONSTRAINTS',
-    'DEFAULTS',
-    'STATE_TRANSITIONS',
-    'RELATIONSHIP_RULES'
+    "AssetType",
+    "ItemStatus",
+    "RelationType",
+    "CONSTRAINTS",
+    "DEFAULTS",
+    "STATE_TRANSITIONS",
+    "RELATIONSHIP_RULES",
 ]

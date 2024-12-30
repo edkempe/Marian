@@ -1,7 +1,7 @@
 # Test Archive
 
-**Version:** 1.0.0  
-**Status:** Authoritative  
+**Version:** 1.0.0
+**Status:** Authoritative
 **Template:** [../../docs/templates/ARCHIVING.md](../../docs/templates/ARCHIVING.md)
 
 > Archive of superseded test files and fixtures, maintaining test history while keeping active test suite clear.

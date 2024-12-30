@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Repository of Architecture Decision Records (ADRs) documenting significant architectural decisions in the project.

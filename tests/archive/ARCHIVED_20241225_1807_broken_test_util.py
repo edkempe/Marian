@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from datetime import datetime, timedelta, timezone
 import os
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.orm import Session
+
 from models.email import Email
 from shared_lib.database_session_util import get_email_session
 
@@ -32,7 +34,7 @@ John""",
         "labels": "important,project-updates",
         "thread_id": "thread_001",
         "has_attachments": False,
-        "full_api_response": "{}"
+        "full_api_response": "{}",
     },
     {
         "id": "msg_002",
@@ -65,7 +67,7 @@ Sarah""",
         "labels": "urgent,production-issues",
         "thread_id": "thread_002",
         "has_attachments": False,
-        "full_api_response": "{}"
+        "full_api_response": "{}",
     },
     {
         "id": "msg_003",
@@ -89,29 +91,32 @@ Emma""",
         "labels": "team-events,social",
         "thread_id": "thread_003",
         "has_attachments": False,
-        "full_api_response": "{}"
-    }
+        "full_api_response": "{}",
+    },
 ]
+
 
 class EmailProcessor:
     """Test email processor for version tracking tests."""
+
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.analysis_prompt = {
-            'prompt_name': 'test_prompt',
-            'version': '1.0',
-            'description': 'Test prompt for email analysis'
+            "prompt_name": "test_prompt",
+            "version": "1.0",
+            "description": "Test prompt for email analysis",
         }
-    
+
     def get_unprocessed_emails(self):
         """Get unprocessed test emails."""
         with get_email_session() as session:
             return [(1, email.subject) for email in session.query(Email).limit(5)]
-    
+
     def process_email(self, email_tuple):
         """Process a test email."""
         email_id, subject = email_tuple
         return True  # Always succeed in test mode
+
 
 def add_test_emails():
     """Add test emails to the database."""
@@ -122,14 +127,17 @@ def add_test_emails():
         session.commit()
         print(f"Added {len(test_emails)} test emails to the database.")
 
+
 def generate_test_data():
     """Generate test data for the application."""
     add_test_emails()
+
 
 def load_test_fixtures():
     """Load test fixtures and return a test API key."""
     generate_test_data()
     return "test_api_key_12345"
+
 
 if __name__ == "__main__":
     add_test_emails()

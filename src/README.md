@@ -1,6 +1,6 @@
 # Marian Source Code
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Application code for the Marian project.
@@ -43,7 +43,7 @@ src/
    Example:
    ```python
    from models import Email
-   
+
    def process_message(msg_data: dict) -> Email:
        return Email(
            id=msg_data['id'],  # String ID from Gmail
@@ -70,7 +70,7 @@ src/
    Example:
    ```python
    from googleapiclient.errors import HttpError
-   
+
    try:
        response = gmail.users().messages().get(...).execute()
    except HttpError as e:

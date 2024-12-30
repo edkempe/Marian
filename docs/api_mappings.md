@@ -1,13 +1,13 @@
 # API to Model Mappings
 
-Version: 1.0.0  
+Version: 1.0.0
 Status: Authoritative
 
 This document tracks the external APIs used by our models and how their responses map to our database schema.
 
 ## Gmail API
 
-API Version: v1  
+API Version: v1
 Documentation: https://developers.google.com/gmail/api/reference/rest/v1/users.messages
 
 ### Email Model (users.messages endpoint)
@@ -60,7 +60,7 @@ updated      | updated_date  | DateTime   | Last modified
 
 ## Anthropic API (Claude)
 
-API Version: v0.18.1  
+API Version: v0.18.1
 Documentation: https://docs.anthropic.com/claude/reference/
 
 ### Email Analysis (messages.create endpoint)
@@ -99,7 +99,7 @@ temperature  | 0                     | Deterministic
 
 ## Asset Catalog API
 
-API Version: v1  
+API Version: v1
 Documentation: [Internal API Documentation]
 
 ### Asset Catalog Items

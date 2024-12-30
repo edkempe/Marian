@@ -306,8 +306,8 @@ Note: The identified duplicates should be consolidated during the next backlog c
 - Optimized performance
 
 ### Setup Script Creation
-**Status**: Planned  
-**Priority**: High  
+**Status**: Planned
+**Priority**: High
 **Workstream**: Program Management
 **Description**: Create a comprehensive setup script to automate environment, credentials, and database initialization.
 
@@ -338,8 +338,8 @@ Note: The identified duplicates should be consolidated during the next backlog c
 6. Create documentation
 
 ### Database Session Management Refactor
-**Status**: Planned  
-**Priority**: High  
+**Status**: Planned
+**Priority**: High
 **Workstream**: Program Management
 **Description**: Implement a scalable database session management system to handle multiple databases efficiently.
 
@@ -367,12 +367,12 @@ Note: The identified duplicates should be consolidated during the next backlog c
 class DatabaseSessions:
     def __init__(self):
         self._sessions = {}
-    
+
     @contextmanager
     def get_session(self, db_name: str):
         # Get single database session
         pass
-    
+
     @contextmanager
     def with_sessions(self, *db_names: str):
         # Get multiple database sessions
@@ -443,8 +443,8 @@ class DatabaseSessions:
 **Session Reference**: 2024-12-25-09-34
 
 ### Code DRY (Don't Repeat Yourself) Review
-**Status**: Planned  
-**Priority**: High  
+**Status**: Planned
+**Priority**: High
 **Workstream**: Program Management
 **Description**: Review and refactor code to eliminate duplication and improve maintainability, following our necessary and sufficient principle.
 
@@ -1123,9 +1123,9 @@ Benefits:
 ### Semantic Search Improvements
 
 #### 1. Improve Semantic Ranking for Advanced vs Basic Content
-**Priority**: High  
-**Complexity**: Medium  
-**Impact**: Better search results for tutorial/guide content  
+**Priority**: High
+**Complexity**: Medium
+**Impact**: Better search results for tutorial/guide content
 **Tag**: semantic-ranking
 
 **Problem**:
@@ -1151,9 +1151,9 @@ Current semantic search doesn't reliably rank advanced content higher than basic
 3. Consider weighted scoring combining semantic and metadata factors
 
 #### 2. Improve Short-form Content Matching
-**Priority**: Medium  
-**Complexity**: Low  
-**Impact**: Better handling of abbreviations and compound concepts  
+**Priority**: Medium
+**Complexity**: Low
+**Impact**: Better handling of abbreviations and compound concepts
 **Tag**: semantic-short-form
 
 **Problem**:
@@ -1174,9 +1174,9 @@ Short-form matching isn't reliably handling compound concepts and technical abbr
 3. Add test cases for common technical abbreviations
 
 ### Prompt Version Tracking
-**Status**: Backlogged  
-**Priority**: Low  
-**Workstream**: Email Processing  
+**Status**: Backlogged
+**Priority**: Low
+**Workstream**: Email Processing
 **Description**: System for tracking and managing different versions of prompts used in email analysis.
 
 #### Technical Details
@@ -1211,9 +1211,9 @@ Short-form matching isn't reliably handling compound concepts and technical abbr
 ## Documentation Tasks
 
 ### Session Log Format Migration
-**Priority**: Medium  
-**Status**: Not Started  
-**Added**: 2024-12-28  
+**Priority**: Medium
+**Status**: Not Started
+**Added**: 2024-12-28
 
 #### Description
 Create script to migrate existing session logs to new format (`session_log_YYYY-MM-DD.md`) and update all related documentation and scripts.
@@ -1256,24 +1256,24 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
        with migration_engine.connect() as conn:
            for statement in latest_migration.upgrade():
                conn.execute(statement)
-       
+
        # Create DB from models
        model_engine = create_engine('sqlite:///:memory:')
        Base.metadata.create_all(model_engine)
-       
+
        # Compare schemas
        migration_inspector = inspect(migration_engine)
        model_inspector = inspect(model_engine)
-       
+
        # Compare tables
        assert set(migration_inspector.get_table_names()) == \
               set(model_inspector.get_table_names())
-       
+
        # Compare columns, constraints, indexes
        for table in migration_inspector.get_table_names():
-           migration_cols = {c['name']: c for c in 
+           migration_cols = {c['name']: c for c in
                            migration_inspector.get_columns(table)}
-           model_cols = {c['name']: c for c in 
+           model_cols = {c['name']: c for c in
                         model_inspector.get_columns(table)}
            assert migration_cols == model_cols
    ```
@@ -1311,5 +1311,10 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
    - Test patterns are clearly explained
    - Documentation is reviewed and approved
    - Existing tests follow documented patterns
+
+{{ ... }}
+
+## Security
+- [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0005)
 
 {{ ... }}

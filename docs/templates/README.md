@@ -1,6 +1,6 @@
 # Documentation Templates
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Standard templates for project documentation to ensure consistency.

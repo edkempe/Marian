@@ -27,7 +27,7 @@
 
 ### JSON Validation
 - **Issue**: Missing required fields in Claude API responses
-- **Solution**: 
+- **Solution**:
   - Use `lib_anthropic.parse_claude_response()` which includes validation
   - Handle missing fields with empty strings/arrays instead of null values
 - **Location**: See `lib_anthropic.py` and model definitions

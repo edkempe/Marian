@@ -1,6 +1,6 @@
 # My Directory
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > Brief one-line description of the directory's purpose.

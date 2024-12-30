@@ -2,25 +2,26 @@
 # Project HAL: Intelligent Personal Assistant
 # Email Processing and Metadata Management Module
 
-import boto3
+import base64
 import json
-from enum import Enum
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
+
+# Additional AWS dependencies
+import os
 import re
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+# Potential AI dependencies
+import anthropic
+import boto3
+from google.auth.transport.requests import Request
 
 # Gmail API dependencies
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
 
-# Additional AWS dependencies
-import os
-import base64
-
-# Potential AI dependencies
-import anthropic
 
 class TFlowPriority(Enum):
     """TFlow priority levels with distribution targets."""
@@ -40,13 +41,13 @@ class EmailSignals:
     time_sensitivity: float = 0.0
 
 class MarianEmailProcessor:
-    def __init__(self, 
-                 dynamodb_table_name: str = 'email_metadata', 
+    def __init__(self,
+                 dynamodb_table_name: str = 'email_metadata',
                  secrets_manager_id: str = 'gmail/oauth/tokens',
                  anthropic_secret_name: str = 'AntrhopicKey'):
         """
         Initialize MARIAN email processor with DynamoDB, Gmail, and Anthropic configuration.
-        
+
         Args:
             dynamodb_table_name (str): Name of DynamoDB table for email metadata
             secrets_manager_id (str): AWS Secrets Manager ID for Gmail OAuth tokens
@@ -57,20 +58,20 @@ class MarianEmailProcessor:
         self.table = self.dynamodb.Table(dynamodb_table_name)
         self.cloudwatch = boto3.client('cloudwatch')
         self.secrets_manager = boto3.client('secretsmanager')
-        
+
         # Gmail Client
         self.gmail_service = self._initialize_gmail_client(secrets_manager_id)
-        
+
         # Anthropic Client
         self.anthropic_client = self._initialize_anthropic_client(anthropic_secret_name)
 
     def _initialize_gmail_client(self, secrets_manager_id: str):
         """
         Initialize Gmail API client using OAuth tokens from AWS Secrets Manager.
-        
+
         Args:
             secrets_manager_id (str): Secrets Manager identifier for Gmail tokens
-        
+
         Returns:
             googleapiclient.discovery.Resource: Initialized Gmail service
         """
@@ -80,7 +81,7 @@ class MarianEmailProcessor:
                 SecretId=secrets_manager_id
             )
             token_info = json.loads(secret_response['SecretString'])
-            
+
             # Create credentials object
             credentials = Credentials(
                 token=token_info['access_token'],
@@ -89,11 +90,11 @@ class MarianEmailProcessor:
                 client_id=token_info['client_id'],
                 client_secret=token_info['client_secret']
             )
-            
+
             # Refresh the token if it's expired
             if credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
-                
+
                 # Update the secret with new access token
                 self.secrets_manager.update_secret(
                     SecretId=secrets_manager_id,
@@ -102,10 +103,10 @@ class MarianEmailProcessor:
                         'access_token': credentials.token
                     })
                 )
-            
+
             # Build and return Gmail service
             return build('gmail', 'v1', credentials=credentials)
-        
+
         except Exception as e:
             print(f"Error initializing Gmail client: {e}")
             raise
@@ -113,10 +114,10 @@ class MarianEmailProcessor:
     def _initialize_anthropic_client(self, secret_name: str):
         """
         Initialize Anthropic client using API key from AWS Secrets Manager.
-        
+
         Args:
             secret_name (str): Secrets Manager identifier for Anthropic API key
-        
+
         Returns:
             anthropic.Anthropic: Initialized Anthropic client
         """
@@ -126,16 +127,16 @@ class MarianEmailProcessor:
                 SecretId=secret_name
             )
             secret = secret_response['SecretString']
-            
+
             # Handle both JSON and plain text secrets
             try:
                 api_key = json.loads(secret).get('api_key', secret)
             except json.JSONDecodeError:
                 api_key = secret
-            
+
             # Initialize and return Anthropic client
             return anthropic.Anthropic(api_key=api_key)
-        
+
         except Exception as e:
             print(f"Error initializing Anthropic client: {e}")
             return None
@@ -143,7 +144,7 @@ class MarianEmailProcessor:
     def list_gmail_labels(self) -> List[Dict[str, str]]:
         """
         List all Gmail labels for the authenticated user.
-        
+
         Returns:
             List[Dict[str, str]]: List of label dictionaries with id and name
         """
@@ -158,10 +159,10 @@ class MarianEmailProcessor:
     def get_label_id(self, label_name: str) -> Optional[str]:
         """
         Get the label ID for a given label name.
-        
+
         Args:
             label_name (str): Name of the Gmail label
-        
+
         Returns:
             Optional[str]: Label ID if found, None otherwise
         """
@@ -169,45 +170,45 @@ class MarianEmailProcessor:
         matching_labels = [label['id'] for label in labels if label['name'] == label_name]
         return matching_labels[0] if matching_labels else None
 
-    def fetch_emails_by_label(self, 
-                               label_id: str, 
+    def fetch_emails_by_label(self,
+                               label_id: str,
                                max_results: int = 100) -> List[Dict[str, Any]]:
         """
         Fetch emails with a specific label ID.
-        
+
         Args:
             label_id (str): Gmail label ID
             max_results (int, optional): Maximum number of emails to retrieve. Defaults to 100.
-        
+
         Returns:
             List[Dict[str, Any]]: List of email metadata
         """
         try:
             # Fetch email threads with the specified label
             results = self.gmail_service.users().threads().list(
-                userId='me', 
-                labelIds=[label_id], 
+                userId='me',
+                labelIds=[label_id],
                 maxResults=max_results
             ).execute()
-            
+
             emails = []
             for thread in results.get('threads', []):
                 # Fetch full thread details
                 thread_detail = self.gmail_service.users().threads().get(
-                    userId='me', 
+                    userId='me',
                     id=thread['id']
                 ).execute()
-                
+
                 # Process each message in the thread
                 for message in thread_detail['messages']:
                     email_data = self._parse_email_message(message)
                     emails.append(email_data)
-                    
+
                     # Store email metadata in DynamoDB
                     self.store_email_metadata(email_data)
-            
+
             return emails
-        
+
         except Exception as e:
             print(f"Error fetching emails by label: {e}")
             return []
@@ -215,15 +216,15 @@ class MarianEmailProcessor:
     def _parse_email_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parse a Gmail API message into a structured dictionary.
-        
+
         Args:
             message (Dict[str, Any]): Raw Gmail API message
-        
+
         Returns:
             Dict[str, Any]: Parsed email metadata
         """
         headers = {h['name']: h['value'] for h in message['payload'].get('headers', [])}
-        
+
         # Extract body content
         body = ''
         if 'parts' in message['payload']:
@@ -233,7 +234,7 @@ class MarianEmailProcessor:
                     break
         elif 'body' in message['payload']:
             body = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
-        
+
         return {
             'id': message['id'],
             'thread_id': message['threadId'],
@@ -248,13 +249,13 @@ class MarianEmailProcessor:
     def store_email_metadata(self, email_data: Dict[str, Any]) -> None:
         """
         Store processed email metadata in DynamoDB.
-        
+
         Args:
             email_data (Dict[str, Any]): Processed email metadata
         """
         signals = self.extract_email_signals(email_data)
         priority = self.calculate_tflow_priority(signals)
-        
+
         item = {
             'email_id': email_data.get('id'),
             'timestamp': datetime.utcnow().isoformat(),
@@ -262,17 +263,17 @@ class MarianEmailProcessor:
             'signals': asdict(signals),
             **email_data
         }
-        
+
         self.table.put_item(Item=item)
         self._log_priority_metrics(priority)
 
     def calculate_tflow_priority(self, signals: EmailSignals) -> TFlowPriority:
         """
         Calculate email priority using weighted signals.
-        
+
         Args:
             signals (EmailSignals): Extracted email priority signals
-        
+
         Returns:
             TFlowPriority: Calculated priority level
         """
@@ -283,7 +284,7 @@ class MarianEmailProcessor:
             signals.recipient_patterns * 0.1 +
             signals.time_sensitivity * 0.1
         )
-        
+
         # Mapping score to priority levels
         if total_score >= 0.9:
             return TFlowPriority.CRITICAL
@@ -299,10 +300,10 @@ class MarianEmailProcessor:
     def extract_email_signals(self, email_data: Dict[str, Any]) -> EmailSignals:
         """
         Extract priority signals from email data.
-        
+
         Args:
             email_data (Dict): Raw email metadata
-        
+
         Returns:
             EmailSignals: Processed priority signals
         """
@@ -317,10 +318,10 @@ class MarianEmailProcessor:
     def process_email_with_ai(self, email_data: Dict[str, Any]) -> Optional[str]:
         """
         Process email using Anthropic AI to extract insights.
-        
+
         Args:
             email_data (Dict[str, Any]): Email metadata
-        
+
         Returns:
             Optional[str]: AI-generated insights or None if processing fails
         """
@@ -358,9 +359,9 @@ class MarianEmailProcessor:
                     }
                 ]
             )
-            
+
             return response.content[0].text
-        
+
         except Exception as e:
             print(f"Error processing email with AI: {e}")
             return None
@@ -368,7 +369,7 @@ class MarianEmailProcessor:
     def _log_priority_metrics(self, priority: TFlowPriority) -> None:
         """
         Log priority distribution metrics to CloudWatch.
-        
+
         Args:
             priority (TFlowPriority): Calculated email priority
         """
@@ -386,36 +387,36 @@ class MarianEmailProcessor:
     def _calculate_sender_importance(self, email_data: Dict) -> float:
         """
         Calculate sender importance based on email metadata.
-        
+
         Args:
             email_data (Dict): Email metadata
-        
+
         Returns:
             float: Sender importance score (0.0 to 1.0)
         """
         # Placeholder implementation
         sender = email_data.get('from', '').lower()
-        
+
         # Example sender importance heuristics
         important_domains = ['@company.com', '@management.org', '@critical.net']
         for domain in important_domains:
             if domain in sender:
                 return 1.0
-        
+
         return 0.5
 
     def _calculate_subject_urgency(self, email_data: Dict) -> float:
         """
         Calculate subject urgency based on keywords.
-        
+
         Args:
             email_data (Dict): Email metadata
-        
+
         Returns:
             float: Subject urgency score (0.0 to 1.0)
         """
         subject = email_data.get('subject', '').lower()
-        
+
         # Urgency keywords with different weights
         urgency_keywords = {
             'urgent': 1.0,
@@ -425,27 +426,38 @@ class MarianEmailProcessor:
             'important': 0.6,
             'time-sensitive': 0.5
         }
-        
+
         for keyword, weight in urgency_keywords.items():
             if keyword in subject:
                 return weight
-        
+
         return 0.1
 
     def _calculate_content_value(self, email_data: Dict) -> float:
         """
         Estimate content value based on email body.
-        
+
         Args:
             email_data (Dict): Email metadata
-        
+
         Returns:
             float: Content value score (0.0 to 1.0)
         """
         body = email_data.get('body', '').lower()
-        
+
         # Content value indicators
         value_indicators = {
             'project update': 0.7,
             'proposal': 0.6,
-            'contract': 0
+            'contract': 0.8,
+            'report': 0.5,
+            'meeting': 0.4,
+            'question': 0.3,
+            'fyi': 0.2
+        }
+
+        for indicator, weight in value_indicators.items():
+            if indicator in body:
+                return weight
+
+        return 0.1

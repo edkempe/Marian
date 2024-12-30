@@ -1,6 +1,6 @@
 # Testing Guide and Strategy
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Authoritative
 
 > **Documentation Role**: This guide outlines the testing strategy for all code and documentation in the Jexi project, including core functionality, AI components, and supporting infrastructure. See `ai-architecture.md` for the complete documentation hierarchy.
@@ -122,12 +122,12 @@ Example test structure:
 def test_command_understanding():
     """Test Jexi's ability to parse and understand user commands."""
     jexi = JexiClient(mode='test')
-    
+
     # Test command parsing
     command = jexi.parse_command("organize my inbox by priority")
     assert command.intent == "organize_inbox"
     assert command.parameters["criteria"] == "priority"
-    
+
     # Test context preservation
     next_command = jexi.parse_command("show me the results")
     assert next_command.context.previous_intent == "organize_inbox"
@@ -202,7 +202,7 @@ def test_semantic_search_score_filtering():
         CatalogItem(title="Item 2"),
         CatalogItem(title="Item 3")
     ]
-    
+
     # Mock API response with various scores
     def mock_scores(*args, **kwargs):
         return type('Response', (), {
@@ -216,9 +216,9 @@ def test_semantic_search_score_filtering():
                 }
             '''})]
         })
-    
+
     chat.client.messages.create = mock_scores
-    
+
     # Test high threshold
     matches = chat.get_semantic_matches("query", items, threshold=0.8)
     assert len(matches) == 1
@@ -328,10 +328,10 @@ def test_feature_name():
     """
     # Setup
     initial_state = setup_test_state()
-    
+
     # Action
     result = perform_test_action()
-    
+
     # Assert
     assert_expected_outcome(result)
     verify_side_effects()
@@ -531,10 +531,10 @@ def test_feature_name():
     """
     # Setup
     initial_state = setup_test_state()
-    
+
     # Action
     result = perform_test_action()
-    
+
     # Assert
     assert_expected_outcome(result)
     verify_side_effects()

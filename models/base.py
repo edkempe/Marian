@@ -14,8 +14,11 @@ To maintain consistency and avoid model resolution issues, follow these guidelin
 
 3. Keep model names unique across the application to prevent conflicts
 """
+
 from sqlalchemy.orm import DeclarativeBase
+
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
+
     pass

@@ -54,7 +54,7 @@ samconfig.toml
 .DS_Store
 Thumbs.db
 
-# databases 
+# databases
 *.db
 !prompts.db
 backups/

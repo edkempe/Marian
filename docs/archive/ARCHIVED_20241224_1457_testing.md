@@ -116,10 +116,10 @@ When adding new integration tests:
    def test_new_feature():
        # Initialize API
        gmail = GmailAPI()
-       
+
        # Make real API calls
        result = gmail.some_operation()
-       
+
        # Validate actual results
        assert result is not None
        print(f"Operation result: {result}")
@@ -145,7 +145,7 @@ Test the semantic similarity detection for catalog items:
    ```
    # Add original item
    add "Python Programming Guide" - "A comprehensive guide to Python programming"
-   
+
    # Try adding semantically similar items
    add "Python Tutorial" - "A complete tutorial for Python programming"
    add "Guide to Programming in Python" - "Learn Python programming from scratch"
@@ -168,7 +168,7 @@ Test the semantic similarity detection for catalog items:
    # Add and archive an item
    add "Python Guide" - "Guide to Python"
    archive "Python Guide"
-   
+
    # Try adding similar item
    add "Python Tutorial" - "Tutorial for Python"
    ```
@@ -183,7 +183,7 @@ Test the semantic similarity detection for tags:
    ```
    # Create original tag
    create_tag programming
-   
+
    # Try creating semantically similar tags
    create_tag coding
    create_tag development
@@ -208,7 +208,7 @@ Test the semantic similarity detection for tags:
    # Create and archive tag
    create_tag programming
    archive_tag programming
-   
+
    # Try using similar tag
    create_tag coding
    ```

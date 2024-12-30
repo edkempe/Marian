@@ -42,16 +42,16 @@
    ```python
    class EmailAnalyzer:
        """Analyzes emails using Claude-3-Haiku with improved error handling and validation.
-       
+
        This analyzer uses the Claude-3-Haiku model exclusively for consistent performance and cost efficiency.
        Do not change to other models without thorough testing and approval.
-       
+
        Known Issues:
        1. Claude API Response Formatting:
           - The API may prefix responses with text like "Here is the JSON response:"
           - This causes json.loads() to fail with "Expecting value: line 1 column 2 (char 1)"
           - Solution: Use _extract_json() to clean the response
-       
+
        Model Requirements:
        - Always use claude-3-haiku-20240307
        - Keep max_tokens_to_sample at 1000 for consistent response sizes
@@ -80,18 +80,18 @@
    ```python
    def _extract_json(self, text: str) -> str:
        """Extract JSON object from text, removing any leading or trailing non-JSON content.
-       
+
        Known Issues:
        1. Leading Text: API may add "Here's the JSON:" before the actual JSON
        2. Trailing Text: API may add "Hope this helps!" after the JSON
        3. Multiple JSON Objects: Need to identify the correct one
-       
+
        Args:
            text: Text containing a JSON object, possibly with extra content
-           
+
        Returns:
            Cleaned JSON string
-           
+
        Example:
            Input: "Here is the JSON: {...} Hope this helps!"
            Output: "{...}"
@@ -120,19 +120,19 @@
    class EmailAnalysis(Base):
        """Clear docstring explaining model purpose and structure."""
        __tablename__ = 'email_analysis'
-       
+
        # Group fields by purpose with clear headers
        # Identification fields
        id = Column(Integer, primary_key=True)
-       
+
        # Content fields
        title = Column(String)
        body = Column(Text)
-       
+
        # Metadata fields
        created_at = Column(DateTime)
        updated_at = Column(DateTime)
-       
+
        # Relationships (always with full paths)
        email = relationship("models.email.Email", backref="analysis")
    ```
@@ -174,11 +174,11 @@
    # Standard library
    import os
    import json
-   
+
    # Third-party libraries
    import anthropic
    from sqlalchemy import text
-   
+
    # Local imports
    from models.email import Email
    from utils.logging import logger

@@ -1,6 +1,6 @@
 # Backup Directory
 
-**Version:** 1.0.1  
+**Version:** 1.0.1
 **Status:** Authoritative
 
 > Implements the 3-2-1 backup strategy: 3 copies of data, 2 different storage types, 1 copy offsite.

@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
-from datetime import datetime
 import os
+import sys
+from datetime import datetime
+
+import pandas as pd
+from constants import DATABASE_CONFIG
+from jinja2 import BaseLoader, Environment
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-import pandas as pd
-from jinja2 import Environment, BaseLoader
-import sys
-from constants import DATABASE_CONFIG
+
 from models.email import Email
 from models.email_analysis import EmailAnalysis
 
+
 def generate_html_report():
     # Create SQLAlchemy engine and session
-    analysis_db_path = 'data/db_email_analysis.db'
-    email_db_path = 'data/db_email_store.db'
-    
+    analysis_db_path = "data/db_email_analysis.db"
+    email_db_path = "data/db_email_store.db"
+
     if not os.path.exists(analysis_db_path) or not os.path.exists(email_db_path):
         print(f"Database files not found!")
         return
-        
+
     # Create SQLAlchemy engine
-    engine = create_engine(f'sqlite:///{analysis_db_path}?check_same_thread=False')
+    engine = create_engine(f"sqlite:///{analysis_db_path}?check_same_thread=False")
     Session = sessionmaker(bind=engine)
     session = Session()
-    
+
     try:
         # Query the data using SQLAlchemy
-        query = text("""
-        SELECT 
+        query = text(
+            """
+        SELECT
             e.subject,
             e.from_ as from_address,
             a.priority_score,
@@ -37,29 +41,33 @@ def generate_html_report():
         FROM emails e
         JOIN email_analysis a ON e.id = a.email_id
         ORDER BY a.analysis_date DESC, a.priority_score DESC
-        """)
-        
+        """
+        )
+
         # Execute query
         result = session.execute(query)
         rows = result.fetchall()
-        
+
         if not rows:
             print("No analyzed emails found in the database!")
             return
-        
+
         print(f"Found {len(rows)} analyzed emails")
-        
+
         # Convert rows to dictionaries for template rendering
         emails = []
         for row in rows:
             email_dict = dict(row)
             # Format dates
-            if email_dict['analysis_date']:
-                email_dict['analysis_date'] = email_dict['analysis_date'].strftime('%Y-%m-%d %H:%M:%S')
+            if email_dict["analysis_date"]:
+                email_dict["analysis_date"] = email_dict["analysis_date"].strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
             emails.append(email_dict)
-        
+
         # Generate HTML report using template
-        template = Environment(loader=BaseLoader()).from_string("""
+        template = Environment(loader=BaseLoader()).from_string(
+            """
         <html>
         <head>
             <title>Email Analysis Report</title>
@@ -101,63 +109,78 @@ def generate_html_report():
             </table>
         </body>
         </html>
-        """)
-        
-        html = template.render(
-            emails=emails,
-            generation_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        """
         )
-        
+
+        html = template.render(
+            emails=emails, generation_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
         # Write HTML report to file
-        with open('reports/email_analysis_report.html', 'w') as f:
+        with open("reports/email_analysis_report.html", "w") as f:
             f.write(html)
-            
+
         print("Report generated successfully!")
-        
+
     except Exception as e:
         print(f"Error generating report: {str(e)}")
-        
+
     finally:
         session.close()
 
-def generate_sent_emails_report(output_file='reports/sent_emails_report.html'):
+
+def generate_sent_emails_report(output_file="reports/sent_emails_report.html"):
     """Generate a report of sent emails."""
     # Create SQLAlchemy engine and session
-    email_db_path = 'data/db_email_store.db'
-    
+    email_db_path = "data/db_email_store.db"
+
     if not os.path.exists(email_db_path):
         print(f"Email database not found!")
         return
-        
+
     # Create SQLAlchemy engine
-    engine = create_engine(f'sqlite:///{email_db_path}?check_same_thread=False')
+    engine = create_engine(f"sqlite:///{email_db_path}?check_same_thread=False")
     Session = sessionmaker(bind=engine)
     session = Session()
-    
+
     try:
         # Query sent emails using SQLAlchemy
-        sent_emails = session.query(Email).filter(
-            Email.from_.like('%@gmail.com')
-        ).order_by(Email.received_date.desc()).all()
-        
+        sent_emails = (
+            session.query(Email)
+            .filter(Email.from_.like("%@gmail.com"))
+            .order_by(Email.received_date.desc())
+            .all()
+        )
+
         if not sent_emails:
             print("No sent emails found!")
             return
-            
+
         print(f"Found {len(sent_emails)} sent emails")
-        
+
         # Convert to list of dictionaries for template
         emails = []
         for email in sent_emails:
-            emails.append({
-                'subject': email.subject,
-                'to': email.to,
-                'date': email.received_date.strftime('%Y-%m-%d %H:%M:%S') if email.received_date else '',
-                'body': email.body[:200] + '...' if len(email.body or '') > 200 else email.body
-            })
-        
+            emails.append(
+                {
+                    "subject": email.subject,
+                    "to": email.to,
+                    "date": (
+                        email.received_date.strftime("%Y-%m-%d %H:%M:%S")
+                        if email.received_date
+                        else ""
+                    ),
+                    "body": (
+                        email.body[:200] + "..."
+                        if len(email.body or "") > 200
+                        else email.body
+                    ),
+                }
+            )
+
         # Generate HTML report
-        template = Environment(loader=BaseLoader()).from_string("""
+        template = Environment(loader=BaseLoader()).from_string(
+            """
         <html>
         <head>
             <title>Sent Emails Report</title>
@@ -190,27 +213,28 @@ def generate_sent_emails_report(output_file='reports/sent_emails_report.html'):
             </table>
         </body>
         </html>
-        """)
-        
-        html = template.render(
-            emails=emails,
-            generation_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        """
         )
-        
+
+        html = template.render(
+            emails=emails, generation_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
         # Write report to file
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(html)
-            
+
         print(f"Report generated successfully at {output_file}")
-        
+
     except Exception as e:
         print(f"Error generating report: {str(e)}")
-        
+
     finally:
         session.close()
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == '--sent':
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--sent":
         generate_sent_emails_report()
     else:
         generate_html_report()

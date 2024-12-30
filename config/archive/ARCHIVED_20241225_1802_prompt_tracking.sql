@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS prompts (
     script_name TEXT NOT NULL,
     purpose TEXT NOT NULL,          -- Specific purpose within the script (e.g., 'classify', 'analyze')
     task TEXT NOT NULL,            -- Specific task (e.g., 'subject', 'body')
-    
+
     -- Configuration
     expected_response_format TEXT NOT NULL,  -- JSON schema of expected response
     required_input_fields TEXT NOT NULL,     -- Array of required parameters
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS prompt_calls (
 
 -- View for prompt performance analytics
 CREATE VIEW IF NOT EXISTS prompt_performance AS
-SELECT 
+SELECT
     p.prompt_id,
     p.prompt_name,
     p.script_name,
