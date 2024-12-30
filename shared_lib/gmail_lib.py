@@ -28,6 +28,7 @@ from shared_lib.constants import (
     REGEX_PATTERNS,
 )
 from shared_lib.exceptions import APIError, AuthenticationError
+from .api_version_utils import verify_gmail_version, check_api_changelog
 
 # Constants
 SCOPES = [
@@ -102,11 +103,23 @@ class GmailAPI:
         
         Args:
             label_db_path: Path to SQLite database for label storage
+            
+        Raises:
+            ValueError: If API version is incompatible
+            RuntimeError: If required features are not available
         """
         self.label_db_path = label_db_path
         self.engine = create_engine(f"sqlite:///{label_db_path}")
         self.Session = sessionmaker(bind=self.engine)
         self.service = self._get_gmail_service()
+        
+        # Verify API version and features
+        if error := verify_gmail_version(self.service):
+            raise ValueError(f"Gmail API version error: {error}")
+            
+        # Check for API updates
+        if warning := check_api_changelog('gmail'):
+            logger.warning(f"Gmail API update: {warning}")
 
     def _get_gmail_service(self):
         """Get authenticated Gmail API service instance."""
