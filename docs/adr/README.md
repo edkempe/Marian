@@ -1,37 +1,48 @@
-# Architecture Decision Records
+# Architecture Decision Records (ADRs)
 
-**Version:** 1.0.0
-**Status:** Authoritative
+This directory contains Architecture Decision Records (ADRs) for the Marian project.
 
-> Repository of Architecture Decision Records (ADRs) documenting significant architectural decisions in the project.
+## What are ADRs?
 
-## Overview
-- **Purpose**: Track and explain architectural decisions
-- **Stability**: Stable
-- **Maintenance**: Active
-- **Python**: >= 3.12
+ADRs are documents that capture important architectural decisions made in a project. Each ADR describes:
+
+1. The context (what is the issue)
+2. The decision (what we're doing about it)
+3. The consequences (what happens as a result)
+
+## ADR File Naming Convention
+
+Files are named using the following format:
+`NNNN-title-with-dashes.md` where:
+- NNNN is a four-digit number (0001-9999)
+- Numbers are assigned chronologically
+- Title is brief but descriptive
+- Words are separated by hyphens
+- Extension is markdown
 
 ## Directory Structure
+
 ```
-/adr/
-├── README.md                          # This file
-├── 001-layered-architecture.md        # Core architecture design
-└── archive/                           # Archived ADRs
+.
+├── README.md                           # This file
+├── 0001-layered-architecture.md        # Core architecture design
+├── 0002-minimal-security-testing.md    # Security testing approach
+└── 0003-test-database-strategy.md      # Database testing strategy
 ```
 
-## Core Components
-1. **Active ADRs**
-   - Purpose: Document current architectural decisions
-   - When to use: When making significant design choices
-   - Location: Root directory
+## Creating New ADRs
 
-2. **Archived ADRs**
-   - Purpose: Preserve historical decisions
-   - When to use: When decisions are superseded
-   - Location: `archive/` directory
+When creating a new ADR:
+1. Copy the template from `template.md`
+2. Name it with the next available number
+3. Fill in all sections
+4. Add it to the directory structure above
+5. Link it in the main project documentation
 
-## Version History
-- 1.0.0 (2024-12-28): Initial ADR structure
-  - Established ADR format
-  - Created first ADR for layered architecture
-  - Set up archival process
+## Status
+
+ADRs can have the following statuses:
+- Proposed: Under discussion
+- Accepted: Approved and in use
+- Deprecated: No longer in use
+- Superseded: Replaced by a newer decision

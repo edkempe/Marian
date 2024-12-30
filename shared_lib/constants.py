@@ -190,6 +190,9 @@ class AssetTypes:
         return [cls.CODE, cls.DOCUMENT, cls.TEST, cls.CONFIG, cls.SCRIPT]
 
 
+# Sentiment analysis constants
+VALID_SENTIMENTS = {"POSITIVE", "NEGATIVE", "NEUTRAL", "MIXED"}
+
 # Sentiment Values
 class SentimentTypes:
     """Valid sentiment types for analysis."""

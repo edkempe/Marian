@@ -182,3 +182,19 @@ def requirements_report_fixture():
     """Generate requirements report after tests run."""
     yield
     requirements_report()
+
+
+REQUIRED_TEST_PACKAGES = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.1.0",
+    "factory-boy>=3.3.0",  # For test data generation
+]
+
+def test_requirements_installed():
+    """Verify all required test packages are installed."""
+    import pkg_resources
+    
+    for package in REQUIRED_TEST_PACKAGES:
+        name = package.split(">=")[0]
+        version = package.split(">=")[1]
+        pkg_resources.require(f"{name}>={version}")
