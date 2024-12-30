@@ -1,0 +1,43 @@
+{
+    "gmail": {
+        "current_version": "v1",
+        "min_supported_version": "2018-12-01",
+        "last_verified": "2023-12-30",
+        "changelog_url": "https://developers.google.com/gmail/api/releases",
+        "deprecation_policy_url": "https://developers.google.com/gmail/api/support/transition",
+        "test_endpoints": {
+            "api_explorer": "https://developers.google.com/gmail/api/reference/rest",
+            "oauth_playground": "https://developers.google.com/oauthplayground",
+            "test_user_profile": "users/me/profile"
+        },
+        "features_required": [
+            "users.messages.list",
+            "users.messages.get",
+            "users.labels.list",
+            "users.labels.create",
+            "users.labels.delete"
+        ],
+        "stability": "stable",
+        "breaking_changes": [],
+        "version_check_endpoint": "users/me/profile",
+        "last_breaking_change": null
+    },
+    "anthropic": {
+        "current_version": "2023-06-01",
+        "min_supported_version": "2023-06-01",
+        "last_verified": "2023-12-30",
+        "changelog_url": "https://docs.anthropic.com/claude/changelog",
+        "features_required": [
+            "messages.create"
+        ],
+        "stability": "evolving",
+        "breaking_changes": [
+            {
+                "date": "2023-08-15",
+                "description": "Updated response format"
+            }
+        ],
+        "version_check_endpoint": null,
+        "last_breaking_change": "2023-08-15"
+    }
+}
