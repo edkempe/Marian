@@ -1,17 +1,17 @@
 """Email analysis model for storing analysis results."""
 
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, relationship
 
 from models.base import Base
-from shared_lib.config_loader import get_schema_config
+from shared_lib.schema_constants import COLUMN_SIZES, AnalysisDefaults
 
-# Get schema configuration
-config = get_schema_config().analysis
-
+# Default values for analysis fields
+ANALYSIS_DEFAULTS = vars(AnalysisDefaults())
 
 class EmailAnalysis(Base):
     """SQLAlchemy model for email analysis storage."""
@@ -19,19 +19,27 @@ class EmailAnalysis(Base):
     __tablename__ = "email_analysis"
 
     # Primary key is the email ID this analysis belongs to
-    email_id: Mapped[str] = Column(String(100), ForeignKey("emails.id"), primary_key=True)
+    email_id: Mapped[str] = Column(
+        String(COLUMN_SIZES["EMAIL_ID"]),
+        ForeignKey("emails.id"),
+        primary_key=True
+    )
     
     # Analysis fields
     sentiment: Mapped[Optional[str]] = Column(
-        String(config.columns["sentiment"].size),
-        server_default=config.defaults.sentiment
+        String(COLUMN_SIZES["ANALYSIS_SENTIMENT"]),
+        server_default=ANALYSIS_DEFAULTS["sentiment"]
     )
     category: Mapped[Optional[str]] = Column(
-        String(config.columns["category"].size),
-        server_default=config.defaults.category
+        String(COLUMN_SIZES["ANALYSIS_CATEGORY"]),
+        server_default=ANALYSIS_DEFAULTS["category"]
     )
     summary: Mapped[Optional[str]] = Column(
-        String(config.columns["summary"].size)
+        String(COLUMN_SIZES["ANALYSIS_SUMMARY"])
+    )
+    priority: Mapped[Optional[str]] = Column(
+        String(COLUMN_SIZES["ANALYSIS_PRIORITY"]),
+        server_default=ANALYSIS_DEFAULTS["priority"]
     )
     
     # Metadata
@@ -50,32 +58,58 @@ class EmailAnalysis(Base):
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f"<EmailAnalysis(email_id={self.email_id}, sentiment={self.sentiment})>"
+        return f"<EmailAnalysis(email_id={self.email_id}, sentiment={self.sentiment}, category={self.category})>"
 
     @classmethod
-    def from_api_response(cls, email_id: str, response: dict) -> "EmailAnalysis":
-        """Create an EmailAnalysis instance from API response.
-
-        Args:
-            email_id: ID of the email this analysis belongs to
-            response: Dictionary containing analysis results
-
-        Returns:
-            EmailAnalysis instance
-        """
-        # Validate sentiment
-        sentiment = response.get("sentiment", config.defaults.sentiment)
-        if sentiment not in config.validation.valid_sentiments:
-            sentiment = config.defaults.sentiment
-
-        # Validate and truncate summary if needed
-        summary = response.get("summary", "")
-        if len(summary) > config.validation.max_summary_length:
-            summary = summary[:config.validation.max_summary_length]
-
+    def from_api_response(cls, response: Dict[str, Any]) -> "EmailAnalysis":
+        """Create instance from API response."""
+        # Validate and truncate fields if needed
+        sentiment = response.get("sentiment", ANALYSIS_DEFAULTS["sentiment"])
+        if len(sentiment) > COLUMN_SIZES["ANALYSIS_SENTIMENT"]:
+            sentiment = sentiment[:COLUMN_SIZES["ANALYSIS_SENTIMENT"]]
+            
+        category = response.get("category", ANALYSIS_DEFAULTS["category"])
+        if len(category) > COLUMN_SIZES["ANALYSIS_CATEGORY"]:
+            category = category[:COLUMN_SIZES["ANALYSIS_CATEGORY"]]
+            
+        summary = response.get("summary")
+        if summary and len(summary) > COLUMN_SIZES["ANALYSIS_SUMMARY"]:
+            summary = summary[:COLUMN_SIZES["ANALYSIS_SUMMARY"]]
+            
+        priority = response.get("priority", ANALYSIS_DEFAULTS["priority"])
+        if len(priority) > COLUMN_SIZES["ANALYSIS_PRIORITY"]:
+            priority = priority[:COLUMN_SIZES["ANALYSIS_PRIORITY"]]
+            
         return cls(
-            email_id=email_id,
+            email_id=response["email_id"],
             sentiment=sentiment,
-            category=response.get("category", config.defaults.category),
-            summary=summary
+            category=category,
+            summary=summary,
+            priority=priority
+        )
+
+
+@dataclass
+class EmailAnalysisResponse:
+    """Response model for email analysis API."""
+    
+    email_id: str
+    sentiment: str
+    category: str
+    summary: str
+    priority: str
+    analyzed_at: datetime
+    
+    @classmethod
+    def from_api_response(cls, response: Dict[str, Any]) -> "EmailAnalysisResponse":
+        """Create instance from API response."""
+        return cls(
+            email_id=response["email_id"],
+            sentiment=response["sentiment"],
+            category=response["category"],
+            summary=response["summary"],
+            priority=response["priority"],
+            analyzed_at=datetime.fromisoformat(response["analyzed_at"])
+            if isinstance(response["analyzed_at"], str)
+            else response["analyzed_at"],
         )

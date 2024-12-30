@@ -26,10 +26,12 @@ from shared_lib.migration_utils import (
     rollback_to_revision,
     get_revision_history,
 )
-from shared_lib.database_session_util import email_engine, analysis_engine
+from shared_lib.database_session_util import email_engine
+from shared_lib.constants import DATABASE_CONFIG
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def setup_argparse() -> argparse.ArgumentParser:
     """Set up argument parser."""
@@ -115,6 +117,7 @@ def setup_argparse() -> argparse.ArgumentParser:
     
     return parser
 
+
 def handle_generate(args) -> int:
     """Handle generate command."""
     revision = generate_migration(args.message, not args.empty)
@@ -123,49 +126,49 @@ def handle_generate(args) -> int:
         return 0
     return 1
 
+
 def handle_apply(args) -> int:
     """Handle apply command."""
     success = True
     
-    for engine in [email_engine, analysis_engine]:
-        logger.info(f"\nApplying migrations for {engine.url.database}:")
+    logger.info(f"\nApplying migrations for {DATABASE_CONFIG['email']['path']}:")
+    if args.dry_run:
+        results = apply_migrations(
+            email_engine,
+            dry_run=True,
+            target_revision=args.target
+        )
         
-        if args.dry_run:
-            results = apply_migrations(
-                engine,
-                dry_run=True,
-                target_revision=args.target
-            )
+        if not results["success"]:
+            logger.error(f"Migration simulation failed: {results['error']}")
+            success = False
+            return 1
             
-            if not results["success"]:
-                logger.error(f"Migration simulation failed: {results['error']}")
-                success = False
-                continue
-                
-            logger.info(f"Current revision: {results['current_revision']}")
-            logger.info(f"Target revision: {results['target_revision']}")
+        logger.info(f"Current revision: {results['current_revision']}")
+        logger.info(f"Target revision: {results['target_revision']}")
+        
+        if not results["changes"]:
+            logger.info("No changes to apply")
+            return 0
             
-            if not results["changes"]:
-                logger.info("No changes to apply")
-                continue
+        logger.info("\nChanges to apply:")
+        for change in results["changes"]:
+            logger.info(f"\nRevision {change['revision']}: {change['message']}")
+            for op in change["operations"]:
+                logger.info(f"  - {op['type']}: {op['args']} {op['kwargs']}")
                 
-            logger.info("\nChanges to apply:")
-            for change in results["changes"]:
-                logger.info(f"\nRevision {change['revision']}: {change['message']}")
-                for op in change["operations"]:
-                    logger.info(f"  - {op['type']}: {op['args']} {op['kwargs']}")
-                    
-        else:
-            result = apply_migrations(
-                engine,
-                dry_run=False,
-                target_revision=args.target
-            )
-            if not result:
-                logger.error(f"Failed to apply migrations to {engine.url.database}")
-                success = False
+    else:
+        result = apply_migrations(
+            email_engine,
+            dry_run=False,
+            target_revision=args.target
+        )
+        if not result:
+            logger.error(f"Failed to apply migrations to {DATABASE_CONFIG['email']['path']}")
+            success = False
                 
     return 0 if success else 1
+
 
 def handle_validate(args) -> int:
     """Handle validate command."""
@@ -184,22 +187,14 @@ def handle_validate(args) -> int:
         logger.error(f"  - {error}")
     return 1
 
+
 def handle_history(args) -> int:
     """Handle history command."""
     if args.detailed:
         email_history = get_revision_history(email_engine)
-        analysis_history = get_revision_history(analysis_engine)
         
         logger.info("Email database revision history:")
         for rev in email_history:
-            logger.info(
-                f"  {rev['revision']}: {rev['message']} "
-                f"(current: {rev['is_current']}, "
-                f"down_revision: {rev['down_revision']})"
-            )
-        
-        logger.info("\nAnalysis database revision history:")
-        for rev in analysis_history:
             logger.info(
                 f"  {rev['revision']}: {rev['message']} "
                 f"(current: {rev['is_current']}, "
@@ -207,49 +202,43 @@ def handle_history(args) -> int:
             )
     else:
         email_history = get_migration_history(email_engine)
-        analysis_history = get_migration_history(analysis_engine)
         
         logger.info("Email database revision history:")
         for rev in email_history:
             logger.info(f"  {rev['revision']}: {rev['message']}")
-        
-        logger.info("\nAnalysis database revision history:")
-        for rev in analysis_history:
-            logger.info(f"  {rev['revision']}: {rev['message']}")
     
     return 0
 
+
 def handle_pending(args) -> int:
     """Handle pending command."""
-    has_pending = False
-    for engine in [email_engine, analysis_engine]:
-        logger.info(f"\nPending migrations for {engine.url.database}:")
-        pending = get_pending_migrations(engine)
-        
-        if not pending:
-            logger.info("  No pending migrations")
-            continue
-            
-        has_pending = True
-        for revision in pending:
-            logger.info(f"  - {revision}")
+    pending_migrations = get_pending_migrations(email_engine)
     
-    return 1 if has_pending else 0
+    if not pending_migrations:
+        logger.info("No pending migrations")
+        return 0
+        
+    logger.info("Pending migrations:")
+    for rev in pending_migrations:
+        logger.info(f"  {rev}")
+    
+    return 0
+
 
 def handle_rollback(args) -> int:
     """Handle rollback command."""
-    success = True
-    
     if args.revision:
-        logger.info(f"Rolling back to revision {args.revision}")
-        success &= rollback_to_revision(email_engine, args.revision)
-        success &= rollback_to_revision(analysis_engine, args.revision)
+        success = rollback_to_revision(email_engine, args.revision)
     else:
-        logger.info(f"Rolling back {args.steps} migration(s)")
-        success &= rollback_migration(email_engine, args.steps)
-        success &= rollback_migration(analysis_engine, args.steps)
-    
-    return 0 if success else 1
+        success = rollback_migration(email_engine, args.steps)
+        
+    if success:
+        logger.info("Successfully rolled back migrations")
+        return 0
+        
+    logger.error("Failed to roll back migrations")
+    return 1
+
 
 def main() -> int:
     """Main entry point."""
@@ -259,7 +248,7 @@ def main() -> int:
     if not args.command:
         parser.print_help()
         return 1
-    
+        
     handlers = {
         "generate": handle_generate,
         "apply": handle_apply,
@@ -270,6 +259,7 @@ def main() -> int:
     }
     
     return handlers[args.command](args)
+
 
 if __name__ == "__main__":
     sys.exit(main())

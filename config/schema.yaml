@@ -6,72 +6,90 @@ email:
     id:
       size: 100
       type: string
-      description: "Gmail message ID"
+      description: "Email ID"
     thread_id:
       size: 100
       type: string
-      description: "Gmail thread ID"
+      description: "Thread ID"
     message_id:
       size: 100
       type: string
-      description: "Email message ID"
+      description: "Message ID"
     subject:
       size: 500
       type: string
-      description: "Email subject line"
-    snippet:
-      size: 500
-      type: string
-      description: "Email snippet/preview"
-    sender:
-      size: 200
+      description: "Email subject"
+    from_address:
+      size: 255
       type: string
       description: "Sender email address"
-    recipient:
-      size: 200
+    to_address:
+      size: 255
       type: string
       description: "Recipient email address"
-    cc:
-      size: 200
+    cc_address:
+      size: 255
       type: string
       description: "CC recipients"
-    bcc:
-      size: 200
+    bcc_address:
+      size: 255
       type: string
       description: "BCC recipients"
   defaults:
     subject: ""
+    body: null
+    snippet: null
+    from_address: null
+    to_address: null
+    cc_address: null
+    bcc_address: null
     has_attachments: false
     is_read: false
     is_important: false
     api_response: "{}"
   validation:
     max_subject_length: 500
-    max_snippet_length: 500
+    max_from_length: 255
+    max_to_length: 255
+    max_cc_length: 255
+    max_bcc_length: 255
 
 analysis:
   columns:
     sentiment:
-      size: 50
+      size: 20
       type: string
-      description: "Sentiment classification"
+      description: "Sentiment analysis result"
     category:
-      size: 100
+      size: 50
       type: string
       description: "Email category"
     summary:
       size: 1000
       type: string
       description: "Email summary"
+    priority:
+      size: 20
+      type: string
+      description: "Email priority"
   defaults:
     sentiment: "neutral"
     category: "uncategorized"
+    summary: null
+    priority: "low"
   validation:
     valid_sentiments:
       - "positive"
       - "negative"
       - "neutral"
       - "mixed"
+    valid_categories:
+      - "work"
+      - "personal"
+      - "finance"
+      - "social"
+      - "support"
+      - "uncategorized"
     valid_priorities:
       - "high"
       - "medium"
@@ -80,27 +98,31 @@ analysis:
 
 label:
   columns:
-    id:
+    label_id:
       size: 100
       type: string
-      description: "Gmail label ID"
+      description: "Label ID"
     name:
-      size: 100
+      size: 255
       type: string
-      description: "Label display name"
+      description: "Label name"
     type:
-      size: 50
+      size: 20
       type: string
-      description: "Label type (system/user)"
-    visibility:
-      size: 50
-      type: string
-      description: "Label visibility settings"
+      description: "Label type"
   defaults:
+    name: ""
     type: "user"
+    message_list_visibility: "show"
+    label_list_visibility: "labelShow"
     is_system: false
   validation:
     valid_types:
       - "system"
       - "user"
-    max_name_length: 100
+    valid_visibilities:
+      - "show"
+      - "hide"
+    valid_label_visibilities:
+      - "labelShow"
+      - "labelHide"

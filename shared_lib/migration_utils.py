@@ -16,7 +16,7 @@ from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, MetaData, Table, inspect
 
-from shared_lib.config_loader import load_schema_config
+from shared_lib.schema_constants import COLUMN_SIZES, EmailDefaults, AnalysisDefaults, LabelDefaults
 from shared_lib.database_session_util import email_engine, analysis_engine
 from models.registry import Base
 
@@ -81,7 +81,6 @@ def validate_schema_changes() -> Dict[str, Any]:
             "warnings": List[str]
         }
     """
-    config = load_schema_config()
     results = {"valid": True, "errors": [], "warnings": []}
     
     # Get all tables from models
@@ -89,32 +88,26 @@ def validate_schema_changes() -> Dict[str, Any]:
     
     # Check each table against configuration
     for table_name, table in model_tables.items():
-        table_config = getattr(config, table_name, None)
-        if not table_config:
-            results["errors"].append(f"Table {table_name} not found in configuration")
-            results["valid"] = False
-            continue
-            
+        # Get expected column sizes from COLUMN_SIZES
+        table_prefix = table_name.upper()
+        
         # Check columns
         for column in table.columns:
-            col_name = column.name
-            col_config = getattr(table_config, col_name, None)
-            if not col_config:
-                results["errors"].append(
-                    f"Column {col_name} in table {table_name} not found in configuration"
-                )
-                results["valid"] = False
-                continue
+            if hasattr(column.type, "length"):
+                col_name = f"{table_prefix}_{column.name.upper()}"
+                if col_name not in COLUMN_SIZES:
+                    results["warnings"].append(f"Column {col_name} size not defined in schema constants")
+                    continue
                 
-            # Check types match
-            model_type = str(column.type)
-            config_type = col_config.type
-            if model_type.lower() != config_type.lower():
-                results["errors"].append(
-                    f"Type mismatch for {table_name}.{col_name}: "
-                    f"model={model_type}, config={config_type}"
-                )
-                results["valid"] = False
+                expected_size = COLUMN_SIZES[col_name]
+                actual_size = column.type.length
+                
+                if actual_size != expected_size:
+                    results["errors"].append(
+                        f"Column {table_name}.{column.name} size mismatch: "
+                        f"expected {expected_size}, got {actual_size}"
+                    )
+                    results["valid"] = False
     
     return results
 

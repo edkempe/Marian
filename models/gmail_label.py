@@ -15,18 +15,18 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, relationship
 
 from models.base import Base
-from shared_lib.config_loader import get_schema_config
-
-# Get schema configuration
-config = get_schema_config().label
+from shared_lib.schema_constants import COLUMN_SIZES, LabelDefaults
 
 # Association table for many-to-many relationship between emails and labels
 email_labels = Table(
     "email_labels",
     Base.metadata,
-    Column("email_id", String(100), ForeignKey("emails.id"), primary_key=True),
-    Column("label_id", String(100), ForeignKey("gmail_labels.id"), primary_key=True),
+    Column("email_id", String(COLUMN_SIZES["EMAIL_ID"]), ForeignKey("emails.id"), primary_key=True),
+    Column("label_id", String(COLUMN_SIZES["LABEL_ID"]), ForeignKey("gmail_labels.id"), primary_key=True),
 )
+
+# Default values for label fields
+LABEL_DEFAULTS = vars(LabelDefaults())
 
 
 class GmailLabel(Base):
@@ -36,32 +36,35 @@ class GmailLabel(Base):
 
     # Primary key and identifiers
     id: Mapped[str] = Column(
-        String(config.columns["id"].size),
+        String(COLUMN_SIZES["LABEL_ID"]),
         primary_key=True
     )
     name: Mapped[str] = Column(
-        String(config.columns["name"].size),
-        unique=True
+        String(COLUMN_SIZES["LABEL_NAME"]),
+        unique=True,
+        server_default=LABEL_DEFAULTS["name"]
     )
 
     # Label properties
     type: Mapped[str] = Column(
-        String(config.columns["type"].size),
-        server_default=config.defaults.type
+        String(COLUMN_SIZES["LABEL_TYPE"]),
+        server_default=LABEL_DEFAULTS["type"]
     )
     message_list_visibility: Mapped[Optional[str]] = Column(
-        String(config.columns["visibility"].size),
+        String(20),  # Fixed size for visibility settings
+        server_default=LABEL_DEFAULTS["message_list_visibility"],
         nullable=True
     )
     label_list_visibility: Mapped[Optional[str]] = Column(
-        String(config.columns["visibility"].size),
+        String(20),  # Fixed size for visibility settings
+        server_default=LABEL_DEFAULTS["label_list_visibility"],
         nullable=True
     )
     
     # System flags
     is_system: Mapped[bool] = Column(
         Boolean,
-        server_default=str(config.defaults.is_system)
+        server_default=str(LABEL_DEFAULTS["is_system"])
     )
 
     # Timestamps
@@ -93,20 +96,20 @@ class GmailLabel(Base):
             GmailLabel instance
         """
         # Validate and truncate name if needed
-        name = response.get("name", "")
-        if len(name) > config.validation.max_name_length:
-            name = name[:config.validation.max_name_length]
+        name = response.get("name", LABEL_DEFAULTS["name"])
+        if len(name) > COLUMN_SIZES["LABEL_NAME"]:
+            name = name[:COLUMN_SIZES["LABEL_NAME"]]
 
-        # Validate label type
-        label_type = response.get("type", config.defaults.type)
-        if label_type not in config.validation.valid_types:
-            label_type = config.defaults.type
+        # Get label type with default
+        label_type = response.get("type", LABEL_DEFAULTS["type"])
+        if len(label_type) > COLUMN_SIZES["LABEL_TYPE"]:
+            label_type = label_type[:COLUMN_SIZES["LABEL_TYPE"]]
 
         return cls(
             id=response["id"],
             name=name,
             type=label_type,
-            message_list_visibility=response.get("messageListVisibility"),
-            label_list_visibility=response.get("labelListVisibility"),
+            message_list_visibility=response.get("messageListVisibility", LABEL_DEFAULTS["message_list_visibility"]),
+            label_list_visibility=response.get("labelListVisibility", LABEL_DEFAULTS["label_list_visibility"]),
             is_system=response.get("type") == "system"
         )
