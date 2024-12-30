@@ -1,53 +1,112 @@
-"""Gmail label database model."""
+"""Gmail label model for storing label data."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
+    Table,
+    func
+)
+from sqlalchemy.orm import Mapped, relationship
 
 from models.base import Base
-from shared_lib.constants import COLUMN_SIZES
+from shared_lib.config_loader import get_schema_config
+
+# Get schema configuration
+config = get_schema_config().label
+
+# Association table for many-to-many relationship between emails and labels
+email_labels = Table(
+    "email_labels",
+    Base.metadata,
+    Column("email_id", String(100), ForeignKey("emails.id"), primary_key=True),
+    Column("label_id", String(100), ForeignKey("gmail_labels.id"), primary_key=True),
+)
 
 
 class GmailLabel(Base):
-    """SQLAlchemy model for Gmail label storage.
-
-    Maps to the 'gmail_labels' table in the database. This model stores Gmail label data
-    including:
-    - Label metadata (id, name, type)
-    - Visibility settings
-    - History tracking (active status, timestamps)
-
-    Gmail labels can be:
-    - System labels: Built-in labels with simple IDs (e.g., "INBOX", "SENT", "DRAFT")
-    - User-created labels: Custom labels with longer IDs (e.g., "Label_1234567890123456789")
-
-    Each label has:
-    - A unique ID from Gmail (up to 100 characters)
-    - A display name (up to 100 characters)
-    - Type ("system" or "user")
-    - Active status and tracking timestamps
-    """
+    """SQLAlchemy model for Gmail label storage."""
 
     __tablename__ = "gmail_labels"
 
-    id: Mapped[str] = Column(String(100), primary_key=True)  # Gmail's label ID
-    name: Mapped[str] = Column(String(100), nullable=False)  # Label display name
-    type: Mapped[str] = Column(String(50), nullable=False)  # 'system' or 'user'
-    is_active: Mapped[bool] = Column(Boolean, default=True, nullable=False)
-    first_seen_at: Mapped[datetime] = Column(
-        DateTime, server_default=func.current_timestamp(), nullable=False
+    # Primary key and identifiers
+    id: Mapped[str] = Column(
+        String(config.columns["id"].size),
+        primary_key=True
     )
-    last_seen_at: Mapped[datetime] = Column(
-        DateTime,
-        server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
-        nullable=False,
+    name: Mapped[str] = Column(
+        String(config.columns["name"].size),
+        unique=True
     )
-    deleted_at: Mapped[Optional[datetime]] = Column(DateTime)
 
-    def __repr__(self):
+    # Label properties
+    type: Mapped[str] = Column(
+        String(config.columns["type"].size),
+        server_default=config.defaults.type
+    )
+    message_list_visibility: Mapped[Optional[str]] = Column(
+        String(config.columns["visibility"].size),
+        nullable=True
+    )
+    label_list_visibility: Mapped[Optional[str]] = Column(
+        String(config.columns["visibility"].size),
+        nullable=True
+    )
+    
+    # System flags
+    is_system: Mapped[bool] = Column(
+        Boolean,
+        server_default=str(config.defaults.is_system)
+    )
+
+    # Timestamps
+    created_at: Mapped[datetime] = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
+
+    # Relationships
+    emails = relationship("Email", secondary=email_labels, back_populates="labels")
+
+    def __repr__(self) -> str:
         """Return string representation."""
-        status = "active" if self.is_active else "inactive"
-        return f"<GmailLabel(id='{self.id}', name='{self.name}', type='{self.type}', status='{status}')>"
+        return f"<GmailLabel(id={self.id}, name={self.name})>"
+
+    @classmethod
+    def from_api_response(cls, response: dict) -> "GmailLabel":
+        """Create a GmailLabel instance from API response.
+
+        Args:
+            response: Dictionary containing label data from API
+
+        Returns:
+            GmailLabel instance
+        """
+        # Validate and truncate name if needed
+        name = response.get("name", "")
+        if len(name) > config.validation.max_name_length:
+            name = name[:config.validation.max_name_length]
+
+        # Validate label type
+        label_type = response.get("type", config.defaults.type)
+        if label_type not in config.validation.valid_types:
+            label_type = config.defaults.type
+
+        return cls(
+            id=response["id"],
+            name=name,
+            type=label_type,
+            message_list_visibility=response.get("messageListVisibility"),
+            label_list_visibility=response.get("labelListVisibility"),
+            is_system=response.get("type") == "system"
+        )

@@ -88,6 +88,9 @@ class EmailConfig(TypedDict):
     LABELS: List[str]
     EXCLUDED_LABELS: List[str]
     DAYS_TO_FETCH: int
+    USER_ID: str
+    DEFAULT_SUBJECT: str
+    EMPTY_STRING: str
 
 
 class CatalogConfig(TypedDict):
@@ -123,6 +126,9 @@ class TestingConfig(TypedDict):
 
     EXCLUDED_DIRS: List[str]
     REQUIRED_VERSIONING: List[str]
+    TEST_DB_PATH: str
+    TEST_EMAIL_DATA: Dict[str, str]
+    TEST_EMAIL_COUNT: int
 
 
 class SessionConfig(TypedDict):
@@ -142,9 +148,36 @@ class SessionConfig(TypedDict):
 
 # Database Column Sizes
 COLUMN_SIZES = {
-    "EMAIL_LABELS": 150,
-    "GMAIL_LABEL_ID": 30,
-    "GMAIL_LABEL_NAME": 100,
+    "EMAIL_LABELS": 500,  # Maximum size for labels string
+    "EMAIL_SUBJECT": 500,  # Maximum size for subject
+    "EMAIL_SENDER": 200,  # Maximum size for sender
+    "EMAIL_THREAD": 100,  # Maximum size for thread ID
+    "EMAIL_TO": 200,  # Maximum size for recipient
+    "EMAIL_ID": 100,  # Maximum size for Gmail message ID
+}
+
+# Analysis Constants
+ANALYSIS_VALIDATION = {
+    "PRIORITY_SCORE": {"MIN": 1, "MAX": 5},
+    "TEXT_LENGTH": {"MIN": 1, "MAX": 10000},
+    "CONFIDENCE_SCORE": {"MIN": 0.0, "MAX": 1.0},
+}
+
+ANALYSIS_DEFAULTS = {
+    "ACTION_NEEDED": False,
+    "EMPTY_STRING": "",
+    "CONFIDENCE_SCORE": 0.8,
+}
+
+ANALYSIS_SENTIMENT_TYPES = {
+    "POSITIVE": "positive",
+    "NEGATIVE": "negative",
+    "NEUTRAL": "neutral",
+}
+
+ANALYSIS_DATE_PATTERNS = {
+    "ISO_DATE_OR_EMPTY": r"^(\d{4}-\d{2}-\d{2})?$",
+    "ISO_DATE_OR_EMPTY_OR_ASAP": r"^(\d{4}-\d{2}-\d{2}|ASAP)?$",
 }
 
 # Default Values
@@ -152,7 +185,6 @@ DEFAULT_VALUES = {
     "EMAIL_SUBJECT": "No Subject",
     "API_RESPONSE": "{}",
     "HAS_ATTACHMENTS": "0",
-    "EMPTY_STRING": "",
     "ACTION_NEEDED": False,
     "CONFIDENCE_SCORE": 0.9,
 }
@@ -220,20 +252,38 @@ DATE_PATTERNS = REGEX_PATTERNS
 
 # Email Configuration
 EMAIL_CONFIG: EmailConfig = {
-    "COUNT": 100,  # Number of emails to process at once
-    "BATCH_SIZE": 10,  # Number of emails per API batch request
-    "MAX_RETRIES": 3,  # Maximum number of retries for failed requests
-    "RETRY_DELAY": 5,  # Delay between retries in seconds
-    "LABELS": ["INBOX", "SENT"],  # Labels to process
+    "COUNT": 100,  # Default number of emails to fetch
+    "BATCH_SIZE": 50,  # Number of emails to process in one batch
+    "MAX_RETRIES": 3,  # Maximum number of retries for failed operations
+    "RETRY_DELAY": 1,  # Delay between retries in seconds
+    "LABELS": ["INBOX", "SENT", "IMPORTANT"],  # Default labels to fetch
     "EXCLUDED_LABELS": ["SPAM", "TRASH"],  # Labels to exclude
-    "DAYS_TO_FETCH": 30,  # Number of days of emails to fetch
+    "DAYS_TO_FETCH": 30,  # Default number of days to fetch
+    "USER_ID": "me",  # Gmail API user ID
+    "DEFAULT_SUBJECT": "No Subject",  # Default subject for emails without one
+    "EMPTY_STRING": "",  # Default empty string value
 }
 
 # Database Configuration
 DATABASE_CONFIG: DatabaseConfig = {
-    "email": {"path": "data/email.db", "url": None},
-    "analysis": {"path": "data/analysis.db", "url": None},
-    "catalog": {"path": "data/catalog.db", "url": None},
+    "EMAIL_DB_PATH": os.path.join(ROOT_DIR, "db_email_store.db"),
+    "ANALYSIS_DB_PATH": os.path.join(ROOT_DIR, "db_email_analysis.db"),
+    "EMAIL_DB_URL": f"sqlite:///{os.path.join(ROOT_DIR, 'db_email_store.db')}",
+    "ANALYSIS_DB_URL": f"sqlite:///{os.path.join(ROOT_DIR, 'db_email_analysis.db')}",
+    "EMAIL_TABLE": "emails",
+    "ANALYSIS_TABLE": "email_analysis",
+    "email": {
+        "path": os.path.join(ROOT_DIR, "db_email_store.db"),
+        "url": f"sqlite:///{os.path.join(ROOT_DIR, 'db_email_store.db')}",
+    },
+    "analysis": {
+        "path": os.path.join(ROOT_DIR, "db_email_analysis.db"),
+        "url": f"sqlite:///{os.path.join(ROOT_DIR, 'db_email_analysis.db')}",
+    },
+    "catalog": {
+        "path": os.path.join(ROOT_DIR, "db_catalog.db"),
+        "url": f"sqlite:///{os.path.join(ROOT_DIR, 'db_catalog.db')}",
+    },
 }
 
 # API Configuration
@@ -298,6 +348,16 @@ SESSION_CONFIG: SessionConfig = {
 TESTING_CONFIG: TestingConfig = {
     "EXCLUDED_DIRS": ["venv", ".git", "__pycache__", ".pytest_cache", "build", "dist"],
     "REQUIRED_VERSIONING": [],  # Version info is in package versions and setup() function
+    "TEST_DB_PATH": os.path.join(ROOT_DIR, "data", "test_email.db"),
+    "TEST_EMAIL_DATA": {
+        "id": "test1",
+        "thread_id": "thread1",
+        "subject": "Test Subject",
+        "from_": "from@test.com",
+        "to": "to@test.com",
+        "body": "Test content",
+    },
+    "TEST_EMAIL_COUNT": 3,
 }
 
 # Catalog Configuration
@@ -367,64 +427,88 @@ PACKAGE_ALIASES = {
 }
 
 DEV_DEPENDENCIES = {
+    "alembic",  # Database migrations
+    "anthropic",  # AI API client
     "bandit",  # Security testing
+    "boto3",  # AWS SDK
+    "botocore",  # AWS SDK core
+    "cryptography",  # Security utilities
+    "factory-boy",  # Test data generation
+    "google-auth-httplib2",  # Google API client
+    "jinja2",  # Template engine
+    "markdown",  # Markdown processing
+    "networkx",  # Graph processing
+    "numpy",  # Numerical processing
+    "pandas",  # Data analysis
+    "passlib",  # Password hashing
+    "plotly",  # Data visualization
     "pre-commit",  # Pre-commit hooks
-    "pytest-cov",  # Test coverage
+    "prompt-toolkit",  # Interactive prompts
+    "pydantic",  # Data validation
+    "pytest",  # Testing framework
     "pytest-asyncio",  # Async test support
+    "pytest-cov",  # Test coverage
     "pytest-mock",  # Test mocking
-    "google-auth-httplib2",  # Required by google-api-python-client
+    "python-dateutil",  # Date utilities
+    "python-dotenv",  # Environment variables
+    "python-jose",  # JWT utilities
+    "pytz",  # Timezone utilities
+    "setuptools",  # Build utilities
+    "sqlalchemy",  # ORM
+    "structlog",  # Structured logging
+    "tabulate",  # Table formatting
+    "tenacity",  # Retry utilities
+    "textblob",  # Text processing
+    "tqdm",  # Progress bars
 }
 
-LOCAL_MODULES = {
+LOCAL_MODULES = [
     "app_api_client",
     "app_catalog",
     "app_email_analyzer",
     "app_email_reports",
     "app_email_self_log",
     "app_get_mail",
-    "config",
-    "constants",
-    "database",
-    "database_session_util",
-    "gmail_label_id",
-    "gmail_lib",
-    "logging_config",
-    "logging_util",
+    "app_label_manager",
+    "app_main",
+    "app_reports",
+    "app_search",
+    "app_sync",
+    "app_utils",
     "models",
-    "reporting",
-    "services",
     "shared_lib",
-    "src",
     "tests",
-    "utils",
-    "test_config",
-    "test_doc_quality",
-    "test_doc_format",
-    "test_doc_hierarchy",
-    "test_dependencies",
-    "test_api_validation",
-    "test_catalog",
-    "test_email_analysis",
-    "test_email_analyzer",
-    "test_email_reports",
-    "test_get_mail",
-    "test_integration",
-    "test_semantic_search",
-    "test_semantic_search_integration",
-    "test_semantic_search_pure",
-    "test_hardcoded_values",
-    "test_requirements",
-    "test_minimal",
-    "test_imports",
-    "test_config",
-    "test_doc_quality",
-}
+]
 
+# Special import patterns to ignore
+SPECIAL_IMPORTS = [
+    r"^from\s+google\.oauth2",  # Special case for google-api-python-client
+    r"^from\s+google_auth_oauthlib",  # Special case for google-auth-oauthlib
+    r"^from\s+googleapiclient",  # Special case for google-api-python-client
+]
+
+# Import patterns for requirements analysis
 IMPORT_PATTERNS = [
-    r"^import\s+(\w+)",  # import foo
-    r"^from\s+(\w+)\s+import",  # from foo import ...
-    r"^import\s+(\w+)\s+as",  # import foo as ...
-    r"^from\s+(\w+)\.",  # from foo.bar import ...
+    r"^import\s+os",  # Standard library imports
+    r"^import\s+sys",
+    r"^import\s+json",
+    r"^import\s+logging",
+    r"^import\s+datetime",
+    r"^import\s+time",
+    r"^import\s+typing",
+    r"^import\s+re",
+    r"^import\s+pathlib",
+    r"^import\s+sqlite3",
+    r"^import\s+base64",
+    r"^import\s+email",
+    r"^import\s+mimetypes",
+    r"^import\s+pickle",
+    r"^import\s+uuid",
+    r"^from\s+datetime\s+import",
+    r"^from\s+typing\s+import",
+    r"^from\s+pathlib\s+import",
+    r"^from\s+email\s+import",
+    r"^from\s+base64\s+import",
     r"^from\s+google\.oauth2",  # Special case for google-api-python-client
     r"^from\s+google_auth_oauthlib",  # Special case for google-auth-oauthlib
     r"^from\s+googleapiclient",  # Special case for google-api-python-client

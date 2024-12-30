@@ -1,8 +1,6 @@
 """Models package initialization.
 
-This module provides convenient access to all models while maintaining proper import paths.
-Always use absolute imports (from models.email import Email) rather than relative imports
-to prevent SQLAlchemy model resolution issues.
+This module imports and exposes the main models used in the application.
 """
 
 from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
@@ -18,7 +16,7 @@ from models.domain_constants import (
     RelationType,
 )
 from models.email import Email
-from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
+from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 from models.mixins import TimestampMixin
 
@@ -27,7 +25,6 @@ __all__ = [
     "Base",
     "Email",
     "EmailAnalysis",
-    "EmailAnalysisResponse",
     "CatalogItem",
     "Tag",
     "CatalogTag",

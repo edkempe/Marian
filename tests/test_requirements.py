@@ -17,9 +17,14 @@ from shared_lib.constants import (
 )
 
 
+def normalize_package_name(name: str) -> str:
+    """Normalize package name by converting to lowercase and replacing - with _."""
+    return name.lower().replace("-", "_")
+
+
 def get_installed_packages() -> Dict[str, str]:
     """Get dictionary of installed packages and their versions."""
-    return {dist.metadata['Name']: dist.version for dist in metadata.distributions()}
+    return {normalize_package_name(dist.metadata['Name']): dist.version for dist in metadata.distributions()}
 
 
 def get_requirements() -> Dict[str, str]:
@@ -35,7 +40,7 @@ def get_requirements() -> Dict[str, str]:
                     pkg, version = line.split("==")
                 else:
                     continue
-                requirements[pkg.strip()] = version.strip()
+                requirements[normalize_package_name(pkg.strip())] = version.strip()
     return requirements
 
 
@@ -58,7 +63,7 @@ def get_imports_from_file(file_path: str) -> Set[str]:
                 if pkg in PACKAGE_ALIASES:
                     pkg = PACKAGE_ALIASES[pkg]
                 if not is_local_import(pkg):
-                    imports.add(pkg.lower())
+                    imports.add(normalize_package_name(pkg.lower()))
 
     except Exception as e:
         print(f"Warning: Error processing {os.path.basename(file_path)}: {str(e)}")
@@ -97,8 +102,12 @@ def analyze_requirements() -> Dict[str, Set[str]]:
     # Get all imports
     imports = get_all_imports()
 
+    # Normalize DEV_DEPENDENCIES
+    normalized_dev_deps = {normalize_package_name(pkg) for pkg in DEV_DEPENDENCIES}
+
     # Check for unused requirements
-    unused = set(requirements) - imports - DEV_DEPENDENCIES
+    used_packages = imports | normalized_dev_deps
+    unused = set(requirements) - used_packages
     if unused:
         issues["unused_requirements"] = unused
 

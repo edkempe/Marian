@@ -30,13 +30,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from models.base import Base
+from models.db_init import init_db
 from models.email import Email
 from models.gmail_label import GmailLabel
 from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import (
     get_analysis_session,
     get_email_session,
-    init_db,
 )
 from shared_lib.gmail_lib import GmailAPI
 
@@ -181,6 +181,52 @@ def fetch_emails(service, start_date=None, end_date=None, label=None, max_result
         return []
 
 
+def get_message_body(message):
+    """Extract email body from message payload.
+    
+    Args:
+        message: Gmail API message object
+        
+    Returns:
+        str: Email body text
+    """
+    if not message.get("payload"):
+        return ""
+        
+    def get_text_parts(part, text_parts=None):
+        if text_parts is None:
+            text_parts = []
+            
+        if part.get("mimeType", "").startswith("text/plain"):
+            if "data" in part.get("body", {}):
+                text = urlsafe_b64decode(part["body"]["data"]).decode()
+                text_parts.append(text)
+        
+        for subpart in part.get("parts", []):
+            get_text_parts(subpart, text_parts)
+            
+        return text_parts
+        
+    text_parts = get_text_parts(message["payload"])
+    return "\n".join(text_parts)
+
+
+def parse_email_date(date_str):
+    """Parse email date with error handling.
+    
+    Args:
+        date_str: Date string from email header
+        
+    Returns:
+        datetime: Parsed date or current UTC time if parsing fails
+    """
+    try:
+        return parser.parse(date_str)
+    except (ValueError, TypeError) as e:
+        logging.warning(f"Failed to parse date '{date_str}': {e}")
+        return datetime.now(timezone.utc)
+
+
 def process_email(service, msg_id, session):
     """Process a single email message and store it in the database.
 
@@ -188,13 +234,17 @@ def process_email(service, msg_id, session):
         service: Gmail API service instance
         msg_id: ID of the message to process
         session: SQLAlchemy session to use for database operations
+        
+    Raises:
+        ValueError: If msg_id is invalid
+        RuntimeError: If email processing fails
     """
     try:
         # Get the email message
         message = (
             service.users()
             .messages()
-            .get(userId="me", id=msg_id, format="full")
+            .get(userId=EMAIL_CONFIG["USER_ID"], id=msg_id, format="full")
             .execute()
         )
 
@@ -207,29 +257,33 @@ def process_email(service, msg_id, session):
         email_data = {
             "id": message["id"],
             "threadId": message["threadId"],
-            "subject": headers_lookup.get("subject", "No Subject"),
-            "from_address": headers_lookup.get("from", ""),
-            "to_address": headers_lookup.get("to", ""),
-            "cc_address": headers_lookup.get("cc", ""),
-            "bcc_address": headers_lookup.get("bcc", ""),
-            "received_date": parser.parse(headers_lookup.get("date", "")),
-            "content": "",  # TODO: Extract email content
-            "labels": ",".join(message.get("labelIds", [])),
+            "subject": headers_lookup.get("subject", EMAIL_CONFIG["DEFAULT_SUBJECT"]),
+            "from_": headers_lookup.get("from", EMAIL_CONFIG["EMPTY_STRING"]),
+            "to": headers_lookup.get("to", EMAIL_CONFIG["EMPTY_STRING"]),
+            "cc": headers_lookup.get("cc", EMAIL_CONFIG["EMPTY_STRING"]),
+            "bcc": headers_lookup.get("bcc", EMAIL_CONFIG["EMPTY_STRING"]),
+            "date": parse_email_date(headers_lookup.get("date")),
+            "body": get_message_body(message),
+            "labelIds": ",".join(message.get("labelIds", [])),
             "has_attachments": bool(message.get("payload", {}).get("parts", [])),
             "full_api_response": json.dumps(message),
         }
+
+        # Validate required fields
+        if not email_data["id"]:
+            raise ValueError("Email ID is required")
 
         email = Email(**email_data)
         session.merge(email)
         session.commit()
 
-        print(f"\nProcessed email {msg_id}:")
-        print(f"Subject: {email_data['subject']}")
-        print(f"From: {email_data['from_address']}")
-        print(f"Labels: {email_data['labels']}")
+        logging.info(
+            f"Processed email {msg_id}: subject='{email_data['subject']}' from='{email_data['from_']}'"
+        )
 
     except Exception as e:
-        print(f"Error processing message {msg_id}: {str(e)}")
+        logging.error(f"Failed to process email {msg_id}: {str(e)}", exc_info=True)
+        raise RuntimeError(f"Failed to process email {msg_id}: {str(e)}") from e
 
 
 def get_oldest_email_date(session):
@@ -326,7 +380,7 @@ def main():
     # Get database session
     with get_email_session() as session:
         # Initialize database
-        init_database(session)
+        init_db(session)
 
         # Clear database if requested
         if args.clear:

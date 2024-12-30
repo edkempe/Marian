@@ -1,95 +1,152 @@
-"""Email database model.
-
-This model is designed to store email data from Gmail. The Gmail API response format
-is considered the source of truth for field types and meanings. For complete API
-documentation, see: https://developers.google.com/gmail/api/reference/rest/v1/users.messages
-
-Field Types from Gmail API:
-- id: string (Gmail message ID)
-- threadId: string
-- labelIds: list[string]
-- snippet: string
-- payload.headers: list[{name: string, value: string}]
-  - subject: string
-  - from: string
-  - to: string
-  - date: string (RFC 2822 format)
-"""
+"""Email model for storing email data."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    func,
+    JSON
+)
 from sqlalchemy.orm import Mapped, relationship
 
 from models.base import Base
+from shared_lib.config_loader import get_schema_config
 
-# Constants used in this model
-EMAIL_COLUMN_SIZES = {
-    "EMAIL_LABELS": 500,  # Maximum size for labels string
-    "EMAIL_SUBJECT": 500,  # Maximum size for subject
-    "EMAIL_SENDER": 200,  # Maximum size for sender
-    "EMAIL_THREAD": 100,  # Maximum size for thread ID
-    "EMAIL_TO": 200,  # Maximum size for recipient
-    "EMAIL_ID": 100,  # Maximum size for Gmail message ID
-}
-
-EMAIL_DEFAULTS = {
-    "EMAIL_SUBJECT": "",
-    "EMPTY_STRING": "",
-    "HAS_ATTACHMENTS": False,
-    "API_RESPONSE": "{}",
-}
+# Get schema configuration
+config = get_schema_config().email
 
 
 class Email(Base):
-    """SQLAlchemy model for email storage.
-
-    Maps to the 'emails' table in the database. This model stores processed email data
-    from Gmail. For complete documentation on database design decisions and schema details,
-    see docs/database_design.md.
-
-    Key Fields (types match Gmail API):
-    - id: Gmail message ID (VARCHAR(100))
-    - threadId: Gmail thread ID (VARCHAR(100))
-    - subject: Email subject (VARCHAR(500))
-    - body: Email body (TEXT)
-    - date: When the email was received (DATETIME with timezone)
-    - labelIds: Comma-separated Gmail label IDs (VARCHAR(500))
-    - snippet: Email snippet (TEXT)
-    - from_: Sender email address (VARCHAR(200))
-    - to: Recipient email address (VARCHAR(200))
-    - has_attachments: Whether the email has attachments (BOOLEAN)
-    - cc: CC recipient email address (TEXT)
-    - bcc: BCC recipient email address (TEXT)
-    - full_api_response: Complete Gmail API response (TEXT)
-    """
+    """SQLAlchemy model for email storage."""
 
     __tablename__ = "emails"
 
-    id: Mapped[str] = Column(String(100), primary_key=True)
-    threadId: Mapped[Optional[str]] = Column(String(100))
-    subject: Mapped[Optional[str]] = Column(
-        String(500), server_default=EMAIL_DEFAULTS["EMAIL_SUBJECT"]
+    # Primary key and identifiers
+    id: Mapped[str] = Column(
+        String(config.columns["id"].size),
+        primary_key=True
     )
-    body: Mapped[Optional[str]] = Column(Text)
-    date: Mapped[Optional[datetime]] = Column(DateTime(timezone=True))
-    labelIds: Mapped[Optional[str]] = Column(String(500))  # Stored as JSON
-    snippet: Mapped[Optional[str]] = Column(Text)
-    from_: Mapped[Optional[str]] = Column("from", String(200), nullable=True)
-    to: Mapped[Optional[str]] = Column(String(200), nullable=True)
-    has_attachments: Mapped[Optional[bool]] = Column(
-        Boolean, server_default=str(EMAIL_DEFAULTS["HAS_ATTACHMENTS"])
+    thread_id: Mapped[str] = Column(
+        String(config.columns["thread_id"].size),
+        index=True
     )
-    cc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
-    bcc: Mapped[Optional[str]] = Column(Text, server_default="''''''")
-    full_api_response: Mapped[Optional[str]] = Column(
-        Text, server_default=EMAIL_DEFAULTS["API_RESPONSE"]
+    message_id: Mapped[str] = Column(
+        String(config.columns["message_id"].size),
+        unique=True
+    )
+
+    # Email content
+    subject: Mapped[str] = Column(
+        String(config.columns["subject"].size),
+        server_default=config.defaults.subject
+    )
+    body: Mapped[Optional[str]] = Column(
+        Text,
+        nullable=True
+    )
+    snippet: Mapped[Optional[str]] = Column(
+        String(config.columns["snippet"].size),
+        nullable=True
+    )
+
+    # Metadata
+    sender: Mapped[str] = Column(
+        String(config.columns["sender"].size)
+    )
+    recipient: Mapped[str] = Column(
+        String(config.columns["recipient"].size)
+    )
+    cc: Mapped[Optional[str]] = Column(
+        String(config.columns["cc"].size),
+        nullable=True
+    )
+    bcc: Mapped[Optional[str]] = Column(
+        String(config.columns["bcc"].size),
+        nullable=True
+    )
+    
+    # Flags and status
+    has_attachments: Mapped[bool] = Column(
+        Boolean,
+        server_default=str(config.defaults.has_attachments)
+    )
+    is_read: Mapped[bool] = Column(
+        Boolean,
+        server_default=str(config.defaults.is_read)
+    )
+    is_important: Mapped[bool] = Column(
+        Boolean,
+        server_default=str(config.defaults.is_important)
+    )
+
+    # Raw data and API responses
+    raw_data: Mapped[Optional[dict]] = Column(
+        JSON,
+        nullable=True,
+        server_default=config.defaults.api_response
+    )
+
+    # Timestamps
+    received_at: Mapped[datetime] = Column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+    created_at: Mapped[datetime] = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
     # Relationships
     analysis = relationship("EmailAnalysis", back_populates="email", uselist=False)
+    labels = relationship("GmailLabel", secondary="email_labels", back_populates="emails")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return string representation."""
-        return f"<Email(id='{self.id}', subject='{self.subject}', threadId='{self.threadId}')>"
+        return f"<Email(id={self.id}, subject={self.subject})>"
+
+    @classmethod
+    def from_api_response(cls, response: dict) -> "Email":
+        """Create an Email instance from API response.
+
+        Args:
+            response: Dictionary containing email data from API
+
+        Returns:
+            Email instance
+        """
+        # Validate and truncate fields if needed
+        subject = response.get("subject", config.defaults.subject)
+        if len(subject) > config.validation.max_subject_length:
+            subject = subject[:config.validation.max_subject_length]
+
+        sender = response.get("from", "")[:config.columns["sender"].size]
+        recipient = response.get("to", "")[:config.columns["recipient"].size]
+
+        return cls(
+            id=response["id"],
+            thread_id=response.get("threadId", ""),
+            message_id=response.get("messageId", ""),
+            subject=subject,
+            body=response.get("body"),
+            snippet=response.get("snippet"),
+            sender=sender,
+            recipient=recipient,
+            cc=response.get("cc"),
+            bcc=response.get("bcc"),
+            has_attachments=response.get("hasAttachments", config.defaults.has_attachments),
+            is_read=response.get("isRead", config.defaults.is_read),
+            is_important=response.get("isImportant", config.defaults.is_important),
+            raw_data=response,
+            received_at=datetime.fromisoformat(response["receivedAt"])
+        )
