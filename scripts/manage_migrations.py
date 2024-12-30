@@ -6,6 +6,7 @@ This script provides commands for:
 2. Applying pending migrations
 3. Viewing migration history
 4. Validating schema changes
+5. Rolling back migrations
 """
 
 import argparse
@@ -14,11 +15,16 @@ import sys
 from typing import List, Optional
 
 from shared_lib.migration_utils import (
+    get_alembic_config,
+    get_current_revision,
+    get_pending_migrations,
+    validate_schema_changes,
     generate_migration,
     apply_migrations,
     get_migration_history,
-    get_pending_migrations,
-    validate_schema_changes,
+    rollback_migration,
+    rollback_to_revision,
+    get_revision_history,
 )
 from shared_lib.database_session_util import email_engine, analysis_engine
 
@@ -45,7 +51,7 @@ def setup_argparse() -> argparse.ArgumentParser:
     generate.add_argument(
         "--empty",
         action="store_true",
-        help="Create empty migration instead of auto-generating"
+        help="Create empty migration"
     )
     
     # apply command
@@ -65,11 +71,32 @@ def setup_argparse() -> argparse.ArgumentParser:
         "history",
         help="Show migration history"
     )
+    history.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Show detailed history"
+    )
     
     # pending command
     pending = subparsers.add_parser(
         "pending",
         help="Show pending migrations"
+    )
+    
+    # rollback command
+    rollback = subparsers.add_parser(
+        "rollback",
+        help="Roll back migrations"
+    )
+    rollback.add_argument(
+        "--steps",
+        type=int,
+        default=1,
+        help="Number of migrations to roll back"
+    )
+    rollback.add_argument(
+        "--revision",
+        help="Target revision to roll back to"
     )
     
     return parser
@@ -109,19 +136,37 @@ def handle_validate(args) -> int:
 
 def handle_history(args) -> int:
     """Handle history command."""
-    for engine in [email_engine, analysis_engine]:
-        logger.info(f"\nMigration history for {engine.url.database}:")
-        history = get_migration_history(engine)
+    if args.detailed:
+        email_history = get_revision_history(email_engine)
+        analysis_history = get_revision_history(analysis_engine)
         
-        if not history:
-            logger.info("  No migrations found")
-            continue
-            
-        for entry in history:
-            current = " (current)" if entry["is_current"] else ""
+        logger.info("Email database revision history:")
+        for rev in email_history:
             logger.info(
-                f"  {entry['revision']}{current}: {entry['message']}"
+                f"  {rev['revision']}: {rev['message']} "
+                f"(current: {rev['is_current']}, "
+                f"down_revision: {rev['down_revision']})"
             )
+        
+        logger.info("\nAnalysis database revision history:")
+        for rev in analysis_history:
+            logger.info(
+                f"  {rev['revision']}: {rev['message']} "
+                f"(current: {rev['is_current']}, "
+                f"down_revision: {rev['down_revision']})"
+            )
+    else:
+        email_history = get_migration_history(email_engine)
+        analysis_history = get_migration_history(analysis_engine)
+        
+        logger.info("Email database revision history:")
+        for rev in email_history:
+            logger.info(f"  {rev['revision']}: {rev['message']}")
+        
+        logger.info("\nAnalysis database revision history:")
+        for rev in analysis_history:
+            logger.info(f"  {rev['revision']}: {rev['message']}")
+    
     return 0
 
 def handle_pending(args) -> int:
@@ -141,6 +186,21 @@ def handle_pending(args) -> int:
     
     return 1 if has_pending else 0
 
+def handle_rollback(args) -> int:
+    """Handle rollback command."""
+    success = True
+    
+    if args.revision:
+        logger.info(f"Rolling back to revision {args.revision}")
+        success &= rollback_to_revision(email_engine, args.revision)
+        success &= rollback_to_revision(analysis_engine, args.revision)
+    else:
+        logger.info(f"Rolling back {args.steps} migration(s)")
+        success &= rollback_migration(email_engine, args.steps)
+        success &= rollback_migration(analysis_engine, args.steps)
+    
+    return 0 if success else 1
+
 def main() -> int:
     """Main entry point."""
     parser = setup_argparse()
@@ -156,6 +216,7 @@ def main() -> int:
         "validate": handle_validate,
         "history": handle_history,
         "pending": handle_pending,
+        "rollback": handle_rollback,
     }
     
     return handlers[args.command](args)

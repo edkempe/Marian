@@ -195,3 +195,72 @@ def get_migration_history(engine) -> List[Dict[str, Any]]:
         })
     
     return history
+
+def rollback_migration(engine, steps: int = 1) -> bool:
+    """Roll back the last N migrations.
+    
+    Args:
+        engine: SQLAlchemy engine
+        steps: Number of migrations to roll back
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        config = get_alembic_config(engine)
+        command.downgrade(config, f"-{steps}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to roll back migrations: {str(e)}")
+        return False
+
+def rollback_to_revision(engine, target_revision: str) -> bool:
+    """Roll back to a specific revision.
+    
+    Args:
+        engine: SQLAlchemy engine
+        target_revision: Target revision to roll back to
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        config = get_alembic_config(engine)
+        command.downgrade(config, target_revision)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to roll back to revision {target_revision}: {str(e)}")
+        return False
+
+def get_revision_history(engine) -> List[Dict[str, Any]]:
+    """Get detailed revision history.
+    
+    Args:
+        engine: SQLAlchemy engine
+        
+    Returns:
+        List of revision details
+    """
+    try:
+        config = get_alembic_config(engine)
+        script = ScriptDirectory.from_config(config)
+        
+        # Get current revision
+        current = get_current_revision(engine)
+        
+        history = []
+        for rev in script.walk_revisions():
+            history.append({
+                "revision": rev.revision,
+                "down_revision": rev.down_revision,
+                "message": rev.doc,
+                "is_current": rev.revision == current,
+                "created_at": rev.module.__file__,
+                "dependencies": rev.dependencies,
+                "branch_labels": rev.branch_labels,
+            })
+        
+        return history
+    except Exception as e:
+        logger.error(f"Failed to get revision history: {str(e)}")
+        return []

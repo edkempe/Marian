@@ -1,0 +1,84 @@
+---
+# Example seed data for development and testing
+emails:
+  - thread_id: "thread_001"
+    message_id: "msg_001"
+    subject: "Project Update: Q4 Goals"
+    body: |
+      Hi team,
+      
+      Here's a quick update on our Q4 goals:
+      1. Database migration system ✅
+      2. Email analysis improvements 🚧
+      3. User preferences implementation 📅
+      
+      Let me know if you have any questions!
+      
+      Best,
+      Alice
+    snippet: "Hi team, Here's a quick update on our Q4 goals..."
+    from_address: "alice@example.com"
+    to_address: "team@example.com"
+    cc_address: "manager@example.com"
+    has_attachments: false
+    is_read: true
+    is_important: true
+    received_at: "2024-12-29T22:00:00Z"
+    api_response: "{}"
+
+  - thread_id: "thread_002"
+    message_id: "msg_002"
+    subject: "Re: Database Migration Review"
+    body: |
+      The migration system looks good! A few suggestions:
+      
+      1. Add rollback procedures
+      2. Consider adding database seeding
+      3. More example migrations would be helpful
+      
+      Otherwise, LGTM! 👍
+    snippet: "The migration system looks good! A few suggestions..."
+    from_address: "bob@example.com"
+    to_address: "alice@example.com"
+    has_attachments: false
+    is_read: false
+    is_important: true
+    received_at: "2024-12-29T23:00:00Z"
+    api_response: "{}"
+
+analyses:
+  - email_id: "msg_001"
+    sentiment: "positive"
+    category: "work"
+    summary: "Project status update for Q4 goals, highlighting completed database migration system and ongoing work."
+    priority: "medium"
+    analyzed_at: "2024-12-29T22:01:00Z"
+
+  - email_id: "msg_002"
+    sentiment: "positive"
+    category: "work"
+    summary: "Positive feedback on migration system with suggestions for improvements including rollback procedures and seeding."
+    priority: "high"
+    analyzed_at: "2024-12-29T23:01:00Z"
+
+labels:
+  - label_id: "label_001"
+    name: "Project Updates"
+    type: "user"
+    message_list_visibility: "show"
+    label_list_visibility: "labelShow"
+    is_system: false
+
+  - label_id: "label_002"
+    name: "Reviews"
+    type: "user"
+    message_list_visibility: "show"
+    label_list_visibility: "labelShow"
+    is_system: false
+
+  - label_id: "label_003"
+    name: "IMPORTANT"
+    type: "system"
+    message_list_visibility: "show"
+    label_list_visibility: "labelShow"
+    is_system: true
