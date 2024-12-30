@@ -25,6 +25,7 @@ from shared_lib.migration_utils import (
     get_current_revision,
     get_pending_migrations,
     get_revision_history,
+    get_alembic_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,8 +102,9 @@ class MigrationMonitor:
                 results["tables"] = inspector.get_table_names()
                 
                 # Get migration status
+                config = get_alembic_config(engine)
                 results["current_revision"] = get_current_revision(engine)
-                results["pending_migrations"] = get_pending_migrations(engine)
+                results["pending_migrations"] = get_pending_migrations(config, engine)
                 
         except Exception as e:
             logger.error(f"Health check failed for {engine.url.database}: {str(e)}")
@@ -136,7 +138,8 @@ class MigrationMonitor:
             if history:
                 metrics["latest_migration"] = history[0]
                 
-            pending = get_pending_migrations(engine)
+            config = get_alembic_config(engine)
+            pending = get_pending_migrations(config, engine)
             metrics["pending_migrations"] = len(pending)
             
         except Exception as e:

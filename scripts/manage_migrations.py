@@ -212,7 +212,8 @@ def handle_history(args) -> int:
 
 def handle_pending(args) -> int:
     """Handle pending command."""
-    pending_migrations = get_pending_migrations(email_engine)
+    config = get_alembic_config(email_engine)
+    pending_migrations = get_pending_migrations(config, email_engine)
     
     if not pending_migrations:
         logger.info("No pending migrations")
