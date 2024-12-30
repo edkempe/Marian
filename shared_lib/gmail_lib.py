@@ -29,6 +29,7 @@ from shared_lib.constants import (
 )
 from shared_lib.exceptions import APIError, AuthenticationError
 from .api_version_utils import verify_gmail_version, check_api_changelog
+from .api_monitor import track_api_call, monitor
 
 # Constants
 SCOPES = [
@@ -167,6 +168,33 @@ class GmailAPI:
             logger.error(f"Authentication error: {str(e)}")
             raise AuthenticationError(ErrorMessages["API_ERROR"]) from e
 
+    @track_api_call('gmail')
+    def get_service(self):
+        """Get Gmail service instance."""
+        if not self.service:
+            self.service = self._get_gmail_service()
+        return self.service
+
+    @track_api_call('gmail')
+    def list_messages(self, query: str = None, max_results: int = 100) -> List[Dict]:
+        """List Gmail messages."""
+        results = self.service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
+        messages = results.get("messages", [])
+        return [{"id": msg["id"], "threadId": msg["threadId"]} for msg in messages]
+
+    @track_api_call('gmail')
+    def get_message(self, message_id: str, format: str = 'full') -> Dict:
+        """Get a Gmail message by ID."""
+        message = self.service.users().messages().get(userId="me", id=message_id, format=format).execute()
+        return message
+
+    @track_api_call('gmail')
+    def list_labels(self) -> List[Dict]:
+        """List Gmail labels."""
+        results = self.service.users().labels().list(userId="me").execute()
+        labels = results.get("labels", [])
+        return [{"id": label["id"], "name": label["name"]} for label in labels]
+
     def setup_label_database(self):
         """Create and setup the labels database"""
         Base.metadata.create_all(self.engine)
@@ -178,12 +206,11 @@ class GmailAPI:
 
         try:
             # Get all labels from Gmail
-            results = self.service.users().labels().list(userId="me").execute()
-            labels = results.get("labels", [])
+            results = self.list_labels()
+            labels = [GmailLabel.from_gmail_dict(label) for label in results]
 
             # Store each label
-            for label_data in labels:
-                label = GmailLabel.from_gmail_dict(label_data)
+            for label in labels:
                 session.merge(label)
 
             session.commit()
@@ -237,12 +264,7 @@ class GmailAPI:
             raise ValueError("Message ID must be a non-empty string")
 
         try:
-            message = (
-                self.service.users()
-                .messages()
-                .get(userId="me", id=msg_id, format="full")
-                .execute()
-            )
+            message = self.get_message(msg_id)
 
             # Validate required fields
             if "id" not in message:

@@ -107,6 +107,28 @@ def gmail_test():
     
     return test_manager
 
+@pytest.fixture
+def gmail_test_context(labels):
+    """Context manager for Gmail API testing."""
+    test_manager = GmailTestManager()
+    
+    # Check API availability
+    if not test_manager.get_test_account():
+        pytest.skip("Gmail test account not configured")
+    
+    # Create test labels
+    created_labels = []
+    for label_name in labels:
+        label = test_manager.create_label(label_name)
+        created_labels.append(label)
+    
+    try:
+        yield test_manager
+    finally:
+        # Clean up test labels
+        for label in created_labels:
+            test_manager.delete_label(label['id'])
+
 def test_init_database(email_session):
     """Test database initialization."""
     from sqlalchemy import inspect
@@ -364,3 +386,47 @@ def test_label_operations(gmail_test):
         
         # Save response for future reference
         gmail_test.save_test_response("sample_label", label)
+
+@pytest.mark.integration
+def test_get_label_id_integration():
+    """Test label ID retrieval with real API."""
+    with gmail_test_context(['INBOX']) as ctx:
+        # Create test label
+        label_id = ctx.created_labels[0]['id']
+        
+        # Test retrieval
+        api = GmailAPI()
+        result = api.get_label_id('TEST_INBOX')
+        assert result == label_id
+
+@pytest.mark.integration
+def test_process_email_integration():
+    """Test email processing with real API."""
+    with gmail_test_context(['INBOX']) as ctx:
+        # Create test message
+        msg_id = ctx.create_message(
+            subject='Test Subject',
+            body='Test content',
+            sender='test@example.com'
+        )
+        
+        # Process message
+        api = GmailAPI()
+        result = api.process_message(msg_id)
+        
+        # Verify result
+        assert result['id'] == msg_id
+        assert result['subject'] == 'Test Subject'
+        assert result['sender'] == 'test@example.com'
+
+@pytest.mark.integration
+def test_list_labels_integration():
+    """Test listing labels with real API."""
+    with gmail_test_context(['INBOX', 'SENT']) as ctx:
+        api = GmailAPI()
+        labels = api.list_labels()
+        
+        # Verify test labels exist
+        test_ids = {label['id'] for label in ctx.created_labels}
+        result_ids = {label['id'] for label in labels}
+        assert test_ids.issubset(result_ids)
