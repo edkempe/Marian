@@ -9,6 +9,10 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from shared_lib.constants import TESTING_CONFIG
 
 @dataclass
 class APITestConfig:
@@ -138,6 +142,24 @@ class GmailTestManager(TestDataManager):
                     ).execute()
                 except Exception as e:
                     print(f"Failed to cleanup message {msg['id']}: {e}")
+
+def build_gmail_service(credentials_path: str = None, token_path: str = None):
+    """Build Gmail service for testing.
+    
+    Args:
+        credentials_path: Path to credentials file
+        token_path: Path to token file
+        
+    Returns:
+        Gmail service
+    """
+    if not credentials_path:
+        credentials_path = TESTING_CONFIG["gmail"]["mock"]["credentials_file"]
+    if not token_path:
+        token_path = TESTING_CONFIG["gmail"]["mock"]["token_file"]
+        
+    creds = Credentials.from_authorized_user_file(token_path)
+    return build("gmail", "v1", credentials=creds)
 
 def validate_response_schema(response: Dict[str, Any], schema: Dict[str, Any]) -> List[str]:
     """Validate API response against expected schema.
