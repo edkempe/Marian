@@ -1,17 +1,22 @@
 """Tests for email fetching functionality."""
 
-from datetime import datetime, timezone
+from datetime import datetime
+from pathlib import Path
 import os
-from typing import List
-from unittest.mock import MagicMock
-
 import pytest
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
-from models.email import Email
 from models.base import Base
 from shared_lib.constants import DATABASE_CONFIG, ROOT_DIR, TESTING_CONFIG
 from shared_lib.gmail_lib import GmailAPI
+from shared_lib.api_version_utils import verify_gmail_version, check_api_changelog
+from shared_lib.api_utils import GmailTestManager, validate_response_schema
+from shared_lib.gmail_utils import (
+    create_test_email,
+    setup_test_labels,
+    cleanup_test_labels
+)
 from src.app_get_mail import (
     count_emails,
     fetch_emails,
@@ -23,10 +28,9 @@ from src.app_get_mail import (
     process_email,
 )
 from tests.utils.db_test_utils import create_test_db_session
-from tests.utils.email_test_utils import create_test_email, create_test_message
+from tests.utils.email_test_utils import create_test_message
 from tests.utils.gmail_test_utils import (
     create_mock_gmail_service,
-    setup_mock_labels,
     setup_mock_message,
     setup_mock_messages,
 )
@@ -43,6 +47,22 @@ from tests.utils.test_constants import (
     TEST_ATTACHMENTS,
     API_ERROR_MESSAGE,
 )
+from tests.utils.api_test_utils import build_gmail_service
+
+# Gmail API response schemas
+MESSAGE_SCHEMA = {
+    "id": str,
+    "threadId": str,
+    "labelIds": list,
+    "snippet": str,
+    "payload": dict
+}
+
+LABEL_SCHEMA = {
+    "id": str,
+    "name": str,
+    "type": str
+}
 
 @pytest.fixture
 def email_session():
@@ -76,6 +96,17 @@ def sample_emails(email_session):
     
     return emails
 
+@pytest.fixture
+def gmail_test():
+    """Fixture for Gmail API testing."""
+    test_manager = GmailTestManager()
+    
+    # Check API availability
+    if not test_manager.get_test_account():
+        pytest.skip("Gmail test account not configured")
+    
+    return test_manager
+
 def test_init_database(email_session):
     """Test database initialization."""
     from sqlalchemy import inspect
@@ -105,9 +136,9 @@ def test_get_label_id(gmail_service, label_name, expected_id):
     """Test label ID retrieval with various inputs."""
     # Set up mock response for valid labels
     if expected_id:
-        setup_mock_labels(gmail_service, [TEST_LABELS[label_name]])
+        setup_test_labels(gmail_service, [TEST_LABELS[label_name]])
     else:
-        setup_mock_labels(gmail_service, [])
+        setup_test_labels(gmail_service, [])
     
     result = get_label_id(gmail_service, label_name)
     assert result == expected_id
@@ -283,7 +314,7 @@ def test_count_emails(email_session, sample_emails):
 
 def test_list_labels(gmail_service):
     """Test listing Gmail labels."""
-    setup_mock_labels(gmail_service, [TEST_LABELS["INBOX"]])
+    setup_test_labels(gmail_service, [TEST_LABELS["INBOX"]])
     
     labels = list_labels(gmail_service)
     assert len(labels) == 1
@@ -296,3 +327,40 @@ def test_list_labels_error():
     
     labels = list_labels(service)
     assert labels == []
+
+def test_get_messages(gmail_test):
+    """Test getting messages with real API."""
+    service = build_gmail_service()  # Your existing service builder
+    
+    # Get messages
+    messages = get_messages(service)
+    assert messages
+    
+    # Validate first message schema
+    if messages:
+        errors = validate_response_schema(messages[0], MESSAGE_SCHEMA)
+        assert not errors, f"Schema validation errors: {errors}"
+        
+        # Save response for future reference
+        gmail_test.save_test_response("sample_message", messages[0])
+
+def test_label_operations(gmail_test):
+    """Test label operations with real API."""
+    service = build_gmail_service()
+    
+    # Use context manager for test labels
+    with gmail_test.test_labels(service) as created_labels:
+        # Create test label
+        label_name = "TEST_LABEL_" + str(uuid.uuid4())
+        label = create_label(service, label_name)
+        created_labels.append(label)
+        
+        # Validate label schema
+        errors = validate_response_schema(label, LABEL_SCHEMA)
+        assert not errors, f"Schema validation errors: {errors}"
+        
+        # Test label operations
+        assert label["name"] == label_name
+        
+        # Save response for future reference
+        gmail_test.save_test_response("sample_label", label)
