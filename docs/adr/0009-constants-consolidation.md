@@ -6,6 +6,12 @@ Date: 2024-12-31
 
 Proposed
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial version with constants/config separation
+- Added Pydantic settings
+- Added environment management
+
 ## Context
 
 Currently, constants and configuration settings are spread across multiple files:

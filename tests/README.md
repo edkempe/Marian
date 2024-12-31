@@ -22,6 +22,12 @@
 └── test_imports.py       # Import validation tests
 ```
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial test framework setup
+- Added testing guidelines
+- Added example tests
+
 ## Test Categories
 1. **Core Tests**
    - `test_email_*.py`: Email processing tests
@@ -80,6 +86,26 @@ Database tests use:
 - Temporary SQLite databases
 - Test-specific configurations
 - Automated cleanup
+
+## External Tool Dependencies
+
+Some tests require external tools for optimal performance:
+
+### Duplicate File Detection
+The `test_file_duplicates.py` test uses `rmlint` for efficient duplicate file detection:
+- **Installation**: See [main README](../README.md#external-tool-requirements)
+- **Performance**: ~2400x faster than pure Python implementation
+- **Features**: Progressive hashing, hardlink handling, built-in caching
+- **Skip Behavior**: Test will be skipped if `rmlint` is not available
+
+### Running Tests with Missing Tools
+```bash
+# Run all tests, skipping those requiring missing tools
+pytest -v
+
+# Run only tests that don't require external tools
+pytest -v -m "not requires_external_tools"
+```
 
 ## Version History
 - 1.0.1 (2024-12-30): Added database utilities test suite

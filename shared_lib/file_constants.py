@@ -117,10 +117,21 @@ ALLOWED_DUPLICATES: List[str] = [
 ]
 
 # Ignored directories for file operations
-IGNORED_DIRS: List[str] = [
-    CACHE_DIR,  # Python cache
-    PYTEST_CACHE_DIR,  # Pytest cache
-    ARCHIVE_DIR,  # Archived files
+IGNORED_DIRS = [
+    ".git",
+    "__pycache__",
+    "venv",
+    "node_modules",
+    "cache",
+    "logs",
+    "reports",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".coverage",
+    "dist",
+    "build",
+    "*.egg-info",
+    "site-packages",
 ]
 
 # Default paths

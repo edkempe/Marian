@@ -353,17 +353,30 @@ SESSION_CONFIG: SessionConfig = {
 
 # Testing Configuration
 TESTING_CONFIG: TestingConfig = {
-    "gmail": {
-        "test_account": os.getenv("GMAIL_TEST_ACCOUNT"),
-        "test_labels": ["TEST_INBOX", "TEST_SENT", "TEST_DRAFT"],
-        "max_test_messages": 10,
-        "cleanup_delay": 5,  # seconds to wait before cleanup
-        "mock": {
-            "service_account": "test@example.com",
-            "credentials_file": os.path.join(ROOT_DIR, "data", "test_credentials.json"),
-            "token_file": os.path.join(ROOT_DIR, "data", "test_token.pickle"),
-        }
-    }
+    "EXCLUDED_DIRS": [
+        ".git",
+        "__pycache__",
+        "venv",
+        "node_modules",
+        "cache",
+        "logs",
+        "reports"
+    ],
+    "REQUIRED_VERSIONING": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/architecture/decisions/*.md",
+        "docs/architecture/*.md",
+        "docs/design/*.md"
+    ],
+    "TEST_DB_PATH": os.path.join(DATA_DIR, "test.db"),
+    "TEST_EMAIL_DATA": {
+        "subject": "Test Email",
+        "from": "test@example.com",
+        "to": "recipient@example.com",
+        "body": "Test email body"
+    },
+    "TEST_EMAIL_COUNT": 10
 }
 
 # Test Configuration

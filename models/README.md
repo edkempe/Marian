@@ -5,6 +5,12 @@
 
 > SQLAlchemy models and domain constants for the Jexi project.
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial models documentation
+- Added data model specifications
+- Added validation rules
+
 ## Data Flow Hierarchy
 
 This package follows a strict data flow hierarchy to ensure consistency:

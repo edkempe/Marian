@@ -1,3 +1,18 @@
+"""Test configuration and fixtures."""
+
+import os
+import pytest
+from config.test_settings import test_settings
+
+# Use test settings
+os.environ["ENV"] = "test"
+
+@pytest.fixture(scope="session")
+def settings():
+    """Provide test settings."""
+    return test_settings
+
+
 """Shared pytest fixtures."""
 
 import json

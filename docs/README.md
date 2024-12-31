@@ -170,6 +170,12 @@ See the [ADR README](adr/README.md) for more information about our ADR process.
    - Update related docs
    - Verify hierarchy integrity
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial documentation structure
+- Added ADR guidelines
+- Added template standards
+
 ## File Naming Conventions
 - `README.md` - All uppercase (standard)
 - Other docs - Kebab-case (e.g., `ai-guidelines.md`)

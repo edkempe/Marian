@@ -4,6 +4,7 @@ This module ensures that:
 1. All imports are actually used in the code
 2. No circular imports exist
 3. Import style is consistent (absolute vs relative)
+4. No forbidden imports are used
 """
 
 import ast
@@ -256,9 +257,65 @@ def check_circular_imports(
     return circular_imports
 
 
+# Forbidden imports that should not be used
+FORBIDDEN_IMPORTS = {
+    # Database
+    'sqlite3': 'Use SQLAlchemy instead of direct sqlite3',
+    
+    # Testing
+    'unittest': 'Use pytest instead of unittest',
+    
+    # Debugging and Logging
+    'print': 'Use logging instead of print statements',
+    'pdb': 'Use debugger in your IDE instead',
+    
+    # Security Sensitive
+    'pickle': 'Use json, yaml, or other secure serialization methods. See ADR-0007',
+    'marshal': 'Unsafe serialization, use json instead',
+    'shelve': 'Uses pickle internally, use SQLAlchemy or json instead',
+    'yaml.load': 'Use yaml.safe_load instead',
+    'xml.etree.ElementTree': 'Use defusedxml for safer XML processing',
+    
+    # Deprecated or Unsafe
+    'os.system': 'Use subprocess.run with proper argument handling',
+    'os.popen': 'Use subprocess.run with proper argument handling',
+    'eval': 'Unsafe evaluation of strings, use ast.literal_eval if needed',
+    'exec': 'Unsafe execution of strings, restructure code to avoid',
+    'input': 'Use argparse for CLI or proper input validation',
+    
+    # Use Standard Project Tools
+    'configparser': 'Use pydantic settings instead',
+    'optparse': 'Use argparse or click instead',
+}
+
+
+def check_forbidden_imports(file_path: str) -> List[str]:
+    """Check for forbidden imports in a Python file."""
+    visitor = ImportVisitor()
+    with open(file_path, 'r', encoding='utf-8') as f:
+        try:
+            tree = ast.parse(f.read(), filename=file_path)
+        except SyntaxError:
+            return []  # Skip files with syntax errors
+        
+    visitor.visit(tree)
+    issues = []
+    
+    for import_node in visitor.import_nodes:
+        if isinstance(import_node, ast.Import):
+            for name in import_node.names:
+                if name.name in FORBIDDEN_IMPORTS:
+                    issues.append(f"Line {import_node.lineno}: Forbidden import '{name.name}' - {FORBIDDEN_IMPORTS[name.name]}")
+        elif isinstance(import_node, ast.ImportFrom):
+            if import_node.module in FORBIDDEN_IMPORTS:
+                issues.append(f"Line {import_node.lineno}: Forbidden import 'from {import_node.module}' - {FORBIDDEN_IMPORTS[import_node.module]}")
+            
+    return issues
+
+
 def analyze_project_imports(
     project_root: str = None,
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]], List[str]]:
+) -> Tuple[Dict[str, List[str]], Dict[str, List[str]], List[str], Dict[str, List[str]]]:
     """Analyze all Python files in the project for import issues.
 
     Returns:
@@ -266,85 +323,100 @@ def analyze_project_imports(
         - Dict mapping files to unused imports
         - Dict mapping files to style issues
         - List of circular import chains
+        - Dict mapping files to forbidden import issues
     """
     if project_root is None:
-        project_root = str(Path(__file__).parent.parent)
+        project_root = os.path.dirname(os.path.dirname(__file__))
 
     unused_imports = {}
     style_issues = {}
     circular_imports = []
-
-    # Find all Python files
+    forbidden_issues = {}
+    
+    # Get all Python files
+    python_files = []
     for root, _, files in os.walk(project_root):
-        if "venv" in root or ".git" in root:
-            continue
-
         for file in files:
-            if file.endswith(".py"):
+            if file.endswith('.py'):
                 file_path = os.path.join(root, file)
+                if '/venv/' not in file_path and '/archive/' not in file_path:
+                    python_files.append(file_path)
 
-                # Check for unused imports
-                unused, style = analyze_file_imports(file_path)
-                if unused:
-                    unused_imports[file_path] = unused
-                if style:
-                    style_issues[file_path] = style
+    # Analyze each file
+    for file_path in python_files:
+        unused, style = analyze_file_imports(file_path)
+        forbidden = check_forbidden_imports(file_path)
+        
+        rel_path = os.path.relpath(file_path, project_root)
+        if unused:
+            unused_imports[rel_path] = unused
+        if style:
+            style_issues[rel_path] = style
+        if forbidden:
+            forbidden_issues[rel_path] = forbidden
 
-                # Check for circular imports
-                circular = check_circular_imports(file_path)
-                if circular:
-                    circular_imports.extend(circular)
+    # Check for circular imports
+    for file_path in python_files:
+        circles = check_circular_imports(file_path)
+        circular_imports.extend(circles)
 
-    return unused_imports, style_issues, circular_imports
+    return unused_imports, style_issues, circular_imports, forbidden_issues
 
 
 def generate_markdown_report(
     unused_imports: Dict[str, List[str]],
     style_issues: Dict[str, List[str]],
     circular_imports: List[str],
+    forbidden_issues: Dict[str, List[str]],
 ) -> str:
     """Generate markdown format report."""
-    report = "# Import Analysis Report\n\n"
+    lines = ["# Import Analysis Report\n"]
+    
+    if forbidden_issues:
+        lines.append("\n## 🚫 Forbidden Imports\n")
+        for file, issues in forbidden_issues.items():
+            lines.append(f"\n### {file}\n")
+            for issue in issues:
+                lines.append(f"- {issue}\n")
 
     if unused_imports:
-        report += "## Unused Imports\n\n"
+        lines.append("\n## Unused Imports\n\n")
         for file, imports in sorted(unused_imports.items()):
-            rel_path = os.path.relpath(file, str(Path(__file__).parent.parent))
-            report += f"### `{rel_path}`\n\n"
+            lines.append(f"### `{file}`\n\n")
             for imp in imports:
-                report += f"- `{imp}`\n"
-            report += "\n"
+                lines.append(f"- `{imp}`\n")
+            lines.append("\n")
 
     if style_issues:
-        report += "## Import Style Issues\n\n"
+        lines.append("## Import Style Issues\n\n")
         for file, issues in sorted(style_issues.items()):
-            rel_path = os.path.relpath(file, str(Path(__file__).parent.parent))
-            report += f"### `{rel_path}`\n\n"
+            lines.append(f"### `{file}`\n\n")
             for issue in issues:
-                report += f"- {issue}\n"
-            report += "\n"
+                lines.append(f"- {issue}\n")
+            lines.append("\n")
 
     if circular_imports:
-        report += "## Circular Imports\n\n"
+        lines.append("## Circular Imports\n\n")
         for cycle in sorted(circular_imports):
-            report += f"- {cycle}\n"
-        report += "\n"
+            lines.append(f"- {cycle}\n")
+        lines.append("\n")
 
-    if not (unused_imports or style_issues or circular_imports):
-        report += "> No import issues found! 🎉\n"
+    if not (unused_imports or style_issues or circular_imports or forbidden_issues):
+        lines.append("> No import issues found! 🎉\n")
 
-    return report
+    return "\n".join(lines)
 
 
 def generate_html_report(
     unused_imports: Dict[str, List[str]],
     style_issues: Dict[str, List[str]],
     circular_imports: List[str],
+    forbidden_issues: Dict[str, List[str]],
 ) -> str:
     """Generate HTML format report."""
     # Convert markdown to HTML
     md_content = generate_markdown_report(
-        unused_imports, style_issues, circular_imports
+        unused_imports, style_issues, circular_imports, forbidden_issues
     )
     html_content = markdown.markdown(md_content, extensions=["tables"])
 
@@ -358,14 +430,14 @@ def generate_import_report():
     base_dir = os.path.dirname(os.path.dirname(__file__))
 
     # Run analysis
-    unused_imports, style_issues, circular_imports = analyze_project_imports()
+    unused_imports, style_issues, circular_imports, forbidden_issues = analyze_project_imports()
 
     # Generate markdown report
-    md_report = generate_markdown_report(unused_imports, style_issues, circular_imports)
+    md_report = generate_markdown_report(unused_imports, style_issues, circular_imports, forbidden_issues)
     md_path = os.path.join(base_dir, REPORTS_DIR, "import_analysis.md")
 
     # Generate HTML report
-    html_report = generate_html_report(unused_imports, style_issues, circular_imports)
+    html_report = generate_html_report(unused_imports, style_issues, circular_imports, forbidden_issues)
     html_path = os.path.join(base_dir, REPORTS_DIR, "import_analysis.html")
 
     # Write reports
@@ -387,7 +459,9 @@ def generate_import_report():
         )
     if circular_imports:
         print(f"- Found {len(circular_imports)} circular import chains")
-    if not (unused_imports or style_issues or circular_imports):
+    if forbidden_issues:
+        print(f"- Found {sum(len(issues) for issues in forbidden_issues.values())} forbidden imports in {len(forbidden_issues)} files")
+    if not (unused_imports or style_issues or circular_imports or forbidden_issues):
         print("No import issues found!")
     print(f"\nReports generated:\n- {md_path}\n- {html_path}")
 
@@ -399,32 +473,45 @@ def test_imports():
     - Unused imports
     - Import style issues
     - Circular imports
+    - Forbidden imports
     """
-    unused_imports, style_issues, circular_imports = analyze_project_imports()
+    unused_imports, style_issues, circular_imports, forbidden_issues = analyze_project_imports()
 
-    # Generate report regardless of issues
-    generate_import_report()
-
-    # Add warnings for issues
-    if unused_imports:
-        for file, imports in unused_imports.items():
-            rel_path = os.path.relpath(file, str(Path(__file__).parent.parent))
-            for imp in imports:
-                pytest.warns(UserWarning, match=f"Unused import '{imp}' in {rel_path}")
-
-    if style_issues:
-        for file, issues in style_issues.items():
-            rel_path = os.path.relpath(file, str(Path(__file__).parent.parent))
-            for issue in issues:
-                pytest.warns(
-                    UserWarning, match=f"Import style issue in {rel_path}: {issue}"
-                )
-
-    if circular_imports:
-        for cycle in circular_imports:
-            pytest.warns(UserWarning, match=f"Circular import detected: {cycle}")
-
-    # Test always passes, issues are reported as warnings
+    # Generate the report
+    report = generate_markdown_report(unused_imports, style_issues, circular_imports, forbidden_issues)
+    
+    # Create reports directory if it doesn't exist
+    os.makedirs(REPORTS_DIR, exist_ok=True)
+    
+    # Save markdown report
+    report_path = os.path.join(REPORTS_DIR, "import_analysis.md")
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report)
+        
+    # Save HTML report
+    html_report = generate_html_report(unused_imports, style_issues, circular_imports, forbidden_issues)
+    html_path = os.path.join(REPORTS_DIR, "import_analysis.html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_report)
+        
+    # Print summary
+    total_issues = (
+        len(unused_imports) +
+        len(style_issues) +
+        len(circular_imports) +
+        len(forbidden_issues)
+    )
+    
+    if total_issues > 0:
+        print(f"\nFound {total_issues} import issues. See {report_path} for details.")
+        if forbidden_issues:
+            print("\nForbidden imports found:")
+            for file, issues in forbidden_issues.items():
+                print(f"\n{file}:")
+                for issue in issues:
+                    print(f"  {issue}")
+    
+    # Don't fail the test, just warn
     assert True
 
 

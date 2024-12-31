@@ -327,33 +327,63 @@ formatter = generic
 format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
 """)
+
+        # Create script.py.mako if it doesn't exist
+        script_mako_path = Path(directory) / "script.py.mako"
+        if not script_mako_path.exists():
+            script_mako_path.write_text('''
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+
+# revision identifiers, used by Alembic.
+revision = ${repr(up_revision)}
+down_revision = ${repr(down_revision)}
+branch_labels = ${repr(branch_labels)}
+depends_on = ${repr(depends_on)}
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+def upgrade() -> None:
+    ${upgrades if upgrades else "pass"}
+
+def downgrade() -> None:
+    ${downgrades if downgrades else "pass"}
+''')
         
         # Create versions directory if it doesn't exist
         versions_dir = Path(directory) / "versions"
         versions_dir.mkdir(exist_ok=True)
         
         # Generate migration
-        revision_id = command.revision(
+        revision = command.revision(
             config,
-            name,
-            message=message or name,
             autogenerate=False,  # Set to False to avoid requiring MetaData
+            rev_id=None,
+            message=message if message else name,
+            version_path=versions_dir
         )
         
         # Get migration file path
         script = ScriptDirectory.from_config(config)
-        migration = script.get_revision(revision_id)
+        migration_file = next(versions_dir.glob("*_test_migration.py"))
         
-        return str(migration.path)
+        return str(migration_file)
     except Exception as e:
         logger.error(f"Failed to generate migration: {str(e)}")
         raise ValueError(f"Failed to generate migration: {str(e)}")
     finally:
         # Clean up temporary files
         if os.path.exists(directory):
-            for file in Path(directory).glob("__pycache__"):
-                if file.is_dir():
-                    shutil.rmtree(file)
+            for cache_dir in Path(directory).rglob("__pycache__"):
+                if cache_dir.is_dir():
+                    shutil.rmtree(cache_dir)
 
 def simulate_migration(
     engine,

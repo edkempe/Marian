@@ -51,3 +51,85 @@ TEST_ATTACHMENTS = [{
     "filename": "test.pdf",
     "body": {"attachmentId": "att1"}
 }]
+
+# Test Message Structure
+TEST_MESSAGE = {
+    "id": TEST_MESSAGE_IDS["PLAIN"],
+    "threadId": "thread1",
+    "labelIds": ["INBOX"],
+    "snippet": "Test email snippet",
+    "payload": {
+        "mimeType": "text/plain",
+        "headers": [
+            {"name": "Subject", "value": "Test Subject"},
+            {"name": "From", "value": "from@test.com"},
+            {"name": "To", "value": "to@test.com"},
+            {"name": "Date", "value": "Tue, 1 Jan 2024 00:00:00 +0000"}
+        ],
+        "body": {"data": "VGVzdCBjb250ZW50"}  # Base64 encoded "Test content"
+    }
+}
+
+# Test Messages Collection
+TEST_MESSAGES = {
+    "PLAIN": {
+        "id": TEST_MESSAGE_IDS["PLAIN"],
+        "threadId": "thread1",
+        "labelIds": ["INBOX"],
+        "snippet": "Plain text email",
+        "payload": {
+            "mimeType": "text/plain",
+            "headers": [
+                {"name": "Subject", "value": "Plain Text Email"},
+                {"name": "From", "value": "sender@test.com"},
+                {"name": "To", "value": "recipient@test.com"},
+                {"name": "Date", "value": "Tue, 1 Jan 2024 00:00:00 +0000"}
+            ],
+            "body": {"data": "UGxhaW4gdGV4dCBjb250ZW50"}  # "Plain text content"
+        }
+    },
+    "HTML": {
+        "id": TEST_MESSAGE_IDS["HTML"],
+        "threadId": "thread2",
+        "labelIds": ["INBOX"],
+        "snippet": "HTML email",
+        "payload": {
+            "mimeType": "text/html",
+            "headers": [
+                {"name": "Subject", "value": "HTML Email"},
+                {"name": "From", "value": "sender@test.com"},
+                {"name": "To", "value": "recipient@test.com"},
+                {"name": "Date", "value": "Tue, 1 Jan 2024 00:00:00 +0000"}
+            ],
+            "body": {"data": "PGgxPlRlc3Q8L2gxPjxwPkhUTUwgY29udGVudDwvcD4="}  # "<h1>Test</h1><p>HTML content</p>"
+        }
+    },
+    "ATTACHMENTS": {
+        "id": TEST_MESSAGE_IDS["ATTACHMENTS"],
+        "threadId": "thread3",
+        "labelIds": ["INBOX"],
+        "snippet": "Email with attachments",
+        "payload": {
+            "mimeType": "multipart/mixed",
+            "headers": [
+                {"name": "Subject", "value": "Email with Attachments"},
+                {"name": "From", "value": "sender@test.com"},
+                {"name": "To", "value": "recipient@test.com"},
+                {"name": "Date", "value": "Tue, 1 Jan 2024 00:00:00 +0000"}
+            ],
+            "parts": [
+                {
+                    "partId": "0",
+                    "mimeType": "text/plain",
+                    "body": {"data": "RW1haWwgd2l0aCBhdHRhY2htZW50cw=="}  # "Email with attachments"
+                },
+                {
+                    "partId": "1",
+                    "mimeType": "application/pdf",
+                    "filename": "test.pdf",
+                    "body": {"attachmentId": "att1"}
+                }
+            ]
+        }
+    }
+}

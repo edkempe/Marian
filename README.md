@@ -1,5 +1,11 @@
 # Jexi Project
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial project setup
+- Added core documentation
+- Added minimalist ADR structure
+
 ## Overview
 
 Jexi is an AI-powered email processing and analysis system that works alongside Marian, a specialized librarian AI that manages the Catalog system. The project uses a library-based architecture where:
@@ -188,6 +194,54 @@ If you encounter any issues while running the application, please refer to our c
   - Contains utilities, constants, and helpers
   - Not for standalone scripts or development tools
   - Example: database_session_util.py used by apps and services
+
+### Application Utilities (`/utils/`)
+Core utilities used throughout the application:
+
+- **Date Utilities** (`date_utils.py`)
+  ```python
+  from utils.date_utils import format_iso_date, parse_iso_date
+  
+  # Format date to ISO string
+  iso_date = format_iso_date(datetime.now())
+  
+  # Parse ISO date string
+  date = parse_iso_date("2024-12-31T09:48:00")
+  ```
+
+- **String Utilities** (`string_utils.py`)
+  ```python
+  from utils.string_utils import camel_to_snake, snake_to_camel
+  
+  # Convert between cases
+  snake = camel_to_snake("camelCase")  # -> "camel_case"
+  camel = snake_to_camel("snake_case")  # -> "SnakeCase"
+  ```
+
+- **Email Utilities** (`email_utils.py`)
+  ```python
+  from utils.email_utils import parse_email_address, normalize_email
+  
+  # Parse email components
+  local, domain = parse_email_address("user@example.com")
+  
+  # Normalize email address
+  clean = normalize_email(" User@Example.COM ")
+  ```
+
+### Development Tools (`/tools/`)
+Tools for development and maintenance:
+
+- Documentation validators
+- Build scripts
+- Project standards
+
+### Test Utilities (`/tests/utils/`)
+Utilities specifically for testing:
+
+- Database test helpers
+- Email test fixtures
+- Test constants
 
 ### Active Content
 - `/docs` - Current documentation only
@@ -513,6 +567,59 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
    - Test edge cases
    - Mock external APIs
    - Use consistent test data
+
+## External Tool Requirements
+
+The project uses several external tools and services for development, testing, and runtime operations. For a complete list and rationale, see [ADR-0007: External Tool Integration](docs/adr/0007-external-tool-integration.md).
+
+### Development Environment
+- **Windsurf.ai**: Our primary IDE and AI copilot
+  - Access via web browser at [windsurf.ai](https://windsurf.ai)
+- **Git**: Version control
+  ```bash
+  brew install git
+  ```
+- **pre-commit**: Git hooks for code quality
+  ```bash
+  pip install pre-commit
+  pre-commit install
+  ```
+
+### Build and Testing
+- **pytest**: Test framework
+  ```bash
+  pip install pytest pytest-cov pytest-mock pytest-asyncio
+  ```
+- **bandit**: Security testing
+  ```bash
+  pip install bandit
+  ```
+- **rmlint**: Fast duplicate file detection
+  ```bash
+  # macOS
+  brew install rmlint
+
+  # Ubuntu/Debian
+  sudo apt-get install rmlint
+
+  # Fedora
+  sudo dnf install rmlint
+  ```
+
+### Runtime Dependencies
+- **SQLite**: Database (built into Python)
+- **alembic**: Database migrations
+  ```bash
+  pip install alembic
+  ```
+
+### External Services
+- **Gmail API**: Email integration
+  - Requires OAuth 2.0 setup
+  - See [Gmail API Setup Guide](docs/setup/gmail_api_setup.md)
+- **Anthropic API**: AI processing
+  - Requires API key
+  - See [AI Integration Guide](docs/setup/ai_integration.md)
 
 ## File Naming Conventions
 1. **Application Files**

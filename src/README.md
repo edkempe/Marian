@@ -5,6 +5,12 @@
 
 > Source code for the Jexi email processing system and Marian catalog management.
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial source code structure
+- Added module organization
+- Added coding standards
+
 ## Directory Structure
 
 1. **Jexi Core Components**

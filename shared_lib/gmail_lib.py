@@ -4,16 +4,13 @@ import base64
 import json
 import logging
 import os
-import pickle
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Dict, List, Optional, Union
 
 from dateutil import parser
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pytz import timezone
@@ -28,6 +25,7 @@ from shared_lib.constants import (
     REGEX_PATTERNS,
 )
 from shared_lib.exceptions import APIError, AuthenticationError
+from shared_lib.token_manager import TokenManager
 from .api_version_utils import verify_gmail_version, check_api_changelog
 from .api_monitor import track_api_call, monitor
 
@@ -44,7 +42,6 @@ CONFIG_DIR = os.path.join(os.path.dirname(DATA_DIR), "config")
 if not os.path.exists(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 
-TOKEN_FILE = os.path.join(CONFIG_DIR, "token.pickle")
 CREDENTIALS_FILE = os.path.join(CONFIG_DIR, "credentials.json")
 DEFAULT_LABEL_DB = os.path.join(DATA_DIR, "email_labels.db")
 
@@ -137,33 +134,14 @@ class GmailAPI:
             AuthenticationError: If authentication fails
         """
         try:
-            if not os.path.exists(CREDENTIALS_FILE):
-                raise FileNotFoundError(
-                    f"Credentials file '{CREDENTIALS_FILE}' not found"
-                )
-
-            creds = None
-            if os.path.exists(TOKEN_FILE):
-                with open(TOKEN_FILE, "rb") as token:
-                    creds = pickle.load(token)
-
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    logger.info("Refreshing expired token...")
-                    creds.refresh(Request())
-                else:
-                    logger.info("Starting new authentication flow...")
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        CREDENTIALS_FILE, SCOPES
-                    )
-                    creds = flow.run_local_server(port=0)
-
-                with open(TOKEN_FILE, "wb") as token:
-                    logger.info(f"Saving token to {TOKEN_FILE}")
-                    pickle.dump(creds, token)
-
-            return creds
-
+            # Try loading existing token
+            creds = TokenManager.load_token()
+            if creds and creds.valid:
+                return creds
+                
+            # Create new token if none exists or is invalid
+            return TokenManager.create_token(SCOPES)
+            
         except Exception as e:
             logger.error(f"Authentication error: {str(e)}")
             raise AuthenticationError(ErrorMessages["API_ERROR"]) from e

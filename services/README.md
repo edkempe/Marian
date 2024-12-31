@@ -11,6 +11,12 @@
 - **Maintenance**: Active
 - **Python**: >= 3.12
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial services documentation
+- Added service architecture overview
+- Added deployment guidelines
+
 ## Directory Structure
 ```
 /services/

@@ -4,14 +4,24 @@ This module ensures that our documentation is consistent and complete:
 1. All referenced documents and folders exist
 2. All existing documents and folders are referenced somewhere
 3. No broken links or references
+4. Documentation follows project standards
 """
 
 import fnmatch
 import os
 import re
 from typing import Dict, List, Set, Tuple
+from pathlib import Path
 
 import pytest
+from tools.doc_standards import (
+    REQUIRED_DOCS,
+    REQUIRED_SECTIONS,
+    CODE_DOCUMENTATION,
+    validate_doc,
+    get_doc_type,
+    validate_code_doc
+)
 
 
 def get_all_docs_and_folders() -> Tuple[Set[str], Set[str]]:
@@ -276,6 +286,40 @@ def test_documentation_references():
     if errors:
         errors.insert(0, "Documentation validation failed!")
         pytest.fail("\n".join(errors))
+
+
+def test_doc_standards():
+    """Verify documentation standards compliance."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    docs_dir = os.path.join(project_root, "docs")
+
+    # Check required docs exist and have required sections
+    for doc_file in REQUIRED_DOCS:
+        doc_path = os.path.join(docs_dir, doc_file)
+        assert os.path.exists(doc_path), f"Missing {doc_file}"
+        
+        if os.path.exists(doc_path):
+            doc_type = get_doc_type(Path(doc_path))
+            errors = validate_doc(Path(doc_path), doc_type, float('inf'))  # No line limit in tests
+            assert not errors, f"Validation errors in {doc_file}:\n" + "\n".join(errors)
+
+
+def test_code_doc_standards():
+    """Verify code documentation standards."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # Check Python files
+    for root, _, files in os.walk(project_root):
+        if "tests" in root.split(os.sep) or "venv" in root.split(os.sep):
+            continue
+            
+        for file in files:
+            if file.endswith('.py'):
+                path = os.path.join(root, file)
+                with open(path) as f:
+                    content = f.read()
+                    errors = validate_code_doc(content)
+                    assert not errors, f"Documentation errors in {path}:\n" + "\n".join(errors)
 
 
 @pytest.fixture(scope="session", autouse=True)
