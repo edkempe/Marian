@@ -4,78 +4,23 @@
 **Status:** Source of truth for project tasks and priorities
 **Note:** Prototype and experimental features have been moved to [backlog_prototypes.md](./backlog_prototypes.md)
 
-## Imported Libraries and Dependencies
-
-### Current Dependencies
-- **anthropic**: Anthropic API integration for Claude
-- **tenacity**: Retry logic for API calls (implemented)
-- **python-dotenv**: Environment variable management
-- **google-api-python-client**: Gmail API integration
-- **google-auth-oauthlib**: Google OAuth authentication
-- **google-auth-httplib2**: Google HTTP client library
-- **sqlalchemy**: Database ORM and management
-- **pytest**: Testing framework
-- **pytest-cov**: Test coverage reporting
-- **black**: Code formatting
-- **isort**: Import sorting
-- **mypy**: Static type checking
-- **ruff**: Fast Python linter
-
-### Planned Dependencies
-- **pydantic**: Data validation and settings management
-- **alembic**: Database migration management
-- **structlog**: Structured logging
-- **prometheus-client**: Metrics and monitoring
-
-## Backlog Notes
-**Last Review**: 2024-12-29
-**Status**: Needs Consolidation
-
-### Identified Duplicates for Future Consolidation
-1. **Database Documentation**:
-   - Multiple entries about moving schema documentation to docs/database_design.md
-   - Duplicate ERD diagram tasks
-   - Repeated validation rules documentation tasks
-   - Migration guide appears in multiple sections
-
-2. **Code Quality Tools**:
-   - Multiple entries about implementing code formatting tools
-   - Duplicate static analysis implementation tasks
-   - Overlapping validation improvement tasks
-
-3. **Schema Changes**:
-   - Multiple entries about TEXT to JSON field migration
-   - Duplicate date handling standardization tasks
-
-### Non-Duplicate Sections
-1. **Session Management**:
-   All session management sections contain unique tasks and should be preserved:
-   - "Session Management Testing" - Covers testing, python command handling, and environment reporting
-   - "Session Management" - Focuses on workflow, file naming, and documentation
-   These sections are complementary and address different aspects of session management.
-
-Note: The identified duplicates should be consolidated during the next backlog cleanup session, ensuring no critical information is lost during consolidation.
-
-## Workstreams Overview
-### Email Processing
-**Status**: Active
-**Focus**: Email retrieval, analysis, and storage
-**Current Priority**: Schema validation and testing
-**Objective**: Build robust email processing infrastructure for information extraction and analysis
-
-### Catalog/Librarian
-**Status**: Active
-**Focus**: Information organization and retrieval
-**Current Priority**: Interactive chat system development
-**Objective**: Create an intelligent catalog system that enables interactive information management through natural language conversations, helping organize, retrieve, and maintain a knowledge base of resources and information while leveraging the email processing infrastructure
-
-### Program Management
-**Status**: Active
-**Focus**: Standards, processes, and coordination
-**Current Priority**: Documentation restructuring
-**Objective**: Establish and maintain development standards, documentation, and processes that promote quality, maintainability, and cross-workstream coordination
-
 ## High Priority
+
+### Security and Authentication
+1. [ ] **Implement ADR-0008: Secure Token Storage**
+   - Status: Backlog
+   - Priority: Medium
+   - Description: Migrate token storage from pickle to JSON format with keyring-based encryption. Implement token rotation, secure deletion, and system keychain integration.
+   - Dependencies: None
+   - ADR: [ADR-0008](adr/0008-secure-token-storage.md)
+
+### Code Organization
+1. [ ] **Implement ADR-0009: Constants Consolidation**
+   - Status: Proposed
+   - Priority: High
+   - Description: Consolidate constants into a hierarchical structure under shared_lib/constants/. Create clear separation between configuration and constants.
+   - Dependencies: None
+   - ADR: [ADR-0009](adr/0009-constants-consolidation.md)
 
 ### Documentation and Standards
 1. [ ] Update component-specific README files
