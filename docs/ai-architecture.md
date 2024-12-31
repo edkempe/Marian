@@ -2,83 +2,142 @@
 
 This document explains the AI systems in the Jexi project and establishes the documentation hierarchy for AI-related content.
 
-## Project Structure
-- **Jexi**: The core AI assistant, powered by Anthropic
-  - **Marian**: Jexi's librarian, who maintains the Catalog
-    - **Catalog**: The knowledge database that Marian manages for Jexi
+## Overview
 
-## AI Systems
+The system uses multiple AI components working together in a library-based architecture:
 
-### 1. Development AI (Cascade, "Cassy")
-> Cascade (affectionately known as Cassy) is the Windsurf.ai copilot that assists with development. Think of Cassy as a skilled pair programmer who understands both code and documentation.
+1. **Runtime AI**
+   - **Jexi**: The primary assistant that interacts with users
+     - Processes and analyzes emails
+     - Can request and "check out" information through Marian
+     - Uses the catalog but doesn't manage it
+     
+   - **Marian**: The librarian who manages the Catalog
+     - Maintains metadata about all information sources
+     - Knows where everything is located and how it relates
+     - Maintains the source of truth hierarchy
+     - Doesn't store content, only references to it
+     
+   - **Catalog**: The knowledge management system
+     - Like a library's card catalog
+     - Stores metadata, locations, and relationships
+     - Contains references/pointers to actual content
+     - Maps the knowledge landscape
+     - Tracks hierarchies and dependencies
 
-#### Primary Responsibilities
-- Code development and review
-- Documentation maintenance
-- Test generation and validation
-- Architecture decisions
+2. **Development AI**
+   - **Cascade**: The development assistant
+     - Helps implement new features
+     - Reviews and refactors code
+     - Manages testing and documentation
 
-#### Limitations
-- Cannot access gitignored directories
-- Cannot run unsafe commands automatically
-- Must validate all generated code
+## Component Details
 
-### 2. Runtime AIs
+### Runtime AI
 
-#### Jexi (Core Assistant)
-> Jexi is the core AI assistant, powered by Anthropic, that interacts with users and manages their digital life.
+#### Jexi (The Primary Assistant)
+> Jexi is the main AI assistant that interacts with users and processes their information.
 
-##### Primary Responsibilities
-- User interaction
-- Task management
-- Information processing
-- Decision support
+Responsibilities:
+- Email processing and analysis
+- User interaction and task management
+- Can request information through Marian
+- "Checks out" content when needed
+- Uses the catalog but doesn't manage it
+
+Access Patterns:
+- Requests information through Marian
+- Gets guided to authoritative sources
+- Maintains active "checkouts"
+- Reports usage patterns back to Catalog
 
 #### Marian (The Librarian)
-> Marian is Jexi's librarian, also powered by Anthropic, who specializes in maintaining and organizing the Catalog.
+> Marian is the librarian who manages the Catalog system, like a skilled research librarian who knows where everything is and how it's organized.
 
-##### Primary Responsibilities
-- Catalog entry management
-- Content classification
-- Relationship inference
-- Query processing
-- Source of truth management
+Responsibilities:
+- Maintains the Catalog (metadata and relationships)
+- Guides users to authoritative sources
+- Manages the source of truth hierarchy
+- Tracks resource locations and access methods
+- Suggests related resources
+- Monitors collection health
 
-##### Integration Points
-- Maintains the Catalog for Jexi
-- Answers Jexi's questions about information hierarchy
-- Ensures data consistency and accuracy
-- Manages sources of truth
+Features:
+1. **Reference Desk**
+   - Helps construct complex queries
+   - Suggests related resources
+   - Guides to authoritative sources
+
+2. **Collection Management**
+   - Tracks resource usage
+   - Identifies gaps in the catalog
+   - Suggests new categorizations
+
+3. **Library Card System**
+   - Tracks what's currently "checked out"
+   - Manages access permissions
+   - Logs usage patterns
+
+4. **Inter-Library Loan**
+   - Handles external resource references
+   - Manages temporary access
+   - Tracks external dependencies
+
+#### The Catalog
+> The Catalog is like a library's card catalog system - it doesn't contain the books, it tells you where to find them.
+
+Components:
+1. **Metadata Store**
+   - Resource locations and access methods
+   - Tags and categories
+   - Last updated timestamps
+   - Access permissions
+
+2. **Relationship Mapper**
+   - Dependencies between resources
+   - Related content links
+   - Version relationships
+   - Authority hierarchies
+
+3. **Access Tracker**
+   - Current "checkouts"
+   - Usage history
+   - Access patterns
+   - Permission logs
+
+4. **Health Monitor**
+   - Resource availability
+   - Link validity
+   - Usage statistics
+   - Gap analysis
+
+### Development AI
+
+#### Cascade
+> Cascade is the development assistant that helps build and maintain the system.
+
+Responsibilities:
+- Code implementation
+- Testing and validation
+- Documentation management
+- Code review and refactoring
 
 ## Documentation Hierarchy
 
-### Core Source of Truth
-1. **Code Implementation**
-   - `models/catalog.py`: Definitive data model
-   - `tests/`: Behavior specifications
-2. **Documentation**
-   - `README.md`: Project overview
-   - `ai-architecture.md`: AI system boundaries
+### Core Documentation
+1. `ai-architecture.md`: This file - system architecture
+2. `librarian.md`: Marian's behavior and operations
+3. `catalog-spec.md`: Catalog system specification
 
-### Development AI (Cascade)
-1. **Primary Documentation**
-   - `README.md`: Project overview
-   - `session-workflow.md`: Development workflow
-2. **Supporting Documentation**
-   - `contributing.md`: Development guidelines and standards
-   - `code-standards.md`: Implementation guidelines
-   - `testing-guide.md`: Test development practices
-   - `troubleshooting.md`: Common issues
-   - Session logs: Historical record
+### Implementation Guides
+1. `catalog-schema.md`: Metadata schema specification
+2. `access-patterns.md`: How to request and use resources
+3. `truth-hierarchy.md`: Source of truth management
 
-### Runtime AI (Jexi and Marian)
-1. **Primary Documentation**
-   - `core-assistant.md`: Jexi's behavior and operations
-   - `librarian.md`: Marian's behavior and operations
-2. **Supporting Documentation**
-   - `ai-guidelines.md`: AI interaction guidelines
-   - `design-decisions.md`: Architecture decisions
-   - `backlog.md`: Project tasks and priorities
+### Best Practices
+1. `metadata-guide.md`: How to structure metadata
+2. `relationship-guide.md`: How to define relationships
+3. `access-guide.md`: Resource access patterns
 
 ## Interaction Between Systems
 

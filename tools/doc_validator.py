@@ -2,9 +2,14 @@
 
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+
+# Add parent directory to Python path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from shared_lib.doc_standards import (
     MAX_NEW_DOC_LINES,
     MAX_EXISTING_DOC_LINES,

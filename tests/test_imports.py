@@ -14,6 +14,7 @@ from typing import Dict, List, Set, Tuple
 
 import jinja2
 import markdown
+import pytest
 
 from shared_lib.constants import TESTING_CONFIG
 

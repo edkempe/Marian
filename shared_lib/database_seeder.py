@@ -17,22 +17,16 @@ from typing import Dict, Any, List, Optional
 
 import yaml
 from faker import Faker
-from sqlalchemy.orm import Session
+from sqlalchemy import Table, MetaData, text, Column, Integer, String, Boolean, DateTime, ForeignKey, create_engine
 
-from models.email import Email
-from models.email_analysis import EmailAnalysis
-from models.gmail_label import GmailLabel
-from shared_lib.database_session_util import (
-    get_email_session,
-    get_analysis_session,
-)
+from shared_lib.config_loader import get_schema_config
+from shared_lib.constants import DATABASE_CONFIG
+from shared_lib.database_session_util import get_engine_for_db_type
 
-logger = logging.getLogger(__name__)
-fake = Faker()
 
 class DatabaseSeeder:
     """Database seeder class."""
-
+    
     def __init__(self, env: str = "development"):
         """Initialize seeder.
         
@@ -40,472 +34,220 @@ class DatabaseSeeder:
             env: Environment name (development, test, etc.)
         """
         self.env = env
-        self.email_session = get_email_session()
-        self.analysis_session = get_analysis_session()
+        self.faker = Faker()
+        self.schema_config = get_schema_config()
+        
+        # Create engines
+        self.email_engine = get_engine_for_db_type("email")
+        self.analysis_engine = get_engine_for_db_type("analysis")
+        
+        # Create MetaData instances
+        self.email_metadata = MetaData()
+        self.analysis_metadata = MetaData()
+        
+        # Create tables if they don't exist
+        self._create_tables()
+        
+        # Reflect existing tables
+        self.email_metadata.reflect(bind=self.email_engine)
+        self.analysis_metadata.reflect(bind=self.analysis_engine)
+        
+    def _create_tables(self):
+        """Create database tables if they don't exist."""
+        # Email tables
+        email_table = Table(
+            "email",
+            self.email_metadata,
+            Column("id", Integer, primary_key=True),
+            Column("subject", String, nullable=False),
+            Column("sender", String, nullable=False),
+            Column("recipient", String, nullable=False),
+            Column("body", String, nullable=False),
+            Column("timestamp", DateTime(timezone=True), nullable=False),
+            Column("has_attachments", Boolean, default=False),
+            Column("thread_id", String, nullable=False),
+            Column("message_id", String, nullable=False, unique=True),
+        )
+        
+        label_table = Table(
+            "gmail_label",
+            self.email_metadata,
+            Column("id", Integer, primary_key=True),
+            Column("name", String, nullable=False),
+            Column("type", String, nullable=False),
+            Column("color", String),
+            Column("visible", Boolean, default=True),
+        )
+        
+        # Analysis tables
+        analysis_table = Table(
+            "analysis",
+            self.analysis_metadata,
+            Column("id", Integer, primary_key=True),
+            Column("email_id", Integer, nullable=False),
+            Column("sentiment", String, nullable=False),
+            Column("priority", String, nullable=False),
+            Column("summary", String),
+            Column("analyzed_at", DateTime(timezone=True), nullable=False),
+        )
+        
+        # Create tables
+        self.email_metadata.create_all(self.email_engine)
+        self.analysis_metadata.create_all(self.analysis_engine)
         
     def _load_seed_data(self, name: str) -> Dict[str, Any]:
-        """Load seed data from YAML file.
-        
-        Args:
-            name: Name of seed data file (without .yaml extension)
+        """Load seed data from YAML file."""
+        seed_path = Path(f"config/seeds/{self.env}/{name}.yaml")
+        if not seed_path.exists():
+            seed_path = Path(f"config/seeds/{name}.yaml")
             
-        Returns:
-            Dictionary containing seed data
-        """
-        seed_dir = Path("config/seeds")
-        seed_file = seed_dir / f"{name}.{self.env}.yaml"
-        
-        if not seed_file.exists():
-            seed_file = seed_dir / f"{name}.yaml"
-            
-        if not seed_file.exists():
+        if not seed_path.exists():
             raise FileNotFoundError(f"No seed file found for {name}")
             
-        with open(seed_file) as f:
-            return yaml.safe_load(f)
+        try:
+            with open(seed_path) as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            raise Exception(f"Failed to parse seed file {name}: {str(e)}")
             
     def _generate_fake_email(self) -> Dict[str, Any]:
         """Generate fake email data."""
-        # Generate realistic email content
-        subject_templates = [
-            "Re: {topic} Update",
-            "Meeting: {topic} Discussion",
-            "Question about {topic}",
-            "Important: {topic} Changes",
-            "{topic} Review Needed",
-        ]
-        
-        topics = [
-            "Project Timeline",
-            "Database Migration",
-            "Code Review",
-            "API Integration",
-            "User Feedback",
-            "Performance Issues",
-            "Security Update",
-            "Documentation",
-            "Testing Strategy",
-            "Release Planning",
-        ]
-        
-        body_templates = [
-            """
-            Hi {recipient_name},
-            
-            I wanted to follow up on the {topic}. Here are the key points:
-            
-            1. {point1}
-            2. {point2}
-            3. {point3}
-            
-            Let me know if you have any questions.
-            
-            Best regards,
-            {sender_name}
-            """,
-            """
-            {recipient_name},
-            
-            Quick update on {topic}:
-            - {point1}
-            - {point2}
-            
-            Can we discuss this in our next meeting?
-            
-            Thanks,
-            {sender_name}
-            """,
-            """
-            Team,
-            
-            Here's the latest on our {topic}:
-            
-            Current Status:
-            {point1}
-            
-            Next Steps:
-            {point2}
-            
-            Action Items:
-            {point3}
-            
-            Please review and provide feedback.
-            
-            Best,
-            {sender_name}
-            """,
-        ]
-        
-        points = [
-            "Completed initial implementation",
-            "Testing in progress",
-            "Documentation needs update",
-            "Found potential issues",
-            "Ready for review",
-            "Needs more discussion",
-            "Blocked by dependencies",
-            "Moving forward as planned",
-            "Requires team input",
-            "Successfully deployed",
-        ]
-        
-        # Generate sender and recipient names
-        sender_name = fake.name()
-        recipient_name = fake.name()
-        
-        # Generate email content
-        topic = fake.random_element(topics)
-        subject = fake.random_element(subject_templates).format(topic=topic)
-        
-        body = fake.random_element(body_templates).format(
-            recipient_name=recipient_name,
-            sender_name=sender_name,
-            topic=topic,
-            point1=fake.random_element(points),
-            point2=fake.random_element(points),
-            point3=fake.random_element(points),
-        )
-        
-        # Generate realistic API response
-        api_response = {
-            "id": fake.uuid4(),
-            "threadId": fake.uuid4(),
-            "labelIds": [
-                "INBOX",
-                "IMPORTANT" if fake.boolean() else None,
-                "CATEGORY_PERSONAL" if fake.boolean() else "CATEGORY_WORK",
-            ],
-            "snippet": body[:100] + "...",
-            "payload": {
-                "mimeType": "text/plain",
-                "headers": [
-                    {
-                        "name": "From",
-                        "value": f"{sender_name} <{fake.email()}>"
-                    },
-                    {
-                        "name": "To",
-                        "value": f"{recipient_name} <{fake.email()}>"
-                    },
-                    {
-                        "name": "Subject",
-                        "value": subject
-                    },
-                    {
-                        "name": "Date",
-                        "value": fake.date_time_this_year(tzinfo=timezone.utc).isoformat()
-                    },
-                ],
-                "body": {
-                    "data": body,
-                    "size": len(body),
-                },
-            },
-            "sizeEstimate": len(body),
-        }
-        
         return {
-            "thread_id": api_response["threadId"],
-            "message_id": api_response["id"],
-            "subject": subject,
-            "body": body,
-            "snippet": api_response["snippet"],
-            "from_address": f"{sender_name} <{fake.email()}>",
-            "to_address": f"{recipient_name} <{fake.email()}>",
-            "cc_address": f"{fake.name()} <{fake.email()}>" if fake.boolean() else None,
-            "bcc_address": f"{fake.name()} <{fake.email()}>" if fake.boolean() else None,
-            "has_attachments": fake.boolean(chance_of_getting_true=30),
-            "is_read": fake.boolean(chance_of_getting_true=70),
-            "is_important": fake.boolean(chance_of_getting_true=20),
-            "received_at": fake.date_time_this_year(tzinfo=timezone.utc),
-            "api_response": json.dumps(api_response),
+            "subject": self.faker.sentence(),
+            "sender": self.faker.email(),
+            "recipient": self.faker.email(),
+            "body": self.faker.text(),
+            "timestamp": datetime.now(timezone.utc),
+            "has_attachments": self.faker.boolean(),
+            "thread_id": self.faker.uuid4(),
+            "message_id": self.faker.uuid4()
         }
         
     def _generate_fake_analysis(self, email_id: str) -> Dict[str, Any]:
         """Generate fake email analysis data."""
-        # Define realistic categories and their associated keywords
-        categories = {
-            "work": [
-                "project", "meeting", "deadline", "report", "client",
-                "presentation", "budget", "timeline", "milestone",
-            ],
-            "personal": [
-                "family", "vacation", "weekend", "dinner", "party",
-                "holiday", "birthday", "travel", "friend",
-            ],
-            "finance": [
-                "invoice", "payment", "budget", "expense", "cost",
-                "quote", "price", "billing", "account",
-            ],
-            "social": [
-                "event", "meetup", "gathering", "party", "celebration",
-                "invitation", "rsvp", "social", "community",
-            ],
-            "support": [
-                "issue", "problem", "help", "question", "assistance",
-                "error", "bug", "fix", "solution",
-            ],
-        }
-        
-        # Generate category based on email content
-        email = self.email_session.query(Email).filter_by(id=email_id).first()
-        if email:
-            content = f"{email.subject} {email.body}".lower()
-            category_scores = {
-                cat: sum(1 for word in keywords if word in content)
-                for cat, keywords in categories.items()
-            }
-            category = max(category_scores.items(), key=lambda x: x[1])[0]
-        else:
-            category = fake.random_element(list(categories.keys()))
-        
-        # Generate sentiment based on category and keywords
-        positive_words = [
-            "great", "excellent", "amazing", "wonderful", "successful",
-            "thank", "appreciate", "good", "happy", "pleased",
-        ]
-        negative_words = [
-            "issue", "problem", "error", "fail", "bad",
-            "wrong", "delay", "bug", "sorry", "unfortunately",
-        ]
-        
-        if email:
-            content = f"{email.subject} {email.body}".lower()
-            positive_score = sum(1 for word in positive_words if word in content)
-            negative_score = sum(1 for word in negative_words if word in content)
-            
-            if positive_score > negative_score:
-                sentiment = "positive"
-            elif negative_score > positive_score:
-                sentiment = "negative"
-            elif positive_score == negative_score and (positive_score + negative_score) > 0:
-                sentiment = "mixed"
-            else:
-                sentiment = "neutral"
-        else:
-            sentiment = fake.random_element(["positive", "negative", "neutral", "mixed"])
-        
-        # Generate priority based on sentiment and category
-        priority_weights = {
-            ("work", "negative"): 90,      # High priority for work issues
-            ("work", "positive"): 60,      # Medium priority for work updates
-            ("finance", "negative"): 80,   # High priority for financial issues
-            ("finance", "positive"): 70,   # Medium-high for financial updates
-            ("support", "negative"): 85,   # High priority for support issues
-            ("support", "positive"): 50,   # Medium priority for support updates
-            ("personal", "negative"): 40,  # Lower priority for personal issues
-            ("personal", "positive"): 20,  # Low priority for personal updates
-            ("social", "negative"): 30,    # Lower priority for social issues
-            ("social", "positive"): 10,    # Low priority for social updates
-        }
-        
-        priority_score = priority_weights.get(
-            (category, sentiment),
-            fake.random_int(min=0, max=100)
-        )
-        
-        if priority_score >= 70:
-            priority = "high"
-        elif priority_score >= 40:
-            priority = "medium"
-        else:
-            priority = "low"
-        
-        # Generate summary based on email content
-        if email:
-            summary = f"{sentiment.title()} {category} email: {email.snippet}"
-        else:
-            summary = f"{sentiment.title()} {category} email with {priority} priority"
-        
         return {
             "email_id": email_id,
-            "sentiment": sentiment,
-            "category": category,
-            "summary": summary,
-            "priority": priority,
-            "analyzed_at": fake.date_time_between(
-                start_date="-1h",
-                end_date="now",
-                tzinfo=timezone.utc
+            "sentiment": self.faker.random_element(
+                self.schema_config.analysis.validation.valid_sentiments
             ),
+            "priority": self.faker.random_element(
+                self.schema_config.analysis.validation.valid_priorities
+            ),
+            "summary": self.faker.text(
+                max_nb_chars=self.schema_config.analysis.validation.max_summary_length
+            ),
+            "analyzed_at": datetime.now(timezone.utc)
         }
-
+        
     def _generate_fake_label(self) -> Dict[str, Any]:
         """Generate fake Gmail label data."""
-        # Define realistic label templates
-        system_labels = [
-            ("INBOX", "show", "labelShow", True),
-            ("SENT", "show", "labelShow", True),
-            ("DRAFT", "show", "labelShow", True),
-            ("SPAM", "show", "labelHide", True),
-            ("TRASH", "show", "labelHide", True),
-            ("IMPORTANT", "show", "labelShow", True),
-            ("STARRED", "show", "labelShow", True),
-            ("UNREAD", "show", "labelHide", True),
-        ]
-        
-        user_label_templates = [
-            "Project/{name}",
-            "Client/{name}",
-            "Team/{name}",
-            "Priority/{level}",
-            "Status/{status}",
-            "Department/{name}",
-            "Category/{name}",
-        ]
-        
-        names = [
-            "Development",
-            "Marketing",
-            "Sales",
-            "Support",
-            "HR",
-            "Finance",
-            "Operations",
-            "Research",
-        ]
-        
-        levels = ["High", "Medium", "Low"]
-        statuses = ["Active", "Pending", "Completed", "Archived"]
-        
-        if fake.boolean(chance_of_getting_true=30):  # 30% chance of system label
-            name, msg_vis, label_vis, is_system = fake.random_element(system_labels)
-        else:
-            template = fake.random_element(user_label_templates)
-            if "{name}" in template:
-                name = template.format(name=fake.random_element(names))
-            elif "{level}" in template:
-                name = template.format(level=fake.random_element(levels))
-            elif "{status}" in template:
-                name = template.format(status=fake.random_element(statuses))
-            else:
-                name = template
-                
-            msg_vis = fake.random_element(["show", "hide"])
-            label_vis = fake.random_element(["labelShow", "labelHide"])
-            is_system = False
-        
         return {
-            "label_id": fake.uuid4(),
-            "name": name,
-            "type": "system" if is_system else "user",
-            "message_list_visibility": msg_vis,
-            "label_list_visibility": label_vis,
-            "is_system": is_system,
+            "name": self.faker.word(),
+            "type": self.faker.random_element(
+                self.schema_config.label.validation.valid_types
+            ),
+            "color": self.faker.hex_color(),
+            "visible": self.faker.boolean()
         }
-
-    def seed_emails(self, count: int = 10, seed_file: Optional[str] = None) -> List[Email]:
-        """Seed email data.
         
-        Args:
-            count: Number of emails to generate if using fake data
-            seed_file: Optional seed file name
-            
-        Returns:
-            List of created Email objects
-        """
+    def seed_emails(
+        self,
+        count: int = 10,
+        seed_file: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Seed email data."""
         emails = []
         
         if seed_file:
-            data = self._load_seed_data(seed_file)
-            for email_data in data["emails"]:
-                email = Email(**email_data)
-                self.email_session.add(email)
-                emails.append(email)
-        else:
-            for _ in range(count):
-                email = Email(**self._generate_fake_email())
-                self.email_session.add(email)
-                emails.append(email)
+            seed_data = self._load_seed_data(seed_file)
+            emails.extend(seed_data.get("emails", []))
+            
+        while len(emails) < count:
+            emails.append(self._generate_fake_email())
+            
+        # Insert into database and get IDs
+        email_table = self.email_metadata.tables["email"]
+        with self.email_engine.begin() as conn:
+            for email in emails:
+                result = conn.execute(
+                    email_table.insert().returning(email_table.c.id),
+                    email
+                )
+                email["id"] = result.scalar()
                 
-        self.email_session.commit()
         return emails
-
+        
     def seed_analysis(
         self,
-        emails: Optional[List[Email]] = None,
+        emails: Optional[List[Dict[str, Any]]] = None,
         count: int = 10,
         seed_file: Optional[str] = None
-    ) -> List[EmailAnalysis]:
-        """Seed email analysis data.
-        
-        Args:
-            emails: Optional list of emails to analyze
-            count: Number of analyses to generate if using fake data
-            seed_file: Optional seed file name
-            
-        Returns:
-            List of created EmailAnalysis objects
-        """
+    ) -> List[Dict[str, Any]]:
+        """Seed email analysis data."""
         analyses = []
         
         if seed_file:
-            data = self._load_seed_data(seed_file)
-            for analysis_data in data["analyses"]:
-                analysis = EmailAnalysis(**analysis_data)
-                self.analysis_session.add(analysis)
-                analyses.append(analysis)
-        else:
-            if not emails:
-                emails = self.seed_emails(count)
+            seed_data = self._load_seed_data(seed_file)
+            analyses.extend(seed_data.get("analyses", []))
+            
+        # Get email IDs if not provided
+        if not emails:
+            with self.email_engine.connect() as conn:
+                result = conn.execute(text("SELECT id FROM email LIMIT :count"), {"count": count})
+                emails = [{"id": row[0]} for row in result]
                 
-            for email in emails:
-                analysis = EmailAnalysis(**self._generate_fake_analysis(email.id))
-                self.analysis_session.add(analysis)
-                analyses.append(analysis)
+        # Generate analysis for each email
+        for email in emails:
+            if len(analyses) >= count:
+                break
+            analyses.append(self._generate_fake_analysis(email["id"]))
+            
+        # Insert into database
+        analysis_table = self.analysis_metadata.tables["analysis"]
+        with self.analysis_engine.begin() as conn:
+            for analysis in analyses:
+                conn.execute(
+                    analysis_table.insert(),
+                    analysis
+                )
                 
-        self.analysis_session.commit()
         return analyses
-
+        
     def seed_labels(
         self,
         count: int = 5,
         seed_file: Optional[str] = None
-    ) -> List[GmailLabel]:
-        """Seed Gmail label data.
-        
-        Args:
-            count: Number of labels to generate if using fake data
-            seed_file: Optional seed file name
-            
-        Returns:
-            List of created GmailLabel objects
-        """
+    ) -> List[Dict[str, Any]]:
+        """Seed Gmail label data."""
         labels = []
         
         if seed_file:
-            data = self._load_seed_data(seed_file)
-            for label_data in data["labels"]:
-                label = GmailLabel(**label_data)
-                self.email_session.add(label)
-                labels.append(label)
-        else:
-            for _ in range(count):
-                label = GmailLabel(**self._generate_fake_label())
-                self.email_session.add(label)
-                labels.append(label)
+            seed_data = self._load_seed_data(seed_file)
+            labels.extend(seed_data.get("labels", []))
+            
+        while len(labels) < count:
+            labels.append(self._generate_fake_label())
+            
+        # Insert into database
+        label_table = self.email_metadata.tables["gmail_label"]
+        with self.email_engine.begin() as conn:
+            for label in labels:
+                conn.execute(
+                    label_table.insert(),
+                    label
+                )
                 
-        self.email_session.commit()
         return labels
-
+        
     def seed_all(
         self,
         email_count: int = 10,
         label_count: int = 5,
         seed_file: Optional[str] = None
-    ) -> Dict[str, List[Any]]:
-        """Seed all data.
-        
-        Args:
-            email_count: Number of emails to generate if using fake data
-            label_count: Number of labels to generate if using fake data
-            seed_file: Optional seed file name
-            
-        Returns:
-            Dictionary containing all created objects
-        """
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Seed all data."""
         emails = self.seed_emails(email_count, seed_file)
-        analyses = self.seed_analysis(emails, seed_file=seed_file)
+        analyses = self.seed_analysis(emails, email_count, seed_file)
         labels = self.seed_labels(label_count, seed_file)
         
         return {
@@ -513,20 +255,21 @@ class DatabaseSeeder:
             "analyses": analyses,
             "labels": labels
         }
-
-    def cleanup(self) -> None:
+        
+    def cleanup(self):
         """Clean up all seeded data."""
-        try:
-            # Delete in reverse order of dependencies
-            self.analysis_session.query(EmailAnalysis).delete()
-            self.email_session.query(GmailLabel).delete()
-            self.email_session.query(Email).delete()
-            
-            self.analysis_session.commit()
-            self.email_session.commit()
-            
-        except Exception as e:
-            logger.error(f"Failed to cleanup seeded data: {str(e)}")
-            self.analysis_session.rollback()
-            self.email_session.rollback()
-            raise
+        for engine in [self.email_engine, self.analysis_engine]:
+            with engine.begin() as conn:
+                meta = MetaData()
+                meta.reflect(bind=engine)
+                
+                # Drop all tables except alembic_version
+                for table in reversed(meta.sorted_tables):
+                    if table.name != "alembic_version":
+                        # Use parameterized query to prevent SQL injection
+                        conn.execute(
+                            text("DELETE FROM :table_name"),
+                            {"table_name": table.name}
+                        )
+                        
+                conn.commit()

@@ -91,4 +91,4 @@ alembic/
 
 - [Schema Configuration Guide](schema_configuration.md)
 - [Database Design ADR](../adr/0001-database-design.md)
-- [Configuration-Based Schema ADR](../adr/0004-configuration-based-schema-definitions.md)
+- [Configuration-Based Schema ADR](../adr/0005-configuration-based-schema-definitions.md)

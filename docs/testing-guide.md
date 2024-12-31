@@ -259,6 +259,147 @@ Located in `tests/test_database.py`
 - Error conditions
 - Data migration
 
+## Database Utilities Testing
+
+The database utilities in Jexi provide essential functionality for database management, including schema migrations, data seeding, and session management. These utilities are critical for maintaining data integrity and supporting development workflows.
+
+### Test Suite Overview
+
+The database utilities test suite (`test_database_utils.py`) covers:
+
+1. **Database Seeder**
+   - Initialization and configuration
+   - Fake data generation
+   - Data seeding operations
+   - Database cleanup
+
+2. **Migration Utilities**
+   - Migration generation
+   - Migration application
+   - Migration status tracking
+
+3. **Schema Validation**
+   - Configuration-based validation
+   - Data type checking
+   - Constraint enforcement
+
+### Key Test Cases
+
+#### Database Seeder Tests
+
+1. **Initialization Tests**
+   ```python
+   def test_seeder_initialization(seeder):
+       """Test seeder initialization."""
+       assert seeder.env == "test"
+       assert seeder.faker is not None
+       assert seeder.schema_config is not None
+   ```
+   Verifies proper initialization of the seeder with correct environment and dependencies.
+
+2. **Fake Data Generation Tests**
+   ```python
+   def test_fake_email_generation(seeder):
+       """Test fake email generation."""
+       email = seeder._generate_fake_email()
+       assert "subject" in email
+       assert "sender" in email
+   ```
+   Ensures generated fake data meets schema requirements and contains all required fields.
+
+3. **Data Seeding Tests**
+   ```python
+   def test_seed_emails(seeder):
+       """Test email seeding."""
+       emails = seeder.seed_emails(count=5)
+       assert len(emails) == 5
+   ```
+   Validates that data is correctly seeded into the database with proper relationships.
+
+#### Migration Utility Tests
+
+1. **Migration Generation Tests**
+   ```python
+   def test_migration_generation():
+       """Test migration generation."""
+       migration_path = generate_migration(
+           "test_migration",
+           "migrations",
+           autogenerate=True
+       )
+       assert Path(migration_path).exists()
+   ```
+   Verifies that migrations are generated correctly with proper naming and content.
+
+2. **Migration Application Tests**
+   ```python
+   def test_migration_application():
+       """Test migration application."""
+       apply_migrations()
+       status = get_migration_status()
+       assert not status["pending_migrations"]
+   ```
+   Ensures migrations are applied successfully and tracked properly.
+
+### Test Environment
+
+The test suite uses:
+- Temporary SQLite databases for isolation
+- Test-specific configuration overrides
+- Automated cleanup of test artifacts
+
+### Running the Tests
+
+To run database utility tests:
+```bash
+# Run all tests
+pytest -v
+
+# Run only database utility tests
+pytest -v tests/test_database_utils.py
+
+# Run specific test case
+pytest -v tests/test_database_utils.py::test_seed_emails
+```
+
+### Best Practices
+
+1. **Database Isolation**
+   - Use temporary databases for testing
+   - Clean up test data after each test
+   - Avoid modifying production databases
+
+2. **Configuration Management**
+   - Override configuration for testing
+   - Use test-specific environments
+   - Maintain separate test data seeds
+
+3. **Test Data Generation**
+   - Generate realistic test data
+   - Cover edge cases and constraints
+   - Maintain referential integrity
+
+4. **Error Handling**
+   - Test error conditions
+   - Verify error messages
+   - Ensure proper cleanup on failure
+
+### Continuous Integration
+
+The database utility tests are part of the CI pipeline and:
+1. Run on every pull request
+2. Block merging if tests fail
+3. Generate test coverage reports
+4. Validate schema changes
+
+### Maintenance
+
+To maintain the test suite:
+1. Update tests when schema changes
+2. Add tests for new features
+3. Review and update test data regularly
+4. Monitor test performance
+
 ## Test Reports
 
 Test reports are generated in the `reports/testing` directory. This directory is gitignored as it contains generated content. Key reports include:

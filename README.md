@@ -1,133 +1,43 @@
-# Marian Project
+# Jexi Project
 
-**Version:** 1.0.0
-**Status:** Authoritative
+## Overview
 
-## Document Version Guidelines
-All project documentation follows this version notation:
-- Format: `[Major].[Minor].[Patch]`
-- Example: `1.2.3`
+Jexi is an AI-powered email processing and analysis system that works alongside Marian, a specialized librarian AI that manages the Catalog system. The project uses a library-based architecture where:
 
-Version components:
-- Major: Breaking changes
-- Minor: New features, backward compatible
-- Patch: Bug fixes, clarifications
+- **Jexi** processes and analyzes emails, and can "check out" information it needs
+- **Marian** acts as a librarian, maintaining metadata about where information is stored
+- **The Catalog** is like a card catalog system - it doesn't store content, just references to where things are
 
-Status levels:
-- Draft: Initial creation, not reviewed
-- Review: Under review/testing
-- Authoritative: Current source of truth
-- Deprecated: Superseded but preserved
+### Components
 
-## Version History
-- 1.0.0: Initial project setup and core documentation
+1. **Jexi Core**: 
+   - Email processing and analysis
+   - Gmail integration
+   - Can request and "check out" information through Marian
+   - Uses the catalog but doesn't manage it
 
-## Important Process Documents
-**REQUIRED**: Follow the authoritative [Development Checklist](docs/dev-checklist.md) for all development sessions.
+2. **Marian**: 
+   - Acts as a librarian for the system
+   - Maintains metadata about information location
+   - Knows where everything is and how it relates
+   - Maintains the source of truth hierarchy
+   - Doesn't store content, only references to it
 
-**Core Documentation**:
-- [Development Session Logs](docs/session_logs/) - Daily development tracking (REQUIRED)
-- [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
-- [Session Workflow Guide](docs/session-workflow.md) - Development workflow
-- [Project Guidelines](docs/adr/README.md) - Project architecture and decisions
-- [Setup Guide](docs/setup.md) - Environment setup
-- [Design Decisions](docs/design-decisions.md) - Architecture choices
-- [Contributing Guide](docs/contributing.md) - Development guidelines
+3. **The Catalog**:
+   - Like a library's card catalog
+   - Stores metadata, locations, and relationships
+   - Contains references/pointers to actual content
+   - Maps the knowledge landscape
+   - Tracks hierarchies and dependencies
 
-The checklist and session logs must be maintained for every development session, with the supporting documents providing additional context and details as needed.
-
-## Critical Development Guidelines
-
-1. **Code Preservation Policy**
-   - **NEVER** remove functionality or information/documentation without explicit permission
-   - This includes:
-     - Test cases and functionality
-     - Documentation and comments
-     - Helper functions and utilities
-     - Logging and debugging code
-     - Error handling
-   - Duplicate important information rather than removing it
-   - Always get explicit approval before removing any code
-   - This guideline is critical and applies to all aspects of the project
-
-2. **Code Addition Policy**
-   - **NEVER** add new functionality without explicit approval
-   - This includes:
-     - New files or modules
-     - External libraries and dependencies
-     - New features or functionality
-     - Code reformatting or restructuring
-     - Changes to build or deployment processes
-   - Always propose and get approval before adding:
-     - New dependencies
-     - New files
-     - Code reformatting
-     - New features
-     - Project structure changes
-   - Document the reason and impact of proposed additions
-   - This guideline is critical and applies to all aspects of the project
-
-3. **Testing Policy**
-   - **NO MOCK TESTING** - All tests must use real integrations
-   - Tests interact with actual APIs, databases, and services
-   - Any changes to use mocks require explicit permission
-   - Test data volumes are limited to prevent timeouts
-   - Tests must be reliable and not dependent on mock behavior
-   - This policy ensures tests validate real-world behavior
-
-4. **Change Management Policy**
-   - Keep detailed session logs of all development work in `docs/session_logs/`
-   - Follow the [Session Logs Guide](docs/session_logs/README.md) for format and naming
-   - Make changes small and incremental
-   - Ensure diffs are readable for review and approval
-   - Document reasoning behind each change
-   - Break large changes into smaller, reviewable chunks
-   - This policy ensures changes can be properly reviewed and tracked
-
-## Test Setup Requirements
-
-Before running tests:
-
-1. **Gmail API Authentication**
-   - Valid Gmail credentials required in `config/credentials.json`
-   - Valid token required in `config/token.pickle`
-   - Run `python app_get_mail.py` first to authenticate
-   - Token must be refreshed when expired
-   - Tests will stall if authentication is needed
-
-2. **Database Setup**
-   - Email database must be initialized
-   - Label database must be synced
-   - Run `python app_get_mail.py --sync-labels` to initialize
-
-3. **Test Data Requirements**
-   - Gmail account must have some emails
-   - Tests use real emails from the last 7 days
-   - Limited to small batches to prevent timeouts
-
-4. **Test Reports**
-   - HTML test reports are generated in `reports/testing/`
-   - Reports include:
-     - Documentation quality and versioning
-     - Import analysis (unused imports, style issues)
-     - File duplicates and similarities
-     - Test coverage
-   - View reports in browser for best experience
-   - Reports are generated automatically during test runs
-   - Issues are reported as warnings to avoid blocking tests
-
-## Project Overview
-
-Marian is an AI-powered email analysis and cataloging system that helps organize and understand email content at scale.
-
-### Key Features
+## Key Features
 - Automated email analysis and categorization
 - Smart priority scoring
 - Catalog generation and management
 - Integration with Gmail API
 - Extensible analysis framework
 
-### Quick Links
+## Quick Links
 - [Project Checklist](docs/dev-checklist.md) - Development checklist
 - [Testing Guide](docs/testing-guide.md) - Testing standards and procedures
 - [Code Standards](docs/code-standards.md) - Coding conventions
@@ -136,7 +46,7 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
   - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
 - [Contributing Guide](docs/contributing.md) - Development guidelines
 
-### Getting Started
+## Getting Started
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
 3. Configure environment variables (see [Setup Guide](docs/setup.md))
@@ -221,6 +131,30 @@ Each component's constants are isolated to prevent confusion and maintain clear 
 3. Changes will be automatically reflected in that component
 
 See the individual constants files for detailed configuration references.
+
+## Overview
+
+Jexi is an AI-powered email processing and analysis system that helps manage and understand email content at scale. It works alongside Marian, a specialized catalog management system, to provide comprehensive email organization.
+
+### Components
+
+1. **Jexi Core**: 
+   - Email processing and analysis
+   - Gmail integration
+   - Content understanding
+   - Email organization
+
+2. **Marian**: 
+   - Catalog management system
+   - Knowledge organization
+   - Asset categorization
+   - Library operations
+
+3. **Shared Infrastructure**:
+   - Database management
+   - API integrations
+   - Authentication
+   - Monitoring
 
 ## Usage
 1. Fetch emails:
@@ -393,7 +327,7 @@ This process ensures:
 ## Monitoring and Maintenance
 1. **Logging**
    - Use structured JSON logging
-   - Log files stored in `logs/marian.log`
+   - Log files stored in `logs/jexi.log`
    - Logs rotate at 10MB with 5 backup files
    - Each log includes:
      * Timestamp

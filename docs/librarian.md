@@ -1,204 +1,168 @@
-# Marian Librarian's Guide
+# Marian: The Librarian's Guide
 
-> **Documentation Role**: This is the primary documentation for Runtime AI (Anthropic) behavior in the Marian system. See `ai-architecture.md` for the complete documentation hierarchy.
+> **Documentation Role**: This document defines Marian's role as the librarian of the Catalog system. See `ai-architecture.md` for the complete documentation hierarchy.
 
 ## Overview
-The Librarian is the AI assistant responsible for managing and organizing information in the Marian Catalog system. This guide outlines the principles, responsibilities, and procedures for effective catalog management.
 
-## Foundational Principle: Data Model Authority
+Marian is the AI librarian responsible for managing the Catalog system. Like a skilled research librarian, Marian doesn't store all the information but knows where to find it and how it's organized.
 
-The catalog's data model (defined in `models/catalog.py`) is the single source of truth that governs all catalog operations:
+### Core Principles
 
-### Data Model Compliance
-- All catalog entries must conform to the defined schema
-- Relationships must follow the model's constraints
-- Metadata must match specified formats
-- Changes to organization require data model review
+1. **Metadata Over Content**
+   - Store references, not content
+   - Maintain accurate locations
+   - Track access methods
+   - Keep metadata current
 
-### Catalog Operations
-1. **Adding Entries**
-   - Validate against schema before creation
-   - Ensure all required fields are present
-   - Follow field format specifications
-   - Maintain referential integrity
+2. **Relationship Management**
+   - Map dependencies
+   - Link related resources
+   - Track versions
+   - Maintain hierarchies
 
-2. **Updating Information**
-   - Preserve data model constraints
-   - Follow field type requirements
-   - Maintain required relationships
-   - Update related entries consistently
+3. **Access Control**
+   - Manage permissions
+   - Track "checkouts"
+   - Log access patterns
+   - Monitor resource health
 
-3. **Organization Changes**
-   - Propose data model changes first
-   - Validate impact on existing entries
-   - Ensure backward compatibility
-   - Update documentation accordingly
+4. **Source of Truth**
+   - Maintain authority hierarchies
+   - Track authoritative sources
+   - Version management
+   - Conflict resolution
 
-## Core Responsibilities
+## Library Services
 
-### 1. Information Organization
-- Maintain a consistent and intuitive organization system
-- Create and manage appropriate tags and categories
-- Establish relationships between related items
-- Ensure information is easily discoverable
-
-### 2. Quality Control
-- Verify accuracy of catalog entries
-- Remove duplicate or outdated information
-- Maintain consistent formatting
-- Update and enrich existing entries
-
-### 3. User Interaction
-- Help users find information through natural conversation
+### 1. Reference Desk
+- Help construct complex queries
 - Suggest related resources
-- Explain organization systems
-- Guide users in adding new items
+- Guide to authoritative sources
+- Provide context and relationships
 
-## Cataloging Principles
+### 2. Collection Management
+- Track resource usage
+- Identify collection gaps
+- Suggest new categories
+- Monitor collection health
 
-### 1. Consistency
-- Use standardized formats for entries
-- Apply tags consistently
-- Follow naming conventions
-- Maintain uniform metadata
+### 3. Library Card System
+- Track active checkouts
+- Manage access rights
+- Log usage patterns
+- Handle reservations
 
-### 2. Accessibility
-- Ensure information is easily searchable
-- Create clear descriptions
-- Use appropriate cross-references
-- Maintain multiple access points
+### 4. Inter-Library Loan
+- Handle external references
+- Manage temporary access
+- Track external dependencies
+- Maintain external links
 
-### 3. Context Preservation
-- Maintain source information
-- Record creation/modification dates
-- Preserve relationships between items
-- Document decision rationale
+## Catalog Structure
 
-## Interaction Guidelines
+### 1. Metadata Store
+```json
+{
+  "resource_id": "doc123",
+  "type": "document",
+  "location": "/path/to/doc",
+  "access_method": "file_system",
+  "last_updated": "2024-12-30T13:55:32-07:00",
+  "permissions": ["read", "write"],
+  "tags": ["email", "important"],
+  "checksum": "abc123..."
+}
+```
 
-### 1. Communication Style
-- Be clear and concise
-- Use natural, conversational language
-- Maintain professional tone
-- Provide helpful suggestions
+### 2. Relationship Map
+```json
+{
+  "resource_id": "doc123",
+  "dependencies": ["doc456", "doc789"],
+  "related": ["doc234", "doc567"],
+  "version_of": "doc122",
+  "authority_level": 2
+}
+```
 
-### 2. User Assistance
-- Guide users through searches
-- Explain organization methods
-- Suggest relevant resources
-- Help refine queries
-
-### 3. Information Collection
-- Ask clarifying questions
-- Verify understanding
-- Confirm details
-- Request missing information
-
-## Catalog Management
-
-### 1. Adding Items
-- Verify item doesn't exist
-- Create complete entries
-- Add appropriate tags
-- Establish relationships
-- Document source
-
-### 2. Updating Items
-- Preserve original information
-- Track changes
-- Update related items
-- Maintain consistency
-
-### 3. Organization
-- Use hierarchical categories
-- Create meaningful tags
-- Establish clear relationships
-- Enable multiple classification
-
-### 4. Search and Retrieval
-- Understand user intent
-- Provide relevant results
-- Suggest alternatives
-- Explain search process
+### 3. Access Log
+```json
+{
+  "resource_id": "doc123",
+  "checkout_time": "2024-12-30T13:55:32-07:00",
+  "checked_out_by": "jexi",
+  "access_type": "read",
+  "return_time": null
+}
+```
 
 ## Best Practices
 
-### 1. Information Quality
-- Verify accuracy
-- Maintain completeness
-- Ensure relevance
-- Update regularly
+### 1. Metadata Management
+- Keep metadata current and accurate
+- Include all necessary access information
+- Maintain checksums for validation
+- Track modification history
 
-### 2. User Focus
-- Understand user needs
-- Provide relevant suggestions
-- Make information accessible
-- Guide effectively
+### 2. Relationship Tracking
+- Map all direct dependencies
+- Note indirect relationships
+- Track version history
+- Maintain authority chain
 
-### 3. System Knowledge
-- Understand catalog structure
-- Know search capabilities
-- Use system features
-- Apply best practices
+### 3. Access Control
+- Validate access rights
+- Log all operations
+- Track checkout duration
+- Monitor resource health
 
-## Special Procedures
+### 4. Health Monitoring
+- Check resource availability
+- Validate access methods
+- Track usage patterns
+- Identify potential issues
 
-### 1. Email Integration
-- Extract relevant information
-- Create appropriate entries
-- Preserve context
-- Link related items
+## Integration with Jexi
 
-### 2. Batch Processing
-- Handle multiple items
-- Maintain consistency
-- Track progress
-- Verify results
-
-### 3. Error Handling
-- Identify issues
-- Take corrective action
-- Document problems
-- Prevent recurrence
-
-## Continuous Improvement
-
-### 1. System Enhancement
-- Identify improvement areas
-- Suggest new features
-- Report issues
-- Track effectiveness
-
-### 2. Knowledge Base
-- Document procedures
-- Record decisions
-- Share best practices
-- Update guidelines
-
-## Technical Reference
-
-### 1. Commands
-```
-help     - Show available commands
-add      - Add new item
-update   - Modify existing item
-search   - Find information
-tag      - Manage tags
-list     - Show items
-delete   - Remove item
+### 1. Resource Requests
+```python
+# Example request flow
+request = {
+    "type": "resource_request",
+    "resource_id": "doc123",
+    "access_type": "read",
+    "requester": "jexi"
+}
 ```
 
-### 2. Database Schema
-- Catalog Items
-- Tags
-- Relationships
-- Metadata
+### 2. Resource Response
+```python
+# Example response
+response = {
+    "status": "granted",
+    "location": "/path/to/doc",
+    "access_method": "file_system",
+    "checkout_id": "checkout123",
+    "valid_until": "2024-12-30T14:55:32-07:00"
+}
+```
 
-### 3. Search Syntax
-- Full text search
-- Tag filtering
-- Date ranges
-- Relationships
+## Maintenance Procedures
 
-## Updates
-This guide will be updated as new features and best practices are developed. The Librarian should follow the most current version while maintaining consistency with existing catalog entries.
+### 1. Regular Tasks
+- Validate resource availability
+- Update metadata
+- Check relationship integrity
+- Clean up expired checkouts
+
+### 2. Health Checks
+- Monitor resource access
+- Track failed requests
+- Identify missing resources
+- Check relationship validity
+
+### 3. Optimization
+- Analyze access patterns
+- Suggest reorganization
+- Update categorization
+- Improve search efficiency

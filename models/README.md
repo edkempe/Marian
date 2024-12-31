@@ -1,9 +1,9 @@
-# Marian Models
+# Jexi Models
 
 **Version:** 1.2.0
 **Status:** Authoritative
 
-> SQLAlchemy models and domain constants for the Marian project.
+> SQLAlchemy models and domain constants for the Jexi project.
 
 ## Data Flow Hierarchy
 

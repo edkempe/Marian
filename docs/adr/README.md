@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory contains Architecture Decision Records (ADRs) for the Marian project.
+This directory contains Architecture Decision Records (ADRs) for the Jexi project.
 
 ## What are ADRs?
 
@@ -14,7 +14,7 @@ ADRs are documents that capture important architectural decisions made in a proj
 
 Files are named using the following format:
 `NNNN-title-with-dashes.md` where:
-- NNNN is a four-digit number (0001-9999)
+- NNNN is a four-digit number (0000-9999)
 - Numbers are assigned chronologically
 - Title is brief but descriptive
 - Words are separated by hyphens
@@ -24,10 +24,15 @@ Files are named using the following format:
 
 ```
 .
-├── README.md                           # This file
-├── 0001-layered-architecture.md        # Core architecture design
-├── 0002-minimal-security-testing.md    # Security testing approach
-└── 0003-test-database-strategy.md      # Database testing strategy
+├── README.md                                        # This file
+├── 0000-subsystem-architecture.md                   # Hub-and-spoke system design
+├── 0001-layered-architecture.md                     # Core architecture design
+├── 0002-minimal-security-testing.md                 # Security testing approach
+├── 0003-test-database-strategy.md                   # Database testing strategy
+├── 0004-configuration-based-schema-definitions.md   # Schema config system
+├── 0004-schema-constants-in-shared-lib.md          # Schema constants (Under Review)
+├── 0005-mocking-policy.md                          # Testing mock policy
+└── 0006-subsystem-interface-protocol.md            # Subsystem communication protocol
 ```
 
 ## Creating New ADRs
@@ -44,5 +49,17 @@ When creating a new ADR:
 ADRs can have the following statuses:
 - Proposed: Under discussion
 - Accepted: Approved and in use
+- Under Review: Being evaluated
 - Deprecated: No longer in use
 - Superseded: Replaced by a newer decision
+
+## Notes
+
+- ADR 0000 defines the foundational hub-and-spoke architecture of Jexi, establishing how the main assistant coordinates with specialized subsystems. All other architectural decisions build upon this foundation.
+
+- ADR 0004 currently has two implementations being evaluated:
+  1. Configuration-based schema definitions using YAML
+  2. Schema constants in shared library
+  Both approaches are documented while under review.
+
+- ADR 0006 builds directly on ADR 0000, defining how the hub-and-spoke components communicate.

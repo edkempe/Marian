@@ -4,12 +4,30 @@ import logging
 from contextlib import contextmanager
 from typing import Any, Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from shared_lib.constants import DATABASE_CONFIG
 
 logger = logging.getLogger(__name__)
+
+
+def get_engine_for_db_type(db_type: str) -> Engine:
+    """Get SQLAlchemy engine for a database type.
+    
+    Args:
+        db_type: Type of database ('email', 'analysis', or 'catalog')
+        
+    Returns:
+        SQLAlchemy Engine instance
+        
+    Raises:
+        ValueError: If db_type is invalid
+    """
+    if db_type not in DATABASE_CONFIG:
+        raise ValueError(f"Invalid database type: {db_type}")
+        
+    return create_engine(DATABASE_CONFIG[db_type]["url"])
 
 
 def get_session_factory(db_path: str) -> sessionmaker:
@@ -19,7 +37,7 @@ def get_session_factory(db_path: str) -> sessionmaker:
         session_factory = sessionmaker(bind=engine)
         return session_factory
     except Exception as e:
-        logging.error(f"Failed to create session factory for {db_path}: {str(e)}")
+        logger.error(f"Failed to create session factory: {e}")
         raise
 
 
@@ -32,27 +50,21 @@ def get_session(db_path: str) -> Generator[Session, Any, None]:
         yield session
         session.commit()
     except Exception as e:
-        logging.error(f"Database session error for {db_path}: {str(e)}")
+        logger.error(f"Database session error for {db_path}: {str(e)}")
         session.rollback()
         raise
     finally:
         session.close()
-        logging.debug(f"Session closed for {db_path}")
+        logger.debug(f"Session closed for {db_path}")
 
 
-# Create engines using URLs from constants
+# Create engines using get_engine_for_db_type
 try:
-    email_engine = create_engine(
-        f"sqlite:///{DATABASE_CONFIG['email']['path']}", echo=False
-    )
-    analysis_engine = create_engine(
-        f"sqlite:///{DATABASE_CONFIG['analysis']['path']}", echo=False
-    )
-    catalog_engine = create_engine(
-        f"sqlite:///{DATABASE_CONFIG['catalog']['path']}", echo=False
-    )
+    email_engine = get_engine_for_db_type("email")
+    analysis_engine = get_engine_for_db_type("analysis")
+    catalog_engine = get_engine_for_db_type("catalog")
 except Exception as e:
-    logging.error(f"Failed to create database engines: {str(e)}")
+    logger.error(f"Failed to create database engines: {e}")
     raise
 
 # Create session factories
@@ -71,7 +83,7 @@ def get_email_session_raw() -> Session:
         session = EmailSession()
         return session
     except Exception as e:
-        logging.error("Failed to create raw email session: {str(e)}")
+        logger.error("Failed to create raw email session: {str(e)}")
         raise
 
 
@@ -86,12 +98,12 @@ def get_email_session() -> Generator[Session, Any, None]:
         yield session
         session.commit()
     except Exception as e:
-        logging.error(f"Email session error: {str(e)}")
+        logger.error(f"Email session error: {str(e)}")
         session.rollback()
         raise
     finally:
         session.close()
-        logging.debug("Email session closed")
+        logger.debug("Email session closed")
 
 
 @contextmanager
@@ -105,12 +117,12 @@ def get_analysis_session() -> Generator[Session, Any, None]:
         yield session
         session.commit()
     except Exception as e:
-        logging.error(f"Analysis session error: {str(e)}")
+        logger.error(f"Analysis session error: {str(e)}")
         session.rollback()
         raise
     finally:
         session.close()
-        logging.debug("Analysis session closed")
+        logger.debug("Analysis session closed")
 
 
 @contextmanager
@@ -124,13 +136,13 @@ def get_catalog_session() -> Generator[Session, Any, None]:
         yield session
         session.commit()
     except Exception as e:
-        logging.error(f"Catalog session error: {str(e)}")
+        logger.error(f"Catalog session error: {str(e)}")
         session.rollback()
         raise
     finally:
         session.close()
-        logging.debug("Catalog session closed")
+        logger.debug("Catalog session closed")
 
 
 if __name__ == "__main__":
-    logging.info("Database session utilities loaded successfully!")
+    logger.info("Database session utilities loaded successfully!")

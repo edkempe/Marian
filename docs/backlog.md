@@ -1315,6 +1315,6 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
 {{ ... }}
 
 ## Security
-- [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0005)
+- [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0006)
 
 {{ ... }}

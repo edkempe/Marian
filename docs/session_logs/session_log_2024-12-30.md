@@ -1,7 +1,7 @@
 # Session Log: 2024-12-30 - Mocking Policy Review
 
 ## Objectives
-1. Review and establish mocking policy (ADR-0005)
+1. Review and establish mocking policy (ADR-0006)
 2. Analyze test dependencies on mocking
 3. Evaluate alternatives to mocking for key components
 
@@ -125,7 +125,7 @@ Based on the analysis, Gmail API mocking appears to be a justified exception to 
 ### 07:30 MST - API Testing Strategy
 - Reviewed current API testing approach
 - Identified areas for improvement in version management
-- Started updating ADR-0005 with mocking policy
+- Started updating ADR-0006 with mocking policy
 
 ### 07:45 MST - API Version Management
 - Created config/api_versions.json

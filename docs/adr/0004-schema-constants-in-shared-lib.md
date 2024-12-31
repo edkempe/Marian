@@ -4,7 +4,7 @@ Date: 2024-12-29
 
 ## Status
 
-Accepted
+Under Review - Needs evaluation against ADR-0004 Configuration-Based Schema Definitions
 
 ## Context
 
