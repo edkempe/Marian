@@ -34,7 +34,7 @@ def validate_files(files: List[str]) -> int:
             continue
             
         # Skip non-documentation files
-        if not any(path.match(pattern) for pattern in STANDARDS.DOC_PATTERNS):
+        if not any(path.match(pattern) for pattern in STANDARDS.FILE_PATTERNS):
             continue
             
         # Determine doc type

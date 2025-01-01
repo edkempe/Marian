@@ -34,7 +34,7 @@ class TestSettings(Settings):
     )
     DATABASE_URLS: Dict[str, str] = Field(
         default={
-            "default": "sqlite:///tests/test_data/test_default.db",
+            "default": "sqlite:///tests/test_data/test.db",
             "email": "sqlite:///tests/test_data/test_email.db",
             "analysis": "sqlite:///tests/test_data/test_analysis.db",
             "catalog": "sqlite:///tests/test_data/test_catalog.db"
@@ -52,8 +52,8 @@ class TestSettings(Settings):
         ge=1
     )
     DATABASE_TIMEOUT: int = Field(
-        default=5,
-        description="Test database timeout in seconds",
+        default=30,
+        description="Database connection timeout in seconds",
         ge=1
     )
     
@@ -99,13 +99,18 @@ class TestSettings(Settings):
         description="Test log file"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **data):
         """Initialize test settings and create test directories."""
-        super().__init__(**kwargs)
+        super().__init__(**data)
         # Create test data directory if it doesn't exist
         self.TEST_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.TEST_LOG_DIR.mkdir(parents=True, exist_ok=True)
         self.LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    class Config:
+        """Pydantic config."""
+        env_prefix = "TEST_"
+        case_sensitive = True
 
 
 # Create test settings instance

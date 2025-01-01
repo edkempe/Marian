@@ -19,9 +19,8 @@ from shared_lib.gmail_utils import (
     setup_mock_message,
     setup_mock_messages,
     setup_mock_labels,
-    TestTransaction,
-    gmail_test_context
 )
+from tests.utils.gmail_test_utils import gmail_test_context
 
 from src.app_get_mail import (
     count_emails,
@@ -39,6 +38,7 @@ from tests.utils.test_constants import (
     TEST_MESSAGES,
     TEST_ATTACHMENTS,
     API_ERROR_MESSAGE,
+    TEST_DATES,
 )
 
 # Gmail API response schemas
@@ -65,20 +65,22 @@ def email_session():
 @pytest.fixture
 def gmail_service():
     """Create a mock Gmail service."""
-    return create_mock_gmail_service()
+    service = create_mock_gmail_service()
+    return service
 
 @pytest.fixture
 def gmail_api(gmail_service):
     """Get Gmail API client for testing."""
     api = GmailAPI(label_db_path=":memory:")
     api._get_gmail_service = lambda: gmail_service
-    return api
+    yield api
+    api.close()  # Close the label database
 
 @pytest.fixture
 def sample_emails(email_session):
     """Create sample emails for testing."""
     emails = [
-        create_test_email(id=f"test{i}", date=date)
+        create_test_message(id=f"test{i}", date=date)
         for i, date in enumerate(TEST_DATES, 1)
     ]
     
@@ -86,7 +88,12 @@ def sample_emails(email_session):
         email_session.add(email)
     email_session.commit()
     
-    return emails
+    yield emails
+    
+    # Cleanup
+    for email in emails:
+        email_session.delete(email)
+    email_session.commit()
 
 @pytest.fixture
 def gmail_test():
@@ -96,8 +103,11 @@ def gmail_test():
     # Check API availability
     if not test_manager.get_test_account():
         pytest.skip("Gmail test account not configured")
+        
+    yield test_manager
     
-    return test_manager
+    # Cleanup
+    test_manager.cleanup()
 
 @pytest.fixture
 def gmail_test_context(labels):
@@ -165,13 +175,15 @@ def test_get_label_id_error():
     result = get_label_id(service, "INBOX")
     assert result is None
 
+@pytest.mark.timeout(5)  # Fail test if it takes longer than 5 seconds
 def test_fetch_emails_success(gmail_service):
-    """Test successful email fetching."""
-    # Set up mock response
-    setup_mock_messages(gmail_service, [
+    """Test successful email fetching with pagination handling."""
+    # Set up mock response with explicit pagination
+    from tests.utils.api_test_utils import mock_gmail_messages
+    mock_gmail_messages(gmail_service, [
         {"id": "msg1"},
         {"id": "msg2"}
-    ])
+    ]).mock_pagination()  # No more pages
     
     # Call function
     result = fetch_emails(gmail_service)
@@ -311,20 +323,20 @@ def test_process_email_with_unicode(gmail_service, email_session):
     assert result is not None
     assert result.body == TEST_UNICODE_TEXT
 
-def test_get_oldest_email_date(email_session, sample_emails):
+def test_get_oldest_email_date(email_session):
     """Test getting oldest email date."""
     oldest_date = get_oldest_email_date(email_session)
     assert oldest_date == TEST_DATES[0]
 
-def test_get_newest_email_date(email_session, sample_emails):
+def test_get_newest_email_date(email_session):
     """Test getting newest email date."""
     newest_date = get_newest_email_date(email_session)
     assert newest_date == TEST_DATES[-1]
 
-def test_count_emails(email_session, sample_emails):
+def test_count_emails(email_session):
     """Test email counting."""
     count = count_emails(email_session)
-    assert count == len(sample_emails)
+    assert count == len(sample_emails(email_session))
 
 def test_list_labels(gmail_service):
     """Test listing Gmail labels."""
