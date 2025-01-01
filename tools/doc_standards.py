@@ -10,7 +10,7 @@ Key Principles:
 4. Used by both tests and pre-commit hooks
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 from typing import Dict, List, Set
 from pathlib import Path
@@ -25,7 +25,7 @@ class DocumentationStandards:
     WARN_DOC_LINES: int = 750
     
     # Required sections by document type
-    REQUIRED_SECTIONS: Dict[str, List[str]] = {
+    REQUIRED_SECTIONS: Dict[str, List[str]] = field(default_factory=lambda: {
         "adr": [
             "Revision History",
             "Status",
@@ -51,171 +51,127 @@ class DocumentationStandards:
             "Revision History",
             "Purpose",
             "Test Cases",
-            "Expected Results"
+            "Expected Results",
+            "Dependencies"
         ],
-        "development": [
+        "session_log": [
+            "Session Summary",
+            "Key Changes",
+            "Next Steps",
+            "Notes"
+        ],
+        "README": [
+            "Overview",
+            "Installation",
+            "Usage",
+            "Development",
+            "Contributing",
+        ],
+        "API": [
+            "Description",
+            "Parameters",
+            "Returns",
+            "Raises",
+            "Examples",
+        ],
+        "Module": [
+            "Description",
+            "Classes",
+            "Functions",
+            "Dependencies",
+        ],
+        "Class": [
+            "Description",
+            "Attributes",
+            "Methods",
+            "Examples",
+        ],
+        "Function": [
+            "Description",
+            "Parameters",
+            "Returns",
+            "Raises",
+            "Examples",
+        ],
+    })
+    
+    # Required fields for each section
+    SECTION_FIELDS: Dict[str, List[str]] = field(default_factory=lambda: {
+        "Revision History": ["Date", "Author", "Changes"],
+        "Status": ["Current Status", "Last Review Date"],
+        "Context": ["Problem", "Requirements"],
+        "Decision": ["Solution", "Implementation"],
+        "Consequences": ["Benefits", "Drawbacks"],
+        "Overview": ["Purpose", "Features"],
+        "Installation": ["Requirements", "Steps"],
+        "Usage": ["Examples", "Configuration"],
+        "Contributing": ["Guidelines", "Process"],
+        "Description": ["Purpose", "Features"],
+        "Parameters": ["Name", "Type", "Description"],
+        "Returns": ["Type", "Description"],
+        "Raises": ["Exception", "Condition"],
+        "Examples": ["Code", "Output"],
+        "Test Cases": ["Input", "Expected Output"],
+        "Dependencies": ["Name", "Version"],
+    })
+    
+    # Valid statuses for documents
+    VALID_STATUSES: Set[str] = field(default_factory=lambda: {
+        "Draft",
+        "Review",
+        "Approved",
+        "Deprecated",
+        "Archived"
+    })
+    
+    # File naming patterns
+    FILE_PATTERNS: Dict[str, str] = field(default_factory=lambda: {
+        "adr": r"^\d{4}-[a-z0-9-]+\.md$",
+        "readme": r"^README\.md$",
+        "api": r"^api-[a-z0-9-]+\.md$",
+        "test": r"^test-[a-z0-9-]+\.md$",
+        "session_log": r"^session-[a-z0-9-]+\.md$"
+    })
+    
+    # Section order (for consistent formatting)
+    SECTION_ORDER: Dict[str, List[str]] = field(default_factory=lambda: {
+        "adr": [
             "Revision History",
-            "Overview",
-            "Guidelines",
-            "Examples"
+            "Status",
+            "Context",
+            "Decision",
+            "Consequences"
         ],
-        "deployment": [
-            "Environment",
-            "Configuration",
-            "Procedure"
-        ],
-        "architecture": [
+        "readme": [
             "Overview",
-            "Components",
-            "Data Flow"
+            "Installation",
+            "Usage",
+            "Contributing"
         ]
-    }
-
-    # Revision history validation
-    REVISION_HEADER = r"^## Revision History\s*$"
-    VERSION_LINE = r"^(\d+\.\d+\.\d+)\s+\((\d{4}-\d{2}-\d{2})\)\s+(@\w+)\s*$"
-    CHANGE_LINE = r"^-\s+.+$"
-
-    def validate_revision_history(self, content: str) -> List[str]:
-        """Validate revision history format."""
-        errors = []
-        lines = content.split('\n')
-        
-        # Find revision history section
-        revision_start = None
-        for i, line in enumerate(lines):
-            if re.match(self.REVISION_HEADER, line):
-                revision_start = i
-                break
-        
-        if revision_start is None:
-            errors.append("Missing '## Revision History' section")
-            return errors
-        
-        # Validate version entries
-        i = revision_start + 1
-        found_version = False
-        while i < len(lines):
-            line = lines[i].strip()
-            if not line:
-                i += 1
-                continue
-            
-            # Check for new section
-            if line.startswith('##'):
-                break
-            
-            # Validate version line
-            version_match = re.match(self.VERSION_LINE, line)
-            if version_match:
-                found_version = True
-                version, date, author = version_match.groups()
-                
-                # Validate semantic version
-                if not self._validate_semver(version):
-                    errors.append(f"Invalid semantic version: {version}")
-                
-                # Validate changes list
-                changes_found = False
-                i += 1
-                while i < len(lines) and lines[i].strip():
-                    if re.match(self.CHANGE_LINE, lines[i].strip()):
-                        changes_found = True
-                    elif not lines[i].strip():
-                        break
-                    else:
-                        errors.append(
-                            f"Invalid change format: {lines[i].strip()}"
-                        )
-                    i += 1
-                
-                if not changes_found:
-                    errors.append(
-                        f"No changes listed for version {version}"
-                    )
-            
-            i += 1
-        
-        if not found_version:
-            errors.append("No version entries found")
-        
-        return errors
-
-    def _validate_semver(self, version: str) -> bool:
-        """Validate semantic version format."""
-        try:
-            major, minor, patch = map(int, version.split('.'))
-            return True
-        except ValueError:
-            return False
-
-    # Documentation file patterns
-    DOC_PATTERNS: List[str] = [
-        "*.md",
-        "*.rst",
-        "*.txt",
-        "**/docs/**/*",
-        "**/README*"
-    ]
-
-    # Required docstring sections
-    REQUIRED_DOCSTRING_SECTIONS: List[str] = [
-        "Args",
-        "Returns",
-        "Raises"
-    ]
-
-    # Required documentation files
-    REQUIRED_DOCS: Set[str] = {
-        "README.md",
-        "CONTRIBUTING.md",
-        "docs/development.md",
-        "docs/deployment.md",
-        "docs/testing.md",
-        "docs/architecture.md"
-    }
-
-    # Style guidelines
-    MAX_LINE_LENGTH: int = 80
-    MIN_DOCSTRING_LENGTH: int = 10
-    MAX_DOCSTRING_LENGTH: int = 1000
-
-    # Validation rules
-    HEADING_PATTERN: str = r"^#{1,6}\s+.+$"
-    CODE_BLOCK_PATTERN: str = r"```[a-z]*\n[\s\S]*?\n```"
-    LINK_PATTERN: str = r"\[([^\]]+)\]\(([^)]+)\)"
-
-def validate_doc(path: Path, doc_type: str) -> List[str]:
-    """Validate a document against standards.
+    })
     
-    Args:
-        path: Path to the document
-        doc_type: Type of document (adr, readme, api, etc.)
-        
-    Returns:
-        List of validation errors, empty if valid
-    """
-    errors = []
-    content = path.read_text().lower()  # Case-insensitive validation
+    # Minimum content requirements
+    MIN_SECTION_LENGTH: int = 50
+    MAX_SECTION_LENGTH: int = 1000
+    MIN_TOTAL_LENGTH: int = 200
+    MAX_TOTAL_LENGTH: int = 5000
     
-    standards = STANDARDS
-    
-    # Check required sections
-    if doc_type in standards.REQUIRED_SECTIONS:
-        for section in standards.REQUIRED_SECTIONS[doc_type]:
-            if section.lower() not in content:
-                errors.append(f"Missing required section: {section}")
-    
-    # Check line length
-    lines = content.split("\n")
-    if len(lines) > standards.MAX_EXISTING_DOC_LINES:
-        errors.append(f"Document exceeds maximum length of {standards.MAX_EXISTING_DOC_LINES} lines")
-    
-    # Check revision history
-    if doc_type in ["adr", "readme", "api", "test", "development"]:
-        errors.extend(standards.validate_revision_history(content))
-    
-    return errors
+    # Documentation directories
+    DOC_DIRS: Set[str] = field(default_factory=lambda: {
+        "docs",
+        "docs/adr",
+        "docs/api",
+        "docs/examples",
+        "docs/guides",
+        "docs/session_logs"
+    })
+
 
 # Singleton instance - THE source of truth
 STANDARDS = DocumentationStandards()
+
+# Export required sections and docs for backward compatibility
+REQUIRED_SECTIONS = STANDARDS.REQUIRED_SECTIONS
+SECTION_FIELDS = STANDARDS.SECTION_FIELDS
+VALID_STATUSES = STANDARDS.VALID_STATUSES
+FILE_PATTERNS = STANDARDS.FILE_PATTERNS
