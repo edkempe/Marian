@@ -19,10 +19,14 @@ class DatabaseType(str, Enum):
 class DatabaseSettings(Settings):
     """Database settings with comprehensive configuration."""
     
-    # Database Type
+    # Core settings
     TYPE: DatabaseType = Field(
         default=DatabaseType.SQLITE,
         description="Database type"
+    )
+    ECHO_SQL: bool = Field(
+        default=False,
+        description="Echo SQL statements for debugging"
     )
     
     # Database URLs

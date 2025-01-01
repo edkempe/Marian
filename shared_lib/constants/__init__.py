@@ -45,7 +45,10 @@ from shared_lib.constants.logging import LOGGING
 from shared_lib.constants.migrations import MIGRATIONS
 from shared_lib.constants.security import SECURITY
 from shared_lib.constants.testing import TESTING_CONFIG
-from shared_lib.constants.validation import RULES as VALIDATION_RULES, ERRORS as VALIDATION_ERRORS
+from shared_lib.constants.validation import (
+    RULES as VALIDATION_RULES,
+    VALIDATION_ERRORS
+)
 from shared_lib.constants.versioning import VERSIONING
 from shared_lib.constants.errors import ErrorMessages
 from shared_lib.constants.regex_patterns import REGEX_PATTERNS

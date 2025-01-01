@@ -53,6 +53,12 @@ email:
     max_to_length: 255
     max_cc_length: 255
     max_bcc_length: 255
+  relationships:
+    catalog_entry:
+      type: "one_to_one"
+      model: "CatalogEntry"
+      back_populates: "email"
+      cascade: "all, delete-orphan"
 
 analysis:
   columns:
@@ -97,32 +103,79 @@ analysis:
     max_summary_length: 1000
 
 label:
+  # Based on Gmail API Label resource:
+  # https://developers.google.com/gmail/api/reference/rest/v1/users.labels#Label
   columns:
-    label_id:
+    id:
       size: 100
       type: string
-      description: "Label ID"
+      description: "Gmail API label ID"
     name:
       size: 255
       type: string
-      description: "Label name"
+      description: "Display name of the label"
+    message_list_visibility:
+      size: 20
+      type: string
+      description: "Show/hide the label in the message list"
+      nullable: true
+    label_list_visibility:
+      size: 20
+      type: string
+      description: "Show/hide the label in the label list"
+      nullable: true
     type:
       size: 20
       type: string
-      description: "Label type"
+      description: "Type of label (system/user)"
+    color:
+      size: 20
+      type: string
+      description: "Label color (hex code)"
+      nullable: true
+    background_color:
+      size: 20
+      type: string
+      description: "Label background color (hex code)"
+      nullable: true
+    text_color:
+      size: 20
+      type: string
+      description: "Label text color (hex code)"
+      nullable: true
+    messages_total:
+      type: integer
+      description: "Total number of messages with this label"
+      nullable: true
+    messages_unread:
+      type: integer
+      description: "Number of unread messages with this label"
+      nullable: true
+    threads_total:
+      type: integer
+      description: "Total number of threads with this label"
+      nullable: true
+    threads_unread:
+      type: integer
+      description: "Number of unread threads with this label"
+      nullable: true
   defaults:
     name: ""
     type: "user"
     message_list_visibility: "show"
     label_list_visibility: "labelShow"
-    is_system: false
+    messages_total: null
+    messages_unread: null
+    threads_total: null
+    threads_unread: null
   validation:
     valid_types:
       - "system"
       - "user"
-    valid_visibilities:
+    valid_message_list_visibilities:
       - "show"
       - "hide"
-    valid_label_visibilities:
+    valid_label_list_visibilities:
       - "labelShow"
+      - "labelShowIfUnread"
       - "labelHide"
