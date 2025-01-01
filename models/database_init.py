@@ -1,12 +1,13 @@
 """Database initialization and management."""
 
+from pathlib import Path
 from typing import Tuple
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from models.registry import Base
-from shared_lib.constants import DATABASE_CONFIG
+from shared_lib.constants import CONFIG
 from shared_lib.database_session_util import (
     AnalysisSession,
     CatalogSession,
@@ -24,7 +25,7 @@ def init_db(testing: bool = False) -> None:
     This is safe to run multiple times as it will not recreate existing tables.
 
     Args:
-        testing: If True, use in-memory databases for testing
+        testing: If True, use test databases
     """
     if testing:
         engines = get_test_engines()
@@ -37,26 +38,21 @@ def init_db(testing: bool = False) -> None:
 
 
 def get_test_engines() -> Tuple[create_engine, create_engine, create_engine]:
-    """Get SQLite in-memory engines for testing.
+    """Get SQLite engines for testing.
 
     Returns:
         Tuple of (email_engine, analysis_engine, catalog_engine)
     """
-    email_engine = create_engine("sqlite:///:memory:", echo=False)
-    analysis_engine = create_engine("sqlite:///:memory:", echo=False)
-    catalog_engine = create_engine("sqlite:///:memory:", echo=False)
+    # Ensure test data directory exists
+    test_data_dir = Path("tests/test_data")
+    test_data_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create engines with file-based databases
+    email_engine = create_engine(f"sqlite:///{test_data_dir}/test_email.db", echo=False)
+    analysis_engine = create_engine(f"sqlite:///{test_data_dir}/test_analysis.db", echo=False)
+    catalog_engine = create_engine(f"sqlite:///{test_data_dir}/test_catalog.db", echo=False)
 
     return email_engine, analysis_engine, catalog_engine
-
-
-def get_test_sessions() -> Tuple[sessionmaker, sessionmaker, sessionmaker]:
-    """Get session factories for test databases.
-
-    Returns:
-        Tuple of (EmailSession, AnalysisSession, CatalogSession)
-    """
-    engines = get_test_engines()
-    return tuple(sessionmaker(bind=engine) for engine in engines)
 
 
 if __name__ == "__main__":

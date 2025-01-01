@@ -5,7 +5,8 @@ from typing import Dict, List, Optional
 from enum import Enum
 
 from pydantic import Field, SecretStr
-from pydantic_settings import BaseSettings
+
+from config.settings.base import Settings
 
 class AuthType(str, Enum):
     """Supported authentication types."""
@@ -13,7 +14,7 @@ class AuthType(str, Enum):
     SESSION = "session"
     API_KEY = "api_key"
 
-class SecuritySettings(BaseSettings):
+class SecuritySettings(Settings):
     """Security configuration with validation."""
     
     # Authentication
@@ -22,7 +23,7 @@ class SecuritySettings(BaseSettings):
         description="Authentication type"
     )
     SECRET_KEY: SecretStr = Field(
-        ...,  # Required
+        default="your-secret-key-for-testing-only",
         description="Secret key for token signing"
     )
     
@@ -52,56 +53,51 @@ class SecuritySettings(BaseSettings):
         default="bcrypt",
         description="Password hashing algorithm"
     )
-    PASSWORD_RESET_TIMEOUT: int = Field(
+    PASSWORD_SALT_ROUNDS: int = Field(
+        default=12,
+        description="Number of salt rounds for password hashing",
+        ge=10
+    )
+    
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = Field(
+        default=True,
+        description="Enable rate limiting"
+    )
+    RATE_LIMIT_REQUESTS: int = Field(
+        default=100,
+        description="Maximum requests per window",
+        ge=1
+    )
+    RATE_LIMIT_WINDOW: int = Field(
         default=3600,  # 1 hour
-        description="Password reset token timeout in seconds",
-        ge=300
+        description="Rate limit window in seconds",
+        ge=60
     )
     
     # Session settings
+    SESSION_TIMEOUT: int = Field(
+        default=1800,  # 30 minutes
+        description="Session timeout in seconds",
+        ge=300
+    )
     SESSION_COOKIE_NAME: str = Field(
         default="session",
         description="Session cookie name"
     )
-    SESSION_TIMEOUT: int = Field(
-        default=3600,  # 1 hour
-        description="Session timeout in seconds",
-        ge=60
-    )
-    SESSION_SECURE: bool = Field(
+    SESSION_COOKIE_SECURE: bool = Field(
         default=True,
         description="Require HTTPS for session cookie"
     )
     
-    # Rate limiting
-    LOGIN_RATE_LIMIT: str = Field(
-        default="5/minute",
-        description="Login attempt rate limit"
-    )
-    PASSWORD_RESET_RATE_LIMIT: str = Field(
-        default="3/hour",
-        description="Password reset rate limit"
-    )
-    
     # CORS settings
+    CORS_ENABLED: bool = Field(
+        default=True,
+        description="Enable CORS"
+    )
     CORS_ORIGINS: List[str] = Field(
-        default=["*"],
+        default=["http://localhost:3000"],
         description="Allowed CORS origins"
-    )
-    CORS_METHODS: List[str] = Field(
-        default=["*"],
-        description="Allowed CORS methods"
-    )
-    
-    # Security headers
-    SECURITY_HEADERS: Dict[str, str] = Field(
-        default={
-            "X-Frame-Options": "DENY",
-            "X-Content-Type-Options": "nosniff",
-            "X-XSS-Protection": "1; mode=block",
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
-        },
-        description="Security headers to include in responses"
     )
     
     class Config:

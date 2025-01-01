@@ -6,7 +6,7 @@ import os
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from shared_lib.constants import DEFAULT_MODEL, EMAIL_CONFIG
+from shared_lib.constants import DEFAULT_MODEL, API_CONFIG
 
 
 class APIClient:
@@ -20,8 +20,8 @@ class APIClient:
         self.client = anthropic.Anthropic(api_key=self.api_key)
 
     @retry(
-        stop=stop_after_attempt(EMAIL_CONFIG["MAX_RETRIES"]),
-        wait=wait_exponential(multiplier=EMAIL_CONFIG["RETRY_DELAY"]),
+        stop=stop_after_attempt(API_CONFIG["max_retries"]),
+        wait=wait_exponential(multiplier=API_CONFIG["timeout"]),
     )
     def echo_test(self):
         """Test the API connection with a simple echo request."""

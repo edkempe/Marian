@@ -2,19 +2,18 @@
 
 import os
 import tempfile
-from datetime import datetime, timezone
-from pathlib import Path
-
 import pytest
-import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models import Base, Email, EmailAnalysis, GmailLabel
+from models.email import EmailMessage
+from models.email_analysis import EmailAnalysis
+from models.gmail_label import GmailLabel
 from shared_lib.config_loader import get_schema_config
+from config.test_settings import test_settings
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def test_config():
     """Create a test configuration."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -86,17 +85,24 @@ def test_config():
         yield get_schema_config()
 
 
-@pytest.fixture
-def db_session():
-    """Create a test database session."""
-    engine = create_engine("sqlite:///:memory:")
+@pytest.fixture(scope="function")
+def test_engine():
+    """Create test database engine."""
+    engine = create_engine(test_settings.DATABASE_URLS["default"])
     Base.metadata.create_all(engine)
-    
-    with Session(engine) as session:
-        yield session
+    yield engine
+    Base.metadata.drop_all(engine)
 
 
-def test_email_model(test_config, db_session):
+@pytest.fixture(scope="function")
+def test_session(test_engine):
+    """Create test database session."""
+    session = Session(test_engine)
+    yield session
+    session.close()
+
+
+def test_email_model(test_config, test_session):
     """Test Email model with configuration."""
     # Test creation from API response
     api_response = {
@@ -116,9 +122,9 @@ def test_email_model(test_config, db_session):
         "receivedAt": "2024-12-29T22:00:00+00:00"
     }
     
-    email = Email.from_api_response(api_response)
-    db_session.add(email)
-    db_session.commit()
+    email = EmailMessage.from_api_response(api_response)
+    test_session.add(email)
+    test_session.commit()
     
     # Test field values
     assert email.id == "msg123"
@@ -134,16 +140,16 @@ def test_email_model(test_config, db_session):
     assert len(email.labels) == 0
 
 
-def test_email_analysis_model(test_config, db_session):
+def test_email_analysis_model(test_config, test_session):
     """Test EmailAnalysis model with configuration."""
     # Create parent email
-    email = Email(
+    email = EmailMessage(
         id="msg123",
         thread_id="thread123",
         subject="Test Email",
         received_at=datetime.now(timezone.utc)
     )
-    db_session.add(email)
+    test_session.add(email)
     
     # Test creation from API response
     api_response = {
@@ -153,8 +159,8 @@ def test_email_analysis_model(test_config, db_session):
     }
     
     analysis = EmailAnalysis.from_api_response(email.id, api_response)
-    db_session.add(analysis)
-    db_session.commit()
+    test_session.add(analysis)
+    test_session.commit()
     
     # Test field values
     assert analysis.email_id == "msg123"
@@ -167,7 +173,7 @@ def test_email_analysis_model(test_config, db_session):
     assert email.analysis == analysis
 
 
-def test_gmail_label_model(test_config, db_session):
+def test_gmail_label_model(test_config, test_session):
     """Test GmailLabel model with configuration."""
     # Test creation from API response
     api_response = {
@@ -179,8 +185,8 @@ def test_gmail_label_model(test_config, db_session):
     }
     
     label = GmailLabel.from_api_response(api_response)
-    db_session.add(label)
-    db_session.commit()
+    test_session.add(label)
+    test_session.commit()
     
     # Test field values
     assert label.id == "Label_123"
@@ -194,16 +200,16 @@ def test_gmail_label_model(test_config, db_session):
     assert len(label.emails) == 0
 
 
-def test_model_relationships(test_config, db_session):
+def test_model_relationships(test_config, test_session):
     """Test relationships between models."""
     # Create email
-    email = Email(
+    email = EmailMessage(
         id="msg123",
         thread_id="thread123",
         subject="Test Email",
         received_at=datetime.now(timezone.utc)
     )
-    db_session.add(email)
+    test_session.add(email)
     
     # Create analysis
     analysis = EmailAnalysis(
@@ -212,7 +218,7 @@ def test_model_relationships(test_config, db_session):
         category="work",
         summary="Test summary"
     )
-    db_session.add(analysis)
+    test_session.add(analysis)
     
     # Create labels
     label1 = GmailLabel(
@@ -225,11 +231,11 @@ def test_model_relationships(test_config, db_session):
         name="Important",
         type="user"
     )
-    db_session.add_all([label1, label2])
+    test_session.add_all([label1, label2])
     
     # Add labels to email
     email.labels.extend([label1, label2])
-    db_session.commit()
+    test_session.commit()
     
     # Test relationships
     assert email.analysis == analysis

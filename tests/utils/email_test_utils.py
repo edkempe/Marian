@@ -4,7 +4,7 @@ from base64 import urlsafe_b64encode
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from models.email import Email
+from models.email import EmailMessage
 from tests.utils.test_constants import TEST_EMAIL
 
 def create_test_email(
@@ -18,8 +18,8 @@ def create_test_email(
     label_ids: str = "",
     has_attachments: bool = False,
     api_response: str = "",
-) -> Email:
-    """Create a test Email model instance.
+) -> EmailMessage:
+    """Create a test EmailMessage model instance.
     
     Args:
         id: Email ID
@@ -34,20 +34,20 @@ def create_test_email(
         api_response: Full Gmail API response JSON
         
     Returns:
-        Email model instance
+        EmailMessage model instance
     """
     if date is None:
         date = datetime.now(timezone.utc)
         
-    return Email(
+    return EmailMessage(
         id=id,
-        threadId=thread_id,
+        thread_id=thread_id,
         subject=subject,
         from_=from_,
         to=to,
         body=body,
         date=date,
-        labelIds=label_ids,
+        label_ids=label_ids,
         has_attachments=has_attachments,
         full_api_response=api_response,
     )

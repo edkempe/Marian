@@ -3,7 +3,7 @@
 This module defines all versioning-related constants used throughout the application.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Set
 from enum import Enum
 
@@ -13,8 +13,8 @@ class VersioningConstants:
     
     # API versions
     CURRENT_API_VERSION: str = "v1"
-    SUPPORTED_API_VERSIONS: Set[str] = {"v1"}
-    DEPRECATED_API_VERSIONS: Set[str] = set()
+    SUPPORTED_API_VERSIONS: Set[str] = field(default_factory=lambda: {"v1"})
+    DEPRECATED_API_VERSIONS: Set[str] = field(default_factory=set)
     
     # Version headers
     API_VERSION_HEADER: str = "X-API-Version"
@@ -34,9 +34,9 @@ class VersioningConstants:
     SEMVER_PATTERN: str = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
     
     # Version compatibility
-    VERSION_COMPATIBILITY: Dict[str, Set[str]] = {
+    VERSION_COMPATIBILITY: Dict[str, Set[str]] = field(default_factory=lambda: {
         "v1": {"1.0.x"}
-    }
+    })
     
     # Deprecation settings
     DEPRECATION_WINDOW: int = 180  # days

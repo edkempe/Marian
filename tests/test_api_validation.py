@@ -7,7 +7,6 @@ from typing import Dict, Set
 
 import markdown
 import pytest
-from bs4 import BeautifulSoup
 
 
 def parse_api_mappings(doc_path: str) -> Dict[str, Dict]:

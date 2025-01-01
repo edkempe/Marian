@@ -18,12 +18,12 @@ from sqlalchemy import Column, DateTime, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from shared_lib.constants import (
-    COLUMN_SIZES,
     DATA_DIR,
     EMAIL_CONFIG,
     ErrorMessages,
     REGEX_PATTERNS,
 )
+from shared_lib.schema_constants import COLUMN_SIZES
 from shared_lib.exceptions import APIError, AuthenticationError
 from shared_lib.token_manager import TokenManager
 from .api_version_utils import verify_gmail_version, check_api_changelog

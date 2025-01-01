@@ -6,7 +6,7 @@ from datetime import datetime
 import pytest
 import pytz
 
-from models.email import Email
+from models.email import EmailMessage
 from models.gmail_label import GmailLabel
 
 
@@ -19,8 +19,8 @@ def test_email_to_address(db_session, sample_emails):
     db_session.commit()
 
     # Verify to_address was stored correctly
-    stored_email = db_session.query(Email).filter_by(id=email.id).first()
-    assert stored_email.to_address == "recipient1@example.com"
+    stored_email = db_session.query(EmailMessage).filter_by(id=email.id).first()
+    assert stored_email.to_addresses == ["recipient1@example.com"]
 
 
 def test_email_api_response(db_session, sample_emails):
@@ -32,7 +32,7 @@ def test_email_api_response(db_session, sample_emails):
     db_session.commit()
 
     # Verify API response was stored correctly
-    stored_email = db_session.query(Email).filter_by(id=email.id).first()
+    stored_email = db_session.query(EmailMessage).filter_by(id=email.id).first()
     api_response = json.loads(stored_email.full_api_response)
     assert api_response["id"] == "msg1"
     assert api_response["threadId"] == "thread1"

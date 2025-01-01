@@ -3,7 +3,7 @@
 This module defines all logging-related constants used throughout the application.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 from pathlib import Path
 
@@ -27,12 +27,12 @@ class LoggingConstants:
     ACCESS_FORMAT: str = "%(asctime)s - %(remote_addr)s - %(request_method)s %(request_path)s"
     
     # Log levels by environment
-    LOG_LEVELS: Dict[str, str] = {
+    LOG_LEVELS: Dict[str, str] = field(default_factory=lambda: {
         "development": "DEBUG",
         "staging": "INFO",
         "production": "WARNING",
         "test": "DEBUG"
-    }
+    })
     
     # Special loggers
     SECURITY_LOGGER: str = "security"

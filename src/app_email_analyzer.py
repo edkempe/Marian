@@ -13,7 +13,7 @@ from structlog import get_logger
 from models.email_analysis import EmailAnalysis
 from shared_lib.anthropic_client_lib import get_anthropic_client, test_anthropic_connection
 from shared_lib.chat_log_util import ChatLogger
-from shared_lib.constants import API_CONFIG, EMAIL_CONFIG
+from shared_lib.constants import API_CONFIG, CONFIG
 from shared_lib.exceptions import APIError, ValidationError
 from shared_lib.file_constants import DEFAULT_CHAT_LOG, LOGS_PATH
 from shared_lib.gmail_lib import GmailAPI
@@ -192,34 +192,30 @@ class EmailAnalyzer:
         """Process all unanalyzed emails from the email store."""
         try:
             with get_email_session() as session:
-                # Get unanalyzed email count
+                # Get count of unanalyzed emails
                 result = session.execute(
                     text(
                         """
-                    SELECT COUNT(*) FROM emails e
+                    SELECT COUNT(*) as count FROM emails e
                     LEFT JOIN email_analysis ea ON e.id = ea.email_id
                     WHERE ea.email_id IS NULL
-                """
+                    """
                     )
-                )
-                count = result.scalar()
+                ).first()
 
-                if count == 0:
-                    logger.info("no_unanalyzed_emails")
-                    return
-
+                count = result[0] if result else 0
                 logger.info("unanalyzed_emails_found", count=count)
 
                 # Process in batches
                 while count > 0:
-                    self.process_emails(EMAIL_CONFIG["BATCH_SIZE"])
-                    count -= EMAIL_CONFIG["BATCH_SIZE"]
+                    self.process_emails(CONFIG["EMAIL"]["batch_size"])
+                    count -= CONFIG["EMAIL"]["batch_size"]
 
         except Exception as e:
             logger.error("process_unanalyzed_error", error=str(e))
             raise
 
-    def process_emails(self, count: int = EMAIL_CONFIG["BATCH_SIZE"]) -> None:
+    def process_emails(self, count: int = CONFIG["EMAIL"]["batch_size"]) -> None:
         """Process a batch of unanalyzed emails."""
         try:
             with get_email_session() as session:
@@ -231,12 +227,12 @@ class EmailAnalyzer:
                     LEFT JOIN email_analysis ea ON e.id = ea.email_id
                     WHERE ea.email_id IS NULL
                     LIMIT :count
-                """
+                    """
                     ),
                     {"count": count},
-                )
+                ).fetchall()
 
-                emails = result.fetchall()
+                emails = result
 
                 for email in emails:
                     email_dict = {

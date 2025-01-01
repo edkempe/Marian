@@ -3,7 +3,7 @@
 This module defines validation rules and error messages used across the application.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Pattern
 import re
 
@@ -37,7 +37,7 @@ class ValidationRules:
 
     # File validation
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
-    ALLOWED_FILE_EXTENSIONS: set[str] = {
+    ALLOWED_FILE_EXTENSIONS: set[str] = field(default_factory=lambda: {
         # Documents
         "txt", "md", "pdf", "doc", "docx",
         # Images
@@ -46,13 +46,13 @@ class ValidationRules:
         "csv", "json", "xml",
         # Code
         "py", "js", "html", "css"
-    }
+    })
 
 @dataclass(frozen=True)
 class ErrorMessages:
     """Standard error messages for validation failures."""
     
-    MESSAGES: Dict[str, str] = {
+    MESSAGES: Dict[str, str] = field(default_factory=lambda: {
         # General errors
         "required": "This field is required.",
         "invalid": "Invalid value provided.",
@@ -86,7 +86,7 @@ class ErrorMessages:
         "invalid_credentials": "Invalid username or password.",
         "expired_token": "Authentication token has expired.",
         "insufficient_permissions": "Insufficient permissions for this action."
-    }
+    })
 
 # Singleton instances
 RULES = ValidationRules()

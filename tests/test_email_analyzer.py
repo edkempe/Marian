@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 import pytest
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis, EmailAnalysisResponse
 from shared_lib.constants import API_CONFIG
 from shared_lib.database_session_util import get_analysis_session, get_email_session
@@ -115,7 +115,7 @@ def test_process_emails_batch_handling(email_analyzer):
     # Add test emails to database
     with get_email_session() as session:
         for i in range(5):
-            email = Email(
+            email = EmailMessage(
                 id=f"test_{i}_{datetime.now().timestamp()}",
                 threadId=f"thread_{i}",
                 subject=f"Test Email {i}",
@@ -146,7 +146,7 @@ def test_process_emails_error_handling(email_analyzer):
     # Add test emails with some invalid content
     with get_email_session() as session:
         # Valid email
-        email1 = Email(
+        email1 = EmailMessage(
             id="test_valid_1",
             threadId="thread_1",
             subject="Test Email 1",
@@ -157,7 +157,7 @@ def test_process_emails_error_handling(email_analyzer):
             labels='["INBOX"]',
         )
         # Invalid email
-        email2 = Email(
+        email2 = EmailMessage(
             id="test_invalid_1",
             threadId="thread_2",
             subject="Test Email 2",

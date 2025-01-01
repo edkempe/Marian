@@ -24,7 +24,7 @@ from jinja2 import Template
 from sqlalchemy.orm import Session
 from textblob import TextBlob
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import get_analysis_session, get_email_session
@@ -56,17 +56,17 @@ class EmailSelfAnalyzer:
             # Print debug info
             print(f"Looking for emails from/to: {self.user_email}")
 
-            query = session.query(Email).filter(
-                Email.from_address == self.user_email,
-                Email.to_address == self.user_email,
+            query = session.query(EmailMessage).filter(
+                EmailMessage.from_address == self.user_email,
+                EmailMessage.to_address == self.user_email,
             )
 
             if days:
                 cutoff = datetime.now() - timedelta(days=days)
-                query = query.filter(Email.received_date >= cutoff)
+                query = query.filter(EmailMessage.received_date >= cutoff)
 
             # Print debug info
-            print(f"Total emails in database: {session.query(Email).count()}")
+            print(f"Total emails in database: {session.query(EmailMessage).count()}")
             print(f"Self-emails found: {query.count()}")
 
             emails = query.all()

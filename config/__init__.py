@@ -7,14 +7,14 @@ https://12factor.net/config
 Usage:
     from config import settings, env_settings
 
-    db_url = settings.db_settings.URL
+    db_url = settings.database_settings.URL
     is_production = env_settings.ENV.is_production
 """
 
 from config.environment import env_settings
 from config.settings import (
     api_settings,
-    db_settings,
+    database_settings,
     email_settings,
     logging_settings,
     security_settings,
@@ -23,7 +23,7 @@ from config.settings import (
 __all__ = [
     'env_settings',
     'api_settings',
-    'db_settings',
+    'database_settings',
     'email_settings',
     'logging_settings',
     'security_settings',

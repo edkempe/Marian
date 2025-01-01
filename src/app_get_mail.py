@@ -31,7 +31,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from models.base import Base
 from models.db_init import init_db
-from models.email import Email
+from models.email import EmailMessage
 from models.gmail_label import GmailLabel
 from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import (
@@ -87,7 +87,7 @@ def clear_database(session: Session) -> None:
     Args:
         session: SQLAlchemy session to use for database operations
     """
-    session.query(Email).delete()
+    session.query(EmailMessage).delete()
     session.commit()
 
 
@@ -273,7 +273,7 @@ def process_email(service, msg_id, session):
         if not email_data["id"]:
             raise ValueError("Email ID is required")
 
-        email = Email(**email_data)
+        email = EmailMessage(**email_data)
         session.merge(email)
         session.commit()
 
@@ -288,19 +288,19 @@ def process_email(service, msg_id, session):
 
 def get_oldest_email_date(session):
     """Get the date of the oldest email in the database."""
-    oldest_email = session.query(Email).order_by(Email.received_date.asc()).first()
+    oldest_email = session.query(EmailMessage).order_by(EmailMessage.received_date.asc()).first()
     return parser.parse(oldest_email.received_date) if oldest_email else None
 
 
 def get_newest_email_date(session):
     """Get the date of the newest email in the database."""
-    newest_email = session.query(Email).order_by(Email.received_date.desc()).first()
+    newest_email = session.query(EmailMessage).order_by(EmailMessage.received_date.desc()).first()
     return parser.parse(newest_email.received_date) if newest_email else None
 
 
 def count_emails(session):
     """Get total number of emails in database."""
-    return session.query(Email).count()
+    return session.query(EmailMessage).count()
 
 
 def fetch_older_emails(session, service, label=None):

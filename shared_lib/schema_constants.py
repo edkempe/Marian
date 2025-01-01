@@ -3,34 +3,41 @@
 This module contains all schema-related constants like column sizes,
 default values, and validation rules. It serves as a single source
 of truth for these values.
+
+Constants:
+    COLUMN_SIZES: Dictionary defining maximum lengths for database columns
+    EMAIL_DEFAULTS: Default values for email-related fields
+    LABEL_DEFAULTS: Default values for label-related fields
+    ANALYSIS_DEFAULTS: Default values for analysis-related fields
+    VALIDATION_RULES: Rules for validating field values
 """
 
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
 
-# Column sizes
+# Column sizes - maximum lengths for database columns
 COLUMN_SIZES = {
     # Email model
-    "EMAIL_ID": 100,
-    "EMAIL_THREAD_ID": 100,
-    "EMAIL_MESSAGE_ID": 100,
-    "EMAIL_SUBJECT": 500,
-    "EMAIL_FROM": 255,
-    "EMAIL_TO": 255,
-    "EMAIL_CC": 255,
-    "EMAIL_BCC": 255,
-    "EMAIL_LABELS": 500,
+    "EMAIL_ID": 100,  # Primary key, UUID4 string
+    "EMAIL_THREAD_ID": 100,  # Gmail thread ID
+    "EMAIL_MESSAGE_ID": 100,  # Gmail message ID
+    "EMAIL_SUBJECT": 500,  # Email subject line
+    "EMAIL_FROM": 255,  # Sender email address
+    "EMAIL_TO": 255,  # Recipient email addresses
+    "EMAIL_CC": 255,  # CC email addresses
+    "EMAIL_BCC": 255,  # BCC email addresses
+    "EMAIL_LABELS": 500,  # Gmail labels (comma-separated)
     
     # Analysis model
-    "ANALYSIS_SENTIMENT": 20,
-    "ANALYSIS_CATEGORY": 50,
-    "ANALYSIS_SUMMARY": 1000,
-    "ANALYSIS_PRIORITY": 20,
+    "ANALYSIS_SENTIMENT": 20,  # Sentiment classification
+    "ANALYSIS_CATEGORY": 50,  # Email category
+    "ANALYSIS_SUMMARY": 1000,  # Email summary
+    "ANALYSIS_PRIORITY": 20,  # Priority level
     
     # Label model
-    "LABEL_ID": 100,
-    "LABEL_NAME": 255,
-    "LABEL_TYPE": 20,
+    "LABEL_ID": 100,  # Gmail label ID
+    "LABEL_NAME": 255,  # Label display name
+    "LABEL_TYPE": 20,  # Label type (system/user)
 }
 
 # Default values

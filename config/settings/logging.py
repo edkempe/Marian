@@ -2,11 +2,12 @@
 
 import os
 from typing import Dict, Optional
-
-from pydantic import Field
-from pydantic_settings import BaseSettings
 from enum import Enum
 from pathlib import Path
+
+from pydantic import Field
+
+from config.settings.base import Settings
 
 class LogLevel(str, Enum):
     """Valid log levels."""
@@ -16,7 +17,7 @@ class LogLevel(str, Enum):
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
 
-class LoggingSettings(BaseSettings):
+class LoggingSettings(Settings):
     """Logging configuration with validation."""
     
     # Log directory
@@ -53,9 +54,19 @@ class LoggingSettings(BaseSettings):
         description="File logging level"
     )
     
+    # Log format
+    LOG_FORMAT: str = Field(
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        description="Log message format"
+    )
+    DATE_FORMAT: str = Field(
+        default="%Y-%m-%d %H:%M:%S",
+        description="Log date format"
+    )
+    
     # Log rotation
     MAX_BYTES: int = Field(
-        default=10 * 1024 * 1024,  # 10MB
+        default=10_485_760,  # 10MB
         description="Maximum log file size in bytes",
         ge=1024
     )
@@ -65,29 +76,15 @@ class LoggingSettings(BaseSettings):
         ge=0
     )
     
-    # Log formats
-    CONSOLE_FORMAT: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        description="Console log format"
-    )
-    FILE_FORMAT: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(pathname)s:%(lineno)d - %(message)s",
-        description="File log format"
-    )
-    DATE_FORMAT: str = Field(
-        default="%Y-%m-%d %H:%M:%S",
-        description="Log date format"
-    )
-    
-    # Performance logging
-    LOG_SLOW_QUERIES: bool = Field(
+    # Performance
+    ASYNC_LOGGING: bool = Field(
         default=True,
-        description="Log slow database queries"
+        description="Use asynchronous logging"
     )
-    SLOW_QUERY_THRESHOLD: float = Field(
-        default=1.0,
-        description="Slow query threshold in seconds",
-        ge=0
+    QUEUE_SIZE: int = Field(
+        default=1000,
+        description="Queue size for async logging",
+        ge=100
     )
     
     class Config:

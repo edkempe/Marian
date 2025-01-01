@@ -2,7 +2,7 @@
 
 This test suite uses real integration testing instead of mocks:
 - All API calls to Claude are real calls
-- All database operations use a real SQLite database (in-memory)
+- All database operations use a real SQLite database (file-based)
 - No mock objects or responses are used
 
 This ensures our tests reflect real-world behavior and catch actual integration issues.
@@ -16,45 +16,53 @@ Key Integration Points Tested:
 
 import json
 from datetime import datetime
-
 import pytest
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import Session
 
 from models.base import Base
-from models.catalog import CatalogItem, CatalogTag, Tag
-from shared_lib.constants import CATALOG_CONFIG
+from models.catalog import CatalogEntry, CatalogTag, Tag
+from shared_lib.constants import CONFIG
 from shared_lib.logging_util import setup_logging
 from src.app_catalog import CatalogChat
+from config.test_settings import test_settings
 
 
-@pytest.fixture
-def db_session():
-    """Create a test database session"""
-    engine = create_engine("sqlite:///:memory:")
+@pytest.fixture(scope="function")
+def db_engine():
+    """Create test database engine."""
+    engine = create_engine(test_settings.DATABASE_URLS["catalog"])
     Base.metadata.create_all(engine)
-    session = Session(bind=engine)
-    return session
+    yield engine
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def db_session(db_engine):
+    """Create test database session."""
+    session = Session(db_engine)
+    yield session
+    session.close()
 
 
 @pytest.fixture
 def catalog_chat():
     """Create a test CatalogChat instance"""
-    return CatalogChat(db_path=":memory:", mode="test")
+    return CatalogChat(db_path=test_settings.DATABASE_URLS["catalog"], mode="test")
 
 
 @pytest.fixture
-def sample_catalog_items():
-    """Create sample catalog items"""
+def sample_catalog_entries():
+    """Create sample catalog entries"""
     return [
-        CatalogItem(
+        CatalogEntry(
             title="Python Tutorial", description="A tutorial on Python programming"
         ),
-        CatalogItem(
+        CatalogEntry(
             title="Machine Learning Basics",
             description="An introduction to machine learning concepts",
         ),
-        CatalogItem(
+        CatalogEntry(
             title="Data Science with Python",
             description="A guide to data science using Python",
         ),
@@ -67,27 +75,27 @@ def sample_tags():
     return [Tag(name="Python"), Tag(name="Machine Learning"), Tag(name="Data Science")]
 
 
-def test_add_catalog_item(db_session, catalog_chat, sample_catalog_items):
-    """Test adding a new catalog item."""
-    # Add items directly to the session
+def test_add_catalog_entry(db_session, catalog_chat, sample_catalog_entries):
+    """Test adding a new catalog entry."""
+    # Add entries directly to the session
     current_time = int(datetime.now().timestamp())
-    for item in sample_catalog_items:
-        item.status = "active"  # Set status to active
-        item.created_date = current_time
-        item.modified_date = current_time
-        db_session.add(item)
+    for entry in sample_catalog_entries:
+        entry.status = "active"  # Set status to active
+        entry.created_date = current_time
+        entry.modified_date = current_time
+        db_session.add(entry)
     db_session.commit()
 
-    # Query all items
-    all_items = db_session.query(CatalogItem).all()
-    assert len(all_items) == len(sample_catalog_items)
+    # Query all entries
+    all_entries = db_session.query(CatalogEntry).all()
+    assert len(all_entries) == len(sample_catalog_entries)
 
-    # Verify each item was added correctly
-    for added_item, sample_item in zip(all_items, sample_catalog_items):
-        assert added_item.title == sample_item.title
-        assert added_item.status == "active"
-        assert added_item.created_date == current_time
-        assert added_item.modified_date == current_time
+    # Verify each entry was added correctly
+    for added_entry, sample_entry in zip(all_entries, sample_catalog_entries):
+        assert added_entry.title == sample_entry.title
+        assert added_entry.status == "active"
+        assert added_entry.created_date == current_time
+        assert added_entry.modified_date == current_time
 
 
 def test_add_tags(db_session, sample_tags):
@@ -113,19 +121,19 @@ def test_add_tags(db_session, sample_tags):
         assert stored_tag.modified_date == current_time
 
 
-def test_tag_catalog_item(db_session, sample_catalog_items, sample_tags):
-    """Test tagging a catalog item."""
+def test_tag_catalog_entry(db_session, sample_catalog_entries, sample_tags):
+    """Test tagging a catalog entry."""
     session = db_session
 
-    # Add item and tags
+    # Add entry and tags
     current_time = int(datetime.now().timestamp())
 
-    # Set up item
-    item = sample_catalog_items[0]
-    item.status = "active"
-    item.created_date = current_time
-    item.modified_date = current_time
-    session.add(item)
+    # Set up entry
+    entry = sample_catalog_entries[0]
+    entry.status = "active"
+    entry.created_date = current_time
+    entry.modified_date = current_time
+    session.add(entry)
 
     # Set up tags
     for tag in sample_tags[:2]:  # Add first two tags
@@ -135,33 +143,33 @@ def test_tag_catalog_item(db_session, sample_catalog_items, sample_tags):
     session.commit()
 
     # Create relationship
-    item.tags.extend(sample_tags[:2])
+    entry.tags.extend(sample_tags[:2])
     session.commit()
 
     # Verify relationships
-    stored_item = session.query(CatalogItem).filter_by(title=item.title).first()
-    assert len(stored_item.tags) == 2
-    assert {t.name for t in stored_item.tags} == {t.name for t in sample_tags[:2]}
+    stored_entry = session.query(CatalogEntry).filter_by(title=entry.title).first()
+    assert len(stored_entry.tags) == 2
+    assert {t.name for t in stored_entry.tags} == {t.name for t in sample_tags[:2]}
 
 
-def test_semantic_search(db_session, catalog_chat, sample_catalog_items):
+def test_semantic_search(db_session, catalog_chat, sample_catalog_entries):
     """Test semantic search functionality."""
     session = db_session
 
-    # Add items to database
+    # Add entries to database
     current_time = int(datetime.now().timestamp())
-    for item in sample_catalog_items:
-        item.status = "active"
-        item.created_date = current_time
-        item.modified_date = current_time
-        session.add(item)
+    for entry in sample_catalog_entries:
+        entry.status = "active"
+        entry.created_date = current_time
+        entry.modified_date = current_time
+        session.add(entry)
     session.commit()
 
-    # Get all items
-    items = session.query(CatalogItem).all()
+    # Get all entries
+    entries = session.query(CatalogEntry).all()
 
     # Test basic search
-    matches = catalog_chat.get_semantic_matches("python programming", items)
+    matches = catalog_chat.get_semantic_matches("python programming", entries)
     assert len(matches) > 0
     assert any("Python" in match[0].title for match in matches)
 

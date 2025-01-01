@@ -900,7 +900,7 @@ Example: For a query about "python class tutorial":
 
         try:
             response = self.client.messages.create(
-                model=API_CONFIG["MODEL"],
+                model="claude-v1.3",
                 max_tokens=API_CONFIG["MAX_TOKENS"],
                 temperature=API_CONFIG["TEMPERATURE"],
                 messages=messages,
@@ -1039,7 +1039,7 @@ Example: For a query about "python class tutorial":
             ]
 
             response = self.client.messages.create(
-                model=API_CONFIG["MODEL"],
+                model="claude-v1.3",
                 max_tokens=API_CONFIG["MAX_TOKENS"],
                 temperature=0.0,  # Use deterministic output for ranking
                 messages=messages,
@@ -1062,7 +1062,7 @@ Example: For a query about "python class tutorial":
         session = self.get_session()
         try:
             response = self.client.messages.create(
-                model=API_CONFIG["MODEL"],
+                model="claude-v1.3",
                 max_tokens=API_CONFIG["MAX_TOKENS"],
                 temperature=API_CONFIG["TEMPERATURE"],
                 messages=[{"role": "user", "content": user_input}],
@@ -1076,7 +1076,7 @@ Example: For a query about "python class tutorial":
             self.chat_logger.log_interaction(
                 user_input=user_input,
                 system_response=result or response.content[0].text,
-                model=API_CONFIG["MODEL"],
+                model="claude-v1.3",
                 status="success" if result else "error",
                 error_details=None if result else "Failed to parse response",
                 metadata={
@@ -1104,7 +1104,7 @@ Example: For a query about "python class tutorial":
                 self.chat_logger.log_interaction(
                     user_input=user_input,
                     system_response=error_msg,
-                    model=API_CONFIG["MODEL"],
+                    model="claude-v1.3",
                     status="error",
                     error_details=error_msg,
                 )

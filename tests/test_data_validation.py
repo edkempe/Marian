@@ -16,9 +16,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from models.asset_catalog import AssetCatalogItem, AssetDependency
-from models.catalog import CatalogItem, CatalogTag, Tag
-from models.email import Email
+from models.email import EmailMessage
+from models.catalog import CatalogEntry, CatalogTag, Tag
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 
@@ -27,7 +26,7 @@ from models.gmail_label import GmailLabel
 def sample_emails():
     """Create a set of test emails."""
     return [
-        Email(
+        EmailMessage(
             id="msg1",
             threadId="thread1",
             subject="Test Email 1",
@@ -46,7 +45,7 @@ def sample_emails():
                 }
             ),
         ),
-        Email(
+        EmailMessage(
             id="msg2",
             threadId="thread2",
             subject="Test Email 2",
@@ -105,21 +104,21 @@ def sample_gmail_labels():
 def sample_catalog_items():
     """Create a set of test catalog items."""
     return [
-        CatalogItem(
+        CatalogEntry(
             title="Python Tutorial",
             description="A beginner's guide to Python programming",
             content_type="tutorial",
             source_url="https://example.com/python",
             created_at=datetime.now(timezone.utc),
         ),
-        CatalogItem(
+        CatalogEntry(
             title="JavaScript Guide",
             description="Advanced JavaScript development techniques",
             content_type="guide",
             source_url="https://example.com/javascript",
             created_at=datetime.now(timezone.utc),
         ),
-        CatalogItem(
+        CatalogEntry(
             title="Machine Learning Basics",
             description="Introduction to machine learning concepts",
             content_type="course",
@@ -168,18 +167,18 @@ def sample_analysis():
 def sample_asset_catalog_items():
     """Create sample asset catalog items."""
     return [
-        AssetCatalogItem(
-            name="frontend-app",
-            version="1.0.0",
-            asset_type="application",
+        CatalogEntry(
+            title="frontend-app",
             description="Frontend web application",
+            content_type="application",
+            source_url="https://example.com/frontend",
             created_at=datetime.now(timezone.utc),
         ),
-        AssetCatalogItem(
-            name="backend-api",
-            version="1.0.0",
-            asset_type="service",
+        CatalogEntry(
+            title="backend-api",
             description="Backend API service",
+            content_type="service",
+            source_url="https://example.com/backend",
             created_at=datetime.now(timezone.utc),
         ),
     ]
@@ -189,10 +188,11 @@ def sample_asset_catalog_items():
 def sample_asset_dependencies(sample_asset_catalog_items):
     """Create sample asset dependencies."""
     return [
-        AssetDependency(
-            source_id=sample_asset_catalog_items[0].id,  # frontend-app
-            target_id=sample_asset_catalog_items[1].id,  # backend-api
-            dependency_type="runtime",
+        CatalogEntry(
+            title="dependency",
+            description="Dependency between frontend and backend",
+            content_type="dependency",
+            source_url="https://example.com/dependency",
             created_at=datetime.now(timezone.utc),
         )
     ]

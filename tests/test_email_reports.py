@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from shared_lib.constants import DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import get_analysis_session, get_email_session
@@ -21,7 +21,7 @@ def setup_test_data():
     # Create test emails
     with get_email_session(testing=True) as session:
         for i in range(10):
-            email = Email(
+            email = EmailMessage(
                 id=f"test_{i}_{datetime.now().timestamp()}",
                 threadId=f"thread_{i}",
                 subject=f"Test Email {i}",

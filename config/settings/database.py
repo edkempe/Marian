@@ -1,49 +1,66 @@
-"""Database settings configuration."""
+"""Database configuration settings."""
 
-import os
-from typing import Dict, Optional
 from enum import Enum
+from pathlib import Path
+from typing import Optional
 
-from pydantic import Field, PostgresDsn
+from pydantic import Field, AnyUrl
 
 from config.settings.base import Settings
 
+
 class DatabaseType(str, Enum):
-    """Supported database types."""
-    POSTGRESQL = "postgresql"
+    """Database type enumeration."""
     SQLITE = "sqlite"
+    POSTGRES = "postgres"
+    MYSQL = "mysql"
+
 
 class DatabaseSettings(Settings):
-    """Database configuration with validation."""
+    """Database settings with comprehensive configuration."""
     
-    # Connection settings
+    # Database Type
     TYPE: DatabaseType = Field(
-        default=DatabaseType.POSTGRESQL,
+        default=DatabaseType.SQLITE,
         description="Database type"
     )
-    URL: PostgresDsn = Field(
-        default="postgresql://user:pass@localhost:5432/db",
-        description="Database connection URL"
+    
+    # Database URLs
+    URL: AnyUrl = Field(
+        default="sqlite:///data/default.db",
+        description="Default database URL"
+    )
+    EMAIL_DB_URL: AnyUrl = Field(
+        default="sqlite:///data/email.db",
+        description="Email database URL"
+    )
+    ANALYSIS_DB_URL: AnyUrl = Field(
+        default="sqlite:///data/analysis.db",
+        description="Analysis database URL"
+    )
+    CATALOG_DB_URL: AnyUrl = Field(
+        default="sqlite:///data/catalog.db",
+        description="Catalog database URL"
     )
     
-    # Connection pool
+    # Connection Pool Settings
     MIN_CONNECTIONS: int = Field(
         default=5,
-        description="Minimum number of connections",
+        description="Minimum database connections",
         ge=1
     )
     MAX_CONNECTIONS: int = Field(
         default=20,
-        description="Maximum number of connections",
-        ge=5
+        description="Maximum database connections",
+        ge=1
     )
     CONNECTION_TIMEOUT: int = Field(
         default=30,
-        description="Connection timeout in seconds",
+        description="Database connection timeout in seconds",
         ge=1
     )
     
-    # Query settings
+    # Query Settings
     QUERY_TIMEOUT: int = Field(
         default=30,
         description="Query timeout in seconds",
@@ -55,32 +72,34 @@ class DatabaseSettings(Settings):
         ge=1
     )
     
-    # Migration settings
+    # Migration Settings
+    MIGRATIONS_DIR: Path = Field(
+        default=Path("migrations"),
+        description="Database migrations directory"
+    )
     AUTO_MIGRATE: bool = Field(
         default=True,
         description="Automatically run migrations on startup"
     )
-    MIGRATION_TABLE: str = Field(
-        default="alembic_version",
-        description="Migration version table name"
+    
+    # SQLite-specific Settings
+    SQLITE_PRAGMA: dict = Field(
+        default={
+            "journal_mode": "WAL",
+            "cache_size": -64000,  # 64MB cache
+            "foreign_keys": "ON",
+            "synchronous": "NORMAL"
+        },
+        description="SQLite PRAGMA settings"
     )
     
-    # Backup settings
-    BACKUP_ENABLED: bool = Field(
-        default=True,
-        description="Enable automated backups"
-    )
-    BACKUP_RETENTION_DAYS: int = Field(
-        default=30,
-        description="Number of days to retain backups",
-        ge=1
-    )
-    
-    class Config:
-        """Pydantic configuration."""
-        env_prefix = "DB_"
-        case_sensitive = True
-        env_file = ".env"
+    def __init__(self, **kwargs):
+        """Initialize database settings and create data directory."""
+        super().__init__(**kwargs)
+        # Create data directory if it doesn't exist
+        data_dir = Path("data")
+        data_dir.mkdir(parents=True, exist_ok=True)
 
-# Create settings instance
-db_settings = DatabaseSettings()
+
+# Create database settings instance
+database_settings = DatabaseSettings()

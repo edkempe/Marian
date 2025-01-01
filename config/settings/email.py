@@ -4,9 +4,10 @@ import os
 from typing import Dict, Optional
 
 from pydantic import Field, EmailStr
-from pydantic_settings import BaseSettings
 
-class EmailSettings(BaseSettings):
+from config.settings.base import Settings
+
+class EmailSettings(Settings):
     """Email configuration with validation."""
     
     # SMTP settings
@@ -50,7 +51,7 @@ class EmailSettings(BaseSettings):
     MAX_RETRIES: int = Field(
         default=3,
         description="Maximum retry attempts",
-        ge=0
+        ge=1
     )
     RETRY_DELAY: int = Field(
         default=5,
@@ -58,31 +59,28 @@ class EmailSettings(BaseSettings):
         ge=1
     )
     
-    # Template settings
-    TEMPLATE_DIR: str = Field(
-        default="templates/email",
-        description="Email template directory"
-    )
-    DEFAULT_TEMPLATE: str = Field(
-        default="base.html",
-        description="Default email template"
+    # Logging
+    LOG_EMAILS: bool = Field(
+        default=True,
+        description="Log email operations"
     )
     
-    # Size limits
-    MAX_RECIPIENTS: int = Field(
+    # Rate limiting
+    RATE_LIMIT: int = Field(
         default=100,
-        description="Maximum recipients per email",
+        description="Maximum emails per hour",
         ge=1
     )
+    
+    # Attachments
     MAX_ATTACHMENT_SIZE: int = Field(
-        default=25 * 1024 * 1024,  # 25MB
+        default=10_485_760,  # 10MB
         description="Maximum attachment size in bytes",
         ge=1
     )
-    MAX_EMAIL_SIZE: int = Field(
-        default=50 * 1024 * 1024,  # 50MB
-        description="Maximum total email size in bytes",
-        ge=1
+    ALLOWED_ATTACHMENT_TYPES: list[str] = Field(
+        default=["pdf", "doc", "docx", "txt", "png", "jpg", "jpeg"],
+        description="Allowed attachment file types"
     )
     
     class Config:
