@@ -10,6 +10,9 @@ This module focuses on process-related quality checks:
 
 import os
 import re
+import ast
+import pytest
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass

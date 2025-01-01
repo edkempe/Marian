@@ -29,30 +29,28 @@ Single workflow for testing and validation:
 
 ```yaml
 # .github/workflows/ci.yml
-name: CI
+name: Python CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install poetry
-          poetry install
-
-      - name: Run tests
-        run: poetry run pytest
-
-      - name: Run linting
-        run: poetry run ruff check .
-
-      - name: Type check
-        run: poetry run mypy .
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install
+    - name: Run linting
+      run: poetry run pylint src/ tests/ models/ shared_lib/
+    - name: Run tests
+      run: poetry run pytest -v
 ```
 
 ### 2. Pre-commit Hooks
@@ -69,16 +67,14 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.1.3
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
-    hooks:
-      - id: mypy
+      - id: pylint
+        name: pylint
+        entry: poetry run pylint
+        language: system
+        types: [python]
+        args: [src, tests, models, shared_lib]
 ```
 
 ### 3. Deployment

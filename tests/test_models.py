@@ -2,15 +2,19 @@
 
 import os
 import tempfile
+from datetime import datetime, timezone
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-
 from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 from shared_lib.config_loader import get_schema_config
 from config.test_settings import test_settings
+import yaml
+from pathlib import Path
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
 
 @pytest.fixture(scope="function")

@@ -42,74 +42,53 @@ class GmailLabel(Base):
     name: Mapped[str] = Column(
         String(COLUMN_SIZES["LABEL_NAME"]),
         unique=True,
-        server_default=LABEL_DEFAULTS["name"]
+        nullable=False
     )
 
     # Label properties
     type: Mapped[str] = Column(
         String(COLUMN_SIZES["LABEL_TYPE"]),
-        server_default=LABEL_DEFAULTS["type"]
+        nullable=False
     )
     message_list_visibility: Mapped[Optional[str]] = Column(
-        String(20),  # Fixed size for visibility settings
-        server_default=LABEL_DEFAULTS["message_list_visibility"],
+        String(COLUMN_SIZES["LABEL_VISIBILITY"]),
         nullable=True
     )
     label_list_visibility: Mapped[Optional[str]] = Column(
-        String(20),  # Fixed size for visibility settings
-        server_default=LABEL_DEFAULTS["label_list_visibility"],
+        String(COLUMN_SIZES["LABEL_VISIBILITY"]),
         nullable=True
     )
-    
-    # System flags
-    is_system: Mapped[bool] = Column(
-        Boolean,
-        server_default=str(LABEL_DEFAULTS["is_system"])
+    background_color: Mapped[Optional[str]] = Column(
+        String(COLUMN_SIZES["COLOR_CODE"]),
+        nullable=True
+    )
+    text_color: Mapped[Optional[str]] = Column(
+        String(COLUMN_SIZES["COLOR_CODE"]),
+        nullable=True
     )
 
     # Timestamps
     created_at: Mapped[datetime] = Column(
         DateTime(timezone=True),
+        nullable=False,
         server_default=func.now()
     )
     updated_at: Mapped[datetime] = Column(
         DateTime(timezone=True),
+        nullable=False,
         server_default=func.now(),
         onupdate=func.now()
     )
 
     # Relationships
-    emails = relationship("Email", secondary=email_labels, back_populates="labels")
+    emails = relationship(
+        "EmailMessage",
+        secondary="email_labels",
+        back_populates="labels",
+        cascade="all",
+        passive_deletes=True
+    )
 
     def __repr__(self) -> str:
-        """Return string representation."""
-        return f"<GmailLabel(id={self.id}, name={self.name})>"
-
-    @classmethod
-    def from_api_response(cls, response: dict) -> "GmailLabel":
-        """Create a GmailLabel instance from API response.
-
-        Args:
-            response: Dictionary containing label data from API
-
-        Returns:
-            GmailLabel instance
-        """
-        # Validate and truncate name if needed
-        name = response.get("name", LABEL_DEFAULTS["name"])
-        if len(name) > COLUMN_SIZES["LABEL_NAME"]:
-            name = name[:COLUMN_SIZES["LABEL_NAME"]]
-
-        # Get label type with default
-        label_type = response.get("type", LABEL_DEFAULTS["type"])
-        if len(label_type) > COLUMN_SIZES["LABEL_TYPE"]:
-            label_type = label_type[:COLUMN_SIZES["LABEL_TYPE"]]
-
-        return cls(
-            id=response["id"],
-            name=name,
-            type=label_type,
-            message_list_visibility=response.get("messageListVisibility", LABEL_DEFAULTS["message_list_visibility"]),
-            label_list_visibility=response.get("labelListVisibility", LABEL_DEFAULTS["label_list_visibility"]),
-            is_system=response.get("type") == "system"
-        )
+        """Get string representation."""
+        return f"<GmailLabel(id='{self.id}', name='{self.name}')>"

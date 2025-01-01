@@ -16,13 +16,12 @@ from shared_lib.constants import CONFIG
 logger = logging.getLogger(__name__)
 
 
-# Custom session classes
 class EmailSession(Session):
     """Custom session class for email database."""
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Initialize email session with custom settings."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.email_config = CONFIG["DATABASE"]["email"]
     
     def get_batch_size(self) -> int:
@@ -33,9 +32,9 @@ class EmailSession(Session):
 class AnalysisSession(Session):
     """Custom session class for analysis database."""
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Initialize analysis session with custom settings."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.analysis_config = CONFIG["DATABASE"]["analysis"]
     
     def get_timeout(self) -> int:
@@ -46,44 +45,38 @@ class AnalysisSession(Session):
 class CatalogSession(Session):
     """Custom session class for catalog database."""
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Initialize catalog session with custom settings."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.catalog_config = CONFIG["DATABASE"]["catalog"]
     
     def get_batch_size(self) -> int:
         """Get configured batch size for catalog operations."""
-        return self.catalog_config.get("batch_size", 50)
+        return self.catalog_config.get("batch_size", 100)
     
     def get_max_retries(self) -> int:
         """Get configured maximum retry attempts."""
         return self.catalog_config.get("max_retries", 3)
 
 
-def get_engine() -> Engine:
+def get_engine(db_url: str = None) -> Engine:
     """Get SQLAlchemy engine using configured settings.
+    
+    Args:
+        db_url: Optional database URL. If not provided, uses configured URL.
     
     Returns:
         SQLAlchemy Engine instance
     """
-    url = str(database_settings.URL)
+    if db_url is None:
+        db_url = str(database_settings.URL)
     
-    # Configure engine based on database type
-    if database_settings.TYPE == "sqlite":
-        return create_engine(
-            url,
-            pool_pre_ping=True,
-            connect_args={"check_same_thread": False},
-        )
-    else:
-        return create_engine(
-            url,
-            pool_size=database_settings.MAX_CONNECTIONS,
-            max_overflow=database_settings.MAX_CONNECTIONS - database_settings.MIN_CONNECTIONS,
-            pool_timeout=database_settings.CONNECTION_TIMEOUT,
-            pool_pre_ping=True,
-            pool_recycle=3600,  # Recycle connections every hour
-        )
+    return create_engine(
+        db_url,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        echo=database_settings.ECHO_SQL
+    )
 
 
 def get_session_factory(db_url: str = None, session_class: type = Session) -> sessionmaker:
@@ -96,8 +89,14 @@ def get_session_factory(db_url: str = None, session_class: type = Session) -> se
     Returns:
         SQLAlchemy sessionmaker instance
     """
-    engine = create_engine(db_url) if db_url else get_engine()
-    return sessionmaker(bind=engine, class_=session_class)
+    engine = get_engine(db_url)
+    return sessionmaker(
+        bind=engine,
+        class_=session_class,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=True
+    )
 
 
 @contextmanager
@@ -115,6 +114,10 @@ def get_session(db_url: str = None, session_class: type = Session) -> Generator[
     session = Session()
     try:
         yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
 
@@ -142,11 +145,11 @@ def get_email_session() -> Generator[EmailSession, None, None]:
     Yields:
         EmailSession
     """
-    session = EmailSessionFactory()
-    try:
+    with get_session(
+        db_url=str(database_settings.EMAIL_DB_URL),
+        session_class=EmailSession
+    ) as session:
         yield session
-    finally:
-        session.close()
 
 
 @contextmanager
@@ -156,11 +159,11 @@ def get_analysis_session() -> Generator[AnalysisSession, None, None]:
     Yields:
         AnalysisSession
     """
-    session = AnalysisSessionFactory()
-    try:
+    with get_session(
+        db_url=str(database_settings.ANALYSIS_DB_URL),
+        session_class=AnalysisSession
+    ) as session:
         yield session
-    finally:
-        session.close()
 
 
 @contextmanager
@@ -170,11 +173,11 @@ def get_catalog_session() -> Generator[CatalogSession, None, None]:
     Yields:
         CatalogSession
     """
-    session = CatalogSessionFactory()
-    try:
+    with get_session(
+        db_url=str(database_settings.CATALOG_DB_URL),
+        session_class=CatalogSession
+    ) as session:
         yield session
-    finally:
-        session.close()
 
 
 def get_engine_for_db_type(db_type: str) -> Engine:
@@ -195,17 +198,24 @@ def get_engine_for_db_type(db_type: str) -> Engine:
     else:
         url = str(database_settings.URL)
     
-    return create_engine(url)
+    return get_engine(url)
 
 
-# Create default engine and engines for each database type
-engine = get_engine()
+# Create engines for each database type
 email_engine = get_engine_for_db_type("email")
 analysis_engine = get_engine_for_db_type("analysis")
 catalog_engine = get_engine_for_db_type("catalog")
 
 # Create session factories
-Session = sessionmaker(bind=engine)
-EmailSessionFactory = sessionmaker(bind=email_engine, class_=EmailSession)
-AnalysisSessionFactory = sessionmaker(bind=analysis_engine, class_=AnalysisSession)
-CatalogSessionFactory = sessionmaker(bind=catalog_engine, class_=CatalogSession)
+EmailSessionFactory = get_session_factory(
+    str(database_settings.EMAIL_DB_URL),
+    EmailSession
+)
+AnalysisSessionFactory = get_session_factory(
+    str(database_settings.ANALYSIS_DB_URL),
+    AnalysisSession
+)
+CatalogSessionFactory = get_session_factory(
+    str(database_settings.CATALOG_DB_URL),
+    CatalogSession
+)

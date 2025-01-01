@@ -15,6 +15,7 @@ import logging
 import pytest
 from sqlalchemy import create_engine, MetaData, Table, text, inspect
 from sqlalchemy.exc import IntegrityError, OperationalError
+from marshmallow import ValidationError
 
 from shared_lib.config_loader import get_schema_config
 from shared_lib.constants import DATABASE_CONFIG

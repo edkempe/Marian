@@ -48,16 +48,12 @@ class CatalogEntry(Base):
     __tablename__ = "catalog_entries"
     
     id = Column(Integer, primary_key=True)
-    email_id = Column(Integer, ForeignKey("email_messages.id"), nullable=False)
     title = Column(String)
     description = Column(String)
     tags = Column(JSON)  # List of tags
     extra_metadata = Column(JSON)  # Additional metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    email = relationship("EmailMessage", back_populates="catalog_entries")
     
     def __repr__(self) -> str:
         """Get string representation."""

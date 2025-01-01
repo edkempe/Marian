@@ -16,6 +16,10 @@ Accepted
 - Added specific tooling decisions
 - Clarified development dependencies
 
+1.2.0 (2025-01-01) @dev
+- Added documentation about Marshmallow and Pylint usage
+- Noted need for tool usage review
+
 ## Context
 - Project needs clear separation between application utilities and development tools
 - Current structure mixes these concerns
@@ -80,12 +84,21 @@ def setup_test_db():
 We will use the following development tools, organized by purpose:
 
 1. **Code Quality**:
+   - **Pylint**: Primary tool for code quality checks
+     - Used in CI pipeline for automated checks
+     - Configured in `pyproject.toml`
+     - Enforces critical error checks and maintains code quality score ≥ 8.0
    - `black`: Code formatting (primary)
-   - `pylint`: Comprehensive linting
    - `mypy`: Static type checking
    - `bandit`: Security checks
 
-2. **Testing**:
+2. **Data Validation**
+   - **Marshmallow**: Used for data validation and serialization
+     - Currently mainly used for ValidationError handling
+     - Opportunity to expand usage for schema definition and validation
+     - Consider replacing custom validation with Marshmallow schemas
+
+3. **Testing**:
    - `pytest`: Test framework
    - `pytest-cov`: Coverage reporting
    - `pytest-mock`: Mocking support
@@ -94,7 +107,7 @@ We will use the following development tools, organized by purpose:
    - `factory-boy`: Test factory patterns
    - `faker`: Test data generation
 
-3. **Development Workflow**:
+4. **Development Workflow**:
    - `pre-commit`: Git hooks management
    - All hooks must be defined in `.pre-commit-config.yaml`
    - Hooks must not block development (use `--allow-missing-config`)

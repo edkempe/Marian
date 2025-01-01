@@ -22,7 +22,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "3.12.8"
+python = "^3.12"
 google-api-python-client = "2.120.0"
 google-auth-oauthlib = "1.2.0"
 boto3 = "1.33.6"
@@ -45,7 +45,7 @@ sqlalchemy = "2.0.36"
 alembic = "1.13.1"
 networkx = "3.4.2"
 structlog = "24.4.0"
-pydantic = "2.6.1"
+pydantic = {extras = ["email"], version = "^2.10.4"}
 pydantic-settings = "2.2.1"
 passlib = "1.7.4"
 prompt-toolkit = "3.0.48"
@@ -54,6 +54,7 @@ python-jose = "3.3.0"
 tenacity = "8.2.3"
 email-validator = "2.1.0.post1"
 pytest-timeout = "^2.2.0"
+marshmallow = "^3.23.2"
 
 [tool.poetry.group.dev.dependencies]
 # Code Quality
@@ -63,10 +64,10 @@ mypy = ">=1.7.0"
 bandit = ">=1.7.0"
 
 # Testing
-pytest = ">=7.0.0"
-pytest-cov = ">=4.1.0"
-pytest-mock = "3.14.0"
-pytest-asyncio = "0.23.5"
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+pytest-asyncio = "^0.23.5"
 pytest-faker = ">=2.0.0"
 factory-boy = ">=3.3.0"
 faker = ">=18.0.0"
@@ -109,16 +110,22 @@ extend-exclude = '''
 ^/docs/
 '''
 
-[tool.pylint.messages_control]
+[tool.pylint]
+max-line-length = 100
 disable = [
     "C0111",  # missing-docstring
     "C0103",  # invalid-name
-    "C0330",  # wrong-hanging-indentation
+    "C0301",  # line-too-long
+    "C0302",  # too-many-lines
+    "C0330",  # bad-continuation
     "C0326",  # bad-whitespace
+    "W0311",  # bad-indentation
+    "W0603",  # global-statement
+    "W0703",  # broad-except
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "R0914",  # too-many-locals
 ]
-
-[tool.pylint.format]
-max-line-length = 88
 
 [tool.coverage.run]
 source = ["src", "models", "shared_lib"]

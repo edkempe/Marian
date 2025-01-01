@@ -2,6 +2,8 @@
 import json
 import logging
 import re
+import time
+import argparse
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -18,6 +20,8 @@ from shared_lib.exceptions import APIError, ValidationError
 from shared_lib.file_constants import DEFAULT_CHAT_LOG, LOGS_PATH
 from shared_lib.gmail_lib import GmailAPI
 from shared_lib.utils import normalize_response, extract_urls, sanitize_email_content
+from shared_lib.database_session_util import get_analysis_session, get_email_session
+from sqlalchemy import text
 
 # Set up structured logging
 logger = get_logger()

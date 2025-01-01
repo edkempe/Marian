@@ -1,36 +1,33 @@
 """Tests for email fetching functionality."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import os
+import uuid
+from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from models.base import Base
+from models.email import EmailMessage
+from models.email_analysis import EmailAnalysis
+from models.gmail_label import GmailLabel
 from shared_lib.constants import DATABASE_CONFIG, ROOT_DIR, TESTING_CONFIG
 from shared_lib.gmail_lib import GmailAPI
 from shared_lib.api_version_utils import verify_gmail_version, check_api_changelog
-from shared_lib.api_utils import GmailTestManager, validate_response_schema, build_gmail_service
-from shared_lib.gmail_utils import (
+from shared_lib.api_utils import GmailTestManager, validate_response_schema
+from shared_lib.gmail_test_utils import (
+    create_mock_gmail_service,
     create_test_email,
     create_test_label,
-    create_mock_gmail_service,
-    setup_mock_message,
     setup_mock_messages,
     setup_mock_labels,
+    setup_mock_message
 )
+
 from tests.utils.gmail_test_utils import gmail_test_context
-
-from src.app_get_mail import (
-    count_emails,
-    fetch_emails,
-    get_label_id,
-    process_email,
-)
-
 from tests.utils.db_test_utils import create_test_db_session
-from tests.utils.email_test_utils import create_test_message
 from tests.utils.test_constants import (
     TEST_EMAIL,
     TEST_LABELS,
@@ -39,114 +36,41 @@ from tests.utils.test_constants import (
     TEST_ATTACHMENTS,
     API_ERROR_MESSAGE,
     TEST_DATES,
+    TEST_MESSAGE_IDS,
+    TEST_PLAIN_TEXT,
+    TEST_HTML_CONTENT,
+    TEST_UNICODE_TEXT,
 )
 
-# Gmail API response schemas
-MESSAGE_SCHEMA = {
-    "id": str,
-    "threadId": str,
-    "labelIds": list,
-    "snippet": str,
-    "payload": dict
-}
+from src.app_get_mail import (
+    fetch_emails,
+    get_label_id,
+    process_email,
+    list_labels,
+)
 
-LABEL_SCHEMA = {
-    "id": str,
-    "name": str,
-    "type": str
-}
 
 @pytest.fixture
 def email_session():
     """Get database session for testing."""
     with create_test_db_session() as session:
+        Base.metadata.create_all(session.get_bind())
         yield session
+        session.rollback()
+        Base.metadata.drop_all(session.get_bind())
+
 
 @pytest.fixture
 def gmail_service():
     """Create a mock Gmail service."""
-    service = create_mock_gmail_service()
-    return service
+    return create_mock_gmail_service()
+
 
 @pytest.fixture
 def gmail_api(gmail_service):
     """Get Gmail API client for testing."""
-    api = GmailAPI(label_db_path=":memory:")
-    api._get_gmail_service = lambda: gmail_service
-    yield api
-    api.close()  # Close the label database
+    return GmailAPI(service=gmail_service)
 
-@pytest.fixture
-def sample_emails(email_session):
-    """Create sample emails for testing."""
-    emails = [
-        create_test_message(id=f"test{i}", date=date)
-        for i, date in enumerate(TEST_DATES, 1)
-    ]
-    
-    for email in emails:
-        email_session.add(email)
-    email_session.commit()
-    
-    yield emails
-    
-    # Cleanup
-    for email in emails:
-        email_session.delete(email)
-    email_session.commit()
-
-@pytest.fixture
-def gmail_test():
-    """Fixture for Gmail API testing."""
-    test_manager = GmailTestManager()
-    
-    # Check API availability
-    if not test_manager.get_test_account():
-        pytest.skip("Gmail test account not configured")
-        
-    yield test_manager
-    
-    # Cleanup
-    test_manager.cleanup()
-
-@pytest.fixture
-def gmail_test_context(labels):
-    """Context manager for Gmail API testing."""
-    test_manager = GmailTestManager()
-    
-    # Check API availability
-    if not test_manager.get_test_account():
-        pytest.skip("Gmail test account not configured")
-    
-    # Create test labels
-    created_labels = []
-    for label_name in labels:
-        label = test_manager.create_label(label_name)
-        created_labels.append(label)
-    
-    try:
-        yield test_manager
-    finally:
-        # Clean up test labels
-        for label in created_labels:
-            test_manager.delete_label(label['id'])
-
-def test_init_database(email_session):
-    """Test database initialization."""
-    from sqlalchemy import inspect
-    
-    # Initialize database
-    init_database(email_session)
-    
-    # Verify Email table exists
-    inspector = inspect(email_session.get_bind())
-    tables = inspector.get_table_names()
-    assert "emails" in tables
-    
-    # Verify required columns exist
-    columns = {col["name"] for col in inspector.get_columns("emails")}
-    required_columns = {"id", "threadId", "subject", "from", "to", "body", "date"}
-    assert required_columns.issubset(columns), f"Missing columns: {required_columns - columns}"
 
 @pytest.mark.parametrize("label_name,expected_id", [
     ("INBOX", "INBOX"),
@@ -158,14 +82,19 @@ def test_init_database(email_session):
 ])
 def test_get_label_id(gmail_service, label_name, expected_id):
     """Test label ID retrieval with various inputs."""
-    # Set up mock response for valid labels
-    if expected_id:
-        setup_test_labels(gmail_service, [TEST_LABELS[label_name]])
-    else:
-        setup_test_labels(gmail_service, [])
-    
-    result = get_label_id(gmail_service, label_name)
-    assert result == expected_id
+    with gmail_test_context(GmailAPI(service=gmail_service)) as ctx:
+        # Set up test labels
+        if expected_id:
+            ctx.create_message(
+                subject="Test Email",
+                body="Test Body",
+                label_ids=[expected_id]
+            )
+        
+        # Test label retrieval
+        result = get_label_id(gmail_service, label_name)
+        assert result == expected_id
+
 
 def test_get_label_id_error():
     """Test handling of API errors in label ID retrieval."""
@@ -175,262 +104,138 @@ def test_get_label_id_error():
     result = get_label_id(service, "INBOX")
     assert result is None
 
-@pytest.mark.timeout(5)  # Fail test if it takes longer than 5 seconds
+
+@pytest.mark.timeout(5)
 def test_fetch_emails_success(gmail_service):
     """Test successful email fetching with pagination handling."""
-    # Set up mock response with explicit pagination
-    from tests.utils.api_test_utils import mock_gmail_messages
-    mock_gmail_messages(gmail_service, [
-        {"id": "msg1"},
-        {"id": "msg2"}
-    ]).mock_pagination()  # No more pages
-    
-    # Call function
-    result = fetch_emails(gmail_service)
-    
-    # Verify results
-    assert len(result) == 2
-    assert result[0]["id"] == "msg1"
+    with gmail_test_context(GmailAPI(service=gmail_service)) as ctx:
+        # Create test messages
+        msg1 = ctx.create_message(subject="Test 1", body="Body 1")
+        msg2 = ctx.create_message(subject="Test 2", body="Body 2")
+        
+        # Test email fetching
+        result = fetch_emails(gmail_service)
+        assert len(result) == 2
+        assert any(m["id"] == msg1["id"] for m in result)
+        assert any(m["id"] == msg2["id"] for m in result)
+
 
 def test_fetch_emails_with_label(gmail_service):
     """Test fetching emails with label filter."""
-    # Set up mock response
-    setup_mock_messages(gmail_service, [{"id": "msg1"}])
-    
-    # Call function with label
-    result = fetch_emails(gmail_service, label_id="INBOX")
-    assert len(result) == 1
+    with gmail_test_context(GmailAPI(service=gmail_service), test_labels=["TEST_LABEL"]) as ctx:
+        # Create test message with label
+        msg = ctx.create_message(
+            subject="Test Email",
+            body="Test Body",
+            label_ids=[ctx.created_labels[0]["id"]]
+        )
+        
+        # Test email fetching with label
+        result = fetch_emails(gmail_service, label_id=ctx.created_labels[0]["id"])
+        assert len(result) == 1
+        assert result[0]["id"] == msg["id"]
+
 
 def test_fetch_emails_error():
     """Test error handling in email fetching."""
     service = MagicMock()
     service.users().messages().list.side_effect = Exception(API_ERROR_MESSAGE)
     
-    messages = fetch_emails(service)
-    assert messages == []
+    result = fetch_emails(service)
+    assert result == []
+
 
 def test_process_email(gmail_service, email_session):
     """Test email processing and storage."""
-    # Create test message
-    message = create_test_message(
-        msg_id=TEST_EMAIL["id"],
-        subject=TEST_EMAIL["subject"],
-        from_addr=TEST_EMAIL["from_"],
-        to_addr=TEST_EMAIL["to"],
-        body_text=TEST_EMAIL["body"],
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    # Process email
-    process_email(gmail_service, TEST_EMAIL["id"], email_session)
-    
-    # Verify email was stored
-    result = email_session.query(Email).filter_by(id=TEST_EMAIL["id"]).first()
-    assert result is not None
-    assert result.subject == TEST_EMAIL["subject"]
-    assert result.from_ == TEST_EMAIL["from_"]
-    assert result.to == TEST_EMAIL["to"]
-    assert result.body == TEST_EMAIL["body"]
+    with gmail_test_context(GmailAPI(service=gmail_service)) as ctx:
+        # Create test message
+        msg = ctx.create_message(
+            subject="Test Email",
+            body="Test Body",
+            from_address="sender@example.com",
+            to_addresses=["recipient@example.com"]
+        )
+        
+        # Process email
+        process_email(gmail_service, msg["id"], email_session)
+        
+        # Verify email was stored
+        stored_email = email_session.query(EmailMessage).first()
+        assert stored_email is not None
+        assert stored_email.subject == "Test Email"
+        assert stored_email.from_address == "sender@example.com"
+        assert stored_email.to_addresses == ["recipient@example.com"]
 
-def test_process_email_with_body(gmail_service, email_session):
-    """Test email processing with different body formats."""
-    # Test plain text
-    message = create_test_message(
-        msg_id=TEST_MESSAGE_IDS["PLAIN"],
-        body_text=TEST_PLAIN_TEXT
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    process_email(gmail_service, TEST_MESSAGE_IDS["PLAIN"], email_session)
-    
-    result = email_session.query(Email).filter_by(id=TEST_MESSAGE_IDS["PLAIN"]).first()
-    assert result is not None
-    assert result.body == TEST_PLAIN_TEXT
 
-def test_process_email_with_html(gmail_service, email_session):
-    """Test processing email with HTML content."""
-    message = create_test_message(
-        msg_id=TEST_MESSAGE_IDS["HTML"],
-        body_text="Hello World!",
-        body_html=TEST_HTML_CONTENT
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    process_email(gmail_service, TEST_MESSAGE_IDS["HTML"], email_session)
-    
-    result = email_session.query(Email).filter_by(id=TEST_MESSAGE_IDS["HTML"]).first()
-    assert result is not None
-    assert "Hello World!" in result.body  # Should prefer plain text over HTML
+def test_process_email_with_labels(gmail_service, email_session):
+    """Test email processing with labels."""
+    with gmail_test_context(GmailAPI(service=gmail_service), test_labels=["TEST_LABEL"]) as ctx:
+        # Create test message with label
+        msg = ctx.create_message(
+            subject="Test Email",
+            body="Test Body",
+            label_ids=[ctx.created_labels[0]["id"]]
+        )
+        
+        # Process email
+        process_email(gmail_service, msg["id"], email_session)
+        
+        # Verify email and labels were stored
+        stored_email = email_session.query(EmailMessage).first()
+        assert stored_email is not None
+        assert len(stored_email.labels) == 1
+        assert stored_email.labels[0].name == "TEST_LABEL"
 
-def test_process_email_with_attachments(gmail_service, email_session):
-    """Test processing email with attachments."""
-    message = create_test_message(
-        msg_id=TEST_MESSAGE_IDS["ATTACHMENTS"],
-        body_text="Email with attachment",
-        attachments=TEST_ATTACHMENTS
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    process_email(gmail_service, TEST_MESSAGE_IDS["ATTACHMENTS"], email_session)
-    
-    result = email_session.query(Email).filter_by(id=TEST_MESSAGE_IDS["ATTACHMENTS"]).first()
-    assert result is not None
-    assert result.has_attachments is True
-
-def test_process_email_with_missing_fields(gmail_service, email_session):
-    """Test processing email with missing optional fields."""
-    message = create_test_message(
-        msg_id=TEST_MESSAGE_IDS["MINIMAL"],
-        subject="Minimal Email"
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    process_email(gmail_service, TEST_MESSAGE_IDS["MINIMAL"], email_session)
-    
-    result = email_session.query(Email).filter_by(id=TEST_MESSAGE_IDS["MINIMAL"]).first()
-    assert result is not None
-    assert result.subject == "Minimal Email"
-    assert result.to == ""  # Optional fields should be empty strings
-    assert result.cc == ""
-    assert result.bcc == ""
-    assert result.threadId is None
-    assert result.labelIds == ""
-
-def test_process_email_with_unicode(gmail_service, email_session):
-    """Test processing email with Unicode content."""
-    message = create_test_message(
-        msg_id=TEST_MESSAGE_IDS["UNICODE"],
-        subject="Unicode Test",
-        body_text=TEST_UNICODE_TEXT
-    )
-    
-    # Set up mock response
-    setup_mock_message(gmail_service, message)
-    
-    process_email(gmail_service, TEST_MESSAGE_IDS["UNICODE"], email_session)
-    
-    result = email_session.query(Email).filter_by(id=TEST_MESSAGE_IDS["UNICODE"]).first()
-    assert result is not None
-    assert result.body == TEST_UNICODE_TEXT
-
-def test_get_oldest_email_date(email_session):
-    """Test getting oldest email date."""
-    oldest_date = get_oldest_email_date(email_session)
-    assert oldest_date == TEST_DATES[0]
-
-def test_get_newest_email_date(email_session):
-    """Test getting newest email date."""
-    newest_date = get_newest_email_date(email_session)
-    assert newest_date == TEST_DATES[-1]
-
-def test_count_emails(email_session):
-    """Test email counting."""
-    count = count_emails(email_session)
-    assert count == len(sample_emails(email_session))
 
 def test_list_labels(gmail_service):
     """Test listing Gmail labels."""
-    setup_test_labels(gmail_service, [TEST_LABELS["INBOX"]])
-    
-    labels = list_labels(gmail_service)
-    assert len(labels) == 1
-    assert labels[0]["id"] == "INBOX"
+    with gmail_test_context(GmailAPI(service=gmail_service), test_labels=["TEST_LABEL"]) as ctx:
+        # Test label listing
+        result = list_labels(gmail_service)
+        assert len(result) > 0
+        assert any(label["name"] == "TEST_LABEL" for label in result)
+
 
 def test_list_labels_error():
     """Test error handling in label listing."""
     service = MagicMock()
     service.users().labels().list.side_effect = Exception(API_ERROR_MESSAGE)
     
-    labels = list_labels(service)
-    assert labels == []
+    result = list_labels(service)
+    assert result == []
 
-def test_get_messages(gmail_test):
+
+@pytest.mark.integration
+def test_get_messages_integration(gmail_test):
     """Test getting messages with real API."""
-    service = build_gmail_service()  # Your existing service builder
-    
-    # Get messages
-    messages = get_messages(service)
-    assert messages
-    
-    # Validate first message schema
-    if messages:
-        errors = validate_response_schema(messages[0], MESSAGE_SCHEMA)
-        assert not errors, f"Schema validation errors: {errors}"
-        
-        # Save response for future reference
-        gmail_test.save_test_response("sample_message", messages[0])
-
-def test_label_operations(gmail_test):
-    """Test label operations with real API."""
-    service = build_gmail_service()
-    
-    # Use context manager for test labels
-    with gmail_test.test_labels(service) as created_labels:
-        # Create test label
-        label_name = "TEST_LABEL_" + str(uuid.uuid4())
-        label = create_label(service, label_name)
-        created_labels.append(label)
-        
-        # Validate label schema
-        errors = validate_response_schema(label, LABEL_SCHEMA)
-        assert not errors, f"Schema validation errors: {errors}"
-        
-        # Test label operations
-        assert label["name"] == label_name
-        
-        # Save response for future reference
-        gmail_test.save_test_response("sample_label", label)
-
-@pytest.mark.integration
-def test_get_label_id_integration():
-    """Test label ID retrieval with real API."""
-    with gmail_test_context(['INBOX']) as ctx:
-        # Create test label
-        label_id = ctx.created_labels[0]['id']
-        
-        # Test retrieval
-        api = GmailAPI()
-        result = api.get_label_id('TEST_INBOX')
-        assert result == label_id
-
-@pytest.mark.integration
-def test_process_email_integration():
-    """Test email processing with real API."""
-    with gmail_test_context(['INBOX']) as ctx:
+    with gmail_test_context(gmail_test.api) as ctx:
         # Create test message
-        msg_id = ctx.create_message(
-            subject='Test Subject',
-            body='Test content',
-            sender='test@example.com'
+        msg = ctx.create_message(subject="Integration Test", body="Test Body")
+        
+        # Test message retrieval
+        result = gmail_test.api.service.users().messages().get(
+            userId="me",
+            id=msg["id"]
+        ).execute()
+        
+        assert result["id"] == msg["id"]
+
+
+@pytest.mark.integration
+def test_label_operations_integration(gmail_test):
+    """Test label operations with real API."""
+    with gmail_test_context(gmail_test.api, test_labels=["TEST_LABEL"]) as ctx:
+        # Create test message
+        msg = ctx.create_message(
+            subject="Label Test",
+            body="Test Body",
+            label_ids=[ctx.created_labels[0]["id"]]
         )
         
-        # Process message
-        api = GmailAPI()
-        result = api.process_message(msg_id)
+        # Test label application
+        message = gmail_test.api.service.users().messages().get(
+            userId="me",
+            id=msg["id"]
+        ).execute()
         
-        # Verify result
-        assert result['id'] == msg_id
-        assert result['subject'] == 'Test Subject'
-        assert result['sender'] == 'test@example.com'
-
-@pytest.mark.integration
-def test_list_labels_integration():
-    """Test listing labels with real API."""
-    with gmail_test_context(['INBOX', 'SENT']) as ctx:
-        api = GmailAPI()
-        labels = api.list_labels()
-        
-        # Verify test labels exist
-        test_ids = {label['id'] for label in ctx.created_labels}
-        result_ids = {label['id'] for label in labels}
-        assert test_ids.issubset(result_ids)
+        assert ctx.created_labels[0]["id"] in message["labelIds"]

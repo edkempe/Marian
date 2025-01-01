@@ -1,6 +1,8 @@
 """Gmail API test utilities."""
 
 from unittest.mock import MagicMock
+from typing import Dict, List, Optional
+from googleapiclient.errors import HttpError
 
 def create_mock_gmail_service():
     """Create a mock Gmail service with common setup.
@@ -24,58 +26,40 @@ def create_mock_gmail_service():
     
     return service
 
-
-def setup_mock_messages(service, messages_data):
+def setup_mock_messages(service: MagicMock, messages_data: List[Dict]):
     """Set up mock messages response with pagination handling.
     
     Args:
         service: Mock Gmail service
         messages_data: List of message dictionaries to return
     """
-    list_response = {'messages': messages_data}
-    service.users().messages().list().execute.return_value = list_response
-    
-    # Mock list_next to return None (no more pages)
-    service.users().messages().list_next.return_value = None
+    messages = service.users().messages.return_value
+    messages.list().execute.return_value = {
+        'messages': messages_data,
+        'nextPageToken': None
+    }
 
-
-def setup_mock_labels(service, labels_data):
+def setup_mock_labels(service: MagicMock, labels_data: List[Dict]):
     """Set up mock labels response.
     
     Args:
         service: Mock Gmail service
         labels_data: List of label dictionaries to return
     """
-    list_response = {'labels': labels_data}
-    service.users().labels().list().execute.return_value = list_response
+    labels = service.users().labels.return_value
+    labels.list().execute.return_value = {'labels': labels_data}
 
-
-def setup_mock_message(service, message_data):
+def setup_mock_message(service: MagicMock, message_data: Dict):
     """Set up mock message get response.
     
     Args:
         service: Mock Gmail service
         message_data: Message data to return
     """
-    service.users().messages().get().execute.return_value = message_data
+    messages = service.users().messages.return_value
+    messages.get().execute.return_value = message_data
 
-
-"""Gmail test utilities."""
-
-import json
-import os
-from base64 import urlsafe_b64encode
-from email.mime.text import MIMEText
-from typing import List, Optional
-
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-from shared_lib.constants import TESTING_CONFIG
-from shared_lib.gmail_lib import GmailAPI
-
-
-def create_test_label(service, name: str):
+def create_test_label(service: MagicMock, name: str) -> Dict:
     """Create a test label.
     
     Args:
@@ -88,24 +72,20 @@ def create_test_label(service, name: str):
     try:
         label = {
             'name': name,
-            'messageListVisibility': 'show',
-            'labelListVisibility': 'labelShow'
+            'labelListVisibility': 'labelShow',
+            'messageListVisibility': 'show'
         }
-        result = service.users().labels().create(
-            userId='me',
-            body=label
-        ).execute()
-        return result
+        created = service.users().labels().create(userId='me', body=label).execute()
+        return created
     except HttpError as error:
         print(f'An error occurred: {error}')
         return None
 
-
-def create_test_email(service,
+def create_test_email(service: MagicMock,
                      subject: str = "Test Email",
                      body: str = "Test Body",
                      sender: str = "test@example.com",
-                     label_ids: List[str] = None):
+                     label_ids: Optional[List[str]] = None) -> Dict:
     """Create a test email message.
     
     Args:
@@ -118,34 +98,21 @@ def create_test_email(service,
     Returns:
         Message info dictionary
     """
-    # Create message
-    message = MIMEText(body)
-    message['to'] = "me"
-    message['from'] = sender
-    message['subject'] = subject
-    
-    # Encode message
-    raw = urlsafe_b64encode(message.as_bytes())
-    raw = raw.decode()
-    body = {'raw': raw}
-    
     try:
-        # Create message
-        message = service.users().messages().insert(
+        message = MIMEMultipart()
+        message['to'] = "user@example.com"
+        message['from'] = sender
+        message['subject'] = subject
+
+        msg = MIMEText(body)
+        message.attach(msg)
+        
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+        
+        return service.users().messages().send(
             userId='me',
-            body=body
+            body={'raw': raw, 'labelIds': label_ids or []}
         ).execute()
-        
-        # Apply labels if specified
-        if label_ids:
-            modify_body = {'addLabelIds': label_ids}
-            message = service.users().messages().modify(
-                userId='me',
-                id=message['id'],
-                body=modify_body
-            ).execute()
-        
-        return message
     except HttpError as error:
         print(f'An error occurred: {error}')
         return None

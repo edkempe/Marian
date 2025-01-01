@@ -27,7 +27,7 @@ from shared_lib.schema_constants import COLUMN_SIZES
 from shared_lib.exceptions import APIError, AuthenticationError
 from shared_lib.token_manager import TokenManager
 from .api_version_utils import verify_gmail_version, check_api_changelog
-from .api_monitor import track_api_call, monitor
+from .api_monitor import track_api_call
 
 # Constants
 SCOPES = [
@@ -168,10 +168,20 @@ class GmailAPI:
 
     @track_api_call('gmail')
     def list_labels(self) -> List[Dict]:
-        """List Gmail labels."""
-        results = self.service.users().labels().list(userId="me").execute()
-        labels = results.get("labels", [])
-        return [{"id": label["id"], "name": label["name"]} for label in labels]
+        """List all labels in the user's mailbox.
+        
+        Returns:
+            list: List of label dictionaries, or empty list if error
+            
+        Raises:
+            APIError: If Gmail API request fails
+        """
+        try:
+            results = self.service.users().labels().list(userId='me').execute()
+            return results.get('labels', [])
+        except HttpError as error:
+            logger.error(f'Failed to list labels: {error}')
+            raise APIError(f'Failed to list labels: {error}')
 
     def setup_label_database(self):
         """Create and setup the labels database"""
@@ -336,3 +346,35 @@ class GmailAPI:
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             return False
+
+    def get_oldest_email_date(self) -> Optional[datetime]:
+        """Get the date of the oldest email in the database.
+        
+        Returns:
+            datetime: Date of oldest email, or None if no emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            result = session.query(EmailMessage.date).order_by(EmailMessage.date.asc()).first()
+            return result[0] if result else None
+
+    def get_newest_email_date(self) -> Optional[datetime]:
+        """Get the date of the newest email in the database.
+        
+        Returns:
+            datetime: Date of newest email, or None if no emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            result = session.query(EmailMessage.date).order_by(EmailMessage.date.desc()).first()
+            return result[0] if result else None
+
+    def count_emails(self) -> int:
+        """Get total number of emails in the database.
+        
+        Returns:
+            int: Total number of emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            return session.query(EmailMessage).count()
