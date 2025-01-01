@@ -8,7 +8,8 @@ from models.base import Base
 from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from models.catalog import CatalogEntry, CatalogItem, Tag
-from tests.factories import EmailFactory, EmailAnalysisFactory, CatalogEntryFactory
+from models.gmail_label import GmailLabel, email_labels
+from tests.factories import EmailFactory, EmailAnalysisFactory, CatalogEntryFactory, GmailLabelFactory
 from datetime import datetime
 
 
@@ -24,8 +25,7 @@ def test_engine():
 @pytest.fixture(scope="function")
 def test_session(test_engine):
     """Create test database session."""
-    Session = Session(bind=test_engine)
-    session = Session()
+    session = Session(bind=test_engine)
     yield session
     session.close()
 
@@ -43,6 +43,8 @@ def test_create_tables(test_engine):
     assert "catalog_items" in table_names
     assert "tags" in table_names
     assert "catalog_tags" in table_names
+    assert "gmail_labels" in table_names
+    assert "email_labels" in table_names
 
 
 def test_email_schema(test_session):
@@ -150,24 +152,37 @@ def test_relationships(test_session):
     # Create test data
     email = EmailFactory()
     analysis = EmailAnalysisFactory(email=email)
-    catalog_entry = CatalogEntryFactory(email=email)
+    catalog = CatalogEntryFactory()
+    label = GmailLabelFactory()
     
-    test_session.add(email)
-    test_session.add(analysis)
-    test_session.add(catalog_entry)
+    # Set up relationships
+    email.analysis = analysis
+    email.catalog_entry = catalog
+    email.labels.append(label)
+    
+    test_session.add_all([email, analysis, catalog, label])
     test_session.commit()
     
-    # Verify relationships
-    stored_email = test_session.query(EmailMessage).get(email.id)
-    assert stored_email.analysis is not None
-    assert stored_email.analysis.id == analysis.id
-    assert len(stored_email.catalog_entries) == 1
-    assert stored_email.catalog_entries[0].id == catalog_entry.id
+    # Test email -> analysis relationship
+    saved_email = test_session.query(EmailMessage).first()
+    assert saved_email.analysis is not None
+    assert saved_email.analysis.id == analysis.id
     
-    stored_analysis = test_session.query(EmailAnalysis).get(analysis.id)
-    assert stored_analysis.email is not None
-    assert stored_analysis.email.id == email.id
+    # Test email -> catalog relationship
+    assert saved_email.catalog_entry is not None
+    assert saved_email.catalog_entry.id == catalog.id
     
-    stored_entry = test_session.query(CatalogEntry).get(catalog_entry.id)
-    assert stored_entry.email is not None
-    assert stored_entry.email.id == email.id
+    # Test email -> label relationship
+    assert len(saved_email.labels) == 1
+    assert saved_email.labels[0].id == label.id
+    
+    # Test reverse relationships
+    saved_analysis = test_session.query(EmailAnalysis).first()
+    assert saved_analysis.email.id == email.id
+    
+    saved_catalog = test_session.query(CatalogEntry).first()
+    assert saved_catalog.email.id == email.id
+    
+    saved_label = test_session.query(GmailLabel).first()
+    assert len(saved_label.emails) == 1
+    assert saved_label.emails[0].id == email.id

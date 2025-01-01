@@ -1,0 +1,112 @@
+openapi: 3.0.0
+info:
+  title: Anthropic API - Analysis Resource
+  version: v1
+  description: Specification for email analysis results from Claude
+  
+components:
+  schemas:
+    EmailAnalysis:
+      type: object
+      required:
+        - id
+        - email_id
+        - summary
+      properties:
+        id:
+          type: string
+          description: The identifier of the analysis
+          pattern: "^analysis_[A-Za-z0-9]+$"
+          maxLength: 100
+        email_id:
+          type: string
+          description: Reference to the analyzed email
+          maxLength: 100
+        summary:
+          type: string
+          description: Brief summary of the email content
+          maxLength: 1000
+        sentiment:
+          type: string
+          description: Detected sentiment of the email
+          enum:
+            - positive
+            - negative
+            - neutral
+            - mixed
+          nullable: true
+        categories:
+          type: array
+          description: Detected categories for the email
+          items:
+            type: string
+            maxLength: 50
+          nullable: true
+        key_points:
+          type: array
+          description: Main points extracted from the email
+          items:
+            type: string
+            maxLength: 200
+          nullable: true
+        action_items:
+          type: array
+          description: Action items identified in the email
+          items:
+            $ref: '#/components/schemas/ActionItem'
+          nullable: true
+        priority_score:
+          type: integer
+          description: Computed priority score (1-5)
+          minimum: 1
+          maximum: 5
+          nullable: true
+        confidence_score:
+          type: number
+          description: Confidence in the analysis (0.0-1.0)
+          minimum: 0
+          maximum: 1
+          nullable: true
+        metadata:
+          type: object
+          description: Additional analysis metadata
+          nullable: true
+        model_version:
+          type: string
+          description: Version of Claude used for analysis
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          description: When the analysis was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the analysis was last updated
+
+    ActionItem:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          description: Description of the action item
+          maxLength: 500
+        due_date:
+          type: string
+          format: date-time
+          description: When the action should be completed
+          nullable: true
+        priority:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+          nullable: true
+        assignee:
+          type: string
+          description: Person assigned to the action
+          maxLength: 100
+          nullable: true

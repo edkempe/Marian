@@ -29,41 +29,47 @@ def sample_emails():
         EmailMessage(
             id="msg1",
             threadId="thread1",
-            subject="Test Email 1",
-            body="This is a test email about Python programming.",
-            from_="sender1@example.com",
-            to="recipient1@example.com",
-            received_date=datetime.now(timezone.utc),
-            cc="cc1@example.com",
-            bcc="bcc1@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg1",
-                    "threadId": "thread1",
-                    "labelIds": ["INBOX", "UNREAD"],
-                    "snippet": "This is a test email...",
+            labelIds=["INBOX", "UNREAD"],
+            snippet="This is a test email...",
+            historyId="12345",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=1024,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender1@example.com"},
+                    {"name": "To", "value": "recipient1@example.com"},
+                    {"name": "Subject", "value": "Test Email 1"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is a test email about Python programming."
                 }
-            ),
+            }
         ),
         EmailMessage(
             id="msg2",
             threadId="thread2",
-            subject="Test Email 2",
-            body="Another test email about JavaScript development.",
-            from_="sender2@example.com",
-            to="recipient2@example.com",
-            received_date=datetime.now(timezone.utc),
-            cc="cc2@example.com",
-            bcc="bcc2@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg2",
-                    "threadId": "thread2",
-                    "labelIds": ["INBOX", "IMPORTANT"],
-                    "snippet": "Another test email...",
+            labelIds=["INBOX", "IMPORTANT"],
+            snippet="Another test email...",
+            historyId="12346",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=2048,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender2@example.com"},
+                    {"name": "To", "value": "recipient2@example.com"},
+                    {"name": "Subject", "value": "Test Email 2"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is another test email about data validation."
                 }
-            ),
-        ),
+            }
+        )
     ]
 
 
@@ -145,21 +151,45 @@ def sample_analysis():
     """Create sample email analysis results."""
     return [
         EmailAnalysis(
+            id="analysis_abc123",
             email_id="msg1",
-            sentiment_score=0.8,
-            priority_score=0.6,
-            topic="Programming",
-            summary="Discussion about Python programming",
-            created_at=datetime.now(timezone.utc),
+            summary="Test email about Python programming",
+            sentiment="positive",
+            categories=["programming", "education"],
+            key_points=["Discusses Python", "Related to programming"],
+            action_items=[{
+                "description": "Review Python code",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "high"
+            }],
+            priority_score=4,
+            confidence_score=0.95,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 1.23
+            },
+            model_version="claude-3-opus-20240229"
         ),
         EmailAnalysis(
+            id="analysis_def456",
             email_id="msg2",
-            sentiment_score=0.7,
-            priority_score=0.4,
-            topic="Development",
-            summary="Discussion about JavaScript development",
-            created_at=datetime.now(timezone.utc),
-        ),
+            summary="Test email about data validation",
+            sentiment="neutral",
+            categories=["testing", "validation"],
+            key_points=["Discusses testing", "Covers data validation"],
+            action_items=[{
+                "description": "Update test cases",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "medium"
+            }],
+            priority_score=3,
+            confidence_score=0.85,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 0.95
+            },
+            model_version="claude-3-opus-20240229"
+        )
     ]
 
 

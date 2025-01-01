@@ -1,0 +1,116 @@
+openapi: 3.0.0
+info:
+  title: Gmail API - Message Resource
+  version: v1
+  description: Official Gmail API Message resource specification
+  
+components:
+  schemas:
+    Message:
+      type: object
+      required:
+        - id
+        - threadId
+      properties:
+        id:
+          type: string
+          description: The immutable ID of the message
+          maxLength: 100
+        threadId:
+          type: string
+          description: The ID of the thread the message belongs to
+          maxLength: 100
+        labelIds:
+          type: array
+          description: List of IDs of labels applied to this message
+          items:
+            type: string
+            maxLength: 100
+        snippet:
+          type: string
+          description: A short part of the message text
+          maxLength: 1000
+          nullable: true
+        historyId:
+          type: string
+          description: The ID of the last history record that modified this message
+          maxLength: 20
+        internalDate:
+          type: string
+          description: The internal message creation timestamp
+          format: date-time
+        sizeEstimate:
+          type: integer
+          description: Estimated size in bytes
+        raw:
+          type: string
+          description: MIME message content if requested
+          nullable: true
+        payload:
+          type: object
+          description: The parsed email structure
+          properties:
+            partId:
+              type: string
+              nullable: true
+            mimeType:
+              type: string
+            filename:
+              type: string
+              nullable: true
+            headers:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            body:
+              type: object
+              properties:
+                attachmentId:
+                  type: string
+                  nullable: true
+                size:
+                  type: integer
+                data:
+                  type: string
+                  nullable: true
+            parts:
+              type: array
+              items:
+                $ref: '#/components/schemas/MessagePart'
+              nullable: true
+    
+    MessagePart:
+      type: object
+      properties:
+        partId:
+          type: string
+        mimeType:
+          type: string
+        filename:
+          type: string
+          nullable: true
+        headers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+        body:
+          type: object
+          properties:
+            attachmentId:
+              type: string
+              nullable: true
+            size:
+              type: integer
+            data:
+              type: string
+              nullable: true

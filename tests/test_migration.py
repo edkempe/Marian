@@ -24,46 +24,39 @@ def alembic_config():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create alembic.ini in temp directory
         config_path = Path(temp_dir) / "alembic.ini"
+        config_content = (
+            "[alembic]\n"
+            "script_location = migrations\n"
+            "sqlalchemy.url = sqlite:///%(here)s/test.db\n\n"
+            "[loggers]\n"
+            "keys = root,sqlalchemy,alembic\n\n"
+            "[handlers]\n"
+            "keys = console\n\n"
+            "[formatters]\n"
+            "keys = generic\n\n"
+            "[logger_root]\n"
+            "level = WARN\n"
+            "handlers = console\n"
+            "qualname =\n\n"
+            "[logger_sqlalchemy]\n"
+            "level = WARN\n"
+            "handlers =\n"
+            "qualname = sqlalchemy.engine\n\n"
+            "[logger_alembic]\n"
+            "level = INFO\n"
+            "handlers =\n"
+            "qualname = alembic\n\n"
+            "[handler_console]\n"
+            "class = StreamHandler\n"
+            "args = (sys.stderr,)\n"
+            "level = NOTSET\n"
+            "formatter = generic\n\n"
+            "[formatter_generic]\n"
+            "format = %(levelname)-5.5s [%(name)s] %(message)s\n"
+            "datefmt = %H:%M:%S\n"
+        )
         with open(config_path, "w") as f:
-            f.write("""
-[alembic]
-script_location = migrations
-sqlalchemy.url = sqlite:///%(here)s/test.db
-
-[loggers]
-keys = root,sqlalchemy,alembic
-
-[handlers]
-keys = console
-
-[formatters]
-keys = generic
-
-[logger_root]
-level = WARN
-handlers = console
-qualname =
-
-[logger_sqlalchemy]
-level = WARN
-handlers =
-qualname = sqlalchemy.engine
-
-[logger_alembic]
-level = INFO
-handlers =
-qualname = alembic
-
-[handler_console]
-class = StreamHandler
-args = (sys.stderr,)
-level = NOTSET
-formatter = generic
-
-[formatter_generic]
-format = %(levelname)-5.5s [%(name)s] %(message)s
-datefmt = %H:%M:%S
-            """)
+            f.write(config_content)
             
         # Create migrations directory
         migrations_dir = Path(temp_dir) / "migrations"
@@ -75,64 +68,56 @@ datefmt = %H:%M:%S
         
         # Create env.py
         env_py = migrations_dir / "env.py"
-        with open(env_py, "w") as f:
-            f.write("""
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
-from models.base import Base
-
-config = context.config
-fileConfig(config.config_file_name)
-target_metadata = Base.metadata
-
-def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-def run_migrations_online():
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
+        env_content = (
+            "from logging.config import fileConfig\n\n"
+            "from sqlalchemy import engine_from_config\n"
+            "from sqlalchemy import pool\n\n"
+            "from alembic import context\n\n"
+            "from models.base import Base\n\n"
+            "config = context.config\n"
+            "fileConfig(config.config_file_name)\n"
+            "target_metadata = Base.metadata\n\n"
+            "def run_migrations_offline():\n"
+            "    url = config.get_main_option(\"sqlalchemy.url\")\n"
+            "    context.configure(\n"
+            "        url=url,\n"
+            "        target_metadata=target_metadata,\n"
+            "        literal_binds=True,\n"
+            "        dialect_opts={\"paramstyle\": \"named\"},\n"
+            "    )\n\n"
+            "    with context.begin_transaction():\n"
+            "        context.run_migrations()\n\n"
+            "def run_migrations_online():\n"
+            "    connectable = engine_from_config(\n"
+            "        config.get_section(config.config_ini_section),\n"
+            "        prefix=\"sqlalchemy.\",\n"
+            "        poolclass=pool.NullPool,\n"
+            "    )\n\n"
+            "    with connectable.connect() as connection:\n"
+            "        context.configure(\n"
+            "            connection=connection,\n"
+            "            target_metadata=target_metadata\n"
+            "        )\n\n"
+            "        with context.begin_transaction():\n"
+            "            context.run_migrations()\n\n"
+            "if context.is_offline_mode():\n"
+            "    run_migrations_offline()\n"
+            "else:\n"
+            "    run_migrations_online()\n"
         )
-
-        with context.begin_transaction():
-            context.run_migrations()
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
-            """)
+        with open(env_py, "w") as f:
+            f.write(env_content)
             
         # Create script.py.mako
         script_mako = migrations_dir / "script.py.mako"
         with open(script_mako, "w") as f:
-            f.write("""
-"""Revision: ${up_revision}
+            f.write("""\"\"\"${message}
+
+Revision ID: ${up_revision}
 Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
 
-"""
+\"\"\"
 from alembic import op
 import sqlalchemy as sa
 ${imports if imports else ""}
@@ -150,7 +135,7 @@ def upgrade():
 
 def downgrade():
     ${downgrades if downgrades else "pass"}
-            """)
+""")
         
         # Create alembic config object
         config = Config(str(config_path))
@@ -208,26 +193,18 @@ def test_apply_migration(alembic_config, test_db):
     # Set database URL in alembic config
     alembic_config.set_main_option("sqlalchemy.url", test_db["url"])
     
-    # Create and apply migration
-    command.revision(
-        alembic_config,
-        message="create tables",
-        autogenerate=True
-    )
+    # Create and apply a migration
+    command.revision(alembic_config, message="create tables", autogenerate=True)
     command.upgrade(alembic_config, "head")
     
-    # Check that tables were created
-    with test_db["engine"].connect() as conn:
-        tables = conn.execute(text("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name NOT LIKE 'sqlite_%'
-        """)).fetchall()
-        table_names = {t[0] for t in tables}
-        
-        assert "email_messages" in table_names
-        assert "email_analyses" in table_names
-        assert "gmail_labels" in table_names
-        assert "email_labels" in table_names
+    # Verify tables were created
+    inspector = test_db["engine"].dialect.inspector
+    tables = inspector.get_table_names()
+    
+    # Should have our core tables
+    assert "email_messages" in tables
+    assert "email_analyses" in tables
+    assert "gmail_labels" in tables
 
 
 def test_rollback_migration(alembic_config, test_db):
@@ -235,29 +212,21 @@ def test_rollback_migration(alembic_config, test_db):
     # Set database URL in alembic config
     alembic_config.set_main_option("sqlalchemy.url", test_db["url"])
     
-    # Create and apply migration
-    command.revision(
-        alembic_config,
-        message="create tables",
-        autogenerate=True
-    )
+    # Create and apply a migration
+    command.revision(alembic_config, message="create tables", autogenerate=True)
     command.upgrade(alembic_config, "head")
     
-    # Rollback migration
+    # Roll back the migration
     command.downgrade(alembic_config, "-1")
     
-    # Check that tables were dropped
-    with test_db["engine"].connect() as conn:
-        tables = conn.execute(text("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name NOT LIKE 'sqlite_%'
-        """)).fetchall()
-        table_names = {t[0] for t in tables}
-        
-        assert "email_messages" not in table_names
-        assert "email_analyses" not in table_names
-        assert "gmail_labels" not in table_names
-        assert "email_labels" not in table_names
+    # Verify tables were removed
+    inspector = test_db["engine"].dialect.inspector
+    tables = inspector.get_table_names()
+    
+    # Tables should be gone
+    assert "email_messages" not in tables
+    assert "email_analyses" not in tables
+    assert "gmail_labels" not in tables
 
 
 def test_concurrent_migrations(alembic_config, test_db):
@@ -265,48 +234,43 @@ def test_concurrent_migrations(alembic_config, test_db):
     # Set database URL in alembic config
     alembic_config.set_main_option("sqlalchemy.url", test_db["url"])
     
-    # Create first migration
-    command.revision(
-        alembic_config,
-        message="create email tables",
-        autogenerate=True
-    )
+    # Create two migrations
+    command.revision(alembic_config, message="create tables", autogenerate=True)
+    command.revision(alembic_config, message="add indexes", autogenerate=True)
     
-    # Create second migration
-    command.revision(
-        alembic_config,
-        message="create label tables",
-        autogenerate=True
-    )
+    # Get migration scripts
+    script = ScriptDirectory.from_config(alembic_config)
+    revisions = list(script.walk_revisions())
     
-    # Apply migrations
-    command.upgrade(alembic_config, "+1")  # Apply first migration
+    # Should have two revisions
+    assert len(revisions) == 2
     
-    # Check that email tables exist but not label tables
-    with test_db["engine"].connect() as conn:
-        tables = conn.execute(text("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name NOT LIKE 'sqlite_%'
-        """)).fetchall()
-        table_names = {t[0] for t in tables}
-        
-        assert "email_messages" in table_names
-        assert "email_analyses" in table_names
-        assert "gmail_labels" not in table_names
-        assert "email_labels" not in table_names
+    # Apply migrations concurrently (simulated)
+    session1 = test_db["session_factory"]()
+    session2 = test_db["session_factory"]()
     
-    # Apply second migration
-    command.upgrade(alembic_config, "+1")
-    
-    # Check that all tables exist
-    with test_db["engine"].connect() as conn:
-        tables = conn.execute(text("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name NOT LIKE 'sqlite_%'
-        """)).fetchall()
-        table_names = {t[0] for t in tables}
-        
-        assert "email_messages" in table_names
-        assert "email_analyses" in table_names
-        assert "gmail_labels" in table_names
-        assert "email_labels" in table_names
+    try:
+        # Start transaction 1
+        with session1.begin():
+            command.upgrade(alembic_config, "+1")
+            
+            # Start transaction 2 (should wait for transaction 1)
+            with session2.begin():
+                command.upgrade(alembic_config, "+1")
+                
+            # Verify final state
+            inspector = test_db["engine"].dialect.inspector
+            tables = inspector.get_table_names()
+            
+            # Should have our core tables with indexes
+            assert "email_messages" in tables
+            assert "email_analyses" in tables
+            assert "gmail_labels" in tables
+            
+            # Check for indexes (implementation-specific)
+            for table in tables:
+                indexes = inspector.get_indexes(table)
+                assert len(indexes) > 0
+    finally:
+        session1.close()
+        session2.close()

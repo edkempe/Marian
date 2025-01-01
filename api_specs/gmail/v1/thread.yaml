@@ -1,0 +1,32 @@
+openapi: 3.0.0
+info:
+  title: Gmail API - Thread Resource
+  version: v1
+  description: Official Gmail API Thread resource specification
+  
+components:
+  schemas:
+    Thread:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The unique ID of the thread
+          maxLength: 100
+        snippet:
+          type: string
+          description: A short snippet from the thread
+          maxLength: 1000
+          nullable: true
+        historyId:
+          type: string
+          description: The ID of the last history record that modified this thread
+          maxLength: 20
+        messages:
+          type: array
+          description: The list of messages in the thread
+          items:
+            $ref: 'message.yaml#/components/schemas/Message'
+          nullable: true
