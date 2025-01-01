@@ -22,6 +22,22 @@
    - Dependencies: None
    - ADR: [ADR-0009](adr/0009-constants-consolidation.md)
 
+2. [ ] **Implement ADR-0026: Code Organization Restructure**
+   - Status: Proposed
+   - Priority: High
+   - Description: Complete code reorganization following clean architecture principles
+   - Tasks:
+     1. Phase 1: Preparation (Week 1)
+     2. Phase 2: Configuration Migration (Week 1)
+     3. Phase 3: Core Components (Week 2)
+     4. Phase 4: Utils and Tools (Week 2)
+     5. Phase 5: Scripts and Entry Points (Week 3)
+     6. Phase 6: Testing (Week 3)
+     7. Phase 7: Documentation and Cleanup (Week 4)
+   - Dependencies: None
+   - ADR: [ADR-0026](adr/0026-code-organization-restructure.md)
+   - Migration Plan: [Code Reorganization Plan](migration/code-reorganization-plan.md)
+
 ### Documentation and Standards
 1. [ ] Update component-specific README files
    - Status: Not Started
@@ -1288,3 +1304,24 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
 - [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0006)
 
 {{ ... }}
+
+### Documentation Restructuring
+**Status**: Planned
+**Priority**: Medium
+**Workstream**: Program Management
+**Description**: Restructure documentation to focus on essential needs for solo developer with AI copilot.
+
+#### Tasks
+1. Create minimal directory structure
+2. Archive unnecessary documentation
+3. Update ADRs to minimal format
+4. Clean up session logs
+
+#### Dependencies
+- None
+
+#### ADR
+- [ADR-0025](adr/0025-documentation-industry-alignment.md)
+
+#### Notes
+- See session_log_2025-01-01.md for detailed task list

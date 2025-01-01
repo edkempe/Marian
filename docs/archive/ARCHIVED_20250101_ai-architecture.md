@@ -1,4 +1,11 @@
-# Jexi AI Architecture
+# [ARCHIVED] Jexi AI Architecture
+
+> **ARCHIVED**: This document has been converted into Architecture Decision Records (ADRs). Please refer to:
+> - [ADR-0020](../adr/0020-ai-system-architecture.md): AI System Architecture
+> - [ADR-0021](../adr/0021-knowledge-management-architecture.md): Knowledge Management
+> - [ADR-0022](../adr/0022-development-runtime-separation.md): Development vs Runtime AI
+>
+> This file is kept for historical reference only. All future updates should be made to the corresponding ADRs.
 
 This document explains the AI systems in the Jexi project and establishes the documentation hierarchy for AI-related content.
 

@@ -1,4 +1,10 @@
-# Database Design Documentation
+# [ARCHIVED] Database Design Documentation
+
+> **ARCHIVED**: This document has been converted into Architecture Decision Records (ADRs). Please refer to:
+> - [ADR-0019](../adr/0019-api-first-schema-design.md): API-First Schema Design
+> - [ADR-0004](../adr/0004-configuration-based-schema-definitions.md): Schema Configuration
+>
+> This file is kept for historical reference only. All future updates should be made to the corresponding ADRs.
 
 **Version:** 1.0.0
 **Status:** Authoritative

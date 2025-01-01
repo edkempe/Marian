@@ -1,10 +1,10 @@
 # ADR 0000: Foundational Subsystem Architecture - Jexi as a Hub-and-Spoke System
 
 ## Status
-Proposed
+Accepted
 
 ## Context
-This is a foundational architectural decision that defines how Jexi and its subsystems interact. All other architectural decisions (ADRs 0001-NNNN) build upon this foundation.
+This is a foundational architectural decision that defines how Jexi and its subsystems interact. All other architectural decisions build upon this foundation.
 
 As Jexi grows in capabilities, we need a scalable architecture that allows for specialized subsystems while maintaining a unified user experience. Users should be able to interact with specialized subsystems either directly or through Jexi as a central coordinator.
 
@@ -140,7 +140,41 @@ We will implement a hub-and-spoke architecture where:
    - Audit logging
    - Privacy protection
 
+## Technical Details
+
+### Communication Protocol
+- RESTful APIs for synchronous operations
+- Message queues for asynchronous operations
+- WebSocket for real-time updates
+- See [ADR-0006](0006-subsystem-interface-protocol.md) for details
+
+### Security
+- Centralized authentication through Jexi
+- Per-subsystem authorization
+- See [ADR-0002](0002-minimal-security-testing.md) for security testing approach
+
+### Data Management
+- Each subsystem manages its own data
+- Jexi maintains minimal coordination data
+- See [ADR-0003](0003-test-database-strategy.md) for database strategy
+
+### AI Components
+- Separate runtime and development AI systems
+- Library-based knowledge management
+- See [ADR-0020](0020-ai-system-architecture.md) for AI architecture
+- See [ADR-0021](0021-knowledge-management-architecture.md) for knowledge management
+- See [ADR-0022](0022-development-runtime-separation.md) for system separation
+
+## Related Decisions
+- [ADR-0001](0001-layered-architecture.md): Implements the internal architecture of each component
+- [ADR-0006](0006-subsystem-interface-protocol.md): Defines how components communicate
+- [ADR-0007](0007-external-tool-integration.md): Specifies how external tools integrate
+- [ADR-0020](0020-ai-system-architecture.md): Defines AI system architecture
+
 ## References
-- ADR 0001: [Initial Project Structure]
-- [Catalog System Documentation]
-- [API Standards]
+- [Microservices Architecture](https://microservices.io/patterns/microservices.html)
+- [API Gateway Pattern](https://microservices.io/patterns/apigateway.html)
+- [Domain-Driven Design](https://domainlanguage.com/ddd/)
+- [ADR-0020](0020-ai-system-architecture.md): AI System Architecture
+- [ADR-0021](0021-knowledge-management-architecture.md): Knowledge Management Architecture
+- [ADR-0022](0022-development-runtime-separation.md): Development Runtime Separation

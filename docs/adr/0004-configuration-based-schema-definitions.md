@@ -1,6 +1,7 @@
 # 4. Configuration-Based Schema Definitions
 
-Date: 2024-12-29
+Date: 2024-12-29  
+Updated: 2025-01-01
 
 ## Status
 
@@ -15,16 +16,35 @@ We had schema-related constants (column sizes, default values, validation rules)
 3. Follow Infrastructure as Code (IaC) principles
 4. Be easily maintainable and extensible
 5. Maintain proper separation of concerns
+6. Respect our layered architecture principles:
+   - Shared library (lower layer) cannot import from models (higher layer)
+   - Models can import from shared library
+7. Avoid circular dependencies while maintaining a single source of truth
 
 ## Decision
 
 We decided to implement a configuration-based approach using YAML files for schema definitions:
 
-1. Create `config/schema.yaml` as the primary schema configuration file
-2. Support environment-specific overrides (e.g., `schema.development.yaml`)
-3. Use Pydantic for configuration validation and type safety
-4. Implement a configuration loader in shared_lib
-5. Update models to use the configuration system
+1. **Configuration Source**
+   - Create `config/schema.yaml` as the primary schema configuration file
+   - Support environment-specific overrides (e.g., `schema.development.yaml`)
+   - Use Pydantic for configuration validation and type safety
+
+2. **Configuration Loading**
+   - Implement a configuration loader in `shared_lib/config_loader.py`
+   - Support environment-specific configuration loading
+   - Provide validation and type safety through Pydantic models
+
+3. **Schema Constants**
+   - Generate schema constants in `shared_lib/schema_constants.py`
+   - Constants are generated from the YAML configuration
+   - Models layer imports these constants from the shared library
+   - Remove duplicated constants from the models layer
+
+4. **Code Generation**
+   - Implement tools to generate constants from YAML
+   - Generated code includes type hints and documentation
+   - Mark generated files to prevent manual edits
 
 Example configuration:
 ```yaml
@@ -33,10 +53,17 @@ email:
     subject:
       size: 500
       type: string
-      description: "Maximum size for email subject"
+      description: "Email subject line"
+    from_address:
+      size: 255
+      type: string
+      description: "Sender email address"
   defaults:
     subject: ""
     has_attachments: false
+  validation:
+    max_subject_length: 500
+    required_fields: ["subject", "from_address"]
 ```
 
 Example model usage:
@@ -130,6 +157,16 @@ Configuration flows down this hierarchy, with each level providing defaults that
    - Can extend validation rules
    - Documentation built into configuration
 
+5. **Proper Layering**:
+   - Respects architectural boundaries
+   - No circular dependencies
+
+6. **No Duplication**:
+   - Constants are generated, not duplicated
+
+7. **Environment Support**:
+   - Can have different settings per environment
+
 ### Negative
 
 1. **Additional Complexity**:
@@ -142,11 +179,44 @@ Configuration flows down this hierarchy, with each level providing defaults that
    - Need to maintain configuration documentation
    - May need to debug configuration issues
 
+3. **Build Step**:
+   - Need to regenerate constants when config changes
+
+4. **Initial Setup**:
+   - More complex than simple constants
+
 ### Neutral
 
-1. Need to decide on configuration file locations and naming conventions
-2. May need to implement configuration caching for performance
-3. Must manage configuration file versioning
+1. **Version Control**:
+   - Configuration files need to be committed
+   - Generated files need to be committed
+
+2. **Review Process**:
+   - Need to review both YAML and generated code
+
+3. **Testing**:
+   - Need to test configuration and generated code
+
+4. **Need to decide on configuration file locations and naming conventions**
+5. **May need to implement configuration caching for performance**
+6. **Must manage configuration file versioning**
+
+## Implementation
+
+1. **Phase 1: Core System** (Completed)
+   - Create schema.yaml template
+   - Implement config loading with Pydantic
+   - Set up basic code generation
+
+2. **Phase 2: Tooling** (In Progress)
+   - Create code generation scripts
+   - Add validation tools
+   - Implement CI checks
+
+3. **Phase 3: Migration** (Planned)
+   - Update existing models
+   - Remove duplicate constants
+   - Add documentation
 
 ## Notes
 
@@ -161,3 +231,5 @@ Configuration flows down this hierarchy, with each level providing defaults that
 - [12-Factor App: Config](https://12factor.net/config)
 - [Pydantic Documentation](https://pydantic-docs.helpmanual.io/)
 - [YAML Specification](https://yaml.org/spec/1.2/spec.html)
+- [ADR-0001: Layered Architecture](0001-layered-architecture.md)
+- [ADR-0003: Test Database Strategy](0003-test-database-strategy.md)
