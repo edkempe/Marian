@@ -8,7 +8,18 @@ version = "0.1.0"
 description = "Email analysis and management system"
 authors = []
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [
+    {include = "src", from = "."},
+    {include = "models", from = "."},
+    {include = "shared_lib", from = "."},
+    {include = "config", from = "."},
+    {include = "services", from = "."},
+    {include = "utils", from = "."},
+    {include = "tools", from = ".", format = "sdist"},  # Development tools only
+    {include = "scripts", from = "."},
+    {include = "alembic", from = "."},
+    {include = "migrations", from = "."}
+]
 
 [tool.poetry.dependencies]
 python = "3.12.8"
@@ -41,26 +52,44 @@ prompt-toolkit = "3.0.48"
 cryptography = "42.0.0"
 python-jose = "3.3.0"
 tenacity = "8.2.3"
+email-validator = "2.1.0.post1"
 
 [tool.poetry.group.dev.dependencies]
+# Code Quality
+black = ">=23.12.1"
+pylint = ">=3.0.3"
+mypy = ">=1.7.0"
+bandit = ">=1.7.0"
+
+# Testing
 pytest = ">=7.0.0"
 pytest-cov = ">=4.1.0"
 pytest-mock = "3.14.0"
 pytest-asyncio = "0.23.5"
+pytest-faker = ">=2.0.0"
 factory-boy = ">=3.3.0"
-black = ">=23.12.1"
-pylint = ">=3.0.3"
-bandit = "1.8.0"
+faker = ">=18.0.0"
+
+# Development Workflow
+pre-commit = ">=3.5.0"
 
 [tool.poetry.scripts]
+# Testing
 test = "pytest:main"
-lint = "pylint:run_pylint"
-format = "black:main"
-check-imports = "pytest:main tests/test_imports.py -v"
-coverage = "pytest:main --cov=src --cov-report=html tests/"
+coverage = "pytest:main ['--cov=src', '--cov=models', '--cov=shared_lib', '--cov-report=html', 'tests/']"
+
+# Code Quality
+format = "black:main ['.']"
+lint = "pylint:run_pylint ['src', 'tests', 'models', 'shared_lib']"
+typecheck = "mypy:main ['src', 'models', 'shared_lib']"
+security = "bandit:main ['-r', 'src', 'models', 'shared_lib']"
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [
+    ".",
+    "src",
+    "tests",
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = [
@@ -81,20 +110,21 @@ extend-exclude = '''
 
 [tool.pylint.messages_control]
 disable = [
-    "C0111",  
-    "C0103",  
-    "C0330",  
-    "C0326",  
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "C0330",  # wrong-hanging-indentation
+    "C0326",  # bad-whitespace
 ]
 
 [tool.pylint.format]
-max-line-length = 88  
+max-line-length = 88
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src", "models", "shared_lib"]
 omit = [
     "tests/*",
     "setup.py",
+    "tools/*",  # Exclude development tools from coverage
 ]
 
 [tool.coverage.report]
@@ -105,3 +135,10 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "pass",
 ]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
