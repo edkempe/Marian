@@ -1,6 +1,7 @@
 import base64
+import json
 import os
-import pickle
+import keyring
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -17,27 +18,38 @@ SCOPES = [
 ]
 
 
-def get_gmail_service():
-    """Get Gmail API service instance."""
+def get_credentials():
+    """Get valid user credentials from storage.
+
+    Returns:
+        Credentials, the obtained credential.
+    """
     creds = None
+    try:
+        token = keyring.get_password("gmail_api", "oauth_token")
+        if token:
+            creds = Credentials.from_authorized_user_info(json.loads(token))
+    except Exception:
+        pass
 
-    # Check if token.pickle exists
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-
-    # If credentials are not valid or don't exist, get new ones
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
+            # Store refreshed token securely
+            keyring.set_password("gmail_api", "oauth_token", json.dumps(creds.to_json()))
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+            # Store new token securely
+            keyring.set_password("gmail_api", "oauth_token", json.dumps(creds.to_json()))
 
-        # Save credentials for future use
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
+    return creds
 
+
+def get_gmail_service():
+    """Get Gmail API service instance."""
+    creds = get_credentials()
     return build("gmail", "v1", credentials=creds)
 
 
