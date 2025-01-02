@@ -51,8 +51,11 @@ We will document and standardize our use of external tools across several catego
 
 | Tool | Purpose | Installation | Benefits |
 |------|----------|-------------|-----------|
-| SQLite | Database | Built into Python | - Lightweight<br>- Zero configuration<br>- Reliable |
-| alembic | DB migrations | `pip install alembic` | - Version control for schema<br>- Automated migrations<br>- Rollback support |
+| SQLAlchemy | ORM & DB Management | `pip install sqlalchemy` | - Pythonic database interface<br>- Type safety<br>- Query optimization |
+| PyYAML | Configuration | `pip install pyyaml` | - Schema configuration<br>- Human-readable format |
+| python-dotenv | Environment Config | `pip install python-dotenv` | - Environment management<br>- Secret handling |
+| requests | HTTP Client | `pip install requests` | - HTTP/HTTPS requests<br>- Session management |
+| google-api-python-client | Gmail API | `pip install google-api-python-client` | - Gmail integration<br>- OAuth handling |
 
 ### 4. External Services
 
@@ -61,14 +64,26 @@ We will document and standardize our use of external tools across several catego
 | Gmail API | Email integration | OAuth 2.0 | - Reliable email access<br>- Rich feature set |
 | Anthropic API | AI processing | API key | - Advanced language processing<br>- Reliable performance |
 
+### 4. Prohibited Tools
+
+The following tools are explicitly prohibited or discouraged:
+
+| Tool | Reason | Alternative |
+|------|---------|-------------|
+| Django | Too heavyweight, different ORM | SQLAlchemy |
+| Flask | Different web framework approach | FastAPI |
+| Alembic | Prefer direct schema verification | Custom schema verification |
+| Pandas | Too heavyweight for our needs | Built-in data structures |
+| TensorFlow/PyTorch | Excessive for current ML needs | Simpler ML libraries |
+
 ## Tool Decisions
 
 ### Chosen Tools
 
 1. **Database Access**:
-   - **Chosen**: SQLAlchemy with Alembic
+   - **Chosen**: SQLAlchemy
    - **Rejected**: Direct SQLite imports
-   - **Rationale**: SQLAlchemy provides ORM, migration support, and better abstraction
+   - **Rationale**: SQLAlchemy provides ORM, better abstraction
    - **Migration Plan**: Replace direct SQLite usage with SQLAlchemy throughout codebase
 
 2. **Duplicate Detection**:
@@ -144,35 +159,47 @@ When evaluating tools, we consider:
 ## Consequences
 
 ### Positive
+1. **Standardization**:
+   - Consistent tooling across project
+   - Clear installation instructions
+   - Known good configurations
 
-- Leverages battle-tested solutions
-- Reduces maintenance burden
-- Improves development efficiency
-- Better security through standard tools
+2. **Efficiency**:
+   - Best-in-class tools
+   - Proven solutions
+   - Community support
+
+3. **Maintainability**:
+   - Limited scope of dependencies
+   - Clear upgrade paths
+   - Security updates
 
 ### Negative
+1. **Learning Curve**:
+   - Team needs to learn tools
+   - Documentation maintenance
+   - Version compatibility
 
-- External dependencies
-- Version management complexity
-- Learning curve for new tools
-- Potential licensing issues
+2. **Dependencies**:
+   - External tool changes
+   - Security vulnerabilities
+   - Version conflicts
 
 ### Mitigations
-
-1. **Dependency Management**:
-   - Lock file versions
-   - Regular updates
-   - Compatibility testing
-
-2. **Knowledge Transfer**:
-   - Tool documentation
+1. **Documentation**:
+   - Clear installation guides
    - Usage examples
-   - Training resources
+   - Troubleshooting tips
 
-3. **Security**:
-   - Regular audits
-   - Update monitoring
-   - Security scanning
+2. **Testing**:
+   - Dependency scanning
+   - Integration tests
+   - Version pinning
+
+3. **Monitoring**:
+   - Dependency updates
+   - Security alerts
+   - Usage patterns
 
 ## References
 

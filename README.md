@@ -72,8 +72,40 @@ For detailed setup instructions, see the [Setup Guide](docs/setup.md).
   - `catalog_constants.py`: Catalog system configuration
   - `librarian_constants.py`: Librarian-specific settings
 - **Database**:
-  - `db_email_store.db`: Main database for email storage and analysis
+  - `data/jexi.db`: Main database for email storage and analysis
   - Schema defined by SQLAlchemy models in `models/`
+
+## Database Architecture
+
+### Schema Management
+The database schema is managed through a configuration-driven approach:
+
+1. **Source of Truth**: `schema.yaml`
+   - Defines all table structures
+   - Specifies relationships and constraints
+   - Single source of truth for database schema
+
+2. **Code Generation**:
+   - Models are generated from schema.yaml
+   - Constants are generated for validation
+   - Schema verification ensures integrity
+
+3. **Database Structure**:
+   - Single SQLite database: `data/jexi.db`
+   - Unified session management
+   - Clear table prefixes for logical separation
+
+### Data Flow
+```
+schema.yaml (source of truth)
+  → Generated Models & Constants
+    → Database Schema
+      → Application Code
+```
+
+### Database Files
+- Main database: `data/jexi.db`
+- Test database: `tests/test_data/test.db`
 
 ## Prerequisites
 1. Python 3.12.8 or higher
@@ -138,29 +170,14 @@ Each component's constants are isolated to prevent confusion and maintain clear 
 
 See the individual constants files for detailed configuration references.
 
-## Overview
+## Dependencies
 
-Jexi is an AI-powered email processing and analysis system that helps manage and understand email content at scale. It works alongside Marian, a specialized catalog management system, to provide comprehensive email organization.
-
-### Components
-
-1. **Jexi Core**: 
-   - Email processing and analysis
-   - Gmail integration
-   - Content understanding
-   - Email organization
-
-2. **Marian**: 
-   - Catalog management system
-   - Knowledge organization
-   - Asset categorization
-   - Library operations
-
-3. **Shared Infrastructure**:
-   - Database management
-   - API integrations
-   - Authentication
-   - Monitoring
+Core dependencies:
+- **sqlalchemy**: ORM and database management
+- **pyyaml**: Schema configuration parsing
+- **pytest**: Testing framework
+- **google-api-python-client**: Gmail API integration
+- **python-dotenv**: Environment configuration
 
 ## Usage
 1. Fetch emails:
@@ -628,5 +645,5 @@ The project uses several external tools and services for development, testing, a
    - Tests: `test_*.py` (e.g., `test_email_analyzer.py`)
 
 2. **Database Files**
-   - Main database: `db_email_store.db`
+   - Main database: `data/jexi.db`
    - Never use generic names like `emails.db`
