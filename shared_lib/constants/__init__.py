@@ -112,6 +112,8 @@ DATA_DIR = str(Path.cwd() / "data")  # Use absolute path
 
 REQUIRED_SECTIONS = DOCUMENTATION.REQUIRED_SECTIONS
 
+TEST_TIMEOUT = TESTING_CONFIG.TEST_TIMEOUT
+
 __all__ = [
     'API',
     'API_CONFIG',
@@ -149,5 +151,6 @@ __all__ = [
     'LOCAL_MODULES',
     'PACKAGE_ALIASES',
     'DATA_DIR',
-    'REQUIRED_SECTIONS'
+    'REQUIRED_SECTIONS',
+    'TEST_TIMEOUT'
 ]

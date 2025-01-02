@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 
 import yaml
 from faker import Faker
-from sqlalchemy import Table, MetaData, text, Column, Integer, String, Boolean, DateTime, ForeignKey, create_engine
+from sqlalchemy import Table, MetaData, text, Column, Integer, String, Boolean, DateTime, ForeignKey, create_engine, select, func
 from sqlalchemy.exc import OperationalError
 
 from shared_lib.config_loader import get_schema_config
@@ -494,7 +494,7 @@ class DatabaseSeeder:
             if table.name != "alembic_version":
                 with engine.connect() as conn:
                     count = conn.execute(
-                        text(f"SELECT COUNT(*) FROM {table.name}")
+                        select(func.count()).select_from(table)
                     ).scalar()
                     if count > 0:
                         raise OperationalError(

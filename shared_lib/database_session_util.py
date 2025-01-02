@@ -4,7 +4,7 @@ import logging
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Dict, Generator, Optional
 
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -201,21 +201,36 @@ def get_engine_for_db_type(db_type: str) -> Engine:
     return get_engine(url)
 
 
-# Create engines for each database type
-email_engine = get_engine_for_db_type("email")
-analysis_engine = get_engine_for_db_type("analysis")
-catalog_engine = get_engine_for_db_type("catalog")
+def get_database_url(database_name: Optional[str] = None) -> str:
+    """Get database URL for a specific database.
+    
+    Args:
+        database_name: Optional name of the database (email, analysis, catalog)
+        
+    Returns:
+        Database URL string
+    """
+    if database_name is None:
+        return str(database_settings.URL)
+    else:
+        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', f'{database_name}.db')
+        return f'sqlite:///{db_path}'
 
-# Create session factories
-EmailSessionFactory = get_session_factory(
-    str(database_settings.EMAIL_DB_URL),
-    EmailSession
+
+# Create engine using settings
+engine = create_engine(
+    database_settings.DATABASE_URL,
+    echo=database_settings.ECHO_SQL
 )
-AnalysisSessionFactory = get_session_factory(
-    str(database_settings.ANALYSIS_DB_URL),
-    AnalysisSession
-)
-CatalogSessionFactory = get_session_factory(
-    str(database_settings.CATALOG_DB_URL),
-    CatalogSession
-)
+
+# Create session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+@contextmanager
+def get_db() -> Generator[Session, None, None]:
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

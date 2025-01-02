@@ -161,6 +161,7 @@ COLUMN_SIZES = {
     "EMAIL_THREAD": 100,  # Maximum size for thread ID
     "EMAIL_TO": 200,  # Maximum size for recipient
     "EMAIL_ID": 100,  # Maximum size for Gmail message ID
+    "ACTION_ITEM": 1000,  # Maximum size for action items
 }
 
 # Analysis Constants
@@ -391,29 +392,26 @@ TEST_CONFIG: TestConfig = {
 
 # Catalog Configuration
 CATALOG_CONFIG: CatalogConfig = {
-    "DB_PATH": os.path.join(DATA_DIR, "db_catalog.db"),
-    "CHAT_LOG": "chat_logs.jsonl",
-    "MATCH_THRESHOLD": 0.85,  # High threshold for near-identical content
-    "POTENTIAL_MATCH_THRESHOLD": 0.70,  # Lower threshold for potential matches
-    "TAG_MATCH_THRESHOLD": 0.60,  # Threshold for tag matching
-    "RESULTS_PER_PAGE": 10,
-    "RELATIONSHIP_TYPES": ["similar", "related", "parent", "child"],
+    "DB_PATH": os.path.join(DATA_DIR, "catalog.db"),
+    "CHAT_LOG": os.path.join(LOGS_DIR, "chat.jsonl"),  # Changed extension to .jsonl
+    "MATCH_THRESHOLD": 0.85,  # Minimum score for a definite match
+    "POTENTIAL_MATCH_THRESHOLD": 0.70,  # Minimum score for a potential match
+    "TAG_MATCH_THRESHOLD": 0.80,  # Minimum score for tag matching
+    "RESULTS_PER_PAGE": 10,  # Number of results per page
+    "RELATIONSHIP_TYPES": ["parent", "child", "related", "depends_on", "required_by"],
     "TABLES": {
-        "ENTRIES": "catalog_entries",
-        "RELATIONSHIPS": "catalog_relationships",
-        "TAGS": "catalog_tags",
+        "CATALOG": "catalog_items",
+        "TAGS": "tags",
+        "RELATIONSHIPS": "relationships"
     },
-    "ENABLE_SEMANTIC": True,
+    "ENABLE_SEMANTIC": True,  # Enable semantic search by default
     "ERROR_MESSAGES": {
-        "API_ERROR": "Failed to get API response: {}",
-        "DATABASE_ERROR": "Database error: {}",
-        "VALIDATION_ERROR": "Invalid data: {}",
-        "JSON_DECODE_ERROR": "Failed to decode JSON: {}",
-        "SEMANTIC_ERROR": "Semantic matching error: {}",
-        "DUPLICATE_ERROR": "Duplicate entry: {}",
-        "TAG_ERROR": "Invalid tag: {}",
-        "RELATIONSHIP_ERROR": "Invalid relationship: {}",
-    },
+        "NO_MATCHES": "No matches found for the given query.",
+        "BELOW_THRESHOLD": "The match score is below the required threshold.",
+        "INVALID_RELATIONSHIP": "Invalid relationship type specified.",
+        "TAG_NOT_FOUND": "One or more specified tags were not found.",
+        "DUPLICATE_ITEM": "An item with this identifier already exists."
+    }
 }
 
 # Error Messages

@@ -14,8 +14,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pytz import timezone
-from sqlalchemy import Column, DateTime, String, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, DateTime, Integer, String, create_engine, ForeignKey, Table
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from shared_lib.constants import (
     DATA_DIR,
@@ -53,17 +53,37 @@ logger = logging.getLogger(__name__)
 # SQLAlchemy setup
 Base = declarative_base()
 
+# Association table for many-to-many relationship between labels and emails
+email_labels = Table(
+    "email_labels",
+    Base.metadata,
+    Column("email_id", ForeignKey("email_messages.id"), primary_key=True),
+    Column("label_id", ForeignKey("gmail_labels.label_id"), primary_key=True),
+)
+
 
 class GmailLabel(Base):
-    """SQLAlchemy model for Gmail labels"""
+    """SQLAlchemy model for Gmail labels.
+    
+    Based on Gmail API Label resource:
+    https://developers.google.com/gmail/api/reference/rest/v1/users.labels#Label
+    """
 
     __tablename__ = "gmail_labels"
-    label_id = Column(String(COLUMN_SIZES["EMAIL_LABELS"]), primary_key=True)
-    name = Column(String(COLUMN_SIZES["EMAIL_LABELS"]), nullable=False)
-    type = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
-    message_list_visibility = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
-    label_list_visibility = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
+    label_id = Column(String(COLUMN_SIZES["LABEL_ID"]), primary_key=True)
+    name = Column(String(COLUMN_SIZES["LABEL_NAME"]), nullable=False)
+    type = Column(String(COLUMN_SIZES["LABEL_TYPE"]))
+    message_list_visibility = Column(String(COLUMN_SIZES["LABEL_MESSAGE_VISIBILITY"]), nullable=True)
+    label_list_visibility = Column(String(COLUMN_SIZES["LABEL_LIST_VISIBILITY"]), nullable=True)
+    color = Column(String(COLUMN_SIZES["LABEL_COLOR"]), nullable=True)
+    messages_total = Column(Integer, nullable=True)
+    messages_unread = Column(Integer, nullable=True)
+    threads_total = Column(Integer, nullable=True)
+    threads_unread = Column(Integer, nullable=True)
     last_sync = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    emails = relationship("EmailMessage", secondary=email_labels, back_populates="labels")
 
     def __repr__(self) -> str:
         """String representation of label."""
@@ -77,6 +97,11 @@ class GmailLabel(Base):
             "type": self.type,
             "message_list_visibility": self.message_list_visibility,
             "label_list_visibility": self.label_list_visibility,
+            "color": self.color,
+            "messages_total": self.messages_total,
+            "messages_unread": self.messages_unread,
+            "threads_total": self.threads_total,
+            "threads_unread": self.threads_unread,
             "last_sync": self.last_sync.isoformat() if self.last_sync else None,
         }
 
@@ -89,6 +114,11 @@ class GmailLabel(Base):
             type=gmail_label.get("type"),
             message_list_visibility=gmail_label.get("messageListVisibility"),
             label_list_visibility=gmail_label.get("labelListVisibility"),
+            color=gmail_label.get("color"),
+            messages_total=gmail_label.get("messagesTotal"),
+            messages_unread=gmail_label.get("messagesUnread"),
+            threads_total=gmail_label.get("threadsTotal"),
+            threads_unread=gmail_label.get("threadsUnread"),
             last_sync=datetime.utcnow(),
         )
 
