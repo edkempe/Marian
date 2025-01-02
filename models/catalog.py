@@ -1,248 +1,76 @@
-"""SQLAlchemy models for the Marian Catalog system.
-
-This module defines the data models for catalog items, tags, and their relationships.
-Following the latest schema from migrations V1-V3, with proper SQLAlchemy relationships
-and case-insensitive constraints.
-"""
+"""SQLAlchemy model for catalog table."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    CheckConstraint,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    event,
-    text,
-    Column,
-    DateTime
-)
-from sqlalchemy.orm import (
-    Mapped,
-    Session,
-    mapped_column,
-    object_session,
-    relationship,
-    validates,
-)
-from sqlalchemy.sql import func
-
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.orm import relationship, validates
 from models.base import Base
-from models.domain_constants import (
-    CONSTRAINTS,
-    DEFAULTS,
-    STATE_TRANSITIONS,
-    ItemStatus,
-    RelationType,
-)
-
-
-class CatalogEntry(Base):
-    """Catalog entry model."""
-    
-    __tablename__ = "catalog_entries"
-    
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    description = Column(String)
-    tags = Column(JSON)  # List of tags
-    extra_metadata = Column(JSON)  # Additional metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __repr__(self) -> str:
-        """Get string representation."""
-        return f"<CatalogEntry(id={self.id}, title='{self.title}')>"
+from shared_lib.schema_constants import COLUMN_SIZES
 
 
 class CatalogItem(Base):
-    """Model for catalog items in the system."""
+    """Model for catalog based on schema.yaml configuration."""
 
-    __tablename__ = "catalog_items"
+    __tablename__ = "catalog"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    description: Mapped[Optional[str]] = mapped_column(Text(2000))
-    content: Mapped[Optional[str]] = mapped_column(Text)
-    source: Mapped[Optional[str]] = mapped_column(String)
-    status: Mapped[str] = mapped_column(String, nullable=False, server_default="draft")
-    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    archived_date: Mapped[Optional[int]] = mapped_column(Integer)
-    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
-    modified_date: Mapped[int] = mapped_column(Integer, nullable=False)
-    item_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
-
-    # Relationships
-    tags: Mapped[List["Tag"]] = relationship(
-        "Tag", secondary="catalog_tags", back_populates="items"
+    # Columns
+    id = Column(
+        String(100),
+        nullable=False, primary_key=True,
+        comment="Catalog item ID"
+    )
+    title = Column(
+        String(255),
+        nullable=True,
+        comment="Item title"
+    )
+    description = Column(
+        String(1000),
+        nullable=True,
+        comment="Item description"
+    )
+    type = Column(
+        String(50),
+        nullable=True, default="document",
+        comment="Item type (code, document, test, config, script)"
+    )
+    created_at = Column(
+        DateTime,
+        nullable=True,
+        comment="Creation timestamp"
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=True,
+        comment="Last update timestamp"
     )
 
-    __table_args__ = (
-        Index("idx_catalog_items_deleted", "deleted"),
-        Index("idx_catalog_items_status", "status"),
-        Index("idx_catalog_items_title", "title"),
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
     )
 
+    # Validation methods
     @validates("title")
     def validate_title(self, key, value):
         """Validate title length."""
-        if not value:
-            raise ValueError("Title cannot be empty")
-        if len(value) > 255:
-            raise ValueError("Title cannot be longer than 255 characters")
+        if value is not None and len(value) > 255:
+            raise ValueError(f"title cannot be longer than 255 characters")
+        return value
+    @validates("description")
+    def validate_description(self, key, value):
+        """Validate description length."""
+        if value is not None and len(value) > 1000:
+            raise ValueError(f"description cannot be longer than 1000 characters")
         return value
 
-    def __repr__(self):
-        """Return string representation."""
-        return (
-            f"<CatalogItem(id={self.id}, title='{self.title}', status='{self.status}')>"
-        )
+    def __init__(self, **kwargs):
+        """Initialize a new catalog record."""
+        super().__init__(**kwargs)
 
-
-class Tag(Base):
-    """Model for tags that can be applied to catalog items."""
-
-    __tablename__ = "tags"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    archived_date: Mapped[Optional[int]] = mapped_column(Integer)
-    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
-    modified_date: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    # Relationships
-    items: Mapped[List["CatalogItem"]] = relationship(
-        "CatalogItem", secondary="catalog_tags", back_populates="tags"
-    )
-
-    __table_args__ = (
-        Index("idx_tags_name", text("name COLLATE NOCASE")),
-        Index("idx_tags_deleted", "deleted"),
-    )
-
-    def __repr__(self):
-        """Return string representation."""
-        return f"<Tag(id={self.id}, name='{self.name}')>"
-
-
-class CatalogTag(Base):
-    """Association model for the many-to-many relationship between CatalogItems and Tags."""
-
-    __tablename__ = "catalog_tags"
-
-    catalog_item_id: Mapped[int] = mapped_column(
-        ForeignKey("catalog_items.id"), primary_key=True
-    )
-    tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
-
-    def __init__(self, catalog_item_id: int, tag_id: int):
-        self.catalog_item_id = catalog_item_id
-        self.tag_id = tag_id
-
-    @validates("catalog_item_id", "tag_id")
-    def validate_ids(self, key, value):
-        """Validate that neither item nor tag is archived."""
-        session = object_session(self)
-        if session is None:
-            return value
-
-        if key == "catalog_item_id":
-            item = session.query(CatalogItem).get(value)
-            if item and item.status == ItemStatus.ARCHIVED:
-                raise ValueError("Cannot tag an archived item")
-        elif key == "tag_id":
-            tag = session.query(Tag).get(value)
-            if tag and tag.deleted:
-                raise ValueError("Cannot use a deleted tag")
-        return value
-
-    @classmethod
-    def create(
-        cls, session: Session, catalog_item_id: int, tag_id: int
-    ) -> "CatalogTag":
-        """Create a new catalog tag with validation."""
-        tag = cls(catalog_item_id=catalog_item_id, tag_id=tag_id)
-        session.add(tag)
-        return tag
-
-    def __repr__(self):
-        """Return string representation."""
-        return f"<CatalogTag(catalog_item_id={self.catalog_item_id}, tag_id={self.tag_id})>"
-
-
-class ItemRelationship(Base):
-    """Model for relationships between catalog items."""
-
-    __tablename__ = "item_relationships"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    source_id: Mapped[int] = mapped_column(
-        ForeignKey("catalog_items.id"), nullable=False
-    )
-    target_id: Mapped[int] = mapped_column(
-        ForeignKey("catalog_items.id"), nullable=False
-    )
-    relationship_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_date: Mapped[int] = mapped_column(Integer, nullable=False)
-    relationship_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
-
-    # Relationships
-    source_item: Mapped["CatalogItem"] = relationship(
-        "CatalogItem", foreign_keys=[source_id], backref="outgoing_relationships"
-    )
-    target_item: Mapped["CatalogItem"] = relationship(
-        "CatalogItem", foreign_keys=[target_id], backref="incoming_relationships"
-    )
-
-    __table_args__ = (
-        Index("idx_relationships_source", "source_id"),
-        Index("idx_relationships_target", "target_id"),
-        Index("idx_relationships_type", "relationship_type"),
-    )
-
-    def __repr__(self):
-        """Return string representation."""
-        return f"<ItemRelationship(id={self.id}, type='{self.relationship_type}')>"
-
-
-# Event listeners for case-insensitive uniqueness
-@event.listens_for(CatalogItem, "before_insert")
-@event.listens_for(CatalogItem, "before_update")
-def catalog_item_before_save(mapper, connection, target):
-    """Ensure case-insensitive uniqueness for catalog item titles."""
-    if target.title is None:
-        return
-
-    stmt = text(
-        "SELECT 1 FROM catalog_items WHERE lower(title) = lower(:title) "
-        "AND id != :id"
-    )
-    existing = connection.execute(
-        stmt, {"title": target.title, "id": target.id or -1}
-    ).first()
-
-    if existing:
-        raise ValueError(f"Title '{target.title}' already exists (case-insensitive)")
-
-
-@event.listens_for(Tag, "before_insert")
-@event.listens_for(Tag, "before_update")
-def tag_before_save(mapper, connection, target):
-    """Ensure case-insensitive uniqueness for tag names."""
-    if target.name is None:
-        return
-
-    stmt = text("SELECT 1 FROM tags WHERE lower(name) = lower(:name) " "AND id != :id")
-    existing = connection.execute(
-        stmt, {"name": target.name, "id": target.id or -1}
-    ).first()
-
-    if existing:
-        raise ValueError(f"Tag name '{target.name}' already exists (case-insensitive)")
+    def __repr__(self) -> str:
+        """Get string representation."""
+        return f"<CatalogItem(id={self.id!r})>"

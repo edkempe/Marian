@@ -1,4 +1,4 @@
-"""SQLAlchemy model for analysis table."""
+"""SQLAlchemy model for relationships table."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -8,10 +8,10 @@ from models.base import Base
 from shared_lib.schema_constants import COLUMN_SIZES
 
 
-class EmailAnalysis(Base):
+class ItemRelationship(Base):
     """Model based on schema.yaml configuration."""
 
-    __tablename__ = "email_analysis"
+    __tablename__ = "item_relationships"
 
     # Table configuration
     __table_args__ = {"extend_existing": True}
@@ -24,58 +24,22 @@ class EmailAnalysis(Base):
         String(100),
         nullable=False,
         primary_key=True,
-        comment="Analysis ID"
+        comment="Relationship ID"
     )
 
-    email_id = Column(
+    source_id = Column(
         String(100),
-        nullable=False,
-        comment="Email ID reference"
+        comment="Source item ID"
     )
 
-    summary = Column(
-        String(1000),
-        comment="Email summary"
+    target_id = Column(
+        String(100),
+        comment="Target item ID"
     )
 
-    sentiment = Column(
-        String(20),
-        comment="Sentiment analysis"
-    )
-
-    categories = Column(
-        JSON,
-        comment="Categories as JSON array"
-    )
-
-    key_points = Column(
-        JSON,
-        comment="Key points as JSON array"
-    )
-
-    action_items = Column(
-        JSON,
-        comment="Action items as JSON array"
-    )
-
-    priority_score = Column(
-        Integer,
-        comment="Priority score (1-5)"
-    )
-
-    confidence_score = Column(
-        Float,
-        comment="Confidence score (0-1)"
-    )
-
-    analysis_metadata = Column(
-        JSON,
-        comment="Analysis metadata as JSON"
-    )
-
-    model_version = Column(
+    type = Column(
         String(50),
-        comment="Model version used for analysis"
+        comment="Relationship type"
     )
 
     # Timestamps
@@ -93,4 +57,4 @@ class EmailAnalysis(Base):
 
     def __repr__(self) -> str:
         """Get string representation."""
-        return f"<EmailAnalysis(id={self.id!r})>"
+        return f"<ItemRelationship(id={self.id!r})>"

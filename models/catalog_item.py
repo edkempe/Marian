@@ -1,4 +1,4 @@
-"""SQLAlchemy model for label table."""
+"""SQLAlchemy model for catalog table."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -8,10 +8,10 @@ from models.base import Base
 from shared_lib.schema_constants import COLUMN_SIZES
 
 
-class GmailLabel(Base):
+class CatalogItem(Base):
     """Model based on schema.yaml configuration."""
 
-    __tablename__ = "gmail_labels"
+    __tablename__ = "catalog_items"
 
     # Table configuration
     __table_args__ = {"extend_existing": True}
@@ -24,53 +24,32 @@ class GmailLabel(Base):
         String(100),
         nullable=False,
         primary_key=True,
-        comment="Gmail API label ID"
+        comment="Catalog item ID"
     )
 
-    name = Column(
+    title = Column(
         String(255),
-        nullable=False,
-        comment="Display name of the label"
+        comment="Item title"
     )
 
-    message_list_visibility = Column(
-        String(20),
-        comment="Show/hide the label in the message list"
-    )
-
-    label_list_visibility = Column(
-        String(20),
-        comment="Show/hide the label in the label list"
+    description = Column(
+        String(1000),
+        comment="Item description"
     )
 
     type = Column(
-        String(20),
-        comment="Type of label (system/user)"
+        String(50),
+        comment="Item type (code, document, test, config, script)"
     )
 
-    color = Column(
-        String(20),
-        comment="Label color (hex code)"
+    created_at = Column(
+        DateTime,
+        comment="Creation timestamp"
     )
 
-    messages_total = Column(
-        Integer,
-        comment="Total number of messages with this label"
-    )
-
-    messages_unread = Column(
-        Integer,
-        comment="Number of unread messages with this label"
-    )
-
-    threads_total = Column(
-        Integer,
-        comment="Total number of threads with this label"
-    )
-
-    threads_unread = Column(
-        Integer,
-        comment="Number of unread threads with this label"
+    updated_at = Column(
+        DateTime,
+        comment="Last update timestamp"
     )
 
     # Timestamps
@@ -88,4 +67,4 @@ class GmailLabel(Base):
 
     def __repr__(self) -> str:
         """Get string representation."""
-        return f"<GmailLabel(id={self.id!r})>"
+        return f"<CatalogItem(id={self.id!r})>"
