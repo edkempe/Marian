@@ -66,7 +66,11 @@ def generate_html_report():
             emails.append(email_dict)
 
         # Generate HTML report using template
-        template = Environment(loader=BaseLoader()).from_string(
+        template = Environment(
+            loader=BaseLoader(),
+            autoescape=True,
+            extensions=['jinja2.ext.autoescape']
+        ).from_string(
             """
         <html>
         <head>
@@ -179,7 +183,10 @@ def generate_sent_emails_report(output_file="reports/sent_emails_report.html"):
             )
 
         # Generate HTML report
-        template = Environment(loader=BaseLoader()).from_string(
+        template = Environment(
+            loader=BaseLoader(),
+            autoescape=True  # Enable autoescaping for security
+        ).from_string(
             """
         <html>
         <head>

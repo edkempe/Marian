@@ -1,9 +1,31 @@
-# Marian Source Code
+# Jexi Source Code
 
 **Version:** 1.0.0
 **Status:** Authoritative
 
-> Application code for the Marian project.
+> Source code for the Jexi email processing system and Marian catalog management.
+
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial source code structure
+- Added module organization
+- Added coding standards
+
+## Directory Structure
+
+1. **Jexi Core Components**
+   - `app_email_analyzer.py`: Email analysis engine
+   - `app_email_self_log.py`: Email monitoring system
+   - `app_get_mail.py`: Gmail integration
+   - `app_email_reports.py`: Email reporting
+
+2. **Marian Components** 
+   - `app_catalog.py`: Catalog management system
+   - `app_catalog_interactive.py`: Catalog interface
+   
+3. **Support Modules**
+   - `proto_*.py`: Prototype implementations
+   - `utils/`: Utility functions and helpers
 
 ## Data Flow Hierarchy
 

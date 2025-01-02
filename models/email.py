@@ -1,152 +1,133 @@
-"""Email model for storing email data."""
+"""SQLAlchemy model for email table."""
 
 from datetime import datetime
-from typing import Optional, List
-
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    String,
-    Text,
-    func,
-    JSON
-)
-from sqlalchemy.orm import Mapped, relationship
-
+from typing import Any, Dict, List, Optional
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.orm import relationship, validates
 from models.base import Base
-from shared_lib.schema_constants import COLUMN_SIZES, EmailDefaults
+from shared_lib.schema_constants import COLUMN_SIZES
 
-# Default values for email fields
-EMAIL_DEFAULTS = vars(EmailDefaults())
 
-class Email(Base):
-    """SQLAlchemy model for email storage."""
+class EmailMessage(Base):
+    """Model for email based on schema.yaml configuration."""
 
-    __tablename__ = "emails"
+    __tablename__ = "email"
 
-    # Primary key and identifiers
-    id: Mapped[str] = Column(
-        String(COLUMN_SIZES["EMAIL_ID"]),
-        primary_key=True
+    # Columns
+    id = Column(
+        String(100),
+        nullable=False, primary_key=True,
+        comment="Email ID"
     )
-    thread_id: Mapped[str] = Column(
-        String(COLUMN_SIZES["EMAIL_THREAD_ID"]),
-        index=True
+    thread_id = Column(
+        String(100),
+        nullable=True,
+        comment="Thread ID"
     )
-    message_id: Mapped[str] = Column(
-        String(COLUMN_SIZES["EMAIL_MESSAGE_ID"]),
-        unique=True
+    message_id = Column(
+        String(100),
+        nullable=True,
+        comment="Message ID"
     )
-
-    # Email content
-    subject: Mapped[str] = Column(
-        String(COLUMN_SIZES["EMAIL_SUBJECT"]),
-        server_default=EMAIL_DEFAULTS["subject"]
+    subject = Column(
+        String(500),
+        nullable=True, default="",
+        comment="Email subject"
     )
-    body: Mapped[Optional[str]] = Column(
+    body = Column(
         Text,
-        nullable=True
+        nullable=True,
+        comment="Email body content"
     )
-    snippet: Mapped[Optional[str]] = Column(
-        Text,
-        nullable=True
+    from_address = Column(
+        String(255),
+        nullable=True,
+        comment="Sender email address"
     )
-
-    # Email addresses
-    from_address: Mapped[Optional[str]] = Column(
-        String(COLUMN_SIZES["EMAIL_FROM"]),
-        nullable=True
+    to_address = Column(
+        String(255),
+        nullable=True,
+        comment="Recipient email address"
     )
-    to_address: Mapped[Optional[str]] = Column(
-        String(COLUMN_SIZES["EMAIL_TO"]),
-        nullable=True
+    cc_address = Column(
+        String(255),
+        nullable=True,
+        comment="CC recipients"
     )
-    cc_address: Mapped[Optional[str]] = Column(
-        String(COLUMN_SIZES["EMAIL_CC"]),
-        nullable=True
+    bcc_address = Column(
+        String(255),
+        nullable=True,
+        comment="BCC recipients"
     )
-    bcc_address: Mapped[Optional[str]] = Column(
-        String(COLUMN_SIZES["EMAIL_BCC"]),
-        nullable=True
+    snippet = Column(
+        String(1000),
+        nullable=True,
+        comment="Email preview snippet"
     )
-
-    # Flags and metadata
-    has_attachments: Mapped[bool] = Column(
-        Boolean,
-        server_default=str(EMAIL_DEFAULTS["has_attachments"])
+    history_id = Column(
+        String(100),
+        nullable=True,
+        comment="Gmail history ID"
     )
-    is_read: Mapped[bool] = Column(
-        Boolean,
-        server_default=str(EMAIL_DEFAULTS["is_read"])
-    )
-    is_important: Mapped[bool] = Column(
-        Boolean,
-        server_default=str(EMAIL_DEFAULTS["is_important"])
-    )
-
-    # API response storage
-    api_response: Mapped[str] = Column(
+    labels = Column(
         JSON,
-        server_default=EMAIL_DEFAULTS["api_response"]
+        nullable=True, default="[]",
+        comment="Email labels as JSON array"
+    )
+    has_attachments = Column(
+        Boolean,
+        nullable=True, default=False,
+        comment="Whether email has attachments"
+    )
+    is_read = Column(
+        Boolean,
+        nullable=True, default=False,
+        comment="Whether email has been read"
+    )
+    is_important = Column(
+        Boolean,
+        nullable=True, default=False,
+        comment="Whether email is marked important"
+    )
+    full_api_response = Column(
+        JSON,
+        nullable=True, default="{}",
+        comment="Full Gmail API response as JSON"
     )
 
     # Timestamps
-    created_at: Mapped[datetime] = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
-    )
-    received_at: Mapped[datetime] = Column(
-        DateTime(timezone=True),
-        nullable=False
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
     )
 
     # Relationships
-    analysis = relationship("EmailAnalysis", back_populates="email", uselist=False)
-    labels = relationship("EmailLabel", back_populates="email")
+    catalog_entry = relationship(
+        "CatalogEntry",
+        back_populates="email",
+        cascade="all, delete-orphan"
+    )
+    labels = relationship(
+        "GmailLabel",
+        back_populates="emails",
+        cascade="all",
+        secondary="email_labels"
+    )
+
+    # Validation methods
+    @validates("subject")
+    def validate_subject(self, key, value):
+        """Validate subject length."""
+        if value is not None and len(value) > 500:
+            raise ValueError(f"subject cannot be longer than 500 characters")
+        return value
+
+    def __init__(self, **kwargs):
+        """Initialize a new email record."""
+        super().__init__(**kwargs)
 
     def __repr__(self) -> str:
-        """Return string representation."""
-        return f"<Email(id={self.id}, subject={self.subject})>"
-
-    @classmethod
-    def from_api_response(cls, response: dict) -> "Email":
-        """Create an Email instance from API response.
-
-        Args:
-            response: Dictionary containing email data from API
-
-        Returns:
-            Email instance
-        """
-        # Validate and truncate fields if needed
-        subject = response.get("subject", EMAIL_DEFAULTS["subject"])
-        if len(subject) > COLUMN_SIZES["EMAIL_SUBJECT"]:
-            subject = subject[:COLUMN_SIZES["EMAIL_SUBJECT"]]
-
-        from_address = response.get("from", "")[:COLUMN_SIZES["EMAIL_FROM"]]
-        to_address = response.get("to", "")[:COLUMN_SIZES["EMAIL_TO"]]
-
-        return cls(
-            id=response["id"],
-            thread_id=response.get("threadId", ""),
-            message_id=response.get("messageId", ""),
-            subject=subject,
-            body=response.get("body"),
-            snippet=response.get("snippet"),
-            from_address=from_address,
-            to_address=to_address,
-            cc_address=response.get("cc"),
-            bcc_address=response.get("bcc"),
-            has_attachments=response.get("hasAttachments", EMAIL_DEFAULTS["has_attachments"]),
-            is_read=response.get("isRead", EMAIL_DEFAULTS["is_read"]),
-            is_important=response.get("isImportant", EMAIL_DEFAULTS["is_important"]),
-            api_response=response,
-            received_at=datetime.fromisoformat(response["receivedAt"])
-        )
+        """Get string representation."""
+        return f"<EmailMessage(id={self.id!r})>"

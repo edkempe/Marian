@@ -4,7 +4,7 @@ from typing import Dict, Optional, Union
 
 import pytest
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 from shared_lib.constants import VALID_SENTIMENTS
@@ -17,7 +17,7 @@ def create_test_email(
     thread_id: Optional[str] = None,
     subject: Optional[str] = None,
     body: Optional[str] = None,
-) -> Email:
+) -> EmailMessage:
     """Create a test email object using EmailFactory."""
     return EmailFactory(
         id=id,

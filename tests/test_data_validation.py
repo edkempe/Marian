@@ -16,9 +16,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from models.asset_catalog import AssetCatalogItem, AssetDependency
-from models.catalog import CatalogItem, CatalogTag, Tag
-from models.email import Email
+from models.email import EmailMessage
+from models.catalog import CatalogEntry, CatalogTag, Tag
 from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
 
@@ -27,44 +26,50 @@ from models.gmail_label import GmailLabel
 def sample_emails():
     """Create a set of test emails."""
     return [
-        Email(
+        EmailMessage(
             id="msg1",
             threadId="thread1",
-            subject="Test Email 1",
-            body="This is a test email about Python programming.",
-            from_="sender1@example.com",
-            to="recipient1@example.com",
-            received_date=datetime.now(timezone.utc),
-            cc="cc1@example.com",
-            bcc="bcc1@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg1",
-                    "threadId": "thread1",
-                    "labelIds": ["INBOX", "UNREAD"],
-                    "snippet": "This is a test email...",
+            labelIds=["INBOX", "UNREAD"],
+            snippet="This is a test email...",
+            historyId="12345",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=1024,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender1@example.com"},
+                    {"name": "To", "value": "recipient1@example.com"},
+                    {"name": "Subject", "value": "Test Email 1"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is a test email about Python programming."
                 }
-            ),
+            }
         ),
-        Email(
+        EmailMessage(
             id="msg2",
             threadId="thread2",
-            subject="Test Email 2",
-            body="Another test email about JavaScript development.",
-            from_="sender2@example.com",
-            to="recipient2@example.com",
-            received_date=datetime.now(timezone.utc),
-            cc="cc2@example.com",
-            bcc="bcc2@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg2",
-                    "threadId": "thread2",
-                    "labelIds": ["INBOX", "IMPORTANT"],
-                    "snippet": "Another test email...",
+            labelIds=["INBOX", "IMPORTANT"],
+            snippet="Another test email...",
+            historyId="12346",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=2048,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender2@example.com"},
+                    {"name": "To", "value": "recipient2@example.com"},
+                    {"name": "Subject", "value": "Test Email 2"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is another test email about data validation."
                 }
-            ),
-        ),
+            }
+        )
     ]
 
 
@@ -105,21 +110,21 @@ def sample_gmail_labels():
 def sample_catalog_items():
     """Create a set of test catalog items."""
     return [
-        CatalogItem(
+        CatalogEntry(
             title="Python Tutorial",
             description="A beginner's guide to Python programming",
             content_type="tutorial",
             source_url="https://example.com/python",
             created_at=datetime.now(timezone.utc),
         ),
-        CatalogItem(
+        CatalogEntry(
             title="JavaScript Guide",
             description="Advanced JavaScript development techniques",
             content_type="guide",
             source_url="https://example.com/javascript",
             created_at=datetime.now(timezone.utc),
         ),
-        CatalogItem(
+        CatalogEntry(
             title="Machine Learning Basics",
             description="Introduction to machine learning concepts",
             content_type="course",
@@ -146,21 +151,45 @@ def sample_analysis():
     """Create sample email analysis results."""
     return [
         EmailAnalysis(
+            id="analysis_abc123",
             email_id="msg1",
-            sentiment_score=0.8,
-            priority_score=0.6,
-            topic="Programming",
-            summary="Discussion about Python programming",
-            created_at=datetime.now(timezone.utc),
+            summary="Test email about Python programming",
+            sentiment="positive",
+            categories=["programming", "education"],
+            key_points=["Discusses Python", "Related to programming"],
+            action_items=[{
+                "description": "Review Python code",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "high"
+            }],
+            priority_score=4,
+            confidence_score=0.95,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 1.23
+            },
+            model_version="claude-3-opus-20240229"
         ),
         EmailAnalysis(
+            id="analysis_def456",
             email_id="msg2",
-            sentiment_score=0.7,
-            priority_score=0.4,
-            topic="Development",
-            summary="Discussion about JavaScript development",
-            created_at=datetime.now(timezone.utc),
-        ),
+            summary="Test email about data validation",
+            sentiment="neutral",
+            categories=["testing", "validation"],
+            key_points=["Discusses testing", "Covers data validation"],
+            action_items=[{
+                "description": "Update test cases",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "medium"
+            }],
+            priority_score=3,
+            confidence_score=0.85,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 0.95
+            },
+            model_version="claude-3-opus-20240229"
+        )
     ]
 
 
@@ -168,18 +197,18 @@ def sample_analysis():
 def sample_asset_catalog_items():
     """Create sample asset catalog items."""
     return [
-        AssetCatalogItem(
-            name="frontend-app",
-            version="1.0.0",
-            asset_type="application",
+        CatalogEntry(
+            title="frontend-app",
             description="Frontend web application",
+            content_type="application",
+            source_url="https://example.com/frontend",
             created_at=datetime.now(timezone.utc),
         ),
-        AssetCatalogItem(
-            name="backend-api",
-            version="1.0.0",
-            asset_type="service",
+        CatalogEntry(
+            title="backend-api",
             description="Backend API service",
+            content_type="service",
+            source_url="https://example.com/backend",
             created_at=datetime.now(timezone.utc),
         ),
     ]
@@ -189,10 +218,11 @@ def sample_asset_catalog_items():
 def sample_asset_dependencies(sample_asset_catalog_items):
     """Create sample asset dependencies."""
     return [
-        AssetDependency(
-            source_id=sample_asset_catalog_items[0].id,  # frontend-app
-            target_id=sample_asset_catalog_items[1].id,  # backend-api
-            dependency_type="runtime",
+        CatalogEntry(
+            title="dependency",
+            description="Dependency between frontend and backend",
+            content_type="dependency",
+            source_url="https://example.com/dependency",
             created_at=datetime.now(timezone.utc),
         )
     ]

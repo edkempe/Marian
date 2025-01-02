@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import get_analysis_session, get_email_session
@@ -54,7 +54,7 @@ def test_emails(gmail_api):
                 )
 
                 # Create Email object
-                email = Email(
+                email = EmailMessage(
                     id=message["id"],
                     threadId=message["threadId"],
                     subject=next(

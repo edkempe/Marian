@@ -24,6 +24,12 @@ Common operations:
 
 ---
 
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial directory structure template
+- Added purpose section
+- Added file organization guidelines
+
 ## Directory Structure
 ```
 /my_directory/

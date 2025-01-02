@@ -10,7 +10,7 @@ from sqlalchemy import and_, desc, func, text
 from sqlalchemy.orm import Session
 from tabulate import tabulate
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from shared_lib import constants
 from shared_lib.database_session_util import (
@@ -61,7 +61,7 @@ class EmailAnalytics:
     def get_total_emails(self) -> int:
         """Get total number of emails in the database"""
         with self._get_email_session() as session:
-            return session.query(Email).count()
+            return session.query(EmailMessage).count()
 
     def _get_analyses_from_ids(self, email_ids: List[str]) -> List[Dict]:
         """Helper method to get formatted analyses from a list of email IDs."""
@@ -76,8 +76,8 @@ class EmailAnalytics:
         """Get top email senders by volume"""
         with self._get_email_session() as session:
             results = (
-                session.query(Email.from_, func.count(Email.id).label("count"))
-                .group_by(Email.from_)
+                session.query(EmailMessage.from_address, func.count(EmailMessage.id).label("count"))
+                .group_by(EmailMessage.from_address)
                 .order_by(desc("count"))
                 .limit(limit)
                 .all()
@@ -89,8 +89,8 @@ class EmailAnalytics:
         with self._get_email_session() as session:
             results = (
                 session.query(
-                    func.date(Email.received_date).label("date"),
-                    func.count(Email.id).label("count"),
+                    func.date(EmailMessage.received_date).label("date"),
+                    func.count(EmailMessage.id).label("count"),
                 )
                 .group_by("date")
                 .order_by(desc("date"))
@@ -102,7 +102,7 @@ class EmailAnalytics:
     def get_label_distribution(self) -> Dict[str, int]:
         """Get distribution of email labels."""
         with self._get_email_session() as session:
-            labels = session.query(Email.labels).all()
+            labels = session.query(EmailMessage.labels).all()
 
         # Process labels
         label_counts = Counter()
@@ -131,7 +131,7 @@ class EmailAnalytics:
             with self._get_email_session() as email_session:
                 for analysis in results:
                     email = (
-                        email_session.query(Email)
+                        email_session.query(EmailMessage)
                         .filter_by(id=analysis.email_id)
                         .first()
                     )
@@ -140,7 +140,7 @@ class EmailAnalytics:
                         analysis_dict.update(
                             {
                                 "subject": email.subject,
-                                "from": email.from_,
+                                "from": email.from_address,
                                 "date": (
                                     email.received_date.isoformat()
                                     if email.received_date
@@ -299,7 +299,7 @@ class EmailAnalytics:
                 return None
 
             with self._get_email_session() as email_session:
-                email = email_session.query(Email).filter_by(id=email_id).first()
+                email = email_session.query(EmailMessage).filter_by(id=email_id).first()
                 if not email:
                     return None
 
@@ -307,7 +307,7 @@ class EmailAnalytics:
                 analysis_dict.update(
                     {
                         "subject": email.subject,
-                        "from": email.from_,
+                        "from": email.from_address,
                         "date": (
                             email.received_date.isoformat()
                             if email.received_date
@@ -553,14 +553,14 @@ class EmailAnalytics:
 
             # Get date range
             date_range = session.query(
-                func.min(Email.received_date).label("oldest"),
-                func.max(Email.received_date).label("newest"),
+                func.min(EmailMessage.received_date).label("oldest"),
+                func.max(EmailMessage.received_date).label("newest"),
             ).first()
 
             # Get top senders
             top_senders = (
-                session.query(Email.from_, func.count(Email.id).label("count"))
-                .group_by(Email.from_)
+                session.query(EmailMessage.from_address, func.count(EmailMessage.id).label("count"))
+                .group_by(EmailMessage.from_address)
                 .order_by(desc("count"))
                 .limit(10)
                 .all()
@@ -568,8 +568,8 @@ class EmailAnalytics:
 
             # Get top recipients
             top_recipients = (
-                session.query(Email.to, func.count(Email.id).label("count"))
-                .group_by(Email.to)
+                session.query(EmailMessage.to, func.count(EmailMessage.id).label("count"))
+                .group_by(EmailMessage.to)
                 .order_by(desc("count"))
                 .limit(10)
                 .all()

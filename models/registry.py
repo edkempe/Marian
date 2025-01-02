@@ -1,20 +1,20 @@
-"""Model registry for SQLAlchemy.
+"""Model registry."""
 
-This module ensures all models are registered with SQLAlchemy before database operations.
-Import this module before creating database engines or sessions.
-"""
+from sqlalchemy.orm import registry
 
-from models.asset_catalog import AssetCatalogItem, AssetCatalogTag, AssetDependency
 from models.base import Base
-from models.email import Email
+from models.email_message import EmailMessage
 from models.email_analysis import EmailAnalysis
+from models.gmail_label import GmailLabel
+from models.catalog_item import CatalogItem
+from models.tag import Tag
+from models.item_relationship import ItemRelationship
 
-# Import all models here to ensure they are registered with SQLAlchemy
-__all__ = [
-    "Base",
-    "EmailAnalysis",
-    "Email",
-    "AssetCatalogItem",
-    "AssetCatalogTag",
-    "AssetDependency",
-]
+# Create registry
+mapper_registry = registry()
+
+# Configure registry with all models
+mapper_registry.configure()
+
+# Export Base for use in tests
+__all__ = ["Base"]

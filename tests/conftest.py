@@ -1,214 +1,212 @@
-"""Shared pytest fixtures."""
+"""Test configuration and fixtures."""
 
-import json
 import os
-from datetime import datetime
+import shutil
 from pathlib import Path
-from typing import Generator
-
+import json
+from datetime import datetime, timezone
 import pytest
-import pytz
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker, scoped_session
 
-from config import CATALOG_CONFIG, EMAIL_CONFIG
-from models.base import Base
-from models.email import Email
+from models.registry import Base
+from models.email import EmailMessage
+from models.email_analysis import EmailAnalysis
 from models.gmail_label import GmailLabel
-from shared_lib.constants import DATABASE_CONFIG
-from shared_lib.gmail_lib import GmailAPI
-from src.app_catalog import CatalogChat
-
-
-class TestDatabaseFactory:
-    """Factory for creating and managing test databases."""
-
-    def __init__(self, test_data_dir: Path):
-        """Initialize test database factory.
-        
-        Args:
-            test_data_dir: Directory to store test database files
-        """
-        self.test_data_dir = test_data_dir
-        self.test_data_dir.mkdir(exist_ok=True)
-        self._engines = {}
-        self._session_factories = {}
-
-    def get_engine(self, db_type: str):
-        """Get or create SQLAlchemy engine for a database type."""
-        if db_type not in self._engines:
-            db_path = self.test_data_dir / f"test_{db_type}.db"
-            self._engines[db_type] = create_engine(f"sqlite:///{db_path}")
-            Base.metadata.create_all(self._engines[db_type])
-        return self._engines[db_type]
-
-    def get_session_factory(self, db_type: str) -> sessionmaker:
-        """Get or create session factory for a database type."""
-        if db_type not in self._session_factories:
-            engine = self.get_engine(db_type)
-            self._session_factories[db_type] = sessionmaker(
-                bind=engine,
-                expire_on_commit=False,
-            )
-        return self._session_factories[db_type]
-
-    def cleanup(self):
-        """Clean up all test databases."""
-        # Close all connections
-        for engine in self._engines.values():
-            engine.dispose()
-        
-        # Remove database files
-        for db_file in self.test_data_dir.glob("test_*.db"):
-            db_file.unlink(missing_ok=True)
+from shared_lib.schema_constants import MessageDefaults, AnalysisDefaults
+from config.test_settings import test_settings
+from shared_lib.database_session_util import (
+    Session,
+    EmailSessionFactory,
+    AnalysisSessionFactory,
+    CatalogSessionFactory,
+)
 
 
 @pytest.fixture(scope="session")
-def test_db_factory(tmp_path_factory) -> Generator[TestDatabaseFactory, None, None]:
-    """Create test database factory.
+def test_data_dir():
+    """Create and manage test data directory."""
+    test_dir = test_settings.TEST_DATA_DIR
+    test_dir.mkdir(parents=True, exist_ok=True)
     
-    Uses pytest's tmp_path_factory to create a temporary directory that persists
-    for the entire test session.
-    """
-    test_data_dir = tmp_path_factory.mktemp("test_data")
-    factory = TestDatabaseFactory(test_data_dir)
-    yield factory
-    factory.cleanup()
+    yield test_dir
+    
+    # Clean up test directory after all tests
+    if test_dir.exists():
+        shutil.rmtree(test_dir)
+
+
+@pytest.fixture(scope="session")
+def test_dbs(test_data_dir):
+    """Initialize test databases."""
+    engines = {
+        "default": create_engine(test_settings.DATABASE_URLS["default"]),
+        "email": create_engine(test_settings.DATABASE_URLS["email"]),
+        "analysis": create_engine(test_settings.DATABASE_URLS["analysis"]),
+        "catalog": create_engine(test_settings.DATABASE_URLS["catalog"])
+    }
+    
+    # Create all tables
+    for engine in engines.values():
+        Base.metadata.create_all(engine)
+    
+    yield engines
+    
+    # Clean up databases
+    for engine in engines.values():
+        Base.metadata.drop_all(engine)
+        engine.dispose()
 
 
 @pytest.fixture(scope="function")
-def email_session(test_db_factory) -> Generator[Session, None, None]:
-    """Create a new email database session for each test."""
-    session_factory = test_db_factory.get_session_factory("email")
-    session = session_factory()
-    
-    # Start transaction
-    session.begin_nested()
+def db_session(test_dbs):
+    """Create a database session for testing."""
+    session = Session()
     
     yield session
     
-    # Rollback transaction after test
+    # Rollback any changes
     session.rollback()
     session.close()
 
 
 @pytest.fixture(scope="function")
-def analysis_session(test_db_factory) -> Generator[Session, None, None]:
-    """Create a new analysis database session for each test."""
-    session_factory = test_db_factory.get_session_factory("analysis")
-    session = session_factory()
-    
-    # Start transaction
-    session.begin_nested()
+def email_session(test_dbs):
+    """Create an email database session for testing."""
+    session = EmailSessionFactory()
     
     yield session
     
-    # Rollback transaction after test
+    # Rollback any changes
     session.rollback()
     session.close()
 
 
 @pytest.fixture(scope="function")
-def catalog_session(test_db_factory) -> Generator[Session, None, None]:
-    """Create a new catalog database session for each test."""
-    session_factory = test_db_factory.get_session_factory("catalog")
-    session = session_factory()
-    
-    # Start transaction
-    session.begin_nested()
+def analysis_session(test_dbs):
+    """Create an analysis database session for testing."""
+    session = AnalysisSessionFactory()
     
     yield session
     
-    # Rollback transaction after test
+    # Rollback any changes
     session.rollback()
     session.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def validate_config():
-    """Validate all configuration values before any tests run."""
-    # Validate email config
-    required_email_config = {"BATCH_SIZE", "COUNT", "LABELS", "EXCLUDED_LABELS"}
-    for key in required_email_config:
-        assert key in EMAIL_CONFIG, f"Missing required email config: {key}"
-
-    # Validate catalog config
-    required_catalog_config = {"ENABLE_SEMANTIC", "DB_PATH", "CHAT_LOG"}
-    for key in required_catalog_config:
-        assert key in CATALOG_CONFIG, f"Missing required catalog config: {key}"
-
-
-@pytest.fixture(scope="session", autouse=True)
-def verify_api_connection():
-    """Verify API connection before running tests."""
-    from shared_lib.anthropic_client_lib import test_anthropic_connection
+@pytest.fixture(scope="function")
+def catalog_session(test_dbs):
+    """Create a catalog database session for testing."""
+    session = CatalogSessionFactory()
     
-    if not test_anthropic_connection():
-        pytest.exit("API connection test failed. Please check your API key and connection.")
-    return test_anthropic_connection
+    yield session
+    
+    # Rollback any changes
+    session.rollback()
+    session.close()
 
 
 @pytest.fixture(scope="session")
-def gmail_api():
-    """Create Gmail API client for tests."""
-    return GmailAPI()
+def test_dbs_email_analysis():
+    """Create test databases."""
+    return {
+        "email": "sqlite:///test_email.db",
+        "analysis": "sqlite:///test_analysis.db",
+        "catalog": "sqlite:///test_catalog.db"
+    }
 
 
 @pytest.fixture(scope="session")
-def catalog_chat():
-    """Create CatalogChat client for tests."""
-    return CatalogChat()
+def email_session_email_analysis(test_dbs_email_analysis):
+    """Create email database session."""
+    engine = create_engine(test_dbs_email_analysis["email"])
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    Session = scoped_session(session_factory)
+    yield Session()
+    Session.remove()
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="session")
+def analysis_session_email_analysis(test_dbs_email_analysis):
+    """Create analysis database session."""
+    engine = create_engine(test_dbs_email_analysis["analysis"])
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    Session = scoped_session(session_factory)
+    yield Session()
+    Session.remove()
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="session")
+def catalog_session_email_analysis(test_dbs_email_analysis):
+    """Create catalog database session."""
+    engine = create_engine(test_dbs_email_analysis["catalog"])
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    Session = scoped_session(session_factory)
+    yield Session()
+    Session.remove()
+    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture
 def sample_emails():
     """Create a set of test emails."""
     return [
-        Email(
+        EmailMessage(
             id="msg1",
-            thread_id="thread1",
-            subject="Test Email 1",
-            body="This is a test email about Python programming.",
-            sender="sender1@example.com",
-            to_address="recipient1@example.com",
-            received_date=datetime.now(pytz.utc),
-            cc_address="cc1@example.com",
-            bcc_address="bcc1@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg1",
-                    "threadId": "thread1",
-                    "labelIds": ["INBOX", "UNREAD"],
-                    "snippet": "This is a test email...",
+            threadId="thread1",
+            labelIds=["INBOX", "UNREAD"],
+            snippet="This is a test email...",
+            historyId="12345",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=1024,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender1@example.com"},
+                    {"name": "To", "value": "recipient1@example.com"},
+                    {"name": "Subject", "value": "Test Email 1"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is a test email about Python programming."
                 }
-            ),
+            }
         ),
-        Email(
+        EmailMessage(
             id="msg2",
-            thread_id="thread2",
-            subject="Test Email 2",
-            body="Another test email about JavaScript development.",
-            sender="sender2@example.com",
-            to_address="recipient2@example.com",
-            received_date=datetime.now(pytz.utc),
-            cc_address="cc2@example.com",
-            bcc_address="bcc2@example.com",
-            full_api_response=json.dumps(
-                {
-                    "id": "msg2",
-                    "threadId": "thread2",
-                    "labelIds": ["INBOX", "IMPORTANT"],
-                    "snippet": "Another test email...",
+            threadId="thread2",
+            labelIds=["INBOX", "IMPORTANT"],
+            snippet="Another test email...",
+            historyId="12346",
+            internalDate=datetime.now(timezone.utc),
+            sizeEstimate=2048,
+            raw=None,
+            payload={
+                "mimeType": "text/plain",
+                "headers": [
+                    {"name": "From", "value": "sender2@example.com"},
+                    {"name": "To", "value": "recipient2@example.com"},
+                    {"name": "Subject", "value": "Test Email 2"},
+                    {"name": "Date", "value": datetime.now(timezone.utc).isoformat()}
+                ],
+                "body": {
+                    "data": "This is another test email about data validation."
                 }
-            ),
-        ),
+            }
+        )
     ]
 
 
 @pytest.fixture
 def sample_gmail_labels():
     """Create a set of test Gmail labels."""
-    now = datetime.now(pytz.utc)
+    now = datetime.now(timezone.utc)
     return [
         GmailLabel(
             id="INBOX",
@@ -239,8 +237,47 @@ def sample_gmail_labels():
 
 
 @pytest.fixture
-def test_mode_analyzer():
-    """Create an EmailAnalyzer instance in test mode."""
-    from src.app_email_analyzer import EmailAnalyzer
-    from tests.test_constants import TEST_MODE
-    return EmailAnalyzer(test_mode=TEST_MODE)
+def sample_analysis():
+    """Create sample email analysis results."""
+    return [
+        EmailAnalysis(
+            id="analysis_abc123",
+            email_id="msg1",
+            summary="Test email about Python programming",
+            sentiment="positive",
+            categories=["programming", "education"],
+            key_points=["Discusses Python", "Related to programming"],
+            action_items=[{
+                "description": "Review Python code",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "high"
+            }],
+            priority_score=4,
+            confidence_score=0.95,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 1.23
+            },
+            model_version="claude-3-opus-20240229"
+        ),
+        EmailAnalysis(
+            id="analysis_def456",
+            email_id="msg2",
+            summary="Test email about data validation",
+            sentiment="neutral",
+            categories=["testing", "validation"],
+            key_points=["Discusses testing", "Covers data validation"],
+            action_items=[{
+                "description": "Update test cases",
+                "due_date": datetime.now(timezone.utc).isoformat(),
+                "priority": "medium"
+            }],
+            priority_score=3,
+            confidence_score=0.85,
+            analysis_metadata={
+                "model": "claude-3-opus-20240229",
+                "processing_time": 0.95
+            },
+            model_version="claude-3-opus-20240229"
+        )
+    ]

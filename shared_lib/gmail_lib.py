@@ -4,32 +4,30 @@ import base64
 import json
 import logging
 import os
-import pickle
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Dict, List, Optional, Union
 
 from dateutil import parser
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pytz import timezone
-from sqlalchemy import Column, DateTime, String, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, DateTime, Integer, String, create_engine, ForeignKey, Table
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from shared_lib.constants import (
-    COLUMN_SIZES,
     DATA_DIR,
     EMAIL_CONFIG,
     ErrorMessages,
     REGEX_PATTERNS,
 )
+from shared_lib.schema_constants import COLUMN_SIZES
 from shared_lib.exceptions import APIError, AuthenticationError
+from shared_lib.token_manager import TokenManager
 from .api_version_utils import verify_gmail_version, check_api_changelog
-from .api_monitor import track_api_call, monitor
+from .api_monitor import track_api_call
 
 # Constants
 SCOPES = [
@@ -44,7 +42,6 @@ CONFIG_DIR = os.path.join(os.path.dirname(DATA_DIR), "config")
 if not os.path.exists(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 
-TOKEN_FILE = os.path.join(CONFIG_DIR, "token.pickle")
 CREDENTIALS_FILE = os.path.join(CONFIG_DIR, "credentials.json")
 DEFAULT_LABEL_DB = os.path.join(DATA_DIR, "email_labels.db")
 
@@ -56,17 +53,37 @@ logger = logging.getLogger(__name__)
 # SQLAlchemy setup
 Base = declarative_base()
 
+# Association table for many-to-many relationship between labels and emails
+email_labels = Table(
+    "email_labels",
+    Base.metadata,
+    Column("email_id", ForeignKey("email_messages.id"), primary_key=True),
+    Column("label_id", ForeignKey("gmail_labels.label_id"), primary_key=True),
+)
+
 
 class GmailLabel(Base):
-    """SQLAlchemy model for Gmail labels"""
+    """SQLAlchemy model for Gmail labels.
+    
+    Based on Gmail API Label resource:
+    https://developers.google.com/gmail/api/reference/rest/v1/users.labels#Label
+    """
 
     __tablename__ = "gmail_labels"
-    label_id = Column(String(COLUMN_SIZES["EMAIL_LABELS"]), primary_key=True)
-    name = Column(String(COLUMN_SIZES["EMAIL_LABELS"]), nullable=False)
-    type = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
-    message_list_visibility = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
-    label_list_visibility = Column(String(COLUMN_SIZES["EMAIL_LABELS"]))
+    label_id = Column(String(COLUMN_SIZES["LABEL_ID"]), primary_key=True)
+    name = Column(String(COLUMN_SIZES["LABEL_NAME"]), nullable=False)
+    type = Column(String(COLUMN_SIZES["LABEL_TYPE"]))
+    message_list_visibility = Column(String(COLUMN_SIZES["LABEL_MESSAGE_VISIBILITY"]), nullable=True)
+    label_list_visibility = Column(String(COLUMN_SIZES["LABEL_LIST_VISIBILITY"]), nullable=True)
+    color = Column(String(COLUMN_SIZES["LABEL_COLOR"]), nullable=True)
+    messages_total = Column(Integer, nullable=True)
+    messages_unread = Column(Integer, nullable=True)
+    threads_total = Column(Integer, nullable=True)
+    threads_unread = Column(Integer, nullable=True)
     last_sync = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    emails = relationship("EmailMessage", secondary=email_labels, back_populates="labels")
 
     def __repr__(self) -> str:
         """String representation of label."""
@@ -80,6 +97,11 @@ class GmailLabel(Base):
             "type": self.type,
             "message_list_visibility": self.message_list_visibility,
             "label_list_visibility": self.label_list_visibility,
+            "color": self.color,
+            "messages_total": self.messages_total,
+            "messages_unread": self.messages_unread,
+            "threads_total": self.threads_total,
+            "threads_unread": self.threads_unread,
             "last_sync": self.last_sync.isoformat() if self.last_sync else None,
         }
 
@@ -92,6 +114,11 @@ class GmailLabel(Base):
             type=gmail_label.get("type"),
             message_list_visibility=gmail_label.get("messageListVisibility"),
             label_list_visibility=gmail_label.get("labelListVisibility"),
+            color=gmail_label.get("color"),
+            messages_total=gmail_label.get("messagesTotal"),
+            messages_unread=gmail_label.get("messagesUnread"),
+            threads_total=gmail_label.get("threadsTotal"),
+            threads_unread=gmail_label.get("threadsUnread"),
             last_sync=datetime.utcnow(),
         )
 
@@ -137,33 +164,14 @@ class GmailAPI:
             AuthenticationError: If authentication fails
         """
         try:
-            if not os.path.exists(CREDENTIALS_FILE):
-                raise FileNotFoundError(
-                    f"Credentials file '{CREDENTIALS_FILE}' not found"
-                )
-
-            creds = None
-            if os.path.exists(TOKEN_FILE):
-                with open(TOKEN_FILE, "rb") as token:
-                    creds = pickle.load(token)
-
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    logger.info("Refreshing expired token...")
-                    creds.refresh(Request())
-                else:
-                    logger.info("Starting new authentication flow...")
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        CREDENTIALS_FILE, SCOPES
-                    )
-                    creds = flow.run_local_server(port=0)
-
-                with open(TOKEN_FILE, "wb") as token:
-                    logger.info(f"Saving token to {TOKEN_FILE}")
-                    pickle.dump(creds, token)
-
-            return creds
-
+            # Try loading existing token
+            creds = TokenManager.load_token()
+            if creds and creds.valid:
+                return creds
+                
+            # Create new token if none exists or is invalid
+            return TokenManager.create_token(SCOPES)
+            
         except Exception as e:
             logger.error(f"Authentication error: {str(e)}")
             raise AuthenticationError(ErrorMessages["API_ERROR"]) from e
@@ -190,10 +198,20 @@ class GmailAPI:
 
     @track_api_call('gmail')
     def list_labels(self) -> List[Dict]:
-        """List Gmail labels."""
-        results = self.service.users().labels().list(userId="me").execute()
-        labels = results.get("labels", [])
-        return [{"id": label["id"], "name": label["name"]} for label in labels]
+        """List all labels in the user's mailbox.
+        
+        Returns:
+            list: List of label dictionaries, or empty list if error
+            
+        Raises:
+            APIError: If Gmail API request fails
+        """
+        try:
+            results = self.service.users().labels().list(userId='me').execute()
+            return results.get('labels', [])
+        except HttpError as error:
+            logger.error(f'Failed to list labels: {error}')
+            raise APIError(f'Failed to list labels: {error}')
 
     def setup_label_database(self):
         """Create and setup the labels database"""
@@ -358,3 +376,35 @@ class GmailAPI:
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             return False
+
+    def get_oldest_email_date(self) -> Optional[datetime]:
+        """Get the date of the oldest email in the database.
+        
+        Returns:
+            datetime: Date of oldest email, or None if no emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            result = session.query(EmailMessage.date).order_by(EmailMessage.date.asc()).first()
+            return result[0] if result else None
+
+    def get_newest_email_date(self) -> Optional[datetime]:
+        """Get the date of the newest email in the database.
+        
+        Returns:
+            datetime: Date of newest email, or None if no emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            result = session.query(EmailMessage.date).order_by(EmailMessage.date.desc()).first()
+            return result[0] if result else None
+
+    def count_emails(self) -> int:
+        """Get total number of emails in the database.
+        
+        Returns:
+            int: Total number of emails
+        """
+        with self.Session() as session:
+            from models.email import EmailMessage
+            return session.query(EmailMessage).count()

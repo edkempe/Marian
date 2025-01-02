@@ -1,0 +1,104 @@
+openapi: 3.0.0
+info:
+  title: Anthropic API - Message Resource
+  version: v1
+  description: Official Anthropic Claude API Message resource specification
+  
+components:
+  schemas:
+    Message:
+      type: object
+      required:
+        - id
+        - role
+        - content
+      properties:
+        id:
+          type: string
+          description: The identifier of the message
+          pattern: "^msg_[A-Za-z0-9]+$"
+          maxLength: 100
+        role:
+          type: string
+          description: The role of the message sender
+          enum:
+            - assistant
+            - user
+            - system
+        content:
+          type: array
+          description: The content of the message
+          items:
+            $ref: '#/components/schemas/Content'
+        model:
+          type: string
+          description: The model that generated the message
+          enum:
+            - claude-3-opus-20240229
+            - claude-3-sonnet-20240229
+            - claude-3-haiku-20240307
+          nullable: true
+        stop_reason:
+          type: string
+          description: Why the message stopped generating
+          enum:
+            - end_turn
+            - max_tokens
+            - stop_sequence
+          nullable: true
+        stop_sequence:
+          type: string
+          description: The sequence that caused the stop
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/Usage'
+          nullable: true
+        metadata:
+          type: object
+          description: Additional metadata about the message
+          nullable: true
+
+    Content:
+      type: object
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          description: The type of content
+          enum:
+            - text
+            - image
+        text:
+          type: string
+          description: The text content
+          maxLength: 100000
+        source:
+          $ref: '#/components/schemas/Source'
+          nullable: true
+
+    Source:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - image
+            - file
+        media_type:
+          type: string
+          description: MIME type of the source
+        data:
+          type: string
+          description: Base64 encoded data or file path
+
+    Usage:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+          description: Number of input tokens used
+        output_tokens:
+          type: integer
+          description: Number of output tokens generated

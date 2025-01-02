@@ -3,18 +3,21 @@
 import os
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
-
 import pytest
-import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-
-from models import Base, Email, EmailAnalysis, GmailLabel
+from models.email import EmailMessage
+from models.email_analysis import EmailAnalysis
+from models.gmail_label import GmailLabel
 from shared_lib.config_loader import get_schema_config
+from config.test_settings import test_settings
+import yaml
+from pathlib import Path
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def test_config():
     """Create a test configuration."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -46,17 +49,39 @@ def test_config():
             },
             "analysis": {
                 "columns": {
+                    "analysis_id": {"size": 100, "type": "string", "description": "Analysis ID"},
+                    "email_id": {"size": 100, "type": "string", "description": "Email ID"},
+                    "summary": {"size": 1000, "type": "text", "description": "Summary"},
                     "sentiment": {"size": 50, "type": "string", "description": "Sentiment"},
-                    "category": {"size": 100, "type": "string", "description": "Category"},
-                    "summary": {"size": 1000, "type": "string", "description": "Summary"}
+                    "categories": {"size": 200, "type": "text", "description": "Categories"},
+                    "key_points": {"size": 200, "type": "text", "description": "Key Points"},
+                    "action_items": {"size": 200, "type": "text", "description": "Action Items"},
+                    "priority_score": {"size": 10, "type": "integer", "description": "Priority Score"},
+                    "confidence_score": {"size": 10, "type": "float", "description": "Confidence Score"},
+                    "model_version": {"size": 100, "type": "string", "description": "Model Version"},
+                    "analysis_metadata": {"size": 200, "type": "text", "description": "Analysis Metadata"}
                 },
                 "defaults": {
                     "sentiment": "neutral",
-                    "category": "uncategorized"
+                    "categories": "[]",
+                    "key_points": "[]",
+                    "action_items": "[]",
+                    "priority_score": 0,
+                    "confidence_score": 0.0,
+                    "model_version": "",
+                    "analysis_metadata": "{}"
                 },
                 "validation": {
                     "valid_sentiments": ["positive", "negative", "neutral", "mixed"],
-                    "max_summary_length": 1000
+                    "max_summary_length": 1000,
+                    "max_categories_length": 200,
+                    "max_key_points_length": 200,
+                    "max_action_items_length": 200,
+                    "min_priority_score": 0,
+                    "max_priority_score": 5,
+                    "min_confidence_score": 0.0,
+                    "max_confidence_score": 1.0,
+                    "valid_model_versions": ["claude-3-opus-20240229"]
                 }
             },
             "label": {
@@ -86,17 +111,24 @@ def test_config():
         yield get_schema_config()
 
 
-@pytest.fixture
-def db_session():
-    """Create a test database session."""
-    engine = create_engine("sqlite:///:memory:")
+@pytest.fixture(scope="function")
+def test_engine():
+    """Create test database engine."""
+    engine = create_engine(test_settings.DATABASE_URLS["default"])
     Base.metadata.create_all(engine)
-    
-    with Session(engine) as session:
-        yield session
+    yield engine
+    Base.metadata.drop_all(engine)
 
 
-def test_email_model(test_config, db_session):
+@pytest.fixture(scope="function")
+def test_session(test_engine):
+    """Create test database session."""
+    session = Session(test_engine)
+    yield session
+    session.close()
+
+
+def test_email_model(test_config, test_session):
     """Test Email model with configuration."""
     # Test creation from API response
     api_response = {
@@ -116,9 +148,9 @@ def test_email_model(test_config, db_session):
         "receivedAt": "2024-12-29T22:00:00+00:00"
     }
     
-    email = Email.from_api_response(api_response)
-    db_session.add(email)
-    db_session.commit()
+    email = EmailMessage.from_api_response(api_response)
+    test_session.add(email)
+    test_session.commit()
     
     # Test field values
     assert email.id == "msg123"
@@ -134,40 +166,130 @@ def test_email_model(test_config, db_session):
     assert len(email.labels) == 0
 
 
-def test_email_analysis_model(test_config, db_session):
+def test_email_analysis_model(test_config, test_session):
     """Test EmailAnalysis model with configuration."""
     # Create parent email
-    email = Email(
+    email = EmailMessage(
         id="msg123",
         thread_id="thread123",
         subject="Test Email",
         received_at=datetime.now(timezone.utc)
     )
-    db_session.add(email)
+    test_session.add(email)
     
-    # Test creation from API response
+    # Test creation from Anthropic API response
     api_response = {
+        "id": "analysis_123",
+        "email_id": "msg123",
+        "summary": "This is a test email about work.",
         "sentiment": "positive",
-        "category": "work",
-        "summary": "This is a test email about work."
+        "categories": ["work", "important"],
+        "key_points": ["Point 1", "Point 2"],
+        "action_items": [
+            {
+                "description": "Follow up with team",
+                "due_date": "2025-01-02T12:00:00Z",
+                "priority": "high",
+                "assignee": "john@example.com"
+            }
+        ],
+        "priority_score": 4,
+        "confidence_score": 0.95,
+        "model_version": "claude-3-opus-20240229",
+        "analysis_metadata": {
+            "source": "email",
+            "version": "1.0",
+            "processing_time": 0.5
+        }
     }
     
-    analysis = EmailAnalysis.from_api_response(email.id, api_response)
-    db_session.add(analysis)
-    db_session.commit()
+    analysis = EmailAnalysis.from_api_response(api_response)
+    test_session.add(analysis)
+    test_session.commit()
     
     # Test field values
-    assert analysis.email_id == "msg123"
-    assert analysis.sentiment == "positive"
-    assert analysis.category == "work"
+    assert analysis.analysis_id == "analysis_123"
+    assert analysis.email_id == email.id
     assert analysis.summary == "This is a test email about work."
+    assert analysis.sentiment == "positive"
+    assert analysis.categories == ["work", "important"]
+    assert analysis.key_points == ["Point 1", "Point 2"]
+    assert len(analysis.action_items) == 1
+    assert analysis.action_items[0]["description"] == "Follow up with team"
+    assert analysis.action_items[0]["priority"] == "high"
+    assert analysis.priority_score == 4
+    assert analysis.confidence_score == 0.95
+    assert analysis.model_version == "claude-3-opus-20240229"
+    assert analysis.analysis_metadata["source"] == "email"
+    assert analysis.analysis_metadata["version"] == "1.0"
     
     # Test relationship
     assert analysis.email == email
     assert email.analysis == analysis
+    
+    # Test response model
+    response = EmailAnalysisResponse.from_model(analysis)
+    assert response.analysis_id == analysis.analysis_id
+    assert response.email_id == str(analysis.email_id)
+    assert response.summary == analysis.summary
+    assert response.sentiment == analysis.sentiment
+    assert response.categories == analysis.categories
+    assert response.key_points == analysis.key_points
+    assert response.action_items == analysis.action_items
+    assert response.priority_score == analysis.priority_score
+    assert response.confidence_score == analysis.confidence_score
+    assert response.model_version == analysis.model_version
+    assert response.analysis_metadata == analysis.analysis_metadata
 
 
-def test_gmail_label_model(test_config, db_session):
+def test_email_analysis_validation(test_config, test_session):
+    """Test EmailAnalysis validation rules."""
+    email = EmailMessage(
+        id="msg123",
+        thread_id="thread123",
+        subject="Test Email",
+        received_at=datetime.now(timezone.utc)
+    )
+    test_session.add(email)
+    
+    # Test invalid sentiment
+    with pytest.raises(ValueError):
+        EmailAnalysis(
+            analysis_id="analysis_123",
+            email_id=email.id,
+            summary="Test summary",
+            sentiment="invalid"
+        )
+    
+    # Test invalid priority score
+    with pytest.raises(ValueError):
+        EmailAnalysis(
+            analysis_id="analysis_123",
+            email_id=email.id,
+            summary="Test summary",
+            priority_score=6
+        )
+    
+    # Test invalid confidence score
+    with pytest.raises(ValueError):
+        EmailAnalysis(
+            analysis_id="analysis_123",
+            email_id=email.id,
+            summary="Test summary",
+            confidence_score=1.5
+        )
+    
+    # Test invalid model version
+    with pytest.raises(ValueError):
+        EmailAnalysis(
+            analysis_id="analysis_123",
+            email_id=email.id,
+            summary="Test summary",
+            model_version="invalid-model"
+        )
+
+
+def test_gmail_label_model(test_config, test_session):
     """Test GmailLabel model with configuration."""
     # Test creation from API response
     api_response = {
@@ -179,8 +301,8 @@ def test_gmail_label_model(test_config, db_session):
     }
     
     label = GmailLabel.from_api_response(api_response)
-    db_session.add(label)
-    db_session.commit()
+    test_session.add(label)
+    test_session.commit()
     
     # Test field values
     assert label.id == "Label_123"
@@ -194,25 +316,43 @@ def test_gmail_label_model(test_config, db_session):
     assert len(label.emails) == 0
 
 
-def test_model_relationships(test_config, db_session):
+def test_model_relationships(test_config, test_session):
     """Test relationships between models."""
     # Create email
-    email = Email(
+    email = EmailMessage(
         id="msg123",
         thread_id="thread123",
         subject="Test Email",
         received_at=datetime.now(timezone.utc)
     )
-    db_session.add(email)
+    test_session.add(email)
     
     # Create analysis
     analysis = EmailAnalysis(
+        analysis_id="analysis_123",
         email_id=email.id,
+        summary="Test summary",
         sentiment="positive",
-        category="work",
-        summary="Test summary"
+        categories=["work", "important"],
+        key_points=["Point 1", "Point 2"],
+        action_items=[
+            {
+                "description": "Follow up with team",
+                "due_date": "2025-01-02T12:00:00Z",
+                "priority": "high",
+                "assignee": "john@example.com"
+            }
+        ],
+        priority_score=4,
+        confidence_score=0.95,
+        model_version="claude-3-opus-20240229",
+        analysis_metadata={
+            "source": "email",
+            "version": "1.0",
+            "processing_time": 0.5
+        }
     )
-    db_session.add(analysis)
+    test_session.add(analysis)
     
     # Create labels
     label1 = GmailLabel(
@@ -225,11 +365,11 @@ def test_model_relationships(test_config, db_session):
         name="Important",
         type="user"
     )
-    db_session.add_all([label1, label2])
+    test_session.add_all([label1, label2])
     
     # Add labels to email
     email.labels.extend([label1, label2])
-    db_session.commit()
+    test_session.commit()
     
     # Test relationships
     assert email.analysis == analysis

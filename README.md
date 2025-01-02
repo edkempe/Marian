@@ -1,133 +1,49 @@
-# Marian Project
+# Jexi Project
 
-**Version:** 1.0.0
-**Status:** Authoritative
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial project setup
+- Added core documentation
+- Added minimalist ADR structure
 
-## Document Version Guidelines
-All project documentation follows this version notation:
-- Format: `[Major].[Minor].[Patch]`
-- Example: `1.2.3`
+## Overview
 
-Version components:
-- Major: Breaking changes
-- Minor: New features, backward compatible
-- Patch: Bug fixes, clarifications
+Jexi is an AI-powered email processing and analysis system that works alongside Marian, a specialized librarian AI that manages the Catalog system. The project uses a library-based architecture where:
 
-Status levels:
-- Draft: Initial creation, not reviewed
-- Review: Under review/testing
-- Authoritative: Current source of truth
-- Deprecated: Superseded but preserved
+- **Jexi** processes and analyzes emails, and can "check out" information it needs
+- **Marian** acts as a librarian, maintaining metadata about where information is stored
+- **The Catalog** is like a card catalog system - it doesn't store content, just references to where things are
 
-## Version History
-- 1.0.0: Initial project setup and core documentation
+### Components
 
-## Important Process Documents
-**REQUIRED**: Follow the authoritative [Development Checklist](docs/dev-checklist.md) for all development sessions.
+1. **Jexi Core**: 
+   - Email processing and analysis
+   - Gmail integration
+   - Can request and "check out" information through Marian
+   - Uses the catalog but doesn't manage it
 
-**Core Documentation**:
-- [Development Session Logs](docs/session_logs/) - Daily development tracking (REQUIRED)
-- [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
-- [Session Workflow Guide](docs/session-workflow.md) - Development workflow
-- [Project Guidelines](docs/adr/README.md) - Project architecture and decisions
-- [Setup Guide](docs/setup.md) - Environment setup
-- [Design Decisions](docs/design-decisions.md) - Architecture choices
-- [Contributing Guide](docs/contributing.md) - Development guidelines
+2. **Marian**: 
+   - Acts as a librarian for the system
+   - Maintains metadata about information location
+   - Knows where everything is and how it relates
+   - Maintains the source of truth hierarchy
+   - Doesn't store content, only references to it
 
-The checklist and session logs must be maintained for every development session, with the supporting documents providing additional context and details as needed.
+3. **The Catalog**:
+   - Like a library's card catalog
+   - Stores metadata, locations, and relationships
+   - Contains references/pointers to actual content
+   - Maps the knowledge landscape
+   - Tracks hierarchies and dependencies
 
-## Critical Development Guidelines
-
-1. **Code Preservation Policy**
-   - **NEVER** remove functionality or information/documentation without explicit permission
-   - This includes:
-     - Test cases and functionality
-     - Documentation and comments
-     - Helper functions and utilities
-     - Logging and debugging code
-     - Error handling
-   - Duplicate important information rather than removing it
-   - Always get explicit approval before removing any code
-   - This guideline is critical and applies to all aspects of the project
-
-2. **Code Addition Policy**
-   - **NEVER** add new functionality without explicit approval
-   - This includes:
-     - New files or modules
-     - External libraries and dependencies
-     - New features or functionality
-     - Code reformatting or restructuring
-     - Changes to build or deployment processes
-   - Always propose and get approval before adding:
-     - New dependencies
-     - New files
-     - Code reformatting
-     - New features
-     - Project structure changes
-   - Document the reason and impact of proposed additions
-   - This guideline is critical and applies to all aspects of the project
-
-3. **Testing Policy**
-   - **NO MOCK TESTING** - All tests must use real integrations
-   - Tests interact with actual APIs, databases, and services
-   - Any changes to use mocks require explicit permission
-   - Test data volumes are limited to prevent timeouts
-   - Tests must be reliable and not dependent on mock behavior
-   - This policy ensures tests validate real-world behavior
-
-4. **Change Management Policy**
-   - Keep detailed session logs of all development work in `docs/session_logs/`
-   - Follow the [Session Logs Guide](docs/session_logs/README.md) for format and naming
-   - Make changes small and incremental
-   - Ensure diffs are readable for review and approval
-   - Document reasoning behind each change
-   - Break large changes into smaller, reviewable chunks
-   - This policy ensures changes can be properly reviewed and tracked
-
-## Test Setup Requirements
-
-Before running tests:
-
-1. **Gmail API Authentication**
-   - Valid Gmail credentials required in `config/credentials.json`
-   - Valid token required in `config/token.pickle`
-   - Run `python app_get_mail.py` first to authenticate
-   - Token must be refreshed when expired
-   - Tests will stall if authentication is needed
-
-2. **Database Setup**
-   - Email database must be initialized
-   - Label database must be synced
-   - Run `python app_get_mail.py --sync-labels` to initialize
-
-3. **Test Data Requirements**
-   - Gmail account must have some emails
-   - Tests use real emails from the last 7 days
-   - Limited to small batches to prevent timeouts
-
-4. **Test Reports**
-   - HTML test reports are generated in `reports/testing/`
-   - Reports include:
-     - Documentation quality and versioning
-     - Import analysis (unused imports, style issues)
-     - File duplicates and similarities
-     - Test coverage
-   - View reports in browser for best experience
-   - Reports are generated automatically during test runs
-   - Issues are reported as warnings to avoid blocking tests
-
-## Project Overview
-
-Marian is an AI-powered email analysis and cataloging system that helps organize and understand email content at scale.
-
-### Key Features
+## Key Features
 - Automated email analysis and categorization
 - Smart priority scoring
 - Catalog generation and management
 - Integration with Gmail API
 - Extensible analysis framework
 
-### Quick Links
+## Quick Links
 - [Project Checklist](docs/dev-checklist.md) - Development checklist
 - [Testing Guide](docs/testing-guide.md) - Testing standards and procedures
 - [Code Standards](docs/code-standards.md) - Coding conventions
@@ -136,7 +52,7 @@ Marian is an AI-powered email analysis and cataloging system that helps organize
   - [Session Logs Guide](docs/session_logs/README.md) - Session logging standards
 - [Contributing Guide](docs/contributing.md) - Development guidelines
 
-### Getting Started
+## Getting Started
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
 3. Configure environment variables (see [Setup Guide](docs/setup.md))
@@ -156,8 +72,40 @@ For detailed setup instructions, see the [Setup Guide](docs/setup.md).
   - `catalog_constants.py`: Catalog system configuration
   - `librarian_constants.py`: Librarian-specific settings
 - **Database**:
-  - `db_email_store.db`: Main database for email storage and analysis
+  - `data/jexi.db`: Main database for email storage and analysis
   - Schema defined by SQLAlchemy models in `models/`
+
+## Database Architecture
+
+### Schema Management
+The database schema is managed through a configuration-driven approach:
+
+1. **Source of Truth**: `schema.yaml`
+   - Defines all table structures
+   - Specifies relationships and constraints
+   - Single source of truth for database schema
+
+2. **Code Generation**:
+   - Models are generated from schema.yaml
+   - Constants are generated for validation
+   - Schema verification ensures integrity
+
+3. **Database Structure**:
+   - Single SQLite database: `data/jexi.db`
+   - Unified session management
+   - Clear table prefixes for logical separation
+
+### Data Flow
+```
+schema.yaml (source of truth)
+  → Generated Models & Constants
+    → Database Schema
+      → Application Code
+```
+
+### Database Files
+- Main database: `data/jexi.db`
+- Test database: `tests/test_data/test.db`
 
 ## Prerequisites
 1. Python 3.12.8 or higher
@@ -222,6 +170,15 @@ Each component's constants are isolated to prevent confusion and maintain clear 
 
 See the individual constants files for detailed configuration references.
 
+## Dependencies
+
+Core dependencies:
+- **sqlalchemy**: ORM and database management
+- **pyyaml**: Schema configuration parsing
+- **pytest**: Testing framework
+- **google-api-python-client**: Gmail API integration
+- **python-dotenv**: Environment configuration
+
 ## Usage
 1. Fetch emails:
    ```bash
@@ -254,6 +211,54 @@ If you encounter any issues while running the application, please refer to our c
   - Contains utilities, constants, and helpers
   - Not for standalone scripts or development tools
   - Example: database_session_util.py used by apps and services
+
+### Application Utilities (`/utils/`)
+Core utilities used throughout the application:
+
+- **Date Utilities** (`date_utils.py`)
+  ```python
+  from utils.date_utils import format_iso_date, parse_iso_date
+  
+  # Format date to ISO string
+  iso_date = format_iso_date(datetime.now())
+  
+  # Parse ISO date string
+  date = parse_iso_date("2024-12-31T09:48:00")
+  ```
+
+- **String Utilities** (`string_utils.py`)
+  ```python
+  from utils.string_utils import camel_to_snake, snake_to_camel
+  
+  # Convert between cases
+  snake = camel_to_snake("camelCase")  # -> "camel_case"
+  camel = snake_to_camel("snake_case")  # -> "SnakeCase"
+  ```
+
+- **Email Utilities** (`email_utils.py`)
+  ```python
+  from utils.email_utils import parse_email_address, normalize_email
+  
+  # Parse email components
+  local, domain = parse_email_address("user@example.com")
+  
+  # Normalize email address
+  clean = normalize_email(" User@Example.COM ")
+  ```
+
+### Development Tools (`/tools/`)
+Tools for development and maintenance:
+
+- Documentation validators
+- Build scripts
+- Project standards
+
+### Test Utilities (`/tests/utils/`)
+Utilities specifically for testing:
+
+- Database test helpers
+- Email test fixtures
+- Test constants
 
 ### Active Content
 - `/docs` - Current documentation only
@@ -393,7 +398,7 @@ This process ensures:
 ## Monitoring and Maintenance
 1. **Logging**
    - Use structured JSON logging
-   - Log files stored in `logs/marian.log`
+   - Log files stored in `logs/jexi.log`
    - Logs rotate at 10MB with 5 backup files
    - Each log includes:
      * Timestamp
@@ -580,6 +585,59 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
    - Mock external APIs
    - Use consistent test data
 
+## External Tool Requirements
+
+The project uses several external tools and services for development, testing, and runtime operations. For a complete list and rationale, see [ADR-0007: External Tool Integration](docs/adr/0007-external-tool-integration.md).
+
+### Development Environment
+- **Windsurf.ai**: Our primary IDE and AI copilot
+  - Access via web browser at [windsurf.ai](https://windsurf.ai)
+- **Git**: Version control
+  ```bash
+  brew install git
+  ```
+- **pre-commit**: Git hooks for code quality
+  ```bash
+  pip install pre-commit
+  pre-commit install
+  ```
+
+### Build and Testing
+- **pytest**: Test framework
+  ```bash
+  pip install pytest pytest-cov pytest-mock pytest-asyncio
+  ```
+- **bandit**: Security testing
+  ```bash
+  pip install bandit
+  ```
+- **rmlint**: Fast duplicate file detection
+  ```bash
+  # macOS
+  brew install rmlint
+
+  # Ubuntu/Debian
+  sudo apt-get install rmlint
+
+  # Fedora
+  sudo dnf install rmlint
+  ```
+
+### Runtime Dependencies
+- **SQLite**: Database (built into Python)
+- **alembic**: Database migrations
+  ```bash
+  pip install alembic
+  ```
+
+### External Services
+- **Gmail API**: Email integration
+  - Requires OAuth 2.0 setup
+  - See [Gmail API Setup Guide](docs/setup/gmail_api_setup.md)
+- **Anthropic API**: AI processing
+  - Requires API key
+  - See [AI Integration Guide](docs/setup/ai_integration.md)
+
 ## File Naming Conventions
 1. **Application Files**
    - Main apps: `app_*.py` (e.g., `app_email_analyzer.py`)
@@ -587,5 +645,5 @@ If you encounter an error like `__init__() got an unexpected keyword argument 'p
    - Tests: `test_*.py` (e.g., `test_email_analyzer.py`)
 
 2. **Database Files**
-   - Main database: `db_email_store.db`
+   - Main database: `data/jexi.db`
    - Never use generic names like `emails.db`

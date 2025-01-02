@@ -92,10 +92,10 @@
 ### Architecture Decision Records (ADRs)
 
 Key architectural decisions are documented in ADRs:
-
- - [ADR 0001: Layered Architecture](adr/0001-layered-architecture.md) - Core architecture decision
- - [ADR 0002: Minimal Security Testing](adr/0002-minimal-security-testing.md) - Security testing approach
- - [ADR 0003: Test Database Strategy](adr/0003-test-database-strategy.md) - Database testing strategy
+  - [ADR 0000: Subsystem Architecture](adr/0000-subsystem-architecture.md) - Foundational hub-and-spoke design
+  - [ADR 0001: Layered Architecture](adr/0001-layered-architecture.md) - Core architecture decision
+  - [ADR 0002: Minimal Security Testing](adr/0002-minimal-security-testing.md) - Security testing approach
+  - [ADR 0003: Test Database Strategy](adr/0003-test-database-strategy.md) - Database testing strategy
 
 See the [ADR README](adr/README.md) for more information about our ADR process.
 
@@ -169,6 +169,12 @@ See the [ADR README](adr/README.md) for more information about our ADR process.
    - Check cross-references
    - Update related docs
    - Verify hierarchy integrity
+
+## Revision History
+1.0.0 (2024-12-31) @dev
+- Initial documentation structure
+- Added ADR guidelines
+- Added template standards
 
 ## File Naming Conventions
 - `README.md` - All uppercase (standard)

@@ -11,12 +11,11 @@ repos:
 -   repo: local
     hooks:
     -   id: doc-validator
-        name: Documentation Standards Validator
+        name: Documentation Validator
         entry: python tools/doc_validator.py
         language: python
-        files: ^docs/.*\.md$
-        pass_filenames: false
-        types: [markdown]
+        files: \.(md)$
+        exclude: ^venv/
         # Lenient mode for pre-commit
         args: []
         verbose: true

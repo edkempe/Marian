@@ -1,30 +1,30 @@
-"""Configuration module for Marian.
+"""Configuration package.
 
-This module provides configuration settings for various components:
-- Email: Settings for Gmail API and email processing
-- Catalog: Settings for the catalog system
-- Database: Database connection settings
+This package provides a centralized location for all configuration settings.
+It follows the 12-Factor App methodology for configuration management:
+https://12factor.net/config
+
+Usage:
+    from config import settings, env_settings
+
+    db_url = settings.database_settings.URL
+    is_production = env_settings.ENV.is_production
 """
 
-from pathlib import Path
+from config.environment import env_settings
+from config.settings import (
+    api_settings,
+    database_settings,
+    email_settings,
+    logging_settings,
+    security_settings,
+)
 
-# Email configuration
-EMAIL_CONFIG = {
-    "BATCH_SIZE": 10,
-    "COUNT": 100,
-    "LABELS": ["INBOX", "SENT"],
-    "EXCLUDED_LABELS": ["SPAM", "TRASH"],
-}
-
-# Catalog configuration
-CATALOG_CONFIG = {
-    "ENABLE_SEMANTIC": True,
-    "DB_PATH": str(Path(__file__).parent.parent / "data" / "db_catalog.db"),
-    "CHAT_LOG": "chat_logs.jsonl",
-    "ERROR_MESSAGES": {
-        "API_ERROR": "Failed to get API response: {}",
-        "DATABASE_ERROR": "Database error: {}",
-        "JSON_DECODE_ERROR": "Failed to decode JSON: {}",
-        "DUPLICATE_ERROR": "Duplicate entry: {}",
-    },
-}
+__all__ = [
+    'env_settings',
+    'api_settings',
+    'database_settings',
+    'email_settings',
+    'logging_settings',
+    'security_settings',
+]

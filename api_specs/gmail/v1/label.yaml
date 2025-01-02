@@ -1,0 +1,69 @@
+openapi: 3.0.0
+info:
+  title: Gmail API - Label Resource
+  version: v1
+  description: Official Gmail API Label resource specification
+
+components:
+  schemas:
+    Label:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: The immutable ID of the label
+          maxLength: 100
+        name:
+          type: string
+          description: The display name of the label
+          maxLength: 255
+        messageListVisibility:
+          type: string
+          description: The visibility of messages with this label in the message list
+          enum:
+            - show
+            - hide
+          nullable: true
+        labelListVisibility:
+          type: string
+          description: The visibility of the label in the label list
+          enum:
+            - labelShow
+            - labelShowIfUnread
+            - labelHide
+          nullable: true
+        type:
+          type: string
+          description: The owner type for the label
+          enum:
+            - system
+            - user
+        color:
+          type: object
+          nullable: true
+          properties:
+            textColor:
+              type: string
+              pattern: "^#[0-9A-Fa-f]{6}$"
+            backgroundColor:
+              type: string
+              pattern: "^#[0-9A-Fa-f]{6}$"
+        messagesTotal:
+          type: integer
+          description: Total number of messages with this label
+          nullable: true
+        messagesUnread:
+          type: integer
+          description: Number of unread messages with this label
+          nullable: true
+        threadsTotal:
+          type: integer
+          description: Total number of threads with this label
+          nullable: true
+        threadsUnread:
+          type: integer
+          description: Number of unread threads with this label
+          nullable: true

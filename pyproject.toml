@@ -1,21 +1,200 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
-name = "marian"
+[tool.poetry]
+name = "jexi"
 version = "0.1.0"
 description = "Email analysis and management system"
-requires-python = ">=3.8"
-dependencies = [
-    "sqlalchemy",
-    "alembic",
-    "google-api-python-client",
-    "google-auth-httplib2",
-    "google-auth-oauthlib",
+authors = []
+readme = "README.md"
+packages = [
+    {include = "src", from = "."},
+    {include = "models", from = "."},
+    {include = "shared_lib", from = "."},
+    {include = "config", from = "."},
+    {include = "services", from = "."},
+    {include = "utils", from = "."},
+    {include = "tools", from = ".", format = "sdist"},  # Development tools only
+    {include = "scripts", from = "."},
+    {include = "alembic", from = "."},
+    {include = "migrations", from = "."},
+    {include = "tests", from = "."}  # Add tests directory
 ]
 
+[tool.poetry.dependencies]
+python = "^3.12"
+google-api-python-client = "2.120.0"
+google-auth-oauthlib = "1.2.0"
+boto3 = "1.33.6"
+botocore = "1.33.13"
+python-dateutil = "2.9.0"
+pytz = "2024.1"
+google-auth-httplib2 = "0.2.0"
+keyring = "24.3.0"
+pandas = "2.1.4"
+plotly = "5.18.0"
+jinja2 = "3.1.2"
+markdown = "3.7"
+numpy = "1.26.4"
+tabulate = "0.9.0"
+textblob = "0.17.1"
+anthropic = "0.42.0"
+python-dotenv = "1.0.1"
+tqdm = "4.66.1"
+sqlalchemy = "2.0.36"
+alembic = "1.13.1"
+networkx = "3.4.2"
+structlog = "24.4.0"
+pydantic = {version = "^2.5.3", extras = ["email"]}
+pydantic-settings = "2.2.1"
+passlib = "1.7.4"
+prompt-toolkit = "3.0.48"
+cryptography = "42.0.0"
+python-jose = "3.3.0"
+tenacity = "8.2.3"
+email-validator = "^2.1.0"
+pytest-timeout = "^2.2.0"
+marshmallow = "^3.23.2"
+flake8 = ">=7.0.0"
+flake8-docstrings = ">=1.7.0"
+flake8-import-order = ">=0.18.2"
+flake8-quotes = ">=3.3.2"
+isort = ">=5.13.2"
+doc8 = ">=1.1.1"
+pytest-env = ">=1.1.1"
+pytest-xdist = ">=3.5.0"
+hypothesis = ">=6.98.0"
+safety = ">=2.3.5"
+detect-secrets = ">=1.4.0"
+
+[tool.poetry.group.dev.dependencies]
+# Code Quality
+black = ">=23.12.1"
+pylint = ">=3.0.3"
+mypy = ">=1.7.0"
+bandit = ">=1.7.0"
+
+# Testing
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+pytest-asyncio = "^0.23.5"
+pytest-faker = ">=2.0.0"
+factory-boy = ">=3.3.0"
+faker = ">=18.0.0"
+
+# Development Workflow
+pre-commit = ">=3.5.0"
+
+[tool.poetry.scripts]
+# Testing
+test = "pytest:main"
+coverage = "pytest:main ['--cov=src', '--cov=models', '--cov=shared_lib', '--cov-report=html', 'tests/']"
+parallel-test = "pytest:main ['-n', 'auto']"
+
+# Code Quality
+format = "black:main ['.']"
+lint = "pylint:main ['src', 'tests', 'models', 'shared_lib']"
+typecheck = "mypy:main ['src', 'models', 'shared_lib']"
+security = "bandit:main ['-r', 'src', 'models', 'shared_lib']"
+sort-imports = "isort:main ['.']"
+check-deps = "safety:main ['check']"
+check-secrets = "detect_secrets:main ['scan']"
+
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [
+    ".",
+    "src",
+    "tests",
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+    "requires_external_tools: marks tests that need external tools",
+    "semantic: marks semantic search related tests",
+    "email: marks email processing related tests",
+    "analysis: marks text analysis related tests",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/docs/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+max-complexity = 10
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+
+[tool.pylint]
+max-line-length = 100
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "C0301",  # line-too-long
+    "C0302",  # too-many-lines
+    "C0330",  # bad-continuation
+    "C0326",  # bad-whitespace
+    "W0311",  # bad-indentation
+    "W0603",  # global-statement
+    "W0703",  # broad-except
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "R0914",  # too-many-locals
+]
+
+[tool.coverage.run]
+source = ["src", "models", "shared_lib"]
+omit = [
+    "tests/*",
+    "setup.py",
+    "tools/*",  # Exclude development tools from coverage
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+plugins = [
+    "sqlalchemy.ext.mypy.plugin",
+    "pydantic.mypy"
+]
+
+[tool.doc8]
+max-line-length = 88
+ignore = ["D001"]  # Do not check line length

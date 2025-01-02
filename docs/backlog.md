@@ -4,78 +4,39 @@
 **Status:** Source of truth for project tasks and priorities
 **Note:** Prototype and experimental features have been moved to [backlog_prototypes.md](./backlog_prototypes.md)
 
-## Imported Libraries and Dependencies
-
-### Current Dependencies
-- **anthropic**: Anthropic API integration for Claude
-- **tenacity**: Retry logic for API calls (implemented)
-- **python-dotenv**: Environment variable management
-- **google-api-python-client**: Gmail API integration
-- **google-auth-oauthlib**: Google OAuth authentication
-- **google-auth-httplib2**: Google HTTP client library
-- **sqlalchemy**: Database ORM and management
-- **pytest**: Testing framework
-- **pytest-cov**: Test coverage reporting
-- **black**: Code formatting
-- **isort**: Import sorting
-- **mypy**: Static type checking
-- **ruff**: Fast Python linter
-
-### Planned Dependencies
-- **pydantic**: Data validation and settings management
-- **alembic**: Database migration management
-- **structlog**: Structured logging
-- **prometheus-client**: Metrics and monitoring
-
-## Backlog Notes
-**Last Review**: 2024-12-29
-**Status**: Needs Consolidation
-
-### Identified Duplicates for Future Consolidation
-1. **Database Documentation**:
-   - Multiple entries about moving schema documentation to docs/database_design.md
-   - Duplicate ERD diagram tasks
-   - Repeated validation rules documentation tasks
-   - Migration guide appears in multiple sections
-
-2. **Code Quality Tools**:
-   - Multiple entries about implementing code formatting tools
-   - Duplicate static analysis implementation tasks
-   - Overlapping validation improvement tasks
-
-3. **Schema Changes**:
-   - Multiple entries about TEXT to JSON field migration
-   - Duplicate date handling standardization tasks
-
-### Non-Duplicate Sections
-1. **Session Management**:
-   All session management sections contain unique tasks and should be preserved:
-   - "Session Management Testing" - Covers testing, python command handling, and environment reporting
-   - "Session Management" - Focuses on workflow, file naming, and documentation
-   These sections are complementary and address different aspects of session management.
-
-Note: The identified duplicates should be consolidated during the next backlog cleanup session, ensuring no critical information is lost during consolidation.
-
-## Workstreams Overview
-### Email Processing
-**Status**: Active
-**Focus**: Email retrieval, analysis, and storage
-**Current Priority**: Schema validation and testing
-**Objective**: Build robust email processing infrastructure for information extraction and analysis
-
-### Catalog/Librarian
-**Status**: Active
-**Focus**: Information organization and retrieval
-**Current Priority**: Interactive chat system development
-**Objective**: Create an intelligent catalog system that enables interactive information management through natural language conversations, helping organize, retrieve, and maintain a knowledge base of resources and information while leveraging the email processing infrastructure
-
-### Program Management
-**Status**: Active
-**Focus**: Standards, processes, and coordination
-**Current Priority**: Documentation restructuring
-**Objective**: Establish and maintain development standards, documentation, and processes that promote quality, maintainability, and cross-workstream coordination
-
 ## High Priority
+
+### Security and Authentication
+1. [ ] **Implement ADR-0008: Secure Token Storage**
+   - Status: Backlog
+   - Priority: Medium
+   - Description: Migrate token storage from pickle to JSON format with keyring-based encryption. Implement token rotation, secure deletion, and system keychain integration.
+   - Dependencies: None
+   - ADR: [ADR-0008](adr/0008-secure-token-storage.md)
+
+### Code Organization
+1. [ ] **Implement ADR-0009: Constants Consolidation**
+   - Status: Proposed
+   - Priority: High
+   - Description: Consolidate constants into a hierarchical structure under shared_lib/constants/. Create clear separation between configuration and constants.
+   - Dependencies: None
+   - ADR: [ADR-0009](adr/0009-constants-consolidation.md)
+
+2. [ ] **Implement ADR-0026: Code Organization Restructure**
+   - Status: Proposed
+   - Priority: High
+   - Description: Complete code reorganization following clean architecture principles
+   - Tasks:
+     1. Phase 1: Preparation (Week 1)
+     2. Phase 2: Configuration Migration (Week 1)
+     3. Phase 3: Core Components (Week 2)
+     4. Phase 4: Utils and Tools (Week 2)
+     5. Phase 5: Scripts and Entry Points (Week 3)
+     6. Phase 6: Testing (Week 3)
+     7. Phase 7: Documentation and Cleanup (Week 4)
+   - Dependencies: None
+   - ADR: [ADR-0026](adr/0026-code-organization-restructure.md)
+   - Migration Plan: [Code Reorganization Plan](migration/code-reorganization-plan.md)
 
 ### Documentation and Standards
 1. [ ] Update component-specific README files
@@ -85,22 +46,34 @@ Note: The identified duplicates should be consolidated during the next backlog c
    - Dependencies: None
    - Estimated Time: 1-2 sessions
 
-### Testing and Quality
-1. [ ] Fix failing tests and dependencies
+2. [ ] Create ADR Index and Hierarchy
+   - Status: Not Started
+   - Priority: High
+   - Description: Create a comprehensive index of all ADRs with clear categorization and relationships
+   - Key Areas:
+     - Create `adr_index.md` with categorized listing
+     - Document ADR relationships and dependencies
+     - Add status tracking for each ADR
+     - Create visualization of ADR hierarchy
+   - Dependencies: None
+   - Estimated Time: 1 session
+   - Notes: Will help track architectural decisions and their impacts
+
+3. [ ] Fix failing tests and dependencies
    - Status: Not Started
    - Priority: High
    - Description: Resolve missing dependencies (bs4, networkx, pkg_resources) and DEFAULT_MODEL import issues
    - Dependencies: None
    - Estimated Time: 1 session
 
-2. [ ] Clean up Python package metadata
+4. [ ] Clean up Python package metadata
    - Status: Not Started
    - Priority: High
    - Description: Resolve duplicate egg-info directories and ensure proper package structure
    - Dependencies: None
    - Estimated Time: 1 session
 
-3. [ ] Set up proper test data module
+5. [ ] Set up proper test data module
    - Status: Not Started
    - Priority: High
    - Description: Create dedicated test data module with versioned test files, fix test_data package structure, and set up semantic_test_data module
@@ -110,7 +83,7 @@ Note: The identified duplicates should be consolidated during the next backlog c
      - [ ] Add version tracking for test files
      - [ ] Create test data documentation
 
-4. [ ] Regular Documentation Consistency Check
+6. [ ] Regular Documentation Consistency Check
    - Status: Not Started
    - Priority: High
    - Description: Set up recurring task to validate documentation consistency
@@ -128,7 +101,7 @@ Note: The identified duplicates should be consolidated during the next backlog c
      - Cross-references are valid
      - HTML reports show no warnings
 
-5. [ ] Standardize Path and File Operations
+7. [ ] Standardize Path and File Operations
    - Status: Not Started
    - Priority: High
    - Description: Refactor codebase to use consistent path and file operation libraries
@@ -153,6 +126,19 @@ Note: The identified duplicates should be consolidated during the next backlog c
      - Consistent error handling across file operations
      - Updated documentation reflecting best practices
      - All tests pass with new implementations
+
+8. [ ] Review and optimize development tool usage
+   - Status: Not Started
+   - Priority: Medium
+   - Description: Comprehensive review of development tools (Pylint, Marshmallow, etc.) to ensure optimal usage and configuration
+   - Key Areas:
+     - Pylint configuration and custom rules
+     - Marshmallow schema implementation
+     - Test framework organization
+     - Code quality metrics
+   - Dependencies: None
+   - Estimated Time: 2-3 sessions
+   - ADR: [ADR-0017](adr/0017-utils-tools-organization.md)
 
 ### Schema Validation and Testing
 **Status**: In Progress
@@ -1315,6 +1301,27 @@ Create script to migrate existing session logs to new format (`session_log_YYYY-
 {{ ... }}
 
 ## Security
-- [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0005)
+- [ ] Enhance security testing: Add Safety, detect-secrets, and OWASP dependency checks (see ADR-0006)
 
 {{ ... }}
+
+### Documentation Restructuring
+**Status**: Planned
+**Priority**: Medium
+**Workstream**: Program Management
+**Description**: Restructure documentation to focus on essential needs for solo developer with AI copilot.
+
+#### Tasks
+1. Create minimal directory structure
+2. Archive unnecessary documentation
+3. Update ADRs to minimal format
+4. Clean up session logs
+
+#### Dependencies
+- None
+
+#### ADR
+- [ADR-0025](adr/0025-documentation-industry-alignment.md)
+
+#### Notes
+- See session_log_2025-01-01.md for detailed task list

@@ -12,10 +12,10 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from shared_lib.constants import DOCS_DIR, SESSION_LOGS_DIR
+from shared_lib.constants import FILE
 
 # Get relative paths for documentation
-SESSION_LOGS_RELATIVE = os.path.relpath(SESSION_LOGS_DIR, DOCS_DIR)
+SESSION_LOGS_RELATIVE = os.path.relpath(FILE.SESSION_LOGS_DIR, FILE.DOCS_DIR)
 SESSION_LOGS_README = os.path.join(SESSION_LOGS_RELATIVE, "README.md")
 
 # Documentation hierarchy

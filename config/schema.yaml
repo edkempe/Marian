@@ -2,11 +2,14 @@
 # This file defines database schema constants used across the application
 
 email:
+  database: "main"
   columns:
     id:
       size: 100
       type: string
       description: "Email ID"
+      nullable: false
+      primary_key: true
     thread_id:
       size: 100
       type: string
@@ -19,6 +22,9 @@ email:
       size: 500
       type: string
       description: "Email subject"
+    body:
+      type: text
+      description: "Email body content"
     from_address:
       size: 255
       type: string
@@ -35,6 +41,29 @@ email:
       size: 255
       type: string
       description: "BCC recipients"
+    snippet:
+      size: 1000
+      type: string
+      description: "Email preview snippet"
+    history_id:
+      size: 100
+      type: string
+      description: "Gmail history ID"
+    labels:
+      type: json
+      description: "Email labels as JSON array"
+    has_attachments:
+      type: boolean
+      description: "Whether email has attachments"
+    is_read:
+      type: boolean
+      description: "Whether email has been read"
+    is_important:
+      type: boolean
+      description: "Whether email is marked important"
+    full_api_response:
+      type: json
+      description: "Full Gmail API response as JSON"
   defaults:
     subject: ""
     body: null
@@ -46,37 +75,81 @@ email:
     has_attachments: false
     is_read: false
     is_important: false
-    api_response: "{}"
+    labels: "[]"
+    full_api_response: "{}"
   validation:
     max_subject_length: 500
     max_from_length: 255
     max_to_length: 255
     max_cc_length: 255
     max_bcc_length: 255
+  relationships:
+    catalog_entry:
+      type: "one_to_one"
+      model: "CatalogEntry"
+      back_populates: "email"
+      cascade: "all, delete-orphan"
+    labels:
+      type: "many_to_many"
+      model: "GmailLabel"
+      back_populates: "emails"
+      secondary: "email_labels"
+      cascade: "all"
 
 analysis:
+  database: "main"
   columns:
-    sentiment:
-      size: 20
+    id:
+      size: 100
       type: string
-      description: "Sentiment analysis result"
-    category:
-      size: 50
+      description: "Analysis ID"
+      nullable: false
+      primary_key: true
+    email_id:
+      size: 100
       type: string
-      description: "Email category"
+      description: "Email ID reference"
+      nullable: false
     summary:
       size: 1000
       type: string
       description: "Email summary"
-    priority:
+    sentiment:
       size: 20
       type: string
-      description: "Email priority"
+      description: "Sentiment analysis"
+    categories:
+      type: json
+      description: "Categories as JSON array"
+    key_points:
+      type: json
+      description: "Key points as JSON array"
+    action_items:
+      type: json
+      description: "Action items as JSON array"
+    priority_score:
+      type: integer
+      description: "Priority score (1-5)"
+    confidence_score:
+      type: float
+      description: "Confidence score (0-1)"
+    analysis_metadata:
+      type: json
+      description: "Analysis metadata as JSON"
+    model_version:
+      size: 50
+      type: string
+      description: "Model version used for analysis"
   defaults:
     sentiment: "neutral"
-    category: "uncategorized"
+    categories: "[]"
     summary: null
-    priority: "low"
+    key_points: "[]"
+    action_items: "[]"
+    priority_score: null
+    confidence_score: null
+    model_version: null
+    analysis_metadata: "{}"
   validation:
     valid_sentiments:
       - "positive"
@@ -90,32 +163,73 @@ analysis:
       - "social"
       - "support"
       - "uncategorized"
-    valid_priorities:
-      - "high"
-      - "medium"
-      - "low"
-    max_summary_length: 1000
+    priority_score_range:
+      min: 1
+      max: 5
+    confidence_score_range:
+      min: 0.0
+      max: 1.0
 
 label:
+  database: "main"
+  # Based on Gmail API Label resource:
+  # https://developers.google.com/gmail/api/reference/rest/v1/users.labels#Label
   columns:
-    label_id:
+    id:
       size: 100
       type: string
-      description: "Label ID"
+      description: "Gmail API label ID"
+      nullable: false
+      primary_key: true
     name:
       size: 255
       type: string
-      description: "Label name"
+      description: "Display name of the label"
+      nullable: false
+    message_list_visibility:
+      size: 20
+      type: string
+      description: "Show/hide the label in the message list"
+      nullable: true
+    label_list_visibility:
+      size: 20
+      type: string
+      description: "Show/hide the label in the label list"
+      nullable: true
     type:
       size: 20
       type: string
-      description: "Label type"
+      description: "Type of label (system/user)"
+    color:
+      size: 20
+      type: string
+      description: "Label color (hex code)"
+      nullable: true
+    messages_total:
+      type: integer
+      description: "Total number of messages with this label"
+      nullable: true
+    messages_unread:
+      type: integer
+      description: "Number of unread messages with this label"
+      nullable: true
+    threads_total:
+      type: integer
+      description: "Total number of threads with this label"
+      nullable: true
+    threads_unread:
+      type: integer
+      description: "Number of unread threads with this label"
+      nullable: true
   defaults:
     name: ""
     type: "user"
     message_list_visibility: "show"
     label_list_visibility: "labelShow"
-    is_system: false
+    messages_total: null
+    messages_unread: null
+    threads_total: null
+    threads_unread: null
   validation:
     valid_types:
       - "system"
@@ -123,6 +237,137 @@ label:
     valid_visibilities:
       - "show"
       - "hide"
-    valid_label_visibilities:
       - "labelShow"
       - "labelHide"
+      - "labelShowIfUnread"
+
+catalog:
+  database: "main"
+  columns:
+    id:
+      size: 100
+      type: string
+      description: "Catalog item ID"
+      nullable: false
+      primary_key: true
+    title:
+      size: 255
+      type: string
+      description: "Item title"
+    description:
+      size: 1000
+      type: string
+      description: "Item description"
+      nullable: true
+    type:
+      size: 50
+      type: string
+      description: "Item type (code, document, test, config, script)"
+    created_at:
+      type: datetime
+      description: "Creation timestamp"
+    updated_at:
+      type: datetime
+      description: "Last update timestamp"
+  defaults:
+    type: "document"
+  validation:
+    valid_types:
+      - "code"
+      - "document"
+      - "test"
+      - "config"
+      - "script"
+    max_title_length: 255
+    max_description_length: 1000
+
+tags:
+  database: "main"
+  columns:
+    id:
+      size: 100
+      type: string
+      description: "Tag ID"
+      nullable: false
+      primary_key: true
+    name:
+      size: 100
+      type: string
+      description: "Tag name"
+    description:
+      size: 500
+      type: string
+      description: "Tag description"
+      nullable: true
+  defaults:
+    description: null
+  validation:
+    max_name_length: 100
+    max_description_length: 500
+
+relationships:
+  database: "main"
+  columns:
+    id:
+      size: 100
+      type: string
+      description: "Relationship ID"
+      nullable: false
+      primary_key: true
+    source_id:
+      size: 100
+      type: string
+      description: "Source item ID"
+    target_id:
+      size: 100
+      type: string
+      description: "Target item ID"
+    type:
+      size: 50
+      type: string
+      description: "Relationship type"
+  defaults:
+    type: "related"
+  validation:
+    valid_types:
+      - "parent"
+      - "child"
+      - "related"
+      - "depends_on"
+      - "required_by"
+
+semantic_search:
+  config:
+    enable_semantic: true
+    match_threshold: 0.85
+    potential_match_threshold: 0.70
+    tag_match_threshold: 0.80
+    results_per_page: 10
+    relationship_types:
+      - "parent"
+      - "child"
+      - "related"
+      - "depends_on"
+      - "required_by"
+    tables:
+      catalog: "catalog_items"
+      tags: "tags"
+      relationships: "relationships"
+    error_messages:
+      no_matches: "No matches found for the given query."
+      below_threshold: "The match score is below the required threshold."
+      invalid_relationship: "Invalid relationship type specified."
+      tag_not_found: "One or more specified tags were not found."
+      duplicate_item: "An item with this identifier already exists."
+
+databases:
+  main:
+    path: "data/jexi.db"
+    tables:
+      - email_messages
+      - email_analysis
+      - gmail_labels
+      - catalog_items
+      - tags
+      - catalog_tags
+      - item_relationships

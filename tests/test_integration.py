@@ -24,7 +24,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models.email import Email
+from models.email import EmailMessage
 from models.email_analysis import EmailAnalysis
 from shared_lib.constants import API_CONFIG, DATABASE_CONFIG, EMAIL_CONFIG
 from shared_lib.database_session_util import get_analysis_session, get_email_session
@@ -171,7 +171,7 @@ def test_email_processing(gmail_api, test_db_session):
             }
 
             # Create email object
-            email = Email(
+            email = EmailMessage(
                 id=message["id"],
                 threadId=message["threadId"],
                 subject=headers.get("Subject", "[No Subject]"),
@@ -198,7 +198,7 @@ def test_email_processing(gmail_api, test_db_session):
     assert processed_count > 0, "Should process at least one email"
 
     # Verify emails were stored in database
-    stored_emails = test_db_session.query(Email).all()
+    stored_emails = test_db_session.query(EmailMessage).all()
     assert len(stored_emails) >= processed_count
 
     # Verify email structure (not specific content)
@@ -235,7 +235,7 @@ def test_email_processing_error_handling(gmail_api, test_db_session):
     try:
         # Directly test the processing logic
         headers = {}
-        email = Email(
+        email = EmailMessage(
             id=msg_with_missing_fields["id"],
             threadId=msg_with_missing_fields["threadId"],
             subject=headers.get("Subject", "[No Subject]"),  # Provide default
@@ -252,7 +252,7 @@ def test_email_processing_error_handling(gmail_api, test_db_session):
 
     # Verify the email was stored with default values
     stored_email = (
-        test_db_session.query(Email).filter_by(id=msg_with_missing_fields["id"]).first()
+        test_db_session.query(EmailMessage).filter_by(id=msg_with_missing_fields["id"]).first()
     )
     assert stored_email is not None
     assert stored_email.subject == "[No Subject]"
@@ -292,7 +292,7 @@ def test_email_date_queries(gmail_api, test_db_session):
                 for header in message["payload"]["headers"]
             }
 
-            email = Email(
+            email = EmailMessage(
                 id=message["id"],
                 threadId=message["threadId"],
                 subject=headers.get("Subject", "[No Subject]"),
@@ -321,7 +321,7 @@ def test_email_date_queries(gmail_api, test_db_session):
     # Query emails from last week
     week_ago = datetime.now() - timedelta(days=7)
     recent_emails = (
-        test_db_session.query(Email).filter(Email.received_date >= week_ago).all()
+        test_db_session.query(EmailMessage).filter(EmailMessage.received_date >= week_ago).all()
     )
     print(f"Found {len(recent_emails)} emails from last 7 days")
     assert len(recent_emails) > 0
@@ -329,7 +329,7 @@ def test_email_date_queries(gmail_api, test_db_session):
     # Query emails from last 24 hours
     day_ago = datetime.now() - timedelta(days=1)
     very_recent = (
-        test_db_session.query(Email).filter(Email.received_date >= day_ago).all()
+        test_db_session.query(EmailMessage).filter(EmailMessage.received_date >= day_ago).all()
     )
     print(f"Found {len(very_recent)} emails from last 24 hours")
 
@@ -353,7 +353,7 @@ def test_email_counting(gmail_api, test_db_session):
             header["name"]: header["value"] for header in message["payload"]["headers"]
         }
 
-        email = Email(
+        email = EmailMessage(
             id=message["id"],
             threadId=message["threadId"],
             subject=headers.get("Subject", "[No Subject]"),
@@ -368,21 +368,21 @@ def test_email_counting(gmail_api, test_db_session):
     test_db_session.commit()
 
     # Count total emails
-    total_count = test_db_session.query(Email).count()
+    total_count = test_db_session.query(EmailMessage).count()
     print(f"\nTotal emails in database: {total_count}")
     assert total_count > 0
 
     # Count emails by label
     for label in ["INBOX", "SENT", "IMPORTANT"]:
         label_count = (
-            test_db_session.query(Email).filter(Email.labels.like(f"%{label}%")).count()
+            test_db_session.query(EmailMessage).filter(EmailMessage.labels.like(f"%{label}%")).count()
         )
         print(f"Emails with {label} label: {label_count}")
 
     # Count emails by date range
     recent_count = (
-        test_db_session.query(Email)
-        .filter(Email.received_date >= datetime.now() - timedelta(days=1))
+        test_db_session.query(EmailMessage)
+        .filter(EmailMessage.received_date >= datetime.now() - timedelta(days=1))
         .count()
     )
     print(f"Emails received in last 24 hours: {recent_count}")
@@ -400,5 +400,5 @@ def test_database_session_management():
         init_database(session)
         assert session.bind is not None
         # Try a simple query
-        result = session.query(Email).first()
-        assert isinstance(result, Email) or result is None
+        result = session.query(EmailMessage).first()
+        assert isinstance(result, EmailMessage) or result is None

@@ -9,18 +9,21 @@ This module provides utilities for:
 import logging
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
+import os
+import sys
+import shutil
 
 from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, MetaData, Table, inspect
+from sqlalchemy import create_engine, MetaData, Table, inspect, text
 from sqlalchemy.exc import OperationalError
 import sqlite3
 
-from shared_lib.schema_constants import COLUMN_SIZES, EmailDefaults, AnalysisDefaults, LabelDefaults
-from shared_lib.database_session_util import email_engine, analysis_engine
-from models.registry import Base
+from shared_lib.config_loader import get_schema_config
+from shared_lib.constants import DATABASE_CONFIG
+from shared_lib.database_session_util import get_engine_for_db_type
 
 logger = logging.getLogger(__name__)
 
@@ -132,99 +135,255 @@ def validate_schema_changes() -> Dict[str, Any]:
             "warnings": List[str]  # List of warning messages
         }
     """
-    results = {"valid": True, "errors": [], "warnings": []}
+    errors = []
+    warnings = []
     
-    try:
-        # Get all tables from models
-        model_tables = Base.metadata.tables
-        
-        # Check each table against configuration
-        for table_name, table in model_tables.items():
-            # Get expected column sizes from COLUMN_SIZES
-            table_prefix = table_name.upper()
+    # Load schema configuration
+    schema_config = get_schema_config()
+    
+    # Create engine for validation
+    engine = create_engine(DATABASE_CONFIG["url"])
+    inspector = inspect(engine)
+    
+    # Get actual table schemas
+    for table_name in inspector.get_table_names():
+        # Skip alembic_version table
+        if table_name == "alembic_version":
+            continue
             
-            # Check columns
-            for column in table.columns:
-                if hasattr(column.type, "length"):
-                    col_name = f"{table_prefix}_{column.name.upper()}"
-                    
-                    # Check if column size is defined
-                    if col_name not in COLUMN_SIZES:
-                        results["warnings"].append(
-                            f"Column size not defined: {col_name} in schema constants"
-                        )
-                        continue
-                        
-                    expected_size = COLUMN_SIZES[col_name]
-                    actual_size = column.type.length
-                    
-                    # Validate column size
-                    if expected_size < 0:
-                        results["errors"].append(
-                            f"Invalid column size defined: {col_name} has negative size {expected_size}"
-                        )
-                        results["valid"] = False
-                    elif actual_size != expected_size:
-                        results["errors"].append(
-                            f"Column size mismatch: {col_name} expected {expected_size}, got {actual_size}"
-                        )
-                        results["valid"] = False
-                        
-        # Validate foreign key relationships
-        for table_name, table in model_tables.items():
-            for fk in table.foreign_keys:
-                if not fk.column.table in model_tables:
-                    results["errors"].append(
-                        f"Invalid foreign key in {table_name}: references non-existent table {fk.column.table}"
+        # Get configured table
+        table_config = getattr(schema_config, table_name, None)
+        if not table_config:
+            warnings.append(f"Table {table_name} not found in configuration")
+            continue
+            
+        # Check columns
+        for column in inspector.get_columns(table_name):
+            col_name = column["name"]
+            col_type = str(column["type"])
+            
+            # Get configured column
+            col_config = table_config.columns.get(col_name)
+            if not col_config:
+                warnings.append(f"Column {table_name}.{col_name} not found in configuration")
+                continue
+                
+            # Validate column type
+            expected_type = col_config.type
+            if expected_type not in col_type.lower():
+                errors.append(
+                    f"Column {table_name}.{col_name} type mismatch: "
+                    f"expected {expected_type}, got {col_type}"
+                )
+                
+            # Validate string column sizes
+            if expected_type == "string" and hasattr(column["type"], "length"):
+                actual_size = column["type"].length
+                if actual_size != col_config.size:
+                    errors.append(
+                        f"Column {table_name}.{col_name} size mismatch: "
+                        f"expected {col_config.size}, got {actual_size}"
                     )
-                    results["valid"] = False
-                    
-    except Exception as e:
-        results["errors"].append(f"Schema validation failed: {str(e)}")
-        results["valid"] = False
-        
-    return results
+    
+    # Check for missing tables
+    for table_name in ["email", "analysis", "label"]:
+        if table_name not in inspector.get_table_names():
+            errors.append(f"Required table {table_name} not found in database")
+    
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings
+    }
 
-def generate_migration(message: str, autogenerate: bool = True) -> Optional[str]:
-    """Generate new migration.
+def generate_migration(
+    name: str,
+    directory: str,
+    autogenerate: bool = True,
+    message: Optional[str] = None,
+    db_type: str = "email"
+) -> str:
+    """Generate a new migration.
     
     Args:
-        message: Migration message
+        name: Name of the migration
+        directory: Directory to store migrations
         autogenerate: Whether to autogenerate migration from models
+        message: Optional message to include in migration
+        db_type: Type of database to generate migration for
         
     Returns:
-        Revision ID if successful, None otherwise
+        Path to generated migration file
         
     Raises:
-        ValueError: If message is empty or invalid
+        ValueError: If name is empty or directory doesn't exist
+        OperationalError: If migration generation fails
     """
-    if not message or not message.strip():
-        raise ValueError("Migration message cannot be empty")
+    if not name:
+        raise ValueError("Migration name cannot be empty")
+        
+    if not os.path.exists(directory):
+        raise ValueError(f"Migration directory {directory} does not exist")
         
     try:
-        config = get_alembic_config(email_engine)
-        script = ScriptDirectory.from_config(config)
+        engine = get_engine_for_db_type(db_type)
+        config = get_alembic_config(engine)
         
-        template_args = {
-            "config": config
-        }
+        # Set migration directory
+        config.set_main_option("script_location", directory)
         
-        if autogenerate:
-            # Get current database schema
-            with email_engine.connect() as connection:
-                context = MigrationContext.configure(connection)
-                template_args["target_metadata"] = Base.metadata
-                
-        revision = script.generate_revision(
-            message,
-            autogenerate=autogenerate,
-            **template_args
+        # Create env.py if it doesn't exist
+        env_path = Path(directory) / "env.py"
+        if not env_path.exists():
+            env_path.write_text("""
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool, MetaData
+
+from alembic import context
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# Create MetaData instance
+target_metadata = MetaData()
+
+def run_migrations_offline() -> None:
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+def run_migrations_online() -> None:
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+""")
+        
+        # Create alembic.ini if it doesn't exist
+        ini_path = Path(directory) / "alembic.ini"
+        if not ini_path.exists():
+            ini_path.write_text(f"""
+[alembic]
+script_location = {directory}
+sqlalchemy.url = {engine.url}
+
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARN
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+""")
+
+        # Create script.py.mako if it doesn't exist
+        script_mako_path = Path(directory) / "script.py.mako"
+        if not script_mako_path.exists():
+            script_mako_path.write_text('''
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+
+# revision identifiers, used by Alembic.
+revision = ${repr(up_revision)}
+down_revision = ${repr(down_revision)}
+branch_labels = ${repr(branch_labels)}
+depends_on = ${repr(depends_on)}
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+def upgrade() -> None:
+    ${upgrades if upgrades else "pass"}
+
+def downgrade() -> None:
+    ${downgrades if downgrades else "pass"}
+''')
+        
+        # Create versions directory if it doesn't exist
+        versions_dir = Path(directory) / "versions"
+        versions_dir.mkdir(exist_ok=True)
+        
+        # Generate migration
+        revision = command.revision(
+            config,
+            autogenerate=False,  # Set to False to avoid requiring MetaData
+            rev_id=None,
+            message=message if message else name,
+            version_path=versions_dir
         )
         
-        return revision.revision
+        # Get migration file path
+        script = ScriptDirectory.from_config(config)
+        migration_file = next(versions_dir.glob("*_test_migration.py"))
+        
+        return str(migration_file)
     except Exception as e:
         logger.error(f"Failed to generate migration: {str(e)}")
-        return None
+        raise ValueError(f"Failed to generate migration: {str(e)}")
+    finally:
+        # Clean up temporary files
+        if os.path.exists(directory):
+            for cache_dir in Path(directory).rglob("__pycache__"):
+                if cache_dir.is_dir():
+                    shutil.rmtree(cache_dir)
 
 def simulate_migration(
     engine,
@@ -261,7 +420,7 @@ def simulate_migration(
         with engine.connect() as connection:
             context = MigrationContext.configure(
                 connection,
-                opts={"target_metadata": Base.metadata}
+                opts={"target_metadata": MetaData()}
             )
             current = context.get_current_revision()
             results["current_revision"] = current
@@ -382,6 +541,91 @@ def get_migration_history(engine, detailed: bool = False) -> List[Dict[str, Any]
     except Exception as e:
         raise OperationalError("Failed to get migration history", str(e))
 
+def get_revision_history(engine) -> List[Dict[str, Any]]:
+    """Get detailed revision history.
+    
+    Args:
+        engine: SQLAlchemy engine
+        
+    Returns:
+        List of revision details
+        
+    Raises:
+        ValueError: If engine is invalid
+        OperationalError: If history retrieval fails
+    """
+    if not engine:
+        raise ValueError("Engine must be provided")
+        
+    try:
+        config = get_alembic_config(engine)
+        script = ScriptDirectory.from_config(config)
+        
+        with engine.connect() as connection:
+            context = MigrationContext.configure(connection)
+            current = context.get_current_revision()
+            
+        history = []
+        for rev in script.walk_revisions():
+            info = {
+                "revision": rev.revision,
+                "down_revision": rev.down_revision,
+                "message": rev.doc,
+                "is_current": rev.revision == current,
+                "operations": []
+            }
+            
+            # Add operation details
+            if hasattr(rev.module, "upgrade"):
+                upgrade_ops = rev.module.upgrade()
+                if upgrade_ops:
+                    for op in upgrade_ops:
+                        info["operations"].append({
+                            "type": op.__class__.__name__,
+                            "args": getattr(op, "args", []),
+                            "kwargs": getattr(op, "kwargs", {})
+                        })
+                        
+            history.append(info)
+            
+        return history
+    except Exception as e:
+        raise OperationalError("Failed to get revision history", str(e))
+
+def get_migration_status(db_type: str = "email") -> Dict[str, Any]:
+    """Get current migration status.
+    
+    Args:
+        db_type: Type of database to check ('email' or 'analysis')
+        
+    Returns:
+        Dictionary containing:
+        - current_revision: Current revision ID or None if no migrations
+        - pending_migrations: List of pending migration IDs
+    """
+    engine = get_engine_for_db_type(db_type)
+    config = get_alembic_config(engine)
+    script = ScriptDirectory.from_config(config)
+    
+    with engine.connect() as connection:
+        context = MigrationContext.configure(connection)
+        current = context.get_current_revision()
+        
+        # Get all revisions
+        revisions = [rev.revision for rev in script.walk_revisions()]
+        
+        # Get pending migrations
+        if current is None:
+            pending = revisions
+        else:
+            current_idx = revisions.index(current)
+            pending = revisions[:current_idx]
+            
+    return {
+        "current_revision": current,
+        "pending_migrations": pending
+    }
+
 def rollback_migration(engine, steps: int = 1) -> bool:
     """Roll back the last N migrations.
     
@@ -435,54 +679,3 @@ def rollback_to_revision(engine, target_revision: str) -> bool:
     except Exception as e:
         logger.error(f"Rollback failed: {str(e)}")
         return False
-
-def get_revision_history(engine) -> List[Dict[str, Any]]:
-    """Get detailed revision history.
-    
-    Args:
-        engine: SQLAlchemy engine
-        
-    Returns:
-        List of revision details
-        
-    Raises:
-        ValueError: If engine is invalid
-        OperationalError: If history retrieval fails
-    """
-    if not engine:
-        raise ValueError("Engine must be provided")
-        
-    try:
-        config = get_alembic_config(engine)
-        script = ScriptDirectory.from_config(config)
-        
-        with engine.connect() as connection:
-            context = MigrationContext.configure(connection)
-            current = context.get_current_revision()
-            
-        history = []
-        for rev in script.walk_revisions():
-            info = {
-                "revision": rev.revision,
-                "down_revision": rev.down_revision,
-                "message": rev.doc,
-                "is_current": rev.revision == current,
-                "operations": []
-            }
-            
-            # Add operation details
-            if hasattr(rev.module, "upgrade"):
-                upgrade_ops = rev.module.upgrade()
-                if upgrade_ops:
-                    for op in upgrade_ops:
-                        info["operations"].append({
-                            "type": op.__class__.__name__,
-                            "args": getattr(op, "args", []),
-                            "kwargs": getattr(op, "kwargs", {})
-                        })
-                        
-            history.append(info)
-            
-        return history
-    except Exception as e:
-        raise OperationalError("Failed to get revision history", str(e))

@@ -6,7 +6,7 @@ from typing import Dict, Union
 
 from dotenv import load_dotenv
 
-from shared_lib.constants import DATABASE_CONFIG, LOGGING_CONFIG, EMAIL_CONFIG
+from shared_lib.constants import CONFIG
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,10 +24,10 @@ TEST_DATABASE_CONFIG = {
 
 # Test environment configuration
 TEST_ENV: Dict[str, str] = {
-    "LOG_LEVEL": LOGGING_CONFIG["LOG_LEVEL"],
+    "LOG_LEVEL": CONFIG.LOGGING["level"],
     "LOG_FILE": str(TEST_DATA_DIR / "test.log"),
-    "BATCH_SIZE": str(EMAIL_CONFIG["BATCH_SIZE"]),
-    "MAX_RETRIES": str(EMAIL_CONFIG["MAX_RETRIES"]),
+    "BATCH_SIZE": str(CONFIG.DATABASE["email"]["batch_size"]),
+    "MAX_RETRIES": str(CONFIG.DATABASE["email"]["max_retries"]),
     "TIMEOUT_SECONDS": "5",
 }
 
