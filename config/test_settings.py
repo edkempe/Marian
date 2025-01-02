@@ -1,7 +1,7 @@
 """Test environment settings."""
 
 from pathlib import Path
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, List
 from datetime import timedelta
 
 from pydantic import Field, SecretStr, AnyUrl, validator, model_validator
@@ -136,6 +136,50 @@ class TestSettings(Settings):
         description="Test cleanup timeout in seconds"
     )
     
+    # Semantic Search
+    ENABLE_SEMANTIC: bool = Field(
+        default=True,
+        description="Enable semantic search"
+    )
+    MATCH_THRESHOLD: float = Field(
+        default=0.85,
+        description="Minimum score for a definite match"
+    )
+    POTENTIAL_MATCH_THRESHOLD: float = Field(
+        default=0.70,
+        description="Minimum score for a potential match"
+    )
+    TAG_MATCH_THRESHOLD: float = Field(
+        default=0.80,
+        description="Minimum score for tag matching"
+    )
+    RESULTS_PER_PAGE: PositiveInt = Field(
+        default=10,
+        description="Number of results per page"
+    )
+    RELATIONSHIP_TYPES: List[str] = Field(
+        default=["parent", "child", "related", "depends_on", "required_by"],
+        description="Valid relationship types"
+    )
+    CATALOG_TABLES: Dict[str, str] = Field(
+        default={
+            "catalog": "catalog_items",
+            "tags": "tags",
+            "relationships": "relationships"
+        },
+        description="Catalog table names"
+    )
+    ERROR_MESSAGES: Dict[str, str] = Field(
+        default={
+            "no_matches": "No matches found for the given query.",
+            "below_threshold": "The match score is below the required threshold.",
+            "invalid_relationship": "Invalid relationship type specified.",
+            "tag_not_found": "One or more specified tags were not found.",
+            "duplicate_item": "An item with this identifier already exists."
+        },
+        description="Error message templates"
+    )
+
     @validator("DATABASE_MAX_CONNECTIONS")
     def validate_max_connections(cls, v: int, values: Dict) -> int:
         """Validate max connections is greater than min connections."""
@@ -168,6 +212,37 @@ class TestSettings(Settings):
             log_file.parent.mkdir(parents=True, exist_ok=True)
             
         return model
+    
+    @model_validator(mode='after')
+    def validate_thresholds(self) -> 'TestSettings':
+        """Validate threshold values."""
+        if not 0 <= self.MATCH_THRESHOLD <= 1:
+            raise ValueError("MATCH_THRESHOLD must be between 0 and 1")
+        if not 0 <= self.POTENTIAL_MATCH_THRESHOLD <= 1:
+            raise ValueError("POTENTIAL_MATCH_THRESHOLD must be between 0 and 1")
+        if not 0 <= self.TAG_MATCH_THRESHOLD <= 1:
+            raise ValueError("TAG_MATCH_THRESHOLD must be between 0 and 1")
+        if self.POTENTIAL_MATCH_THRESHOLD >= self.MATCH_THRESHOLD:
+            raise ValueError("POTENTIAL_MATCH_THRESHOLD must be less than MATCH_THRESHOLD")
+        return self
+
+    @validator("RELATIONSHIP_TYPES")
+    def validate_relationship_types(cls, v: List[str]) -> List[str]:
+        """Validate relationship types."""
+        valid_types = {"parent", "child", "related", "depends_on", "required_by"}
+        invalid_types = set(v) - valid_types
+        if invalid_types:
+            raise ValueError(f"Invalid relationship types: {invalid_types}")
+        return v
+
+    @validator("CATALOG_TABLES")
+    def validate_catalog_tables(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """Validate catalog table names."""
+        required_tables = {"catalog", "tags", "relationships"}
+        missing_tables = required_tables - set(v.keys())
+        if missing_tables:
+            raise ValueError(f"Missing required tables: {missing_tables}")
+        return v
     
     def __init__(self, **data):
         """Initialize test settings and create test directories."""
